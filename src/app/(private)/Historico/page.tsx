@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 "use client";
 
 import { ChevronLeft, ChevronRight } from "lucide-react";
@@ -22,12 +23,10 @@ const cardsData = [
   { icon: IconPeple, title: "Seguro de Vida", price: "1000 ECV" },
 ];
 
-type MenuProps = {
-  isCollapsed: boolean;
-};
-const Historico = ({ isCollapsed }: MenuProps) => {
+export default function Historico() {
   const [currentPage, setCurrentPage] = useState(0);
   const [cardsPerPage, setCardsPerPage] = useState(1);
+  const [isCollapsed, setIsCollapsed] = useState(false);
 
   useEffect(() => {
     const updateCardsPerPage = () => {
@@ -183,6 +182,4 @@ const Historico = ({ isCollapsed }: MenuProps) => {
       </section>
     </div>
   );
-};
-
-export default Historico;
+}

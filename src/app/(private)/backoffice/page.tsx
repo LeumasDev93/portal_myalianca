@@ -262,9 +262,7 @@ const Page = () => {
             </div>
           ) : (
             <>
-              {currentPage === "Historico" && (
-                <Historico isCollapsed={isMenuCollapsed} />
-              )}
+              {currentPage === "Historico" && <Historico />}
               {currentPage === "Apolice" && <ApoliceScreen />}
               {currentPage === "Simulation" && <SimulationScreen />}
               {currentPage === "Sinistro" && <SinistroScreen />}
