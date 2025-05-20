@@ -1,77 +1,136 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import Logo from "@/assets/alianca.png";
+import { IconType } from "react-icons";
 
-// Definição do tipo do item de menu
 export interface MenuItem {
   title: string;
   path: string;
-  icon: string;
+  icon: string | IconType;
   hoverIcon?: string | React.ReactNode;
   onClick?: () => void;
+  isActive?: boolean;
 }
 
 type MenuProps = {
   onMenuClick: (path: string) => void;
   menuItems: MenuItem[];
+  activePath?: string;
 };
 
-export function Menu({ onMenuClick, menuItems }: MenuProps) {
-  const handleMenuClick = (path: string) => {
-    onMenuClick(path);
+export function Menu({ onMenuClick, menuItems, activePath }: MenuProps) {
+  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [hoveredItem, setHoveredItem] = useState<number | null>(null);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsCollapsed(window.innerWidth < 1280);
+    };
+
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  const renderIcon = (icon: string | IconType) => {
+    if (typeof icon === "string") {
+      return (
+        <Image
+          src={icon}
+          alt="Icon"
+          width={20}
+          height={20}
+          className="w-5 h-5"
+        />
+      );
+    }
+    const Icon = icon;
+    return <Icon className="w-5 h-5" />;
   };
 
   return (
-    <aside className="hidden md:flex flex-col md:w-44 xl:w-64 h-screen bg-white shadow-xl p-6 fixed top-0 left-0 z-40 overflow-y-auto">
-      <div className="flex items-center justify-center mb-10">
-        <Image
-          src={Logo}
-          alt="Logo"
-          width={60}
-          height={60}
-          className="w-12 h-10 xl:w-16 xl:h-14"
-        />
-        <div className="xl:ml-2 flex">
-          <h1 className="xl:text-xl font-extrabold text-[#B7021C]">My</h1>
-          <h1 className="xl:text-xl font-extrabold text-[#002256]">Alianca</h1>
+    <div className="relative">
+      {/* Menu Container */}
+      <aside
+        className={`hidden md:flex flex-col h-screen bg-white shadow-xl fixed top-0 left-0 z-40 transition-all duration-300
+          ${isCollapsed ? "w-16" : "w-64"}`}
+      >
+        {/* Cabeçalho */}
+        <div className="flex items-center p-4 border-b">
+          <div className="flex items-center">
+            <Image
+              src={Logo}
+              alt="Logo"
+              width={60}
+              height={60}
+              className={`transition-all duration-300 ${
+                isCollapsed ? "w-10" : "w-12"
+              }`}
+            />
+            {!isCollapsed && (
+              <div className="flex ml-2">
+                <h1 className="text-lg font-extrabold text-[#B7021C]">My</h1>
+                <h1 className="text-lg font-extrabold text-[#002256]">
+                  Alianca
+                </h1>
+              </div>
+            )}
+          </div>
         </div>
-      </div>
 
-      <ul className="space-y-4">
-        {menuItems.map((menu, index) => (
-          <li key={index}>
-            <button
-              onClick={menu.onClick || (() => handleMenuClick(""))}
-              className="flex items-center w-full p-3 rounded-md hover:bg-[#B7021C] group transition-colors"
-            >
-              <span className="text-[#002256] group-hover:text-white text-lg xl:text-xl mr-4">
-                <Image
-                  src={menu.icon || "/default-icon.png"}
-                  alt="Logo"
-                  width={60}
-                  height={60}
-                  className="w-5 h-5 xl:w-5 xl:h-5"
-                />
-              </span>
-              <span className="text-[#002256] group-hover:text-white text-sm xl:text-lg font-medium">
-                {menu.title}
-              </span>
-            </button>
-          </li>
-        ))}
-      </ul>
-      <div className="bg-[#002256] w-full h-40 sm:h-48 md:h-60 lg:h-60 xl:h-60 mt-8 sm:mt-16 md:mt-16 rounded-lg flex flex-col justify-end items-center pb-3 sm:pb-4 md:pb-5 lg:pb-6">
-        <div className="flex flex-col items-center px-4 w-full max-w-xs">
-          <span className="text-white text-xs sm:text-xs md:text-xs mb-2 sm:mb-3 text-center mt-16">
-            Tens algumas dúvidas?
-          </span>
-          <button className="bg-white w-full max-w-[180px] flex items-center justify-center px-4 sm:px-6 md:px-8 py-1 sm:py-1 rounded-lg text-xs sm:text-xs md:text-xs text-gray-600 font-medium hover:bg-gray-100 transition duration-200 ease-in-out">
-            Fale connosco!
-          </button>
+        {/* Itens do menu */}
+        <div
+          className="flex-1 overflow-y-auto py-2 px-1 mt-4 xl:mt-10"
+          style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+        >
+          <ul className="space-y-4 xl:space-y-8">
+            {menuItems.map((menu, index) => {
+              const isActive = menu.isActive || activePath === menu.path;
+              return (
+                <li key={index} className="relative">
+                  <button
+                    onMouseEnter={() => setHoveredItem(index)}
+                    onMouseLeave={() => setHoveredItem(null)}
+                    onClick={menu.onClick || (() => onMenuClick(menu.path))}
+                    className={`flex items-center w-full p-2 xl:p-3 rounded-md transition-colors
+                      ${isCollapsed ? "justify-center" : "justify-start"}
+                      ${
+                        isActive
+                          ? "bg-[#002256] text-white"
+                          : "text-[#002256] hover:bg-[#002256] hover:text-white"
+                      }`}
+                  >
+                    <span>{renderIcon(menu.icon)}</span>
+                    {!isCollapsed && (
+                      <span className="ml-3 font-medium">{menu.title}</span>
+                    )}
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
         </div>
-      </div>
-    </aside>
+      </aside>
+
+      {isCollapsed &&
+        menuItems.map((menu, index) => (
+          <div
+            key={index}
+            className={`fixed left-16 top-0 h-full pointer-events-none z-50 transition-opacity duration-200 ${
+              hoveredItem === index ? "opacity-100" : "opacity-0"
+            }`}
+            style={{
+              top: `${80 + index * 56}px`,
+            }}
+          >
+            <div className="ml-2 px-3 py-1 bg-gray-900 text-white text-sm rounded shadow-lg whitespace-nowrap">
+              {menu.title}
+              <div className="absolute right-full top-1/2 -translate-y-1/2 w-0 h-0 border-t-4 border-t-transparent border-r-4 border-r-gray-900 border-b-4 border-b-transparent"></div>
+            </div>
+          </div>
+        ))}
+    </div>
   );
 }

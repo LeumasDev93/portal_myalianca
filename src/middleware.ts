@@ -1,38 +1,34 @@
 import { NextResponse, type NextRequest } from 'next/server';
-import { getToken } from 'next-auth/jwt';
 
-const publicRoutes = [
-  { path: '/signUp', whenAuthenticated: 'redirect' },
-  { path: '/', whenAuthenticated: 'redirect' },
-] as const;
+const PUBLIC_ROUTES = ['/login', '/signUp', '/recuperar-senha'];
+const PRIVATE_ROUTE_PREFIXES = ['/backoffice', '/empresarial'];
 
-const privateRoutes = [
-  { path: '/backoffice', whenAuthenticated: 'redirect' },
-] as const;
+const LOGIN_REDIRECT = '/login';
+const AUTHENTICATED_REDIRECT = '/backoffice';
 
-const REDIRECT_WHEN_NOT_AUTHENTICATED_ROUTE = '/';
+export function middleware(req: NextRequest) {
+  const { pathname } = req.nextUrl;
 
-export async function middleware(req: NextRequest) {
-  const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
-  const path = req.nextUrl.pathname;
+  const isPublic = PUBLIC_ROUTES.some((route) => pathname.startsWith(route));
+  const isPrivate = PRIVATE_ROUTE_PREFIXES.some((prefix) =>
+    pathname.startsWith(prefix)
+  );
 
-  const isPublicRoute = publicRoutes.some(route => route.path === path);
-  const isPrivateRoute = privateRoutes.some(route => route.path === path);
+  // Verifica se o token existe no cookie (definido no client com `document.cookie`)
+  const token = req.cookies.get('token')?.value;
 
-  if (isPrivateRoute && !token) {
+  // Usuário não autenticado tentando acessar rota privada
+  if (isPrivate && !token) {
     const redirectUrl = req.nextUrl.clone();
-    redirectUrl.pathname = REDIRECT_WHEN_NOT_AUTHENTICATED_ROUTE;
+    redirectUrl.pathname = LOGIN_REDIRECT;
+    redirectUrl.searchParams.set('from', pathname);
     return NextResponse.redirect(redirectUrl);
   }
 
-  if (isPublicRoute && !token) {
-    return NextResponse.next();
-  }
-
-  const publicRoute = publicRoutes.find(route => route.path === path);
-  if (token && publicRoute?.whenAuthenticated === 'redirect') {
+  // Usuário autenticado tentando acessar rota pública
+  if (token && isPublic) {
     const redirectUrl = req.nextUrl.clone();
-    redirectUrl.pathname = '/backoffice';
+    redirectUrl.pathname = AUTHENTICATED_REDIRECT;
     return NextResponse.redirect(redirectUrl);
   }
 

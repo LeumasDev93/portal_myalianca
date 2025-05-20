@@ -1,141 +1,510 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
+import React, { useEffect, useState } from "react";
+import {
+  FaCar,
+  FaHome,
+  FaPlane,
+  FaUserShield,
+  FaFileInvoice,
+  FaEye,
+  FaChevronLeft,
+  FaChevronRight,
+} from "react-icons/fa";
+import { HiDotsVertical } from "react-icons/hi";
+import { MdHealthAndSafety } from "react-icons/md";
 
-import React, { useState } from "react";
+const ramoIcons = {
+  Automóvel: <FaCar className="text-white text-sm xl:text-xl" />,
+  Habitação: <FaHome className="text-white text-sm xl:text-xl" />,
+  Viagem: <FaPlane className="text-white text-sm xl:text-xl" />,
+  Vida: <FaUserShield className="text-white text-sm xl:text-xl" />,
+  Saúde: <MdHealthAndSafety className="text-white text-sm xl:text-xl" />,
+  Outros: <FaFileInvoice className="text-white text-sm xl:text-xl" />,
+};
+
+// Cabeçalhos configuráveis por tipo
+const tableConfigs = {
+  Apólices: {
+    headers: [
+      { key: "ramo", label: "RAMO" },
+      { key: "numberapolice", label: "NÚMERO APÓLICE" },
+      { key: "dateEnd", label: "DATA FIM" },
+      { key: "value", label: "VALOR" },
+      { key: "status", label: "ESTADO" },
+      { key: "action", label: "AÇÃO" },
+      { key: "options", label: "" },
+    ],
+    data: [
+      {
+        ramo: "Automóvel",
+        numberapolice: "ST-28-ZS",
+        value: "30.000 ECV",
+        dateEnd: "15/06/2024",
+        status: "Normal",
+        action: "Pagar",
+        statusClass: "bg-green-300 text-green-700",
+      },
+      {
+        ramo: "Automóvel",
+        numberapolice: "ST-28-ZS",
+        value: "30.000 ECV",
+        dateEnd: "15/06/2024",
+        status: "Pendente",
+        action: "Pagar",
+        statusClass: "bg-yellow-100 text-yellow-600",
+      },
+      {
+        ramo: "Automóvel",
+        numberapolice: "ST-28-ZS",
+        value: "30.000 ECV",
+        dateEnd: "15/06/2024",
+        status: "Anulado",
+        action: "",
+        statusClass: "bg-red-300 text-red-700",
+      },
+      {
+        ramo: "Automóvel",
+        numberapolice: "ST-28-ZS",
+        value: "30.000 ECV",
+        dateEnd: "15/06/2024",
+        status: "Normal",
+        action: "",
+        statusClass: "bg-green-300 text-green-700",
+      },
+      {
+        ramo: "Automóvel",
+        numberapolice: "ST-28-ZS",
+        value: "30.000 ECV",
+        dateEnd: "15/06/2024",
+        status: "Pendente",
+        action: "Pagar",
+        statusClass: "bg-yellow-100 text-yellow-600",
+      },
+      {
+        ramo: "Automóvel",
+        numberapolice: "ST-28-ZS",
+        value: "30.000 ECV",
+        dateEnd: "15/06/2024",
+        status: "Anulado",
+        action: "",
+        statusClass: "bg-red-300 text-red-700",
+      },
+      {
+        ramo: "Automóvel",
+        numberapolice: "ST-28-ZS",
+        value: "30.000 ECV",
+        dateEnd: "15/06/2024",
+        status: "Pendente",
+        action: "Pagar",
+        statusClass: "bg-yellow-100 text-yellow-600",
+      },
+    ],
+  },
+
+  Sinistros: {
+    headers: [
+      { key: "ramo", label: "RAMO" },
+      { key: "clientName", label: "NOME DO CLIENTE" },
+      { key: "reference", label: "# REFERÊNCIA" },
+      { key: "numberapolice", label: "NÚMERO APÓLICE" },
+      { key: "occurrenceDate", label: "DATA DA OCORRÊNCIA" },
+      { key: "status", label: "ESTADO" },
+      { key: "options", label: "" },
+    ],
+    data: [
+      {
+        ramo: "Automóvel",
+        clientName: "João Silva",
+        reference: "REF-001",
+        numberapolice: "ST-28-ZS",
+        occurrenceDate: "10/05/2024",
+        estimatedValue: "15.000 ECV",
+        status: "Encerrado",
+        statusValue: 2,
+        statusClass: "bg-green-300 text-green-700",
+      },
+      {
+        ramo: "Automóvel",
+        clientName: "João Silva",
+        reference: "REF-002",
+        numberapolice: "ST-28-ZS",
+        occurrenceDate: "10/05/2024",
+        estimatedValue: "15.000 ECV",
+        status: "Pendente",
+        statusValue: 2,
+        statusClass: "bg-yellow-100 text-yellow-600",
+      },
+      {
+        ramo: "Automóvel",
+        clientName: "João Silva",
+        reference: "REF-003",
+        numberapolice: "ST-28-ZS",
+        occurrenceDate: "10/05/2024",
+        estimatedValue: "15.000 ECV",
+        status: "Recusado",
+        statusValue: 2,
+        statusClass: "bg-red-300 text-red-700",
+      },
+      {
+        ramo: "Automóvel",
+        clientName: "João Silva",
+        reference: "REF-004",
+        numberapolice: "ST-28-ZS",
+        occurrenceDate: "10/05/2024",
+        estimatedValue: "15.000 ECV",
+        status: "Pendente",
+        statusValue: 2,
+        statusClass: "bg-yellow-100 text-yellow-600",
+      },
+      {
+        ramo: "Automóvel",
+        clientName: "João Silva",
+        reference: "REF-003",
+        numberapolice: "ST-28-ZS",
+        occurrenceDate: "10/05/2024",
+        estimatedValue: "15.000 ECV",
+        status: "Recusado",
+        statusValue: 2,
+        statusClass: "bg-red-300 text-red-700",
+      },
+    ],
+  },
+
+  Recibos: {
+    headers: [
+      { key: "ramo", label: "RAMO" },
+      { key: "clientName", label: "NOME DO CLIENTE" },
+      { key: "type", label: "TIPO" },
+      { key: "date", label: "Data" },
+      { key: "value", label: "VALOR" },
+      { key: "status", label: "ESTADO" },
+      { key: "options", label: "" },
+    ],
+    data: [
+      {
+        ramo: "Saúde",
+        clientName: "João Silva",
+        type: "Seguro novo",
+        date: "10/05/2024",
+        value: "10.000 ECV",
+        emissionDate: "12/03/2024",
+        paymentMethod: "Transferência",
+        status: "Cobrado",
+        statusValue: 1,
+        statusClass: "bg-green-300 text-green-700",
+      },
+      {
+        ramo: "Automóvel",
+        clientName: "João Silva",
+        type: "Seguro novo",
+        date: "10/05/2024",
+        value: "10.000 ECV",
+        emissionDate: "12/03/2024",
+        paymentMethod: "Transferência",
+        status: "Em Cobrança",
+        statusValue: 1,
+        statusClass: "bg-yellow-100 text-yellow-600",
+      },
+      {
+        ramo: "Viagem",
+        clientName: "João Silva",
+        type: "Seguro novo",
+        date: "10/05/2024",
+        value: "10.000 ECV",
+        emissionDate: "12/03/2024",
+        paymentMethod: "Transferência",
+        status: "Anulado",
+        statusValue: 1,
+        statusClass: "bg-red-300 text-red-700",
+      },
+      {
+        ramo: "Vida",
+        clientName: "João Silva",
+        type: "Seguro novo",
+        date: "10/05/2024",
+        value: "10.000 ECV",
+        emissionDate: "12/03/2024",
+        paymentMethod: "Transferência",
+        status: "Em Cobrança",
+        statusValue: 1,
+        statusClass: "bg-yellow-100 text-yellow-600",
+      },
+      {
+        ramo: "Habitação",
+        clientName: "João Silva",
+        type: "Seguro novo",
+        date: "10/05/2024",
+        value: "10.000 ECV",
+        emissionDate: "12/03/2024",
+        paymentMethod: "Transferência",
+        status: "Anulado",
+        statusValue: 1,
+        statusClass: "bg-red-300 text-red-700",
+      },
+    ],
+  },
+};
 
 const PaymentHistoryCard = () => {
-  // Dados completos da tabela
-  const allPaymentData = [
-    {
-      name: "Alex Correia",
-      type: "Carro",
-      value: "30.000 ECV",
-      status: "Pago",
-      date: new Date(2024, 5, 15), // Exemplo: 15 de junho de 2023
-    },
-    {
-      name: "Alex Correia",
-      type: "Viagem",
-      value: "30.000 ECV",
-      status: "Pago",
-      date: new Date(2024, 5, 10), // 10 de junho de 2023
-    },
-    {
-      name: "Alex Correia",
-      type: "Saúde",
-      value: "30.000 ECV",
-      status: "Pendente",
-      date: new Date(2025, 4, 2), // 28 de maio de 2023
-    },
-    {
-      name: "Alex Correia",
-      type: "Casa",
-      value: "30.000 ECV",
-      status: "Pago",
-      date: new Date(2025, 4, 15), // 15 de abril de 2023
-    },
-  ];
+  const [activeTab, setActiveTab] =
+    useState<keyof typeof tableConfigs>("Apólices");
+  const [selectedItem, setSelectedItem] = useState<any>(null);
+  const [showPopup, setShowPopup] = useState(false);
+  const [popupPosition, setPopupPosition] = useState({ top: 0, left: 0 });
+  const [currentPage, setCurrentPage] = useState(1);
 
-  // Estado para o filtro ativo
-  const [activeFilter, setActiveFilter] = useState<string>("Tudo");
-  const [paymentData, setPaymentData] = useState(allPaymentData);
+  const config = tableConfigs[activeTab];
+  const totalItems = config.data.length;
 
-  // Opções de filtro
-  const filterOptions = ["Tudo", "Semana", "Mês", "Ano"];
+  const [itemsPerPage, setItemsPerPage] = useState(
+    typeof window !== "undefined" && window.innerWidth >= 1280 ? 6 : 5
+  );
 
-  // Função para aplicar filtro
-  const applyFilter = (filter: string) => {
-    setActiveFilter(filter);
+  // Get current items
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentItems = config.data.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(totalItems / itemsPerPage);
 
-    const now = new Date();
-    let filteredData = [...allPaymentData];
+  useEffect(() => {
+    const updateItemsPerPage = () => {
+      const isXL = window.innerWidth >= 1280;
+      setItemsPerPage(isXL ? 6 : 5);
+    };
 
-    if (filter === "Semana") {
-      const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-      filteredData = allPaymentData.filter((item) => item.date >= oneWeekAgo);
-    } else if (filter === "Mês") {
-      const oneMonthAgo = new Date(
-        now.getFullYear(),
-        now.getMonth() - 1,
-        now.getDate()
-      );
-      filteredData = allPaymentData.filter((item) => item.date >= oneMonthAgo);
-    } else if (filter === "Ano") {
-      const oneYearAgo = new Date(
-        now.getFullYear() - 1,
-        now.getMonth(),
-        now.getDate()
-      );
-      filteredData = allPaymentData.filter((item) => item.date >= oneYearAgo);
-    }
+    window.addEventListener("resize", updateItemsPerPage);
+    updateItemsPerPage(); // chamada inicial
 
-    setPaymentData(filteredData);
+    return () => window.removeEventListener("resize", updateItemsPerPage);
+  }, []);
+
+  const handleOptionsClick = (event: React.MouseEvent, item: any) => {
+    const rect = event.currentTarget.getBoundingClientRect();
+    setPopupPosition({
+      top: rect.bottom + window.scrollY,
+      left: rect.left + window.scrollX,
+    });
+    setSelectedItem(item);
+    setShowPopup(true);
+  };
+
+  const closePopup = () => {
+    setShowPopup(false);
+  };
+
+  const handleViewDetails = () => {
+    alert(
+      `Visualizando detalhes do item: ${
+        selectedItem?.numberapolice || selectedItem?.id
+      }`
+    );
+    closePopup();
+  };
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+
+  const handleTabChange = (tab: keyof typeof tableConfigs) => {
+    setActiveTab(tab);
+    setCurrentPage(1); // Reset to first page when changing tabs
   };
 
   return (
-    <div>
-      <div className="bg-white rounded-lg shadow-md p-6 w-full">
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead>
+    <div className="w-full">
+      <div className="flex gap-2">
+        {Object.keys(tableConfigs).map((tab) => (
+          <button
+            key={tab}
+            onClick={() => handleTabChange(tab as keyof typeof tableConfigs)}
+            className={`px-4 xl:px-6 py-2 xl:py-3 font-bold cursor-pointer ${
+              activeTab === tab
+                ? "bg-[#002855] text-white rounded-lg text-xs xl:text-sm"
+                : "text-[#002855] hover:text-[#231c48] text-sm"
+            }`}
+          >
+            {tab}
+          </button>
+        ))}
+      </div>
+
+      <div className="bg-white rounded-lg shadow-md p-3 xl:p-6 w-full mt-4 overflow-x-auto">
+        <div
+          className="overflow-y-auto"
+          style={{
+            minHeight: "400px", // altura mínima sempre visível
+            maxHeight: "650px", // se passar disso, começa o scroll
+            overflowY: "auto",
+          }}
+        >
+          <table className="divide-y divide-gray-200 w-full">
+            <thead className="sticky top-0 bg-white z-10">
               <tr className="border-b-2 border-[#B7021C]">
-                <th className="px-6 py-3 text-left text-xs font-semibold text-black uppercase tracking-wider">
-                  NOME
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-black uppercase tracking-wider">
-                  TIPO DE SEGUROS
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-black uppercase tracking-wider">
-                  VALOR
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-black uppercase tracking-wider">
-                  ESTADO
-                </th>
+                {config.headers.map((header) => (
+                  <th
+                    key={header.key}
+                    className={`px-3 py-3 text-center text-[10px] xl:text-xs font-semibold whitespace-nowrap ${
+                      header.key === "options" ? "w-10" : ""
+                    } ${
+                      header.label ? "text-black uppercase tracking-wider" : ""
+                    }`}
+                  >
+                    {header.label}
+                  </th>
+                ))}
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {paymentData.map((payment, index) => (
-                <tr key={index}>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {payment.name}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {payment.type}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {payment.value}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm">
-                    <span
-                      className={`inline-flex items-center justify-center w-24 py-2 text-xs font-semibold rounded-lg ${
-                        payment.status === "Pago"
-                          ? "bg-[#002855] text-white"
-                          : "bg-[#B7021C] text-white"
-                      }`}
-                    >
-                      {payment.status}
-                    </span>
-                  </td>
+              {currentItems.map((item, rowIndex) => (
+                <tr key={rowIndex} className="hover:bg-gray-50">
+                  {config.headers.map((header, colIndex) => {
+                    if (header.key === "options") {
+                      return (
+                        <td
+                          key={colIndex}
+                          className="px-3 py-4 text-center relative"
+                        >
+                          <button
+                            onClick={(e) => handleOptionsClick(e, item)}
+                            className="text-[#002855] hover:text-[#001a3d] focus:outline-none"
+                          >
+                            <HiDotsVertical className="text-sm xl:text-xl" />
+                          </button>
+                        </td>
+                      );
+                    }
+
+                    const value = (item as Record<string, string>)[header.key];
+
+                    if (header.key === "ramo") {
+                      return (
+                        <td key={colIndex} className="px-3 py-4 text-center">
+                          <span className="bg-[#002855] rounded-full w-6 h-6 xl:w-8 xl:h-8 flex items-center justify-center mx-auto">
+                            {ramoIcons[value as keyof typeof ramoIcons] ||
+                              ramoIcons.Outros}
+                          </span>
+                        </td>
+                      );
+                    }
+
+                    if (header.key === "status") {
+                      return (
+                        <td key={colIndex} className="px-3 py-4 text-center">
+                          <span
+                            className={`inline-block text-[10px] xl:text-xs font-semibold py-1 xl:py-2 px-3 rounded-md xl:rounded-lg text-center whitespace-nowrap w-[6rem] xl:w-[7rem] ${
+                              item.statusClass ||
+                              "bg-yellow-100 text-yellow-800"
+                            }`}
+                          >
+                            {item.status}
+                          </span>
+                        </td>
+                      );
+                    }
+
+                    if (header.key === "action") {
+                      return (
+                        <td key={colIndex} className="px-3 py-4 text-center">
+                          {value && (
+                            <button
+                              className={`px-4 py-1 xl:py-2 rounded-md xl:rounded-lg text-[10px] xl:text-xs bg-[#002855] text-white hover:bg-[#001a3d]`}
+                            >
+                              {value}
+                            </button>
+                          )}
+                        </td>
+                      );
+                    }
+
+                    return (
+                      <td
+                        key={colIndex}
+                        className="px-3 xl:py-4 text-[10px] xl:text-sm text-center"
+                      >
+                        {value}
+                      </td>
+                    );
+                  })}
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
+
+        {totalItems > itemsPerPage && (
+          <div className="flex justify-between items-center mt-4 px-4 py-2">
+            <div className="text-xs xl:text-sm text-gray-600">
+              Mostrando {indexOfFirstItem + 1} a{" "}
+              {Math.min(indexOfLastItem, totalItems)} de {totalItems} itens
+            </div>
+            <div className="flex items-center space-x-2">
+              <button
+                onClick={() => handlePageChange(currentPage - 1)}
+                disabled={currentPage === 1}
+                className={`p-1 rounded-sm xl:p-2 xl:rounded-md text-xs xl:text-sm ${
+                  currentPage === 1
+                    ? "bg-gray-200 text-gray-500 cursor-not-allowed"
+                    : "bg-[#002855] text-white hover:bg-[#001a3d]"
+                }`}
+              >
+                <FaChevronLeft />
+              </button>
+
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map(
+                (page) => (
+                  <button
+                    key={page}
+                    onClick={() => handlePageChange(page)}
+                    className={`w-5 h-5 xl:w-8 xl:h-8 rounded-sm xl:rounded-md text-xs xl:text-sm ${
+                      page === currentPage
+                        ? "bg-[#002855] text-white"
+                        : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                    }`}
+                  >
+                    {page}
+                  </button>
+                )
+              )}
+
+              <button
+                onClick={() => handlePageChange(currentPage + 1)}
+                disabled={currentPage === totalPages}
+                className={`p-1 rounded-sm xl:p-2 xl:rounded-md text-xs xl:text-sm  ${
+                  currentPage === totalPages
+                    ? "bg-gray-200 text-gray-500 cursor-not-allowed"
+                    : "bg-[#002855] text-white hover:bg-[#001a3d]"
+                }`}
+              >
+                <FaChevronRight />
+              </button>
+            </div>
+          </div>
+        )}
       </div>
-      <div className="flex justify-start px-4 py-6 space-x-4">
-        {filterOptions.map((option) => (
+
+      {showPopup && (
+        <div
+          className="absolute z-50 bg-white shadow-lg rounded-md py-2 w-48 border border-gray-300"
+          style={{
+            top: `${popupPosition.top}px`,
+            left: `${popupPosition.left}px`,
+          }}
+          onClick={(e) => e.stopPropagation()}
+        >
           <button
-            key={option}
-            onClick={() => applyFilter(option)}
-            className={`text-sm focus:outline-none ${
-              activeFilter === option
-                ? "text-[#002855] font-bold bg-white px-4 py-2 rounded-lg shadow-md"
-                : "text-gray-600 hover:text-gray-900"
-            }`}
+            onClick={handleViewDetails}
+            className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:text-gray-800 flex items-center"
           >
-            {option}
+            <FaEye className="mr-2" />
+            Ver detalhes
           </button>
-        ))}
-      </div>
+          {/* Adicione mais opções aqui se necessário */}
+        </div>
+      )}
+
+      {/* Overlay para fechar o popup ao clicar fora */}
+      {showPopup && <div className="fixed inset-0 z-40" onClick={closePopup} />}
     </div>
   );
 };
