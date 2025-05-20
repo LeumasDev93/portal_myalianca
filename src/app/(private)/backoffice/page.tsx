@@ -6,8 +6,6 @@ import { FaSearch, FaSpinner } from "react-icons/fa";
 import { MobileMenu } from "@/components/MobileMenu";
 import { Menu, MenuItem } from "@/components/Menu";
 
-import { destroyCookie } from "nookies";
-import { signOut } from "next-auth/react";
 import {
   IoGrid,
   IoLogOut,

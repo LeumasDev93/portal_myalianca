@@ -25,7 +25,7 @@ const cardsData = [
 type MenuProps = {
   isCollapsed: boolean;
 };
-export default function Historico({ isCollapsed }: MenuProps) {
+const Historico = ({ isCollapsed }: MenuProps) => {
   const [currentPage, setCurrentPage] = useState(0);
   const [cardsPerPage, setCardsPerPage] = useState(1);
 
@@ -183,4 +183,6 @@ export default function Historico({ isCollapsed }: MenuProps) {
       </section>
     </div>
   );
-}
+};
+
+export default Historico;
