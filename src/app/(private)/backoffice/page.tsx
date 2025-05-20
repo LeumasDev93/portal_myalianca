@@ -27,7 +27,7 @@ import SinistroScreen from "../Sinistro/page";
 import { Avatar, AvatarFallback, AvatarImage } from "@radix-ui/react-avatar";
 import { useAuth } from "@/contexts/auth-context";
 import { Footer } from "@/components/Footer";
-import { Historico } from "../Historico/page";
+import Historico from "../Historico/page";
 
 const Page = () => {
   const [isLoading, setIsLoading] = useState(false);
