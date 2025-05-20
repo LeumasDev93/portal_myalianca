@@ -82,7 +82,7 @@ export function DashboardCharts() {
 
   return (
     <div className="flex flex-col">
-      <div className="flex justify-end pt-2">
+      <div className="flex justify-end">
         <Button
           onClick={handleExport}
           className="bg-[#002855] text-white py-2 cursor-pointer"
