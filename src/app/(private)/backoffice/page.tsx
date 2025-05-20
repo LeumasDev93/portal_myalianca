@@ -21,13 +21,13 @@ import { BsPersonFill } from "react-icons/bs";
 import { MdEmail } from "react-icons/md";
 import { IoIosInformationCircle, IoIosLogOut } from "react-icons/io";
 import { IoMdPin } from "react-icons/io";
-import Historico from "../Historico/page";
 import ApoliceScreen from "../Apolice/page";
 import SimulationScreen from "../Simulation/page";
 import SinistroScreen from "../Sinistro/page";
 import { Avatar, AvatarFallback, AvatarImage } from "@radix-ui/react-avatar";
 import { useAuth } from "@/contexts/auth-context";
 import { Footer } from "@/components/Footer";
+import { Historico } from "../Historico/page";
 
 const Page = () => {
   const [isLoading, setIsLoading] = useState(false);
