@@ -1,7 +1,6 @@
 import NextAuth, { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 
-import { setCookie } from "nookies";
 
 const nextAuthOptions: NextAuthOptions = {
   providers: [
@@ -38,12 +37,6 @@ const nextAuthOptions: NextAuthOptions = {
           const token = data.access_token;
           console.log("Token recebido:", token);
 
-          // Armazenar o token no cookie
-          setCookie(undefined, "nextauth.token", token, {
-            maxAge: 60 * 60 * 1, // 1 hora
-            path: "/",
-          });
-
           return {
             id: "oauth-user",
             token: token,
@@ -58,9 +51,10 @@ const nextAuthOptions: NextAuthOptions = {
   secret: process.env.NEXTAUTH_SECRET,
   callbacks: {
     async jwt({ token, user }) {
+        // console.log('JWT Callback:', { token, user }); // ← Debug
       if (user) {
         token.accessToken = user.token;
-        token.tokenExpiry = Math.floor(Date.now() / 1000) + 3600; // Expiração do token em 1 hora
+        token.tokenExpiry = Math.floor(Date.now() / 1000) + 3600; 
       }
       return token;
     },

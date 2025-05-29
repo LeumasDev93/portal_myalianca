@@ -6,17 +6,27 @@ export const DotLoading = ({
   dotClassName,
   dotCount = 3,
   dotSize = "w-3 h-3",
-  color = "bg-gray-400",
 }: {
   className?: string;
   dotClassName?: string;
   dotCount?: number;
   dotSize?: string;
-  color?: string;
 }) => {
+  // Definindo as cores padrão (preto, azul, vermelho)
+  const defaultColors = [
+    "bg-black", // Preto
+    "bg-blue-900", // Azul
+    "bg-red-800", // Vermelho
+  ];
+
+  // Se tiver mais dots que cores, repetimos o padrão
+  const dotColors = [...Array(dotCount)].map(
+    (_, i) => defaultColors[i % defaultColors.length]
+  );
+
   return (
     <div className={cn("flex space-x-2 justify-center py-4", className)}>
-      {[...Array(dotCount)].map((_, i) => (
+      {dotColors.map((color, i) => (
         <div
           key={i}
           className={cn(

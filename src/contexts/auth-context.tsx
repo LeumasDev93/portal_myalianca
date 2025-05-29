@@ -98,36 +98,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         });
 
         if (!response.data?.user?.sessao) {
-          throw new Error("Invalid API response");
+          throw new Error(response.data?.response.desc);
         }
 
         const { user } = response.data;
         const userToken = user.sessao;
 
-        // Store auth data
         localStorage.setItem("user", JSON.stringify(user));
         localStorage.setItem("token", userToken);
         setUser(user);
         setToken(userToken);
         setAuthCookies(userToken);
 
-        // Handle redirect - either to original path or dashboard
-        const redirectPath =
-          searchParams.get("from") ||
-          (user.tipo === "particular" ? "/backoffice" : "/empresarial");
-        router.replace(redirectPath);
+        router.replace("/backoffice");
       } catch (error) {
-        let errorMessage = "Login failed";
+        let errorMessage = "";
 
         if (axios.isAxiosError(error)) {
           errorMessage =
-            error.response?.data?.error ||
-            error.response?.data?.message ||
-            "Invalid credentials";
+            error.response?.data?.response?.desc ||
+            error.response?.data?.desc ||
+            "Credenciais inválidas";
+        } else if (error instanceof Error) {
+          errorMessage = error.message;
         }
 
-        clearAuthData();
         setError(errorMessage);
+        setTimeout(() => setError(null), 5000);
         throw error;
       } finally {
         setIsLoading(false);
@@ -159,9 +156,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     if (user && isPublicRoute && pathname !== "/") {
-      router.replace(
-        user.tipo === "particular" ? "/backoffice" : "/empresarial"
-      );
+      router.replace("/backoffice");
     }
   }, [user, isLoading, pathname, router]);
 

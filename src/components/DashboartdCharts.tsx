@@ -91,7 +91,7 @@ export function DashboardCharts() {
           Exportar
         </Button>
       </div>
-      <Card className=" w-full h-full bg-white rounded-lg shadow-md mt-4">
+      <Card className=" w-full h-full bg-white rounded-lg shadow-md mt-2">
         <CardHeader>
           <CardTitle className="text-xl xl:text-2xl font-bold">
             Dashboard

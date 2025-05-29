@@ -1,7 +1,7 @@
 import type React from "react";
 import type { Metadata } from "next";
 import "@/app/globals.css";
-import { AuthProvider } from "@/contexts/auth-context";
+import NextAuthSessionProvider from "@/providers/sessionProvider";
 
 export const metadata: Metadata = {
   title: "MYALIANCA - Portal do Cliente",
@@ -14,5 +14,5 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  return <AuthProvider>{children}</AuthProvider>;
+  return <NextAuthSessionProvider>{children}</NextAuthSessionProvider>;
 }

@@ -11,7 +11,9 @@ import {
   FaChevronLeft,
   FaChevronRight,
 } from "react-icons/fa";
+import { FaTriangleExclamation } from "react-icons/fa6";
 import { HiDotsVertical } from "react-icons/hi";
+import { IoReceiptSharp, IoShieldCheckmarkSharp } from "react-icons/io5";
 import { MdHealthAndSafety } from "react-icons/md";
 
 const ramoIcons = {
@@ -26,6 +28,7 @@ const ramoIcons = {
 // Cabeçalhos configuráveis por tipo
 const tableConfigs = {
   Apólices: {
+    icon: <IoShieldCheckmarkSharp />,
     headers: [
       { key: "ramo", label: "RAMO" },
       { key: "numberapolice", label: "NÚMERO APÓLICE" },
@@ -103,6 +106,7 @@ const tableConfigs = {
   },
 
   Sinistros: {
+    icon: <FaTriangleExclamation />,
     headers: [
       { key: "ramo", label: "RAMO" },
       { key: "clientName", label: "NOME DO CLIENTE" },
@@ -172,6 +176,7 @@ const tableConfigs = {
   },
 
   Recibos: {
+    icon: <IoReceiptSharp />,
     headers: [
       { key: "ramo", label: "RAMO" },
       { key: "clientName", label: "NOME DO CLIENTE" },
@@ -313,28 +318,37 @@ const PaymentHistoryCard = () => {
 
   return (
     <div className="w-full">
-      <div className="flex gap-2">
-        {Object.keys(tableConfigs).map((tab) => (
-          <button
-            key={tab}
-            onClick={() => handleTabChange(tab as keyof typeof tableConfigs)}
-            className={`px-4 xl:px-6 py-2 xl:py-3 font-bold cursor-pointer ${
-              activeTab === tab
-                ? "bg-[#002855] text-white rounded-lg text-xs xl:text-sm"
-                : "text-[#002855] hover:text-[#231c48] text-sm"
-            }`}
-          >
-            {tab}
-          </button>
-        ))}
+      <div className="flex sm:gap-2">
+        {Object.keys(tableConfigs).map((tab) => {
+          const tabIcon = tableConfigs[tab as keyof typeof tableConfigs].icon;
+
+          return (
+            <button
+              key={tab}
+              onClick={() => handleTabChange(tab as keyof typeof tableConfigs)}
+              className={`flex items-center gap-2 px-[10px] sm:px-4 xl:px-6 py-2 xl:py-3 font-bold cursor-pointer ${
+                activeTab === tab
+                  ? "bg-[#002855] text-white rounded-t-lg text-[10px] sm:text-xs xl:text-sm"
+                  : "text-[#002855] hover:text-[#231c48] text-sm"
+              }`}
+            >
+              {tabIcon && (
+                <span className="text-[10px]sm:text-base xl:text-lg">
+                  {tabIcon}
+                </span>
+              )}
+              {tab}
+            </button>
+          );
+        })}
       </div>
 
-      <div className="bg-white rounded-lg shadow-md p-3 xl:p-6 w-full mt-4 overflow-x-auto">
+      <div className="bg-white rounded-b-lg shadow-md p-3 xl:p-6 w-full overflow-x-auto">
         <div
           className="overflow-y-auto"
           style={{
-            minHeight: "400px", // altura mínima sempre visível
-            maxHeight: "650px", // se passar disso, começa o scroll
+            minHeight: "400px",
+            maxHeight: "650px",
             overflowY: "auto",
           }}
         >

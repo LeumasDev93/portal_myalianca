@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 "use client";
 
-import { useState, FormEvent } from "react";
+import { useState, FormEvent, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/auth-context";
 import { Loader2 } from "lucide-react";
@@ -31,12 +31,11 @@ export default function LoginPage() {
 
       await login(username, password);
     } catch (err) {
-      // O erro já é tratado no contexto
-      console.error("Erro no login:", err);
+      // console.error("Erro no login:", err);
     }
   };
 
-  console.log(useAuth());
+  // console.log(useAuth());
   return (
     <div className="flex h-screen flex-col md:flex-row bg-gray-50">
       {/* Banner Side */}
@@ -91,7 +90,7 @@ export default function LoginPage() {
           </div>
 
           {error && (
-            <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-600 rounded-md text-sm">
+            <div className="absolute -mt-10 flex items-center justify-center w-full xl:max-w-sm py-2 bg-red-500 border shadow-2xl text-white rounded-md text-sm">
               {error}
             </div>
           )}
@@ -136,12 +135,12 @@ export default function LoginPage() {
               </label>
               <input
                 id="email"
-                type="email"
+                type="text"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 required
                 className="w-full px-2 py-1 xl:px-4 xl:py-3 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-                placeholder="seu@email.com"
+                placeholder="entre com email ou NIF"
               />
             </div>
 
