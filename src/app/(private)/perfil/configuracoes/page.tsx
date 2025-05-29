@@ -1,25 +1,31 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Switch } from "@/components/ui/switch"
-import { Label } from "@/components/ui/label"
-import { Separator } from "@/components/ui/separator"
-import { ArrowLeft, Bell, Check, Globe, Lock, Shield } from "lucide-react"
-import Link from "next/link"
-import { useToast } from "@/components/ui/use-toast"
+import { useState } from "react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
+import { ArrowLeft, Bell, Check, Globe, Lock, Shield } from "lucide-react";
+import Link from "next/link";
+import { useToast } from "@/components/ui/use-toast";
 
 export default function ConfiguracoesPage() {
   // Estados para as configurações
-  const [notificacoesEmail, setNotificacoesEmail] = useState(true)
-  const [notificacoesSMS, setNotificacoesSMS] = useState(false)
-  const [notificacoesApp, setNotificacoesApp] = useState(true)
-  const [modoEscuro, setModoEscuro] = useState(false)
-  const [autenticacaoDoisFatores, setAutenticacaoDoisFatores] = useState(false)
-  const [idiomaPortugues, setIdiomaPortugues] = useState(true)
+  const [notificacoesEmail, setNotificacoesEmail] = useState(true);
+  const [notificacoesSMS, setNotificacoesSMS] = useState(false);
+  const [notificacoesApp, setNotificacoesApp] = useState(true);
+  const [modoEscuro, setModoEscuro] = useState(false);
+  const [autenticacaoDoisFatores, setAutenticacaoDoisFatores] = useState(false);
+  const [idiomaPortugues, setIdiomaPortugues] = useState(true);
 
-  const { toast } = useToast()
+  const { toast } = useToast();
 
   const handleSaveSettings = () => {
     // Simulando salvamento de configurações
@@ -27,8 +33,8 @@ export default function ConfiguracoesPage() {
       title: "Configurações salvas",
       description: "Suas preferências foram atualizadas com sucesso.",
       variant: "success",
-    })
-  }
+    });
+  };
 
   return (
     <div className="flex-1 space-y-6 p-6 md:p-8">
@@ -38,7 +44,9 @@ export default function ConfiguracoesPage() {
             <ArrowLeft className="h-4 w-4" />
           </Link>
         </Button>
-        <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Configurações</h1>
+        <h1 className="text-2xl md:text-3xl font-bold tracking-tight">
+          Configurações
+        </h1>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -49,31 +57,55 @@ export default function ConfiguracoesPage() {
               <Bell className="h-5 w-5 text-blue-500" />
               Notificações
             </CardTitle>
-            <CardDescription>Gerencie como você recebe notificações</CardDescription>
+            <CardDescription>
+              Gerencie como você recebe notificações
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex items-center justify-between">
               <div className="space-y-0.5">
-                <Label htmlFor="notifications-email">Notificações por Email</Label>
-                <p className="text-sm text-muted-foreground">Receba atualizações importantes por email</p>
+                <Label htmlFor="notifications-email">
+                  Notificações por Email
+                </Label>
+                <p className="text-sm text-muted-foreground">
+                  Receba atualizações importantes por email
+                </p>
               </div>
-              <Switch id="notifications-email" checked={notificacoesEmail} onCheckedChange={setNotificacoesEmail} />
+              <Switch
+                id="notifications-email"
+                checked={notificacoesEmail}
+                onCheckedChange={setNotificacoesEmail}
+              />
             </div>
             <Separator />
             <div className="flex items-center justify-between">
               <div className="space-y-0.5">
                 <Label htmlFor="notifications-sms">Notificações por SMS</Label>
-                <p className="text-sm text-muted-foreground">Receba alertas urgentes por mensagem de texto</p>
+                <p className="text-sm text-muted-foreground">
+                  Receba alertas urgentes por mensagem de texto
+                </p>
               </div>
-              <Switch id="notifications-sms" checked={notificacoesSMS} onCheckedChange={setNotificacoesSMS} />
+              <Switch
+                id="notifications-sms"
+                checked={notificacoesSMS}
+                onCheckedChange={setNotificacoesSMS}
+              />
             </div>
             <Separator />
             <div className="flex items-center justify-between">
               <div className="space-y-0.5">
-                <Label htmlFor="notifications-app">Notificações no Aplicativo</Label>
-                <p className="text-sm text-muted-foreground">Receba notificações enquanto usa o portal</p>
+                <Label htmlFor="notifications-app">
+                  Notificações no Aplicativo
+                </Label>
+                <p className="text-sm text-muted-foreground">
+                  Receba notificações enquanto usa o portal
+                </p>
               </div>
-              <Switch id="notifications-app" checked={notificacoesApp} onCheckedChange={setNotificacoesApp} />
+              <Switch
+                id="notifications-app"
+                checked={notificacoesApp}
+                onCheckedChange={setNotificacoesApp}
+              />
             </div>
           </CardContent>
         </Card>
@@ -91,17 +123,29 @@ export default function ConfiguracoesPage() {
             <div className="flex items-center justify-between">
               <div className="space-y-0.5">
                 <Label htmlFor="dark-mode">Modo Escuro</Label>
-                <p className="text-sm text-muted-foreground">Ative o tema escuro para reduzir o cansaço visual</p>
+                <p className="text-sm text-muted-foreground">
+                  Ative o tema escuro para reduzir o cansaço visual
+                </p>
               </div>
-              <Switch id="dark-mode" checked={modoEscuro} onCheckedChange={setModoEscuro} />
+              <Switch
+                id="dark-mode"
+                checked={modoEscuro}
+                onCheckedChange={setModoEscuro}
+              />
             </div>
             <Separator />
             <div className="flex items-center justify-between">
               <div className="space-y-0.5">
                 <Label htmlFor="language-pt">Idioma Português</Label>
-                <p className="text-sm text-muted-foreground">Usar português como idioma principal</p>
+                <p className="text-sm text-muted-foreground">
+                  Usar português como idioma principal
+                </p>
               </div>
-              <Switch id="language-pt" checked={idiomaPortugues} onCheckedChange={setIdiomaPortugues} />
+              <Switch
+                id="language-pt"
+                checked={idiomaPortugues}
+                onCheckedChange={setIdiomaPortugues}
+              />
             </div>
           </CardContent>
         </Card>
@@ -119,15 +163,23 @@ export default function ConfiguracoesPage() {
             <div className="flex items-center justify-between">
               <div className="space-y-0.5">
                 <Label htmlFor="two-factor">Autenticação de Dois Fatores</Label>
-                <p className="text-sm text-muted-foreground">Adicione uma camada extra de segurança à sua conta</p>
+                <p className="text-sm text-muted-foreground">
+                  Adicione uma camada extra de segurança à sua conta
+                </p>
               </div>
-              <Switch id="two-factor" checked={autenticacaoDoisFatores} onCheckedChange={setAutenticacaoDoisFatores} />
+              <Switch
+                id="two-factor"
+                checked={autenticacaoDoisFatores}
+                onCheckedChange={setAutenticacaoDoisFatores}
+              />
             </div>
             <Separator />
             <div className="flex items-center justify-between">
               <div className="space-y-0.5">
                 <Label htmlFor="password-change">Alterar Senha</Label>
-                <p className="text-sm text-muted-foreground">Atualize sua senha regularmente para maior segurança</p>
+                <p className="text-sm text-muted-foreground">
+                  Atualize sua senha regularmente para maior segurança
+                </p>
               </div>
               <Button variant="outline" size="sm" asChild>
                 <Link href="/perfil">
@@ -141,11 +193,14 @@ export default function ConfiguracoesPage() {
       </div>
 
       <div className="flex justify-end mt-6">
-        <Button onClick={handleSaveSettings} className="bg-blue-600 hover:bg-blue-700">
+        <Button
+          onClick={handleSaveSettings}
+          className="bg-blue-600 hover:bg-blue-700"
+        >
           <Check className="mr-2 h-4 w-4" />
           Salvar Configurações
         </Button>
       </div>
     </div>
-  )
+  );
 }
