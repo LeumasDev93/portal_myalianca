@@ -30,7 +30,6 @@ import { LoadingScreen } from "@/components/ui/loading-screen";
 import { TopMenu } from "@/components/TopMenu";
 import AgenciasPage from "../agencias/page";
 import ApolicePage from "../(apolices)/apolices/page";
-import { ApoliceDetailPage } from "../(apolices)/apoliceDetails/page";
 import { SinistrosPage } from "../(sinistros)/sinistros/page";
 import { SinistroDetailPage } from "../(sinistros)/sinistroDetails/page";
 import MensagensPage from "../(mensagens)/mensagens/page";
@@ -38,6 +37,7 @@ import MensagemDetailPage from "../(mensagens)/mensagemDetails/page";
 import AbrirSinistroPage from "../(sinistros)/newSinistro/page";
 import ReciboPage from "../(recibo)/recibo/page";
 import EncaminharMensagemPage from "../(mensagens)/encaminhar/page";
+import ApoliceDetailPage from "../(apolices)/apoliceDetails/page";
 
 const Page = () => {
   const [isLoading, setIsLoading] = useState(false);

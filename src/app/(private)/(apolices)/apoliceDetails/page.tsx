@@ -128,7 +128,10 @@ type ApoliceDetailPageProps = {
   id: string;
   onBack: () => void;
 };
-export function ApoliceDetailPage({ id, onBack }: ApoliceDetailPageProps) {
+export default function ApoliceDetailPage({
+  id,
+  onBack,
+}: ApoliceDetailPageProps) {
   const { token } = useSessionCheckToken();
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
