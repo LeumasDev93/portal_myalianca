@@ -30,6 +30,7 @@ import { LoadingScreen } from "@/components/ui/loading-screen";
 import { TopMenu } from "@/components/TopMenu";
 import AgenciasPage from "../agencias/page";
 import ApolicePage from "../(apolices)/apolices/page";
+import { ApoliceDetailPage } from "../(apolices)/apoliceDetails/page";
 import { SinistrosPage } from "../(sinistros)/sinistros/page";
 import { SinistroDetailPage } from "../(sinistros)/sinistroDetails/page";
 import MensagensPage from "../(mensagens)/mensagens/page";
@@ -37,7 +38,6 @@ import MensagemDetailPage from "../(mensagens)/mensagemDetails/page";
 import AbrirSinistroPage from "../(sinistros)/newSinistro/page";
 import ReciboPage from "../(recibo)/recibo/page";
 import EncaminharMensagemPage from "../(mensagens)/encaminhar/page";
-import ApoliceDetailPage from "../(apolices)/apoliceDetails/page";
 
 const Page = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -48,6 +48,9 @@ const Page = () => {
   const [selectedApoliceId, setSelectedApoliceId] = useState<string | null>(
     null
   );
+  const [selectedContractNumber, setSelectedContractNumber] = useState<
+    string | null
+  >(null);
   const [selectedSinistroId, setSelectedSinistroId] = useState<string | null>(
     null
   );
@@ -120,34 +123,34 @@ const Page = () => {
       hoverIcon: <IoMdPin />,
       onClick: () => handleMenuClick("Agencias"),
     },
-    {
-      title: "Perfil",
-      path: "Perfil",
-      icon: FaUserLarge,
-      hoverIcon: <FaUserLarge />,
-      onClick: () => handleMenuClick("Perfil"),
-    },
-    {
-      title: "Ajuda",
-      path: "Ajuda",
-      icon: IoIosInformationCircle,
-      hoverIcon: <IoIosInformationCircle />,
-      onClick: () => handleMenuClick("Ajuda"),
-    },
-    {
-      title: "Mensagem",
-      path: "mensagens",
-      icon: MdEmail,
-      hoverIcon: <MdEmail />,
-      onClick: () => handleMenuClick("mensagens"),
-    },
-    {
-      title: "Notificações",
-      path: "Notificacoes",
-      icon: IoNotifications,
-      hoverIcon: <IoNotifications />,
-      onClick: () => handleMenuClick("Notificacoes"),
-    },
+    // {
+    //   title: "Perfil",
+    //   path: "Perfil",
+    //   icon: FaUserLarge,
+    //   hoverIcon: <FaUserLarge />,
+    //   onClick: () => handleMenuClick("Perfil"),
+    // },
+    // {
+    //   title: "Ajuda",
+    //   path: "Ajuda",
+    //   icon: IoIosInformationCircle,
+    //   hoverIcon: <IoIosInformationCircle />,
+    //   onClick: () => handleMenuClick("Ajuda"),
+    // },
+    // {
+    //   title: "Mensagem",
+    //   path: "mensagens",
+    //   icon: MdEmail,
+    //   hoverIcon: <MdEmail />,
+    //   onClick: () => handleMenuClick("mensagens"),
+    // },
+    // {
+    //   title: "Notificações",
+    //   path: "Notificacoes",
+    //   icon: IoNotifications,
+    //   hoverIcon: <IoNotifications />,
+    //   onClick: () => handleMenuClick("Notificacoes"),
+    // },
     {
       title: "Sair",
       path: "",
@@ -184,8 +187,9 @@ const Page = () => {
     }, 1000);
   };
 
-  function handleSelectApoliceDetail(id: string) {
+  function handleSelectApoliceDetail(id: string, contractNumber: string) {
     setSelectedApoliceId(id);
+    setSelectedContractNumber(contractNumber);
     setCurrentPage("apoliceDetails");
   }
 
@@ -257,7 +261,9 @@ const Page = () => {
                 )}
                 {currentPage === "apoliceDetails" && selectedApoliceId && (
                   <ApoliceDetailPage
+                    onSelectDetail={handleSelectSinistroDetail}
                     id={selectedApoliceId}
+                    contractNumber={selectedContractNumber ?? ""}
                     onBack={() => setCurrentPage("apolice")}
                   />
                 )}
@@ -280,7 +286,7 @@ const Page = () => {
                 )}
                 {currentPage === "Simulation" && <SimulationScreen />}{" "}
                 {currentPage === "recibo" && (
-                  <ReciboPage onSelectDetail={handleSelectApoliceDetail} />
+                  <ReciboPage onSelectDetail={handleSelectMensagemDetail} />
                 )}
                 {currentPage === "Perfil" && <PerfilPage />}
                 {currentPage === "Agencias" && <AgenciasPage />}

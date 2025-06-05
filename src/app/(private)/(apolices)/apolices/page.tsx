@@ -27,6 +27,9 @@ import {
   getStatusVariant,
 } from "@/lib/utils";
 import { IoShieldCheckmarkSharp } from "react-icons/io5";
+import { useAuth } from "@/contexts/auth-context";
+import { useUserProfile } from "@/hooks/useUserProfile ";
+import { LoadingScreen } from "@/components/ui/loading-screen";
 
 type Invoice = {
   invoiceNumber: number;
@@ -53,7 +56,7 @@ interface ApoliceData {
 }
 
 type ApolicePageProps = {
-  onSelectDetail: (id: string) => void;
+  onSelectDetail: (id: string, contractNumber: string) => void;
 };
 
 export default function ApolicePage({ onSelectDetail }: ApolicePageProps) {
@@ -61,6 +64,7 @@ export default function ApolicePage({ onSelectDetail }: ApolicePageProps) {
   const { token } = useSessionCheckToken();
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const { profile } = useUserProfile();
 
   useEffect(() => {
     if (!token) return;
@@ -69,9 +73,10 @@ export default function ApolicePage({ onSelectDetail }: ApolicePageProps) {
       setIsLoading(true);
       setError(null);
 
+      const nif = profile?.nif;
       try {
         const response = await fetch(
-          `/api/anywhere/api/v1/private/mobile/entity/nif/501417303/policies`,
+          `/api/anywhere/api/v1/private/mobile/entity/nif/${nif}/policies`,
           {
             method: "GET",
             headers: {
@@ -97,7 +102,7 @@ export default function ApolicePage({ onSelectDetail }: ApolicePageProps) {
     };
 
     fetchApolices();
-  }, [token]);
+  }, [token, profile?.nif]);
 
   return (
     <div className="flex-1 space-y-6 p-6 md:p-8">
@@ -119,12 +124,12 @@ export default function ApolicePage({ onSelectDetail }: ApolicePageProps) {
           <span className="text-gray-700 font-semibold text-xl uppercase">
             Carregando Apólices
           </span>
-          <DotLoading />
+          <LoadingScreen />
         </div>
       ) : error ? (
         <p className="text-red-500">{error}</p>
       ) : apolices.length === 0 ? (
-        <DotLoading />
+        <LoadingScreen />
       ) : (
         <div className="grid gap-6">
           {apolices.map((apolice) => {
@@ -159,7 +164,10 @@ export default function ApolicePage({ onSelectDetail }: ApolicePageProps) {
                     </div>
                     <Button
                       onClick={() =>
-                        onSelectDetail(apolice.contractNumber.toString())
+                        onSelectDetail(
+                          apolice.contractNumber.toString(),
+                          apolice.contractNumber.toString()
+                        )
                       }
                       className="bg-[#002256] hover:bg-[#002256]/80 flex items-center text-white sm:gap-2"
                     >
@@ -182,19 +190,16 @@ export default function ApolicePage({ onSelectDetail }: ApolicePageProps) {
                     <div className="flex justify-between">
                       <div className="flex items-center gap-4">
                         <div className="bg-gray-200  p-2 rounded-full ">
-                          <FaCar className="size-3 sm:size-4 xl:size-5 text-[#002256]" />
+                          <FaRegCalendar className="size-3 sm:size-4 xl:size-5 text-[#002256]" />
                         </div>
                         <p className="font-bold text-gray-900 text-[12px] xl:text-base uppercase">
-                          Veículo
+                          Data Inicio
                         </p>
                       </div>
-                      <div className="flex flex-col items-end gap-2">
+                      <div className="flex items-center gap-2">
                         <p className="font-bold text-gray-900 text-[12px] xl:text-base ">
-                          {apolice.productName}
+                          {formatDate(apolice.startDate)}
                         </p>
-                        <span className="text-gray-600 text-xs">
-                          {apolice.registration}
-                        </span>
                       </div>
                     </div>
                     <div className="flex justify-between">
@@ -203,12 +208,11 @@ export default function ApolicePage({ onSelectDetail }: ApolicePageProps) {
                           <FaRegCalendar className="size-3 sm:size-4 xl:size-5 text-[#002256]" />
                         </div>
                         <p className="font-bold text-gray-900 text-[12px] xl:text-base uppercase">
-                          Vigência
+                          Data Vencimento
                         </p>
                       </div>
                       <div className="flex items-center gap-2">
                         <p className="font-bold text-gray-900 text-[12px] xl:text-base ">
-                          {formatDate(apolice.startDate)} a {""}
                           {formatDate(apolice.endDate)}
                         </p>
                       </div>
@@ -222,24 +226,12 @@ export default function ApolicePage({ onSelectDetail }: ApolicePageProps) {
                           valor
                         </p>
                       </div>
-                      <div className="flex items-center gap-2">
+                      <div className="flex flex-col items-center">
                         <p className="font-bold text-gray-900 text-[12px] xl:text-base ">
-                          {formatCurrency(apolice.premium)}
+                          {formatCurrency(apolice.totalPremium)}
                         </p>
-                      </div>
-                    </div>
-                    <div className="flex justify-between">
-                      <div className="flex items-center gap-4">
-                        <div className="bg-gray-200  p-2 rounded-full ">
-                          <RiShieldStarFill className="size-3 sm:size-4 xl:size-5 text-[#002256]" />
-                        </div>
-                        <p className="font-bold text-gray-900 text-[12px] xl:text-base uppercase">
-                          cobertura
-                        </p>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <p className="font-bold text-gray-900 text-[12px] xl:text-base ">
-                          {apolice.contractStatus}
+                        <p className=" text-gray-900 text-[10px] xl:text-xs ">
+                          12x de {formatCurrency(apolice.premium)}
                         </p>
                       </div>
                     </div>

@@ -4,22 +4,28 @@
 import { useState, FormEvent, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/auth-context";
-import { Loader2 } from "lucide-react";
+import { Eye, EyeOff, Loader2 } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import { CheckCircle2 } from "lucide-react";
 import ImageBG from "@/assets/img_background.png";
+import { Label } from "@radix-ui/react-label";
+import Input from "@/components/Input";
 
 export default function LoginPage() {
-  const [email, setEmail] = useState("");
+  const { login, isLoading, error, clearError } = useAuth();
+  const router = useRouter();
+  const [showNewPassword, setShowNewPassword] = useState(false);
+
+  const [isLoginForm, setIsLoginForm] = useState(true);
   const [loginType, setLoginType] = useState<"personal" | "business">(
     "personal"
   );
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const { login, isLoading, error, clearError } = useAuth();
-  const router = useRouter();
-
+  const [email, setEmail] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [isloading, setIsLoading] = useState(false);
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     clearError();
@@ -35,6 +41,12 @@ export default function LoginPage() {
     }
   };
 
+  const handleResetPasswordSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+    // Lógica para enviar email de recuperação...
+    setIsLoading(false);
+  };
   // console.log(useAuth());
   return (
     <div className="flex h-screen flex-col md:flex-row bg-gray-50">
@@ -77,7 +89,7 @@ export default function LoginPage() {
 
       {/* Login Form */}
       <div className="flex-1 flex items-center justify-center xl:p-6">
-        <div className="w-full sm:max-w-sm xl:max-w-md sm:h-[400px] xl:h-[500px] bg-white p-8 rounded-xl shadow-sm border border-gray-200">
+        <div className="w-full sm:max-w-sm xl:max-w-md bg-white p-8 rounded-xl shadow-sm border border-gray-200">
           <div className="mb-8 text-center">
             <h1 className="text-lg xl:text-3xl font-bold text-gray-900 mb-2">
               Bem-vindo
@@ -94,89 +106,168 @@ export default function LoginPage() {
               {error}
             </div>
           )}
+          {isLoginForm ? (
+            <form onSubmit={handleSubmit} className="space-y-2 xl:space-y-4">
+              <div>
+                <label className="block text-xs xl:text-sm font-medium text-gray-700 mb-2">
+                  Tipo de Conta
+                </label>
+                <div className="inline-flex rounded-md shadow-sm">
+                  <button
+                    type="button"
+                    onClick={() => setLoginType("personal")}
+                    className={`px-2 py-1 xl:px-4 xl:py-2 text-xs xl:text-sm font-medium rounded-l-lg border ${
+                      loginType === "personal"
+                        ? "bg-blue-600 text-white border-blue-600"
+                        : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
+                    }`}
+                  >
+                    Pessoal
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setLoginType("business")}
+                    className={`px-2 py-1 xl:px-4 xl:py-2 text-xs xl:text-sm font-medium rounded-r-lg border ${
+                      loginType === "business"
+                        ? "bg-blue-600 text-white border-blue-600"
+                        : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
+                    }`}
+                  >
+                    Empresarial
+                  </button>
+                </div>
+              </div>
 
-          <form onSubmit={handleSubmit} className="space-y-2 xl:space-y-4">
-            <div>
-              <label className="block text-xs xl:text-sm font-medium text-gray-700 mb-2">
-                Tipo de Conta
-              </label>
-              <div className="inline-flex rounded-md shadow-sm">
+              <div className="space-y-2">
+                <label
+                  htmlFor="email"
+                  className="block text-xs xl:text-sm font-medium text-gray-700"
+                >
+                  Email ou NIF
+                </label>
+                <div className="relative">
+                  <input
+                    id="email"
+                    type="text"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    required
+                    minLength={8}
+                    placeholder="Digite seu email ou NIF"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-xs xl:text-sm"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label
+                  htmlFor="password"
+                  className="block text-xs xl:text-sm font-medium text-gray-700"
+                >
+                  Senha
+                </label>
+                <div className="relative">
+                  <input
+                    id="password"
+                    type={showPassword ? "text" : "password"}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    minLength={8}
+                    placeholder="••••••••"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-xs xl:text-sm"
+                  />
+                  <button
+                    type="button"
+                    className="absolute right-2 top-2.5 text-gray-500 hover:text-gray-700"
+                    onClick={() => setShowPassword(!showPassword)}
+                  >
+                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
+                </div>
+              </div>
+
+              <div className="flex justify-between items-center">
                 <button
                   type="button"
-                  onClick={() => setLoginType("personal")}
-                  className={`px-2 py-1 xl:px-4 xl:py-2 text-xs xl:text-sm font-medium rounded-l-lg border ${
-                    loginType === "personal"
-                      ? "bg-blue-600 text-white border-blue-600"
-                      : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
-                  }`}
+                  onClick={() => setIsLoginForm(false)}
+                  className="text-xs xl:text-sm text-blue-600 hover:text-blue-800"
                 >
-                  Pessoal
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setLoginType("business")}
-                  className={`px-2 py-1 xl:px-4 xl:py-2 text-xs xl:text-sm font-medium rounded-r-lg border ${
-                    loginType === "business"
-                      ? "bg-blue-600 text-white border-blue-600"
-                      : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
-                  }`}
-                >
-                  Empresarial
+                  Esqueceu a senha?
                 </button>
               </div>
-            </div>
 
-            <div>
-              <label
-                htmlFor="email"
-                className="block text-xs xl:text-sm font-medium text-gray-700 mb-1"
+              <button
+                type="submit"
+                disabled={isLoading}
+                className="w-full bg-blue-600 text-white text-xs xl:text-sm py-1 xl:py-3 rounded-md hover:bg-blue-700 disabled:opacity-70 flex justify-center items-center gap-2"
               >
-                Email
-              </label>
-              <input
-                id="email"
-                type="text"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                required
-                className="w-full px-2 py-1 xl:px-4 xl:py-3 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-                placeholder="entre com email ou NIF"
-              />
-            </div>
+                {isLoading ? (
+                  <>
+                    <Loader2 className="animate-spin h-3 w-3 xl:h-5 xl:w-5" />
+                    <span>Entrando...</span>
+                  </>
+                ) : (
+                  "Entrar"
+                )}
+              </button>
+            </form>
+          ) : (
+            // Formulário de Recuperação de Senha
+            <form onSubmit={handleResetPasswordSubmit} className="space-y-4">
+              <div className="text-center">
+                <h3 className="text-lg font-medium text-gray-900">
+                  Recuperar Senha
+                </h3>
+                <p className="mt-2 text-sm text-gray-600">
+                  Digite seu email para receber instruções de recuperação
+                </p>
+              </div>
 
-            <div>
-              <label
-                htmlFor="password"
-                className="block text-xs xl:text-sm font-medium text-gray-700 mb-1"
+              <div className="space-y-2">
+                <label
+                  htmlFor="recovery-email"
+                  className="block text-sm font-medium text-gray-700"
+                >
+                  Email
+                </label>
+                <input
+                  id="recovery-email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  placeholder="seu@email.com"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-sm"
+                />
+              </div>
+
+              <div className="flex justify-between items-center">
+                <button
+                  type="button"
+                  onClick={() => setIsLoginForm(true)}
+                  className="text-sm text-blue-600 hover:text-blue-800"
+                >
+                  Voltar para login
+                </button>
+              </div>
+
+              <button
+                type="submit"
+                disabled={isloading}
+                className="w-full bg-blue-600 text-white text-sm py-2 rounded-md hover:bg-blue-700 disabled:opacity-70 flex justify-center items-center gap-2"
               >
-                Senha
-              </label>
-              <input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                className="w-full px-2 py-1 xl:px-4 xl:py-3 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-                placeholder="••••••••"
-              />
-            </div>
-
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="w-full bg-blue-600 text-white text-xs xl:text-sm py-1 xl:py-3 rounded-md hover:bg-blue-700 disabled:opacity-70 flex justify-center items-center gap-2"
-            >
-              {isLoading ? (
-                <>
-                  <Loader2 className="animate-spin h-3 w-3 xl:h-5 xl:w-5" />
-                  <span>Aguarde...</span>
-                </>
-              ) : (
-                "Entrar"
-              )}
-            </button>
-          </form>
+                {isloading ? (
+                  <>
+                    <Loader2 className="animate-spin h-4 w-4" />
+                    <span>Entrando...</span>
+                  </>
+                ) : (
+                  "Enviar Instruções"
+                )}
+              </button>
+            </form>
+          )}
 
           <div className="mt-6 text-center text-xs xl:text-sm text-gray-600">
             <p>

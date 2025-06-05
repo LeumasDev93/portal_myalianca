@@ -20,23 +20,30 @@ export function cn(...inputs: ClassValue[]) {
     }
   };
 
- export const getStatusText = (status: string) => {
-    switch (status) {
-      case "C":
-        return "Concluido";
-      case "E":
-        return "Em Analise";
-      case "A":
-        return "Aprovado";
-      case "I":
-        return "Inativo";
-      default:
-        return status;
-    }
-  };
+export const getStatusText = (status: string | number): string => {
+  // Converte para string caso seja number
+  const statusStr = typeof status === 'number' ? status.toString() : status;
+  
+  switch (statusStr) {
+    case "C":
+    case "1": // Adicionei mapeamento para números caso necessário
+      return "Concluído";
+    case "E":
+    case "2":
+      return "Em Análise";
+    case "A":
+    case "3":
+      return "Aprovado";
+    case "I":
+    case "4":
+      return "Inativo";
+    default:
+      return statusStr;
+  }
+};
 
   export const formatDate = (dateString: string | null) => {
-    if (!dateString) return "N/A";
+    if (!dateString) return "";
     const date = new Date(dateString);
     return date.toLocaleDateString("pt-PT");
   };

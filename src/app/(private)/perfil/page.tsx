@@ -15,20 +15,39 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Camera, Check, Mail, Phone, Shield, User } from "lucide-react";
+import {
+  Camera,
+  Check,
+  Eye,
+  EyeOff,
+  Loader2,
+  Mail,
+  Phone,
+  Shield,
+  User,
+} from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { DotLoading } from "@/components/ui/dot-loading";
 import { useUserProfile } from "@/hooks/useUserProfile ";
+import { useAuth } from "@/contexts/auth-context";
 
 export function PerfilPage() {
-  const { profile, loading, error, hasChanges, updateProfile, saveChanges } =
+  const { profile, loading, hasChanges, updateProfile, saveChanges } =
     useUserProfile();
-
+  const user = useAuth();
   const [profileImage, setProfileImage] =
     useState<string>("/diverse-group.png");
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
+  const { logout } = useAuth();
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -62,6 +81,70 @@ export function PerfilPage() {
     }
   };
 
+  const handleSubmitPasswordChange = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setError(null);
+    setSuccess(null);
+
+    const form = e.currentTarget as HTMLFormElement;
+    const senhaAtual = (
+      form.elements.namedItem("senha-atual") as HTMLInputElement
+    ).value;
+    const novaSenha = (
+      form.elements.namedItem("nova-senha") as HTMLInputElement
+    ).value;
+    const confirmarSenha = (
+      form.elements.namedItem("confirmar-senha") as HTMLInputElement
+    ).value;
+
+    // Validações básicas do cliente
+    if (novaSenha !== confirmarSenha) {
+      setError("As senhas não coincidem");
+      setIsLoading(false);
+      return;
+    }
+
+    try {
+      const response = await fetch("/api/auth/change-password", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          senha_atual: senhaAtual,
+          nova_senha: novaSenha,
+          user_id: user?.user?.id,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        if (data.response?.desc?.includes("Nova senha invalida")) {
+          throw new Error(data.response.desc);
+        }
+        throw new Error(
+          data.error || data.response?.desc || "Erro ao alterar senha"
+        );
+      }
+
+      setSuccess("Senha alterada com sucesso!");
+      setTimeout(() => {
+        setSuccess("");
+      }, 5000);
+      form.reset();
+      logout();
+    } catch (error) {
+      console.error("Erro ao alterar senha:", error);
+      setError(error instanceof Error ? error.message : "Erro desconhecido");
+      setTimeout(() => {
+        setError("");
+      }, 5000);
+    } finally {
+      setIsLoading(false);
+    }
+  };
   const formatBirthDate = (dateString: string) => {
     if (!dateString) return "";
     const date = new Date(dateString);
@@ -339,7 +422,7 @@ export function PerfilPage() {
                   <div className="flex justify-end mt-6">
                     <Button
                       type="submit"
-                      className="bg-emerald-600 hover:bg-emerald-700"
+                      className="bg-[#002856] hover:bg-[#002856]/50"
                     >
                       <Check className="mr-2 h-4 w-4" />
                       Salvar Documentos
@@ -349,31 +432,127 @@ export function PerfilPage() {
               </TabsContent>
 
               <TabsContent value="seguranca">
-                <form onSubmit={handleSubmit} className="space-y-4">
+                <form
+                  onSubmit={handleSubmitPasswordChange}
+                  className="space-y-4"
+                >
                   <div className="grid grid-cols-1 gap-4">
+                    {/* Campo Senha Atual */}
                     <div className="space-y-2">
                       <Label htmlFor="senha-atual">Senha Atual</Label>
-                      <Input id="senha-atual" type="password" />
+                      <div className="relative">
+                        <Input
+                          id="senha-atual"
+                          type={showCurrentPassword ? "text" : "password"}
+                          required
+                        />
+                        <button
+                          type="button"
+                          className="absolute right-2 top-2.5 text-gray-500 hover:text-gray-700"
+                          onClick={() =>
+                            setShowCurrentPassword(!showCurrentPassword)
+                          }
+                        >
+                          {showCurrentPassword ? (
+                            <EyeOff size={18} />
+                          ) : (
+                            <Eye size={18} />
+                          )}
+                        </button>
+                      </div>
                     </div>
+
+                    {/* Campo Nova Senha */}
                     <div className="space-y-2">
                       <Label htmlFor="nova-senha">Nova Senha</Label>
-                      <Input id="nova-senha" type="password" />
+                      <div className="relative">
+                        <Input
+                          id="nova-senha"
+                          type={showNewPassword ? "text" : "password"}
+                          required
+                          minLength={8}
+                          placeholder="Mínimo 8 caracteres com letra, número e símbolo"
+                        />
+                        <button
+                          type="button"
+                          className="absolute right-2 top-2.5 text-gray-500 hover:text-gray-700"
+                          onClick={() => setShowNewPassword(!showNewPassword)}
+                        >
+                          {showNewPassword ? (
+                            <EyeOff size={18} />
+                          ) : (
+                            <Eye size={18} />
+                          )}
+                        </button>
+                      </div>
                     </div>
+
+                    {/* Campo Confirmar Senha */}
                     <div className="space-y-2">
                       <Label htmlFor="confirmar-senha">
                         Confirmar Nova Senha
                       </Label>
-                      <Input id="confirmar-senha" type="password" />
+                      <div className="relative">
+                        <Input
+                          id="confirmar-senha"
+                          type={showConfirmPassword ? "text" : "password"}
+                          required
+                          minLength={8}
+                          placeholder="Repita a nova senha"
+                        />
+                        <button
+                          type="button"
+                          className="absolute right-2 top-2.5 text-gray-500 hover:text-gray-700"
+                          onClick={() =>
+                            setShowConfirmPassword(!showConfirmPassword)
+                          }
+                        >
+                          {showConfirmPassword ? (
+                            <EyeOff size={18} />
+                          ) : (
+                            <Eye size={18} />
+                          )}
+                        </button>
+                      </div>
                     </div>
                   </div>
+
+                  {/* Mantenha as mensagens de feedback e o botão de submit como estão */}
+                  {error && (
+                    <div className="p-4 text-sm text-red-700 bg-red-100 rounded-lg">
+                      {error.includes("Nova senha invalida") ? (
+                        <>
+                          <strong>Requisitos da senha:</strong>
+                          <ul className="list-disc pl-5 mt-1">
+                            <li>Mínimo 8 caracteres</li>
+                            <li>Pelo menos 1 letra</li>
+                            <li>Pelo menos 1 número</li>
+                            <li>Pelo menos 1 símbolo</li>
+                          </ul>
+                        </>
+                      ) : (
+                        error
+                      )}
+                    </div>
+                  )}
+                  {success && (
+                    <div className="p-4 text-sm text-green-700 bg-green-100 rounded-lg">
+                      {success}
+                    </div>
+                  )}
 
                   <div className="flex justify-end mt-6">
                     <Button
                       type="submit"
-                      className="bg-emerald-600 hover:bg-emerald-700"
+                      className="bg-[#002856] hover:bg-[#002856]/50"
+                      disabled={isLoading}
                     >
-                      <Check className="mr-2 h-4 w-4" />
-                      Atualizar Senha
+                      {isLoading ? (
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      ) : (
+                        <Check className="mr-2 h-4 w-4" />
+                      )}
+                      {isLoading ? "Processando..." : "Atualizar Senha"}
                     </Button>
                   </div>
                 </form>

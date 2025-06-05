@@ -162,46 +162,15 @@ export function SinistroDetailPage({ id, onBack }: SinistroDetailPageProps) {
             </div>
           </CardHeader>
           <CardContent className="pt-6">
-            <div className="mb-6">
-              <div className="flex justify-between mb-2">
-                <span className="text-sm">Progresso do Sinistro</span>
-                <span className="text-sm font-medium">{sinistro.status}</span>
-              </div>
-              <Progress value={sinistro.claimNumber} className="h-2" />
-            </div>
-
             <Tabs defaultValue="detalhes" className="space-y-6">
               <TabsList>
                 <TabsTrigger value="detalhes">Detalhes</TabsTrigger>
-                <TabsTrigger value="riscos">Riscos</TabsTrigger>
-                <TabsTrigger value="documentos">Documentos</TabsTrigger>
-                <TabsTrigger value="atualizacoes">Atualizações</TabsTrigger>
-                <TabsTrigger value="contato">Contato</TabsTrigger>
+                <TabsTrigger value="riscos">Recibo</TabsTrigger>
+                <TabsTrigger value="documentos">Sinistrados</TabsTrigger>
+                <TabsTrigger value="atualizacoes">Riscos</TabsTrigger>
               </TabsList>
 
-              <TabsContent value="riscos" className="space-y-6">
-                <div>
-                  <h3 className="text-lg font-semibold mb-4">
-                    Riscos Cobertos pela Apólice
-                  </h3>
-                  <div className="overflow-x-auto">
-                    <table className="w-full border-collapse">
-                      <thead>
-                        <tr className="bg-gray-50">
-                          <th className="text-left p-3 border">
-                            Tipo de Risco
-                          </th>
-                          <th className="text-left p-3 border">Cobertura</th>
-                          <th className="text-left p-3 border">Franquia</th>
-                        </tr>
-                      </thead>
-                      <tbody></tbody>
-                    </table>
-                  </div>
-                </div>
-
-                <Separator />
-              </TabsContent>
+              <TabsContent value="riscos" className="space-y-6"></TabsContent>
             </Tabs>
           </CardContent>
           <CardFooter className="flex flex-col sm:flex-row justify-between gap-4 bg-gray-50">

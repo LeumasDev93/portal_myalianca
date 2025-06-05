@@ -1,136 +1,61 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 "use client";
 
-import Link from "next/link";
-import { notFound } from "next/navigation";
 import {
   Card,
-  CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-  CardFooter,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import {
-  FileText,
-  ArrowLeft,
-  Calendar,
-  AlertCircle,
-  User,
-  Car,
-  CreditCard,
-  Clock,
-  Home,
-  Shield,
-  Check,
-  Download,
-  Phone,
-  AlertTriangle,
-  Receipt,
-  FileWarning,
-  Eye,
-  Calculator,
-  Globe,
-  Mail,
-  MessageSquare,
-} from "lucide-react";
+import { ArrowLeft, Download } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import { useSessionCheckToken } from "@/hooks/useSessionToken";
 import { useEffect, useState } from "react";
+import { PiExportLight } from "react-icons/pi";
 import {
   formatCurrency,
   formatDate,
   getStatusText,
   getStatusVariant,
 } from "@/lib/utils";
-import { IoShieldCheckmarkSharp } from "react-icons/io5";
+import { IoReceiptSharp, IoShieldCheckmarkSharp } from "react-icons/io5";
 import {
   FaAddressCard,
-  FaCar,
+  FaCheck,
   FaDollarSign,
+  FaEye,
   FaMobile,
   FaRegCalendar,
+  FaSpinner,
   FaUser,
 } from "react-icons/fa";
-import { RiShieldStarFill } from "react-icons/ri";
 import { MdEmail } from "react-icons/md";
+import {
+  ApoliceDataDetails,
+  InsurancePolicy,
+  SinistroData,
+} from "@/types/typesData";
+import { FaTriangleExclamation } from "react-icons/fa6";
 
-type Invoice = {
-  number: string;
-  clientName: string;
-  status: number;
-  dueDate: string;
-  from: string;
-  to: string;
-  value: number;
-  mbref: string;
-  type: number;
-  atm: string;
-};
-interface ApoliceDataDetails {
-  productName: string;
-  contractNumber: number;
-  clientName: string;
-  birthdate: string;
-  primaryMobileContact: string;
-  primaryEmailContact: string;
-  producerName: string;
-  contractStatus: string;
-  registration: string;
-  premium: number;
-  totalPremium: number;
-  startDate: string;
-  endDate: string;
-  atm: string;
-  contacts: string[];
-  invoices: Invoice[];
-}
-// interface dados [
-
-//     "productName": "Caução",
-//     "contractNumber": 273,
-//     "clientName": "Testes1",
-//     "birthdate": null,
-//     "primaryMobileContact": "915377717",
-//     "primaryEmailContact": "sara.soares@rtcom.pt",
-//     "producerName": "Agência Sede",
-//     "contractStatus": "C",
-//     "registration": null,
-//     "premium": 3600.0,
-//     "totalPremium": 4189.5,
-//     "startDate": "2025-03-20T01:00:00.000+00:00",
-//     "endDate": "2025-06-17T01:00:00.000+00:00",
-//     "atm": null,
-//     "contacts": [
-//         "sara.soares@rtcom.pt",
-//         "915377717",
-//         "915377717"
-//     ],
-//     "invoices": [
-//         {
-//             "number": "P2025.90",
-//             "clientName": "Testes1",
-//             "status": 5,
-//             "dueDate": "2025-04-03T01:00:00.000+00:00",
-//             "from": "2025-03-20",
-//             "to": "2025-06-17",
-//             "value": 4189.5,
-//             "mbref": "",
-//             "type": 1,
-//             "atm": null
-//         }
-//     ]
-// ]
 type ApoliceDetailPageProps = {
   id: string;
+  contractNumber: string;
   onBack: () => void;
+  onSelectDetail: (claimNumber: string) => void;
 };
-export default function ApoliceDetailPage({
+
+type ReciboLoadingState = {
+  [number: string]: boolean;
+};
+export function ApoliceDetailPage({
   id,
+  contractNumber,
   onBack,
+  onSelectDetail,
 }: ApoliceDetailPageProps) {
   const { token } = useSessionCheckToken();
   const [isLoading, setIsLoading] = useState<boolean>(true);
@@ -138,7 +63,20 @@ export default function ApoliceDetailPage({
   const [apoliceDetails, setApoliceDetails] = useState<ApoliceDataDetails[]>(
     []
   );
-  console.log("Apolice id:", id);
+  const [loadingStates, setLoadingStates] = useState<ReciboLoadingState>({});
+  const [cobertura, setCobertura] = useState<InsurancePolicy[]>([]);
+  const [sinistros, setSinistros] = useState<SinistroData[]>([]);
+  const [expandedItems, setExpandedItems] = useState<boolean[]>(
+    new Array(cobertura.length).fill(true)
+  );
+
+  const toggleExpand = (index: number) => {
+    setExpandedItems((prev) => {
+      const newState = [...prev];
+      newState[index] = !newState[index];
+      return newState;
+    });
+  };
 
   useEffect(() => {
     if (!token) return;
@@ -177,6 +115,127 @@ export default function ApoliceDetailPage({
     fetchApolices();
   }, [token, id]);
 
+  useEffect(() => {
+    if (!token) return;
+
+    const fetchCoberturaApolices = async () => {
+      setIsLoading(true);
+      setError(null);
+
+      try {
+        const response = await fetch(
+          `/api/anywhere/api/v1/private/mobile/contract/${id}/insuredObjects`,
+          {
+            method: "GET",
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+              Accept: "application/json",
+            },
+          }
+        );
+
+        if (!response.ok) {
+          throw {
+            message: `Erro ao buscar objetos segurados`,
+            status: response.status,
+          };
+        }
+
+        const data: InsurancePolicy[] = await response.json();
+        setCobertura(Array.isArray(data) ? data : [data]);
+      } catch (error) {
+        console.error("Erro ao buscar objetos segurados:", error);
+        setError(
+          "Erro ao carregar objetos segurados. Tente novamente mais tarde."
+        );
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchCoberturaApolices();
+  }, [token, id]);
+
+  useEffect(() => {
+    if (!token || !contractNumber) return;
+
+    const fetchCoberturas = async () => {
+      setIsLoading(true);
+      setError(null);
+
+      try {
+        const response = await fetch(
+          `/api/anywhere/api/v1/private/mobile/contract/${contractNumber}/claims`,
+          {
+            method: "GET",
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+              Accept: "application/json",
+            },
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error("Erro ao buscar coberturas do sinistro");
+        }
+
+        const data = await response.json();
+
+        // Normaliza os dados para sempre trabalhar com array
+        setSinistros(Array.isArray(data) ? data : [data]);
+      } catch (error) {
+        console.error("Erro ao buscar coberturas:", error);
+        setError("Erro ao carregar coberturas. Tente novamente mais tarde.");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchCoberturas();
+  }, [token, contractNumber]);
+
+  const handleDownload = async (invoiceNumber: string) => {
+    setLoadingStates((prev) => ({ ...prev, [invoiceNumber]: true }));
+    setError(null);
+
+    try {
+      const response = await fetch(
+        `/api/anywhere/api/v1/private/mobile/invoice/${invoiceNumber}/print/invoice`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            Accept: "application/pdf",
+          },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`Erro ${response.status}: ${response.statusText}`);
+      }
+
+      const arrayBuffer = await response.arrayBuffer();
+      const blob = new Blob([arrayBuffer], { type: "application/pdf" });
+      const url = URL.createObjectURL(blob);
+
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `recibo-${invoiceNumber}.pdf`;
+      a.click();
+
+      URL.revokeObjectURL(url);
+    } catch (error: any) {
+      // console.error("Erro ao baixar PDF:", error);
+      setError(error.message || "Erro desconhecido ao baixar PDF.");
+    } finally {
+      setLoadingStates((prev) => ({ ...prev, [invoiceNumber]: false }));
+    }
+  };
+
+  const handleSinistroDetalhes = (claimNumber: string) => {
+    window.location.href = `/sinistro/${claimNumber}`;
+  };
   return (
     <div className="flex-1 space-y-6 p-6 md:p-8">
       <div className="flex items-center justify-between">
@@ -200,8 +259,8 @@ export default function ApoliceDetailPage({
               }
               className="bg-[#002256] hover:bg-[#002256]/80 text-sm text-white flex items-center rounded-md px-2 sm:px-4 py-1 sm:py-2"
             >
-              <Download className="mr-2 h-4 w-4" />
-              Baixar Apólice
+              <PiExportLight className="mr-2 h-4 w-4" />
+              Exportar Apólice
             </button>
           </div>
         ))}
@@ -248,30 +307,30 @@ export default function ApoliceDetailPage({
             </CardHeader>
           </Card>
           <Tabs defaultValue="detalhes" className="">
-            <TabsList className="flex justify-start space-x-2">
+            <TabsList className="flex justify-start sm:space-x-2 space-x-0.5">
               <TabsTrigger
-                className="px-4 py-2 rounded-md text-[#002256] font-semibold hover:bg-[#002256] hover:text-white data-[state=active]:bg-[#002256] data-[state=active]:text-white transition-colors"
+                className="sm:px-4 sm:py-2 px-2 py-1 rounded-md text-[#002256] font-semibold hover:bg-[#002256] hover:text-white data-[state=active]:bg-[#002256] data-[state=active]:text-white transition-colors"
                 value="detalhes"
               >
                 Detalhes
               </TabsTrigger>
               <TabsTrigger
-                className="px-4 py-2 rounded-md text-[#002256] font-semibold hover:bg-[#002256] hover:text-white data-[state=active]:bg-[#002256] data-[state=active]:text-white transition-colors"
+                className="sm:px-4 sm:py-2 px-2 py-1 rounded-md text-[#002256] font-semibold hover:bg-[#002256] hover:text-white data-[state=active]:bg-[#002256] data-[state=active]:text-white transition-colors"
                 value="coberturas"
               >
                 Coberturas
               </TabsTrigger>
               <TabsTrigger
-                className="px-4 py-2 rounded-md text-[#002256] font-semibold hover:bg-[#002256] hover:text-white data-[state=active]:bg-[#002256] data-[state=active]:text-white transition-colors"
-                value="documentos"
+                className="sm:px-4 sm:py-2 ps-2 py-1 rounded-md text-[#002256] font-semibold hover:bg-[#002256] hover:text-white data-[state=active]:bg-[#002256] data-[state=active]:text-white transition-colors"
+                value="recibos"
               >
-                Documentos
+                Recibos
               </TabsTrigger>
               <TabsTrigger
-                className="px-4 py-2 rounded-md text-[#002256] font-semibold hover:bg-[#002256] hover:text-white data-[state=active]:bg-[#002256] data-[state=active]:text-white transition-colors"
-                value="historico"
+                className="sm:px-4 sm:py-2 px-2 py-1 rounded-md text-[#002256] font-semibold hover:bg-[#002256] hover:text-white data-[state=active]:bg-[#002256] data-[state=active]:text-white transition-colors"
+                value="sinistros"
               >
-                Histórico
+                Sinistros
               </TabsTrigger>
             </TabsList>
 
@@ -287,15 +346,15 @@ export default function ApoliceDetailPage({
                   <div className="flex justify-between">
                     <div className="flex items-center gap-4">
                       <div className="bg-gray-200  p-2 rounded-full ">
-                        <FaCar className="size-3 sm:size-4 xl:size-5 text-[#002256]" />
+                        <FaRegCalendar className="size-3 sm:size-4 xl:size-5 text-[#002256]" />
                       </div>
                       <p className="font-bold text-gray-900 text-[12px] xl:text-base uppercase">
-                        Veículo
+                        Data Inicio
                       </p>
                     </div>
-                    <div className="flex flex-col items-end gap-2">
+                    <div className="flex items-center gap-2">
                       <p className="font-bold text-gray-900 text-[12px] xl:text-base ">
-                        {apolice.productName}
+                        {formatDate(apolice.startDate)}
                       </p>
                     </div>
                   </div>
@@ -305,12 +364,11 @@ export default function ApoliceDetailPage({
                         <FaRegCalendar className="size-3 sm:size-4 xl:size-5 text-[#002256]" />
                       </div>
                       <p className="font-bold text-gray-900 text-[12px] xl:text-base uppercase">
-                        Vigência
+                        Data Vencimento
                       </p>
                     </div>
                     <div className="flex items-center gap-2">
                       <p className="font-bold text-gray-900 text-[12px] xl:text-base ">
-                        {formatDate(apolice.startDate)} a {""}
                         {formatDate(apolice.endDate)}
                       </p>
                     </div>
@@ -321,7 +379,7 @@ export default function ApoliceDetailPage({
                         <FaDollarSign className="size-3 sm:size-4 xl:size-5 text-[#002256]" />
                       </div>
                       <p className="font-bold text-gray-900 text-[12px] xl:text-base uppercase">
-                        valor
+                        Prêmio
                       </p>
                     </div>
                     <div className="flex items-center gap-2">
@@ -330,24 +388,9 @@ export default function ApoliceDetailPage({
                       </p>
                     </div>
                   </div>
-                  <div className="flex justify-between">
-                    <div className="flex items-center gap-4">
-                      <div className="bg-gray-200  p-2 rounded-full ">
-                        <RiShieldStarFill className="size-3 sm:size-4 xl:size-5 text-[#002256]" />
-                      </div>
-                      <p className="font-bold text-gray-900 text-[12px] xl:text-base uppercase">
-                        cobertura
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <p className="font-bold text-gray-900 text-[12px] xl:text-base ">
-                        {apolice.contractStatus}
-                      </p>
-                    </div>
-                  </div>
                 </div>
               </div>
-              <Separator className="bg-red-600" />
+              {/* <Separator className="bg-red-600" />
               <div className="mt-4">
                 <h3 className="text-lg font-semibold uppercase">
                   Detalhes da Veículo
@@ -444,7 +487,7 @@ export default function ApoliceDetailPage({
                     </div>
                   </div>
                 </div>
-              </div>
+              </div> */}
               <Separator className="bg-red-600" />
               <div className="mt-4">
                 <h3 className="text-lg font-semibold uppercase">
@@ -552,15 +595,15 @@ export default function ApoliceDetailPage({
                 </div>
               </div>
               <Separator className="bg-red-600" />
-              <div className="mt-4">
-                <div className="flex justify-end gap-2">
-                  <Button className="bg-white border border-blue-950 hover:bg-blue-950 text-blue-950 hover:text-white">
+              <div className="py-4">
+                <div className="flex justify-center lg:justify-end gap-1 sm:gap-2">
+                  <Button className="bg-white sm:px-4 sm:py-2 px-1 py-0.5 text-[10px] sm:text-sm  border border-blue-950 hover:bg-blue-950 text-blue-950 hover:text-white">
                     Abrir Sinistro
                   </Button>
-                  <Button className="bg-white border border-blue-950 hover:bg-blue-950 text-blue-950 hover:text-white">
+                  <Button className="bg-white sm:px-4 sm:py-2 px-1 py-0.5 text-[10px] sm:text-sm  border border-blue-950 hover:bg-blue-950 text-blue-950 hover:text-white">
                     Solicitar Contacto
                   </Button>
-                  <Button className="bg-white border border-blue-950 hover:bg-blue-950 text-blue-950 hover:text-white">
+                  <Button className="bg-white sm:px-4 sm:py-2 px-1 py-0.5 text-[10px] sm:text-sm border border-blue-950 hover:bg-blue-950 text-blue-950 hover:text-white">
                     Renovar Apolice
                   </Button>
                 </div>
@@ -568,30 +611,137 @@ export default function ApoliceDetailPage({
             </TabsContent>
 
             <TabsContent value="coberturas">
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold">
-                  Coberturas Contratadas
-                </h3>
-                <div className="grid grid-cols-1 gap-3">
-                  {apolice.invoices.map((invoice, index) => (
+              <div className="grid grid-cols-1 gap-3">
+                {cobertura.map((item, index) => (
+                  <div
+                    key={index}
+                    className="flex flex-col bg-white rounded-xl p-4 gap-4 shadow-sm hover:shadow-md transition-shadow"
+                  >
                     <div
-                      key={index}
-                      className="flex items-center justify-between p-3 border rounded-lg"
+                      className={`flex items-center ${
+                        expandedItems[index] ? " border-b border-red-600" : ""
+                      } pb-2 cursor-pointer`}
+                      onClick={() => toggleExpand(index)}
                     >
-                      <div className="flex items-center gap-3">
-                        <div className="bg-emerald-50 p-1.5 rounded-full text-emerald-600">
-                          <Check className="h-4 w-4" />
-                        </div>
-                        <span className="font-medium">
-                          {invoice.clientName}
-                        </span>
-                      </div>
-                      <Badge variant="outline" className="font-semibold">
-                        {invoice.value}
-                      </Badge>
+                      <span className="font-bold flex-grow">
+                        {item.name || "Cobertura sem nome"}
+                      </span>
+                      <span className="text-sm text-gray-500">
+                        {expandedItems[index] ? "▼" : "▶"}
+                      </span>
                     </div>
-                  ))}
-                </div>
+
+                    {expandedItems[index] && (
+                      <div className="flex flex-col font-semibold ml-4 gap-3">
+                        {item.risks.map((risk, idx) => (
+                          <div
+                            key={idx}
+                            className="flex items-center justify-between py-1"
+                          >
+                            <div className="flex items-center gap-3">
+                              <div className="flex items-center bg-green-200 p-1 rounded-full">
+                                <FaCheck className="w-3 h-3 text-green-700" />
+                              </div>
+                              <span className="font-medium">{risk.name}</span>
+                            </div>
+                            {risk.premium > 1 && (
+                              <div className="flex flex-col items-end">
+                                <span>{formatCurrency(risk.capital)}</span>
+                                <span className="text-xs text-gray-400">
+                                  12x de {formatCurrency(risk.premium / 12)}
+                                </span>
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </TabsContent>
+
+            <TabsContent value="recibos">
+              <div className=" bg-white rounded-xl p-4 gap-4 shadow-sm hover:shadow-md transition-shadow">
+                {apolice.invoices.map((item, index) => (
+                  <div key={index} className="flex flex-col">
+                    <div className="flex items-center justify-between py-2">
+                      <div className="flex items-center gap-3">
+                        <div className="flex items-center bg-gray-200 p-2 rounded-full">
+                          <IoReceiptSharp className="size-4 sm:size-6 xl:size-8 text-[#002256]" />
+                        </div>
+                        <div className="flex flex-col">
+                          <span className="font-medium underline text-[#002256]">
+                            Recibo Nº {item.number}
+                          </span>
+                          <span className="text-xs sm:text-sm text-gray-400">
+                            Valor do Prêmio: {formatCurrency(item.value)}
+                          </span>
+                          <span className="text-xs sm:text-sm text-gray-400">
+                            Estado: {getStatusText(item.status)}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="flex flex-col items-end">
+                        <Button
+                          onClick={() => handleDownload(item.number)}
+                          disabled={loadingStates[item.number]}
+                          className="bg-[#002256] hover:bg-[#002256]/50 sm:px-4 sm:py-2 px-1 py-0.5 text-[10px] sm:text-sm text-white"
+                        >
+                          {loadingStates[item.number] ? (
+                            <FaSpinner className="animate-spin" />
+                          ) : (
+                            <>
+                              <Download className="size-2 sm:size-4 xl:size-5 text-white" />
+                              <span>Baixar</span>
+                            </>
+                          )}
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </TabsContent>
+
+            <TabsContent value="sinistros">
+              <div className=" bg-white rounded-xl p-4 gap-4 shadow-sm hover:shadow-md transition-shadow">
+                {sinistros.map((item, index) => (
+                  <div key={index} className="flex flex-col">
+                    <div className="flex items-center justify-between py-2">
+                      <div className="flex items-center gap-3">
+                        <div className="flex items-center bg-gray-200 p-2 rounded-full">
+                          <FaTriangleExclamation className="size-4 sm:size-6 xl:size-8 text-[#002256]" />
+                        </div>
+                        <div className="flex flex-col gap-1">
+                          <div className="flex flex-col">
+                            <span className="font-medium text-[#002256]">
+                              {item.clientName}
+                            </span>
+                          </div>
+                          <div className="flex flex-col">
+                            <span className="text-xs sm:text-xs text-gray-400">
+                              Sinistro: {item.claimNumber}
+                            </span>
+                            <span className="text-xs sm:text-xs text-gray-400">
+                              Estado: {getStatusText(item.status)}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                      <div>
+                        <Button
+                          onClick={() =>
+                            onSelectDetail(item.claimNumber.toString())
+                          }
+                          className="bg-[#002256] hover:bg-[#002256]/50 sm:px-4 sm:py-2 px-1 py-0.5 text-[10px] sm:text-sm text-white"
+                        >
+                          <FaEye /> Detalhes
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
               </div>
             </TabsContent>
           </Tabs>

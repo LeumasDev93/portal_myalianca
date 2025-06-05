@@ -29,7 +29,7 @@ const nextAuthOptions: NextAuthOptions = {
           );
 
           const data = await response.json();
-
+            console.log(data, "data")
           if (!response.ok || !data.access_token) {
             throw new Error(data.error || "Falha na autenticação.");
           }

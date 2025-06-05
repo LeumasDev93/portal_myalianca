@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/card";
 import { DotLoading } from "@/components/ui/dot-loading";
 import { useSessionCheckToken } from "@/hooks/useSessionToken";
-import { formatDate } from "@/lib/utils";
+import { formatCurrency, formatDate } from "@/lib/utils";
 import { useEffect, useState } from "react";
 import { FaDownload, FaSpinner, FaUser } from "react-icons/fa";
 import { IoDownloadOutline } from "react-icons/io5";
@@ -163,6 +163,9 @@ export default function ReciboPage({}: ReciboPageProps) {
                 </CardTitle>
                 <CardDescription>
                   <div>Referencia: {recibo.mbref}</div>
+                  <div className="flex flex-col gap-2">
+                    <span>Valor: {formatCurrency(recibo.value)}</span>
+                  </div>
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -197,7 +200,7 @@ export default function ReciboPage({}: ReciboPageProps) {
                   </div>
                 </div>
               </CardContent>
-              <CardFooter>
+              <CardFooter className="flex justify-between">
                 <div className="flex flex-col">
                   Data Faturacao:
                   <span className="text-xs xl:text-[14px] text-[#002256] ">

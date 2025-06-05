@@ -30,20 +30,10 @@ import {
 } from "react-icons/md";
 import { FaPlus } from "react-icons/fa";
 import { DotLoading } from "@/components/ui/dot-loading";
+import { SinistroData } from "@/types/typesData";
+import { useSessionCheckToken } from "@/hooks/useSessionToken";
+import { useUserProfile } from "@/hooks/useUserProfile ";
 // import { useUserProfile } from "@/hooks/useUserProfile ";
-
-type SinistroData = {
-  claimNumber: number;
-  contractNumber: number;
-  occurenceDate: string;
-  claimDate: string;
-  clientName: string;
-  status: string;
-  manager: string;
-  insuredObjectName: string;
-  insuredObjectDescription: string;
-  product: string;
-};
 
 type SinistroPageProps = {
   onNewSinistro: () => void;
@@ -55,22 +45,13 @@ export function SinistrosPage({
   onNewSinistro,
 }: SinistroPageProps) {
   const [sinistros, setSinistros] = useState<SinistroData[]>([]);
-
-  const [token, setToken] = useState<string | null>(null);
+  const { token } = useSessionCheckToken();
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
-  // const { profile } = useUserProfile();
+  const { profile } = useUserProfile();
 
-  const nif = 501417303;
-
-  useEffect(() => {
-    const checkSession = async () => {
-      const session = await getSession();
-      setToken(session?.user.accessToken || null);
-    };
-    checkSession();
-  }, []);
+  const nif = profile?.nif;
 
   useEffect(() => {
     if (!token) return;

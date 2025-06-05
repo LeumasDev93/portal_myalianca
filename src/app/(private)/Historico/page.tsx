@@ -40,6 +40,18 @@ const cardsData: CardData[] = [
     status: "+1 desde o último mês",
     quantity: 3,
   },
+  {
+    icon: IconMaritima,
+    title: "Apólices Ativas",
+    status: "+1 desde o último mês",
+    quantity: 3,
+  },
+  {
+    icon: IconMaritima,
+    title: "Apólices Ativas",
+    status: "+1 desde o último mês",
+    quantity: 3,
+  },
 ];
 
 export default function Historico() {
@@ -54,7 +66,7 @@ export default function Historico() {
       if (width < 640) setCardsPerPage(1);
       else if (width < 1024) setCardsPerPage(2);
       else if (width < 1920) setCardsPerPage(3);
-      else setCardsPerPage(5);
+      else setCardsPerPage(4);
     };
 
     updateLayout();
