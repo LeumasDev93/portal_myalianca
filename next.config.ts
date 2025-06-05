@@ -2,6 +2,9 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   devIndicators: false,
+  experimental: {
+     typedRoutes: false
+  },
   images: {
     domains: ["st2.depositphotos.com", "via.placeholder.com", "gestao.aliancaseguros.cv"], 
     remotePatterns: [

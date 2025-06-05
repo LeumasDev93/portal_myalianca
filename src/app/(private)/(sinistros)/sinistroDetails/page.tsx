@@ -2,7 +2,6 @@
 "use client";
 
 import Link from "next/link";
-import { notFound } from "next/navigation";
 import {
   Card,
   CardContent,
@@ -12,38 +11,12 @@ import {
   CardFooter,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import {
-  FileText,
-  ArrowLeft,
-  Calendar,
-  AlertCircle,
-  User,
-  Car,
-  CreditCard,
-  Clock,
-  Home,
-  Shield,
-  Check,
-  Download,
-  Phone,
-  AlertTriangle,
-  Receipt,
-  FileWarning,
-  Eye,
-  Calculator,
-  Globe,
-  Mail,
-  MessageSquare,
-  AlertOctagon,
-  Upload,
-} from "lucide-react";
+import { ArrowLeft, Phone, Upload } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Separator } from "@/components/ui/separator";
 import { useSessionCheckToken } from "@/hooks/useSessionToken";
 import { useEffect, useState } from "react";
 import { formatCurrency, getStatusText, getStatusVariant } from "@/lib/utils";
-import { Progress } from "@radix-ui/react-progress";
 
 interface SinistroDataDetails {
   claimNumber: number;
