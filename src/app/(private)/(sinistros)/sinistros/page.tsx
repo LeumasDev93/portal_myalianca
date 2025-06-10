@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 "use client";
 
-import Link from "next/link";
 import {
   Card,
   CardContent,
@@ -11,29 +10,26 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { CiCalendar } from "react-icons/ci";
-import {
-  AlertTriangle,
-  Eye,
-  AlertCircle,
-  Info,
-  Clock,
-  CheckCircle,
-} from "lucide-react";
+import { Eye, AlertCircle, Info, Clock, CheckCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useEffect, useState } from "react";
-import { getSession } from "next-auth/react";
-import {
-  MdAppRegistration,
-  MdDashboard,
-  MdManageAccounts,
-  MdOutlineDashboardCustomize,
-} from "react-icons/md";
-import { FaPlus } from "react-icons/fa";
+import { MdManageAccounts, MdOutlineDashboardCustomize } from "react-icons/md";
+import { FaDollarSign, FaPlus, FaRegCalendar } from "react-icons/fa";
 import { DotLoading } from "@/components/ui/dot-loading";
 import { SinistroData } from "@/types/typesData";
 import { useSessionCheckToken } from "@/hooks/useSessionToken";
 import { useUserProfile } from "@/hooks/useUserProfile ";
-// import { useUserProfile } from "@/hooks/useUserProfile ";
+import {
+  formatCurrency,
+  formatDate,
+  getBorderCardSinistrosColors,
+  getApolicesStatusText,
+  getStatusSinistrosColors,
+  getSinistroStatusText,
+} from "@/lib/utils";
+import { LoadingScreen } from "@/components/ui/loading-screen";
+import { FaTriangleExclamation } from "react-icons/fa6";
+import { IoShieldCheckmarkSharp } from "react-icons/io5";
 
 type SinistroPageProps = {
   onNewSinistro: () => void;
@@ -106,143 +102,97 @@ export function SinistrosPage({
           Novo Sinistro
         </Button>
       </div>
-
       {isLoading ? (
-        <div className="flex flex-col items-center justify-center h-screen">
-          <span className="text-gray-700 font-semibold text-xl uppercase">
-            Carregando Sinistros
-          </span>
-          <DotLoading />
+        <div className="flex items-center justify-center h-screen">
+          <LoadingScreen />
         </div>
+      ) : error ? (
+        <p className="text-red-500">{error}</p>
+      ) : sinistros.length === 0 ? (
+        <LoadingScreen />
       ) : (
         <div className="flex flex-col gap-6">
           {sinistros.map((sinistro) => (
             <Card
-              key={sinistro.claimDate}
-              className={`overflow-hidden border-b-4 sm:border-b-0 sm:border-l-4 rounded-xl ${
-                sinistro.status == "A"
-                  ? "border-b-[#002256] sm:border-l-[#002256]"
-                  : sinistro.status == "E"
-                  ? "border-b-[#B7021C] sm:border-l-[#B7021C]"
-                  : "border-b-[#908688] sm:border-l-[#908688]"
-              } `}
+              key={sinistro.claimNumber}
+              className={`overflow-hidden border-b-4 sm:border-b-0 sm:border-l-4 rounded-xl ${getBorderCardSinistrosColors(
+                sinistro.status
+              )} `}
             >
-              <CardHeader className="border-b ">
-                <div className="flex items-center justify-between px-4">
-                  <div>
-                    <CardTitle className="flex items-center gap-2 text-[#002256]">
-                      {sinistro.product} - {sinistro.insuredObjectName}
-                    </CardTitle>
-                    <CardDescription>
-                      Sinistro #{sinistro.claimNumber} • Apólice #
-                      {sinistro.contractNumber}
-                    </CardDescription>
+              <CardHeader className="border-b border-b-red-500">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <div className="bg-[#002256] p-2 sm:p-3  rounded-full text-white">
+                      <FaTriangleExclamation className="size-4 sm:size-5 xl:size-6" />
+                    </div>
+                    <div className="flex flex-col">
+                      <CardTitle className="flex items-center gap-2 text-company-blue-600">
+                        {sinistro.insuredObjectName}
+                      </CardTitle>
+                      <CardDescription>
+                        Apólice #{sinistro.contractNumber}
+                      </CardDescription>
+                    </div>
+                    <div className="hidden sm:flex flex-col ">
+                      <Badge
+                        className={`${getStatusSinistrosColors(
+                          sinistro.status
+                        )} px-2 py-1 text-xs xl:text-sm font-medium `}
+                      >
+                        {getSinistroStatusText(sinistro.status)}
+                      </Badge>
+                    </div>
                   </div>
                   <Button
                     onClick={() =>
                       onSelectDetail(sinistro.claimNumber.toString())
                     }
-                    className="bg-[#002256] hover:bg-[#002256]/80"
-                    size="sm"
+                    className="bg-[#002256] hover:bg-[#002256]/80 flex items-center text-white sm:gap-2"
                   >
-                    <Eye className="mr-2 h-4 w-4" />
-                    Ver detalhes
+                    <Eye className=" h-4 w-4" />
+                    <span className="hidden sm:inline">Ver detalhes</span>
                   </Button>
                 </div>
-              </CardHeader>
-              <CardContent className="pt-6">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  <div className="flex items-start gap-2">
-                    <div className="bg-blue-100 p-2 rounded-full text-[#002256]">
-                      <MdManageAccounts className="size-10" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-[#002256]">
-                        Gestor
-                      </p>
-                      <p className="font-bold text-gray-600 text-xl">
-                        {sinistro.manager}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex flex-col items-start gap-3">
-                    <div className="flex items-start gap-3">
-                      <div className="bg-company-blue-50 p-2 rounded-full text-company-blue-600">
-                        <MdOutlineDashboardCustomize className="h-5 w-5" />
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium text-[#002256]">
-                          Matricula
-                        </p>
-                        {sinistro.insuredObjectDescription ? (
-                          <p className="font-medium text-company-blue-600">
-                            {sinistro.insuredObjectDescription}
-                          </p>
-                        ) : (
-                          <p className="flex items-center gap-2 text-xs xl:text-sm text-gray-300">
-                            <AlertCircle className="h-4 w-4 text-red-500" />
-                            Nenhuma matrícula disponível
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                    <div className="flex items-start gap-3">
-                      <div className="bg-company-blue-50 p-2 rounded-full text-company-blue-600">
-                        <CiCalendar className="h-5 w-5" />
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium text-[#002256]">
-                          Data
-                        </p>
-                        <p className="font-medium text-company-blue-600">
-                          {sinistro.occurenceDate}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="flex items-start gap-3">
-                    <div className="flex flex-col">
-                      <span className="text-sm font-medium text-[#002256]">
-                        Estado
-                      </span>
-                      <Badge
-                        className={`flex items-center gap-1.5 rounded-sm py-2 ${
-                          sinistro.status === "A"
-                            ? "bg-green-100 border border-green-200 text-green-800"
-                            : sinistro.status === "E"
-                            ? "bg-red-100 border border-red-200 text-red-800"
-                            : ""
-                        } capitalize`}
-                      >
-                        {sinistro.status === "A" && (
-                          <CheckCircle className="h-3.5 w-3.5" />
-                        )}
-                        {sinistro.status === "E" && (
-                          <Clock className="h-3.5 w-3.5" />
-                        )}
-                        {sinistro.status === "A"
-                          ? "Aprovado"
-                          : sinistro.status === "E"
-                          ? "Em Análise"
-                          : sinistro.status}
-                      </Badge>
-                    </div>
-                  </div>
+                <div className="flex sm:hidden flex-col w-24 items-center">
+                  <Badge
+                    className={`${getStatusSinistrosColors(
+                      sinistro.status
+                    )} px-2 py-1 text-xs xl:text-sm font-medium `}
+                  >
+                    {getApolicesStatusText(sinistro.status)}
+                  </Badge>
                 </div>
-
-                <div className="mt-6 pt-4 border-t">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      {sinistro.status === "A" ? (
-                        <CheckCircle className="h-4 w-4 text-blue-900" />
-                      ) : (
-                        <Clock className="h-4 w-4 text-red-700" />
-                      )}
-                      <span className="text-sm text-company-blue-600"></span>
+              </CardHeader>
+              <CardContent className="">
+                <div className="flex flex-col gap-6">
+                  <div className="flex justify-between">
+                    <div className="flex items-center gap-4">
+                      <div className="bg-gray-200  p-2 rounded-full ">
+                        <IoShieldCheckmarkSharp className="size-3 sm:size-4 xl:size-5 text-[#002256]" />
+                      </div>
+                      <p className="font-bold text-gray-900 text-[12px] xl:text-base uppercase">
+                        Tipo
+                      </p>
                     </div>
-                    <div className="flex items-center gap-1 text-xs xl:text-sm text-[#002256]">
-                      <span>Última atualização: {sinistro.claimDate}</span>
+                    <div className="flex items-center gap-2">
+                      <p className="font-bold text-gray-900 text-[12px] xl:text-base ">
+                        {sinistro.product}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex justify-between">
+                    <div className="flex items-center gap-4">
+                      <div className="bg-gray-200  p-2 rounded-full ">
+                        <FaRegCalendar className="size-3 sm:size-4 xl:size-5 text-[#002256]" />
+                      </div>
+                      <p className="font-bold text-gray-900 text-[12px] xl:text-base uppercase">
+                        Data da Ocorrência
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <p className="font-bold text-gray-900 text-[12px] xl:text-base ">
+                        {formatDate(sinistro.occurenceDate)}
+                      </p>
                     </div>
                   </div>
                 </div>

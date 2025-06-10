@@ -23,8 +23,8 @@ import { RiShieldStarFill } from "react-icons/ri";
 import {
   formatCurrency,
   formatDate,
-  getStatusText,
-  getStatusVariant,
+  getApolicesStatusText,
+  getStatusApolicesColors,
 } from "@/lib/utils";
 import { IoShieldCheckmarkSharp } from "react-icons/io5";
 import { useAuth } from "@/contexts/auth-context";
@@ -120,10 +120,7 @@ export default function ApolicePage({ onSelectDetail }: ApolicePageProps) {
       </div>
 
       {isLoading ? (
-        <div className="flex flex-col items-center justify-center h-screen">
-          <span className="text-gray-700 font-semibold text-xl uppercase">
-            Carregando Apólices
-          </span>
+        <div className="flex items-center justify-center h-screen">
           <LoadingScreen />
         </div>
       ) : error ? (
@@ -154,11 +151,11 @@ export default function ApolicePage({ onSelectDetail }: ApolicePageProps) {
                       </div>
                       <div className="hidden sm:flex flex-col ">
                         <Badge
-                          className={`${getStatusVariant(
+                          className={`${getStatusApolicesColors(
                             apolice.contractStatus
                           )} px-2 py-1 text-xs xl:text-sm font-medium `}
                         >
-                          {getStatusText(apolice.contractStatus)}
+                          {getApolicesStatusText(apolice.contractStatus)}
                         </Badge>
                       </div>
                     </div>
@@ -177,11 +174,11 @@ export default function ApolicePage({ onSelectDetail }: ApolicePageProps) {
                   </div>
                   <div className="flex sm:hidden flex-col w-24 items-center">
                     <Badge
-                      className={`${getStatusVariant(
+                      className={`${getStatusApolicesColors(
                         apolice.contractStatus
                       )} px-2 py-1 text-xs xl:text-sm font-medium `}
                     >
-                      {getStatusText(apolice.contractStatus)}
+                      {getApolicesStatusText(apolice.contractStatus)}
                     </Badge>
                   </div>
                 </CardHeader>

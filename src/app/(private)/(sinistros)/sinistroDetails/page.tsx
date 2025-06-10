@@ -16,7 +16,23 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useSessionCheckToken } from "@/hooks/useSessionToken";
 import { useEffect, useState } from "react";
-import { formatCurrency, getStatusText, getStatusVariant } from "@/lib/utils";
+import {
+  formatCurrency,
+  formatDate,
+  getSinistroStatusText,
+  getStatusSinistrosColors,
+} from "@/lib/utils";
+import {
+  FaAddressCard,
+  FaDollarSign,
+  FaMobile,
+  FaRegCalendar,
+  FaTriangleExclamation,
+  FaUser,
+} from "react-icons/fa6";
+import { Separator } from "@radix-ui/react-separator";
+import { MdCarCrash } from "react-icons/md";
+import { LoadingScreen } from "@/components/ui/loading-screen";
 
 interface SinistroDataDetails {
   claimNumber: number;
@@ -103,62 +119,218 @@ export function SinistroDetailPage({ id, onBack }: SinistroDetailPageProps) {
           </Button>
         </div>
       </div>
-      {sinistroDetails.map((sinistro, idx) => (
-        <Card key={idx}>
-          <CardHeader className="border-b">
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-              <div>
-                <CardTitle className="flex items-center gap-2 text-xl text-[#002256]">
-                  {sinistro.product} - {sinistro.insuredObjectDescription}
-                  <Badge
-                    className={`text-sm font-medium text-gray-600 py-1 px-2 rounded-md ${
-                      sinistro.status === "E"
-                        ? "bg-red-100 text-red-800 border border-red-200"
-                        : "bg-green-100 border border-green-200 text-green-800"
-                    }`}
-                  >
-                    {getStatusText(sinistro.status)}
-                  </Badge>
-                </CardTitle>
-                <CardDescription>
-                  Sinistro #{sinistro.claimNumber} • Apólice #
-                  {sinistro.contractNumber} • {sinistro.occurenceDate}
-                </CardDescription>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="text-right">
-                  <div className="font-semibold">
-                    {formatCurrency(sinistro.claimNumber)}
+      {isLoading ? (
+        <div className="flex items-center justify-center h-screen">
+          <LoadingScreen />
+        </div>
+      ) : error ? (
+        <p className="text-red-500">{error}</p>
+      ) : sinistroDetails.length === 0 ? (
+        <LoadingScreen />
+      ) : (
+        <>
+          {sinistroDetails.map((sinistro, idx) => (
+            <Card key={idx}>
+              <CardHeader className="border-b">
+                <div className="flex items-center gap-4">
+                  <div className="bg-[#002256] p-2 sm:p-3  rounded-full text-white">
+                    <FaTriangleExclamation className="size-4 sm:size-5 xl:size-6" />
+                  </div>
+                  <div className="flex flex-col">
+                    <CardTitle className="flex items-center gap-2 text-company-blue-600">
+                      {sinistro.insuredObjectName}
+                    </CardTitle>
+                    <CardDescription>
+                      Apólice #{sinistro.contractNumber}
+                    </CardDescription>
+                  </div>
+                  <div className="hidden sm:flex flex-col ">
+                    <Badge
+                      className={`${getStatusSinistrosColors(
+                        sinistro.status
+                      )} px-2 py-1 text-xs xl:text-sm font-medium `}
+                    >
+                      {getSinistroStatusText(sinistro.status)}
+                    </Badge>
                   </div>
                 </div>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent className="pt-6">
-            <Tabs defaultValue="detalhes" className="space-y-6">
-              <TabsList>
-                <TabsTrigger value="detalhes">Detalhes</TabsTrigger>
-                <TabsTrigger value="riscos">Recibo</TabsTrigger>
-                <TabsTrigger value="documentos">Sinistrados</TabsTrigger>
-                <TabsTrigger value="atualizacoes">Riscos</TabsTrigger>
-              </TabsList>
+              </CardHeader>
+              <CardContent className="pt-6">
+                <Tabs defaultValue="detalhes" className="space-y-6 bg-white">
+                  <TabsList className="flex justify-start sm:space-x-2 space-x-0.5 bg-whit">
+                    <TabsTrigger
+                      className="sm:px-4 sm:py-2 px-2 py-1 rounded-md text-[#002256] font-semibold hover:bg-[#002256] hover:text-white data-[state=active]:bg-[#002256] data-[state=active]:text-white transition-colors"
+                      value="detalhes"
+                    >
+                      Detalhes
+                    </TabsTrigger>
+                    <TabsTrigger
+                      className="sm:px-4 sm:py-2 px-2 py-1 rounded-md text-[#002256] font-semibold hover:bg-[#002256] hover:text-white data-[state=active]:bg-[#002256] data-[state=active]:text-white transition-colors"
+                      value="recibo"
+                    >
+                      Recibo
+                    </TabsTrigger>
+                    <TabsTrigger
+                      className="sm:px-4 sm:py-2 px-2 py-1 rounded-md text-[#002256] font-semibold hover:bg-[#002256] hover:text-white data-[state=active]:bg-[#002256] data-[state=active]:text-white transition-colors"
+                      value="sinistrados"
+                    >
+                      Sinistrados
+                    </TabsTrigger>
+                    <TabsTrigger
+                      className="sm:px-4 sm:py-2 px-2 py-1 rounded-md text-[#002256] font-semibold hover:bg-[#002256] hover:text-white data-[state=active]:bg-[#002256] data-[state=active]:text-white transition-colors"
+                      value="riscos"
+                    >
+                      Riscos
+                    </TabsTrigger>
+                  </TabsList>
+                  <TabsContent
+                    value="detalhes"
+                    className="bg-white rounded-lg px-4 xl:p-6"
+                  >
+                    <div>
+                      <div className="flex flex-col gap-6 py-4 xl:py-6">
+                        <div className="flex justify-between">
+                          <div className="flex items-center gap-4">
+                            <div className="bg-gray-200  p-2 rounded-full ">
+                              <FaRegCalendar className="size-3 sm:size-4 xl:size-5 text-[#002256]" />
+                            </div>
+                            <p className="font-bold text-gray-900 text-[12px] xl:text-base uppercase">
+                              Data da Ocorrência
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <p className="font-bold text-gray-900 text-[12px] xl:text-base ">
+                              {formatDate(sinistro.occurenceDate)}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex justify-between">
+                          <div className="flex items-center gap-4">
+                            <div className="bg-gray-200  p-2 rounded-full ">
+                              <FaTriangleExclamation className="size-3 sm:size-4 xl:size-5 text-[#002256]" />
+                            </div>
+                            <p className="font-bold text-gray-900 text-[12px] xl:text-base uppercase">
+                              Tipo de Sinistro
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <p className="font-bold text-gray-900 text-[12px] xl:text-base ">
+                              {sinistro.product}
+                            </p>
+                          </div>
+                        </div>
 
-              <TabsContent value="riscos" className="space-y-6"></TabsContent>
-            </Tabs>
-          </CardContent>
-          <CardFooter className="flex flex-col sm:flex-row justify-between gap-4 bg-gray-50">
-            <div className="flex items-center gap-2">
-              <Button className="bg-[#002256] hover:bg-[#002256]/80">
-                <Upload className="mr-2 h-4 w-4" />
-                Enviar Documentos
-              </Button>
-            </div>
-            <Button className="bg-[#002256] hover:bg-[#002256]/80">
-              Acompanhar Status
-            </Button>
-          </CardFooter>
-        </Card>
-      ))}
+                        <div className="flex justify-between">
+                          <div className="flex items-center gap-4">
+                            <div className="bg-gray-200  p-2 rounded-full ">
+                              <FaUser className="size-3 sm:size-4 xl:size-5 text-[#002256]" />
+                            </div>
+                            <p className="font-bold text-gray-900 text-[12px] xl:text-base uppercase">
+                              Tomador se Seguros
+                            </p>
+                          </div>
+                          <div className="flex flex-col items-end gap-2">
+                            <p className="font-bold text-gray-900 text-[12px] xl:text-base ">
+                              {sinistro.clientName}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </TabsContent>
+                  <TabsContent
+                    value="recibo"
+                    className="bg-white rounded-lg px-4 xl:p-6"
+                  >
+                    <div>Sem dados no memento!!</div>
+                  </TabsContent>
+                  <TabsContent
+                    value="sinistrados"
+                    className="bg-white rounded-lg px-4 xl:p-6"
+                  >
+                    <div>
+                      <div className="flex flex-col gap-6 py-4 xl:py-6">
+                        <div className="flex justify-between">
+                          <div className="flex items-center gap-4">
+                            <div className="bg-gray-200  p-2 rounded-full ">
+                              <FaTriangleExclamation className="size-3 sm:size-4 xl:size-5 text-[#002256]" />
+                            </div>
+                            <p className="font-bold text-gray-900 text-[12px] xl:text-base uppercase">
+                              Nome
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <p className="font-bold text-gray-900 text-[12px] xl:text-base ">
+                              {sinistro.insuredObjectName}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex justify-between">
+                          <div className="flex items-center gap-4">
+                            <div className="bg-gray-200  p-2 rounded-full ">
+                              <MdCarCrash className="size-3 sm:size-4 xl:size-5 text-[#002256]" />
+                            </div>
+                            <p className="font-bold text-gray-900 text-[12px] xl:text-base uppercase">
+                              Identificação
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <p className="font-bold text-gray-900 text-[12px] xl:text-base ">
+                              {sinistro.insuredObjectDescription}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </TabsContent>
+                  <TabsContent
+                    value="riscos"
+                    className="bg-white rounded-lg px-4 xl:p-6"
+                  >
+                    <div>
+                      <h3 className="text-lg text-[#002855] font-semibold uppercase">
+                        Coberturas
+                      </h3>
+                      <div className="flex flex-col gap-6 py-4 xl:py-6">
+                        <div className="flex justify-between">
+                          <div className="flex items-center gap-4">
+                            <div className="bg-gray-200  p-2 rounded-full ">
+                              <FaTriangleExclamation className="size-3 sm:size-4 xl:size-5 text-[#002256]" />
+                            </div>
+                            <p className="font-bold text-gray-900 text-[12px] xl:text-base uppercase">
+                              Nome
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <p className="font-bold text-gray-900 text-[12px] xl:text-base ">
+                              {sinistro.insuredObjectName}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex justify-between">
+                          <div className="flex items-center gap-4">
+                            <div className="bg-gray-200  p-2 rounded-full ">
+                              <MdCarCrash className="size-3 sm:size-4 xl:size-5 text-[#002256]" />
+                            </div>
+                            <p className="font-bold text-gray-900 text-[12px] xl:text-base uppercase">
+                              Identificação
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <p className="font-bold text-gray-900 text-[12px] xl:text-base ">
+                              {sinistro.insuredObjectDescription}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </TabsContent>
+                </Tabs>
+              </CardContent>
+            </Card>
+          ))}
+        </>
+      )}
     </div>
   );
 }

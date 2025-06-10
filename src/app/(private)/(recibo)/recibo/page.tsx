@@ -11,12 +11,19 @@ import {
   CardTitle,
   CardFooter,
 } from "@/components/ui/card";
+import CopiableNumber from "@/components/ui/copiableNumber";
 import { DotLoading } from "@/components/ui/dot-loading";
+import { LoadingScreen } from "@/components/ui/loading-screen";
 import { useSessionCheckToken } from "@/hooks/useSessionToken";
-import { formatCurrency, formatDate } from "@/lib/utils";
+import {
+  formatCurrency,
+  formatDate,
+  getStatusReciverColors,
+  getStatusReciverTexts,
+  getTypesReciver,
+} from "@/lib/utils";
 import { useEffect, useState } from "react";
 import { FaDownload, FaSpinner, FaUser } from "react-icons/fa";
-import { IoDownloadOutline } from "react-icons/io5";
 
 type ReciboData = {
   number: string;
@@ -127,27 +134,22 @@ export default function ReciboPage({}: ReciboPageProps) {
         </h1>
       </div>
       {isLoading ? (
-        <div className="flex flex-col items-center justify-center h-screen">
-          <span className="text-gray-700 font-semibold text-xl uppercase">
-            Carregando Recibos
-          </span>
-          <DotLoading />
+        <div className="flex items-center justify-center h-screen">
+          <LoadingScreen />
         </div>
       ) : error ? (
         <p className="text-red-500">{error}</p>
       ) : recibos.length === 0 ? (
-        <DotLoading />
+        <LoadingScreen />
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {recibos.map((recibo) => (
             <Card key={recibo.number}>
               <CardHeader className="border-b">
                 <CardTitle className="flex items-center justify-between">
-                  <div className="text-sm xl:text-lg font-bold text-[#002256]">
-                    Numero:{" "}
-                    <span className="text-sm xl:text-[16px] bg-[#cdcecf] text-[#002256] px-2 py-1 rounded-sm">
-                      #{recibo.number}
-                    </span>
+                  <div className="flex text-sm xl:text-lg font-bold text-[#002256]">
+                    Número:
+                    <CopiableNumber number={recibo.number} />
                   </div>
                   <Button
                     onClick={() => handleDownload(recibo.number)}
@@ -166,6 +168,9 @@ export default function ReciboPage({}: ReciboPageProps) {
                   <div className="flex flex-col gap-2">
                     <span>Valor: {formatCurrency(recibo.value)}</span>
                   </div>
+                  <div className="flex flex-col gap-2">
+                    <span>Tipo: {getTypesReciver(recibo.type)}</span>
+                  </div>
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -173,29 +178,17 @@ export default function ReciboPage({}: ReciboPageProps) {
                   <div className="flex items-center just gap-2">
                     <span className="bg-blue-100 rounded-full p-2">
                       <FaUser />
-                    </span>{" "}
+                    </span>
                     <span>{recibo.clientName}</span>
                   </div>
                   <div className="flex flex-col gap-2">
                     <span>Estado:</span>
                     <span
-                      className={`text-xs xl:text-[14px] border ${
-                        recibo.status === 1
-                          ? "bg-red-200 border-red-400"
-                          : recibo.status === 5
-                          ? "bg-green-200 border-green-400"
-                          : recibo.status === 2
-                          ? "bg-blue-200 border-blue-400"
-                          : "bg-gray-200 border-gray-400"
-                      } bg-[#cdcecf] text-[#002256] px-2 py-1 rounded-sm`}
+                      className={`text-xs xl:text-[14px] border ${getStatusReciverColors(
+                        recibo.status
+                      )} bg-[#cdcecf] text-[#002256] px-2 py-1 rounded-sm`}
                     >
-                      {recibo.status === 5
-                        ? "Concluido"
-                        : recibo.status === 1
-                        ? "Divida"
-                        : recibo.status === 2
-                        ? "Pago"
-                        : "Pendente"}
+                      {getStatusReciverTexts(recibo.status)}
                     </span>
                   </div>
                 </div>

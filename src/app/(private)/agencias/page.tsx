@@ -5,13 +5,13 @@ import { MapPin, Phone, Clock } from "lucide-react";
 import Link from "next/link";
 import { FaMapMarker } from "react-icons/fa";
 import { useAgencias } from "@/hooks/useAgencias";
-import { DotLoading } from "@/components/ui/dot-loading";
+import { LoadingScreen } from "@/components/ui/loading-screen";
 
 export default function AgenciasPage() {
   const { agencias, loading, error } = useAgencias();
 
   return (
-    <div className="container mx-auto p-6">
+    <div className="container p-6">
       <div className="mb-8">
         <h1 className="text-xl lg:text-2xl xl:text-3xl font-bold mb-2 text-[#002256]">
           Nossas Agências
@@ -21,16 +21,13 @@ export default function AgenciasPage() {
         </p>
       </div>
       {loading ? (
-        <div className="flex flex-col items-center justify-center h-screen">
-          <span className="text-gray-700 font-semibold text-xl uppercase">
-            Carregando Agências
-          </span>
-          <DotLoading />
+        <div className="flex items-center justify-center h-screen">
+          <LoadingScreen />
         </div>
       ) : error ? (
         <p className="text-red-500">{error}</p>
       ) : agencias.length === 0 ? (
-        <DotLoading />
+        <LoadingScreen />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {agencias.map((agencia) => (

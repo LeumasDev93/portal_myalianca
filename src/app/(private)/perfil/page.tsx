@@ -27,9 +27,9 @@ import {
   User,
 } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
-import { DotLoading } from "@/components/ui/dot-loading";
 import { useUserProfile } from "@/hooks/useUserProfile ";
 import { useAuth } from "@/contexts/auth-context";
+import { LoadingScreen } from "@/components/ui/loading-screen";
 
 export function PerfilPage() {
   const { profile, loading, hasChanges, updateProfile, saveChanges } =
@@ -154,7 +154,7 @@ export function PerfilPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-screen">
-        <DotLoading />
+        <LoadingScreen />
       </div>
     );
   }
