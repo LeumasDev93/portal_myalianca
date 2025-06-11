@@ -321,25 +321,25 @@ export function ApoliceDetailPage({
               <Tabs defaultValue="detalhes" className="">
                 <TabsList className="flex justify-start sm:space-x-2 space-x-0.5">
                   <TabsTrigger
-                    className="sm:px-4 sm:py-2 px-2 py-1 rounded-md text-[#002256] font-semibold hover:bg-[#002256] hover:text-white data-[state=active]:bg-[#002256] data-[state=active]:text-white transition-colors"
+                    className="sm:px-4 xl:text-lg sm:py-2 px-2 py-1 rounded-md text-[#002256] font-semibold hover:bg-[#002256] hover:text-white data-[state=active]:bg-[#002256] data-[state=active]:text-white transition-colors"
                     value="detalhes"
                   >
                     Detalhes
                   </TabsTrigger>
                   <TabsTrigger
-                    className="sm:px-4 sm:py-2 px-2 py-1 rounded-md text-[#002256] font-semibold hover:bg-[#002256] hover:text-white data-[state=active]:bg-[#002256] data-[state=active]:text-white transition-colors"
+                    className="sm:px-4 xl:text-lg sm:py-2 px-2 py-1 rounded-md text-[#002256] font-semibold hover:bg-[#002256] hover:text-white data-[state=active]:bg-[#002256] data-[state=active]:text-white transition-colors"
                     value="coberturas"
                   >
                     Coberturas
                   </TabsTrigger>
                   <TabsTrigger
-                    className="sm:px-4 sm:py-2 ps-2 py-1 rounded-md text-[#002256] font-semibold hover:bg-[#002256] hover:text-white data-[state=active]:bg-[#002256] data-[state=active]:text-white transition-colors"
+                    className="sm:px-4 xl:text-lg sm:py-2 ps-2 py-1 rounded-md text-[#002256] font-semibold hover:bg-[#002256] hover:text-white data-[state=active]:bg-[#002256] data-[state=active]:text-white transition-colors"
                     value="recibos"
                   >
                     Recibos
                   </TabsTrigger>
                   <TabsTrigger
-                    className="sm:px-4 sm:py-2 px-2 py-1 rounded-md text-[#002256] font-semibold hover:bg-[#002256] hover:text-white data-[state=active]:bg-[#002256] data-[state=active]:text-white transition-colors"
+                    className="sm:px-4 xl:text-lg sm:py-2 px-2 py-1 rounded-md text-[#002256] font-semibold hover:bg-[#002256] hover:text-white data-[state=active]:bg-[#002256] data-[state=active]:text-white transition-colors"
                     value="sinistros"
                   >
                     Sinistros
