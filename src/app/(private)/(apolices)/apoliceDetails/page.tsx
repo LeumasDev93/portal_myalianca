@@ -53,7 +53,7 @@ type ApoliceDetailPageProps = {
 type ReciboLoadingState = {
   [number: string]: boolean;
 };
-// @ts-expect-error - Invalid page export for Next.js (temporário)
+
 export default function ApoliceDetailPage({
   id,
   contractNumber,
