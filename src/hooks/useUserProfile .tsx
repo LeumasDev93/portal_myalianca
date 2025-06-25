@@ -6,20 +6,21 @@ interface UserProfile {
   nome: string;
   username: string;
   tipo: string;
-  ativo: true;
+  ativo: boolean;
   nif: string;
   email: string;
-  token: string;
+  telefone: string;
+  morada: string | null;
+  telemovel: string;
+  display_name: string;
   cliente_id: string;
   cliente_nome: string;
-  criado_em: string;
-  session_id: string;
+  criado_em: string; // ou Date, se você parsear
+  session_id: string | null;
 }
 
 export function useUserProfile(initialData?: UserProfile) {
-  const [profile, setProfile] = useState<UserProfile | null>(
-    initialData || null
-  );
+  const [profile, setProfile] = useState<UserProfile | null>(null);
   const [initialProfile, setInitialProfile] = useState<UserProfile | null>(
     initialData || null
   );

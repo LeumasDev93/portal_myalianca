@@ -18,7 +18,7 @@ import { MdOutlineDashboardCustomize } from "react-icons/md";
 import { LoadingSpinner } from "./ui/loading";
 import { DotLoading } from "./ui/dot-loading";
 import { LoadingScreen } from "./ui/loading-screen";
-import { ApoliceDetailPage } from "./apolice/DetailsApiloce";
+import ApoliceDetailPage from "./(apolices)/apoliceDetails/page";
 
 type Invoice = {
   invoiceNumber: number;
@@ -208,7 +208,12 @@ const ApoliceCard = () => {
                   </div>
                 </CardHeader>
                 {modalDetailApolice && selectedApoliceId && (
-                  <ApoliceDetailPage id={selectedApoliceId.toString()} />
+                  <ApoliceDetailPage
+                    onBack={() => console.log()}
+                    contractNumber=""
+                    onSelectDetail={() => console.log()}
+                    id={selectedApoliceId.toString()}
+                  />
                 )}
                 <CardContent className="pt-6">
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6">

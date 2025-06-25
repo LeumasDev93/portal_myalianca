@@ -31,6 +31,24 @@ import { useUserProfile } from "@/hooks/useUserProfile ";
 import { useAuth } from "@/contexts/auth-context";
 import { LoadingScreen } from "@/components/ui/loading-screen";
 
+export interface UserProfile {
+  id: string;
+  nome: string;
+  username: string;
+  tipo: string; // Ex: 'cliente', 'admin', etc. (você pode usar um union type se os valores forem fixos)
+  ativo: boolean;
+  nif: string;
+  email: string;
+  telefone: string;
+  morada: string | null;
+  telemovel: string;
+  display_name: string;
+  cliente_id: string;
+  cliente_nome: string;
+  criado_em: string; // ou use `Date` se você estiver convertendo a string em objeto Date
+  session_id: string | null;
+}
+
 export function PerfilPage() {
   const { profile, loading, hasChanges, updateProfile, saveChanges } =
     useUserProfile();
@@ -252,7 +270,7 @@ export function PerfilPage() {
                 <div className="flex items-center gap-2">
                   <Shield className="h-5 w-5 text-[#002256]" />
                   <span className="font-medium">
-                    {profile.tipo_cliente === "particular"
+                    {profile.tipo === "cliente"
                       ? "Plano Individual"
                       : "Plano Empresarial"}
                   </span>
@@ -327,7 +345,7 @@ export function PerfilPage() {
                         onChange={(e) =>
                           updateProfile({
                             ...profile,
-                            telefone: Number(e.target.value),
+                            telemovel: e.target.value,
                           })
                         }
                       />
@@ -341,7 +359,7 @@ export function PerfilPage() {
                         onChange={(e) =>
                           updateProfile({
                             ...profile,
-                            telemovel: Number(e.target.value),
+                            telemovel: e.target.value,
                           })
                         }
                       />
@@ -350,11 +368,11 @@ export function PerfilPage() {
                       <Label htmlFor="dataNascimento">Data de Nascimento</Label>
                       <Input
                         id="dataNascimento"
-                        value={formatBirthDate(profile.data_nascimento)}
+                        value={formatBirthDate(profile.criado_em)}
                         onChange={(e) =>
                           updateProfile({
                             ...profile,
-                            data_nascimento: e.target.value,
+                            criado_em: e.target.value,
                           })
                         }
                       />
@@ -367,7 +385,7 @@ export function PerfilPage() {
                         onChange={(e) =>
                           updateProfile({
                             ...profile,
-                            nif: Number(e.target.value),
+                            nif: e.target.value,
                           })
                         }
                         disabled
@@ -395,11 +413,11 @@ export function PerfilPage() {
                       <Label htmlFor="bi_cni">BI/CNI</Label>
                       <Input
                         id="bi_cni"
-                        value={profile.bi_cni}
+                        value={profile.nif}
                         onChange={(e) =>
                           updateProfile({
                             ...profile,
-                            bi_cni: Number(e.target.value),
+                            nif: e.target.value,
                           })
                         }
                       />
@@ -408,11 +426,11 @@ export function PerfilPage() {
                       <Label htmlFor="passaporte">Passaporte</Label>
                       <Input
                         id="passaporte"
-                        value={profile.passaporte}
+                        value={profile.nif}
                         onChange={(e) =>
                           updateProfile({
                             ...profile,
-                            passaporte: e.target.value,
+                            nif: e.target.value,
                           })
                         }
                       />
