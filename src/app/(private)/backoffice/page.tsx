@@ -31,13 +31,13 @@ import { TopMenu } from "@/components/TopMenu";
 import AgenciasPage from "../agencias/page";
 import ApolicePage from "../../../components/(apolices)/apolices/page";
 import ApoliceDetailPage from "../../../components/(apolices)/apoliceDetails/page";
-import SinistrosPage from "../(sinistros)/sinistros/page";
-import SinistroDetailPage from "../(sinistros)/sinistroDetails/page";
-import MensagensPage from "../(mensagens)/mensagens/page";
-import MensagemDetailPage from "../(mensagens)/mensagemDetails/page";
-import AbrirSinistroPage from "../(sinistros)/newSinistro/page";
-import ReciboPage from "../(recibo)/recibo/page";
-import EncaminharMensagemPage from "../(mensagens)/encaminhar/page";
+import SinistrosPage from "../../../components/(sinistros)/sinistros/page";
+import SinistroDetailPage from "../../../components/(sinistros)/sinistroDetails/page";
+import MensagensPage from "../../../components/(mensagens)/mensagens/page";
+import MensagemDetailPage from "../../../components/(mensagens)/mensagemDetails/page";
+import AbrirSinistroPage from "../../../components/(sinistros)/newSinistro/page";
+import ReciboPage from "../../../components/(recibo)/recibo/page";
+import EncaminharMensagemPage from "../../../components/(mensagens)/encaminhar/page";
 
 const Page = () => {
   const [isLoading, setIsLoading] = useState(false);
