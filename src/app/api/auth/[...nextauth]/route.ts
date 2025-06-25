@@ -1,7 +1,6 @@
 import NextAuth, { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 
-
 const nextAuthOptions: NextAuthOptions = {
   providers: [
     CredentialsProvider({
@@ -9,6 +8,7 @@ const nextAuthOptions: NextAuthOptions = {
       credentials: {},
       async authorize() {
         try {
+          // Gerar o cabeçalho Basic Auth
           const credentials = Buffer.from(
             "ALIANCA_WEBSITE:TQzQzxvlKSZCzTAVjc2iP6CX"
           ).toString("base64");
@@ -19,27 +19,26 @@ const nextAuthOptions: NextAuthOptions = {
               method: "POST",
               headers: {
                 "Content-Type": "application/x-www-form-urlencoded",
-                Authorization: `Basic ${credentials}`,
+                Authorization: `Basic ${credentials}`, // Basic Auth header
               },
               body: new URLSearchParams({
                 grant_type: "client_credentials",
-                scope: "read write",
+                scope: "read write", // Incluindo escopo
               }),
             }
           );
 
           const data = await response.json();
-            console.log(data, "data")
+
+          console.log("Resposta da API:", data);
+
           if (!response.ok || !data.access_token) {
             throw new Error(data.error || "Falha na autenticação.");
           }
 
-          const token = data.access_token;
-          console.log("Token recebido:", token);
-
           return {
             id: "oauth-user",
-            token: token,
+            token: data.access_token,
           };
         } catch (error) {
           console.error("Erro no fluxo de autorização:", error);
@@ -48,13 +47,12 @@ const nextAuthOptions: NextAuthOptions = {
       },
     }),
   ],
-  secret: process.env.NEXTAUTH_SECRET,
+  secret: process.env.NEXTAUTH_SECRET, // Certifique-se de que isso está configurado no .env
   callbacks: {
     async jwt({ token, user }) {
-        // console.log('JWT Callback:', { token, user }); // ← Debug
       if (user) {
         token.accessToken = user.token;
-        token.tokenExpiry = Math.floor(Date.now() / 1000) + 3600; 
+        token.tokenExpiry = Math.floor(Date.now() / 1000) + 3600; // Define o tempo de expiração (exemplo: 1 hora)
       }
       return token;
     },
@@ -68,7 +66,6 @@ const nextAuthOptions: NextAuthOptions = {
     },
   },
 };
-
 
 const handler = NextAuth(nextAuthOptions);
 

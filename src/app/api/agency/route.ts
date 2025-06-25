@@ -3,13 +3,13 @@ import { NextResponse } from 'next/server';
 
 export async function GET() {
   try {
-    const apiUrl = 'http://41.221.195.121:8280/aliancamiddleware/agency';
-
+    const apiUrl = `${process.env.NEXT_PUBLIC_API_BASE_URL}/agencys`
+    const apiToken = process.env.API_SECRET_TOKEN;
     const response = await fetch(apiUrl, {
-      headers: {
-        Authorization: 'Bearer 3eb96e29-664b-4bb6-8813-bb7549fcee19',
-        'Content-Type': 'application/json',
-      },
+        headers: {
+         'Authorization': `Bearer ${apiToken}`,
+         'ApiKey': process.env.NEXT_PUBLIC_API_KEY || '' 
+       } 
     });
 
     if (!response.ok) {

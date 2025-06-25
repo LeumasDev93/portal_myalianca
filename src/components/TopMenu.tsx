@@ -23,6 +23,7 @@ export function TopMenu({
 }: TopMenuProps) {
   const { profile } = useUserProfile();
 
+  console.log(profile?.email, "perfil do usuário no TopMenu");
   const unreadCount = useUnreadCount();
 
   const [showSearch, setShowSearch] = useState(false);

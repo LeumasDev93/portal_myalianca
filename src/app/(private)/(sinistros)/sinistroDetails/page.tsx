@@ -69,14 +69,15 @@ export function SinistroDetailPage({ id, onBack }: SinistroDetailPageProps) {
   console.log("Sinistro id:", id);
 
   useEffect(() => {
-    if (!token) return;
+    if (!token || !id) return;
 
-    const fetchSinistroDetails = async () => {
+    const fetchData = async () => {
       setIsLoading(true);
       setError(null);
 
       try {
-        const response = await fetch(
+        // 1. Buscar detalhes do sinistro
+        const detailsRes = await fetch(
           `/api/anywhere/api/v1/private/mobile/claim/${id}/info`,
           {
             method: "GET",
@@ -88,58 +89,64 @@ export function SinistroDetailPage({ id, onBack }: SinistroDetailPageProps) {
           }
         );
 
-        if (!response.ok) {
-          throw new Error(`Erro ${response.status}: ${response.statusText}`);
+        if (!detailsRes.ok) {
+          throw new Error(
+            `Erro ao buscar detalhes: ${detailsRes.status} ${detailsRes.statusText}`
+          );
         }
 
-        const data = await response.json();
-        setSinistroDetails(Array.isArray(data) ? data : [data]);
-      } catch (error) {
-        console.error("Erro ao buscar apólices:", error);
-        setError("Erro ao carregar apólices. Tente novamente mais tarde.");
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchSinistroDetails();
-  }, [token, id]);
-
-  useEffect(() => {
-    if (!token) return;
-
-    const fetchSinistroCoberturas = async () => {
-      setIsLoading(true);
-      setError(null);
-
-      try {
-        const response = await fetch(
-          `/api/anywhere/api/v1/private/mobile/claim/${id}/risks`,
-          {
-            method: "GET",
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "application/json",
-              Accept: "application/json",
-            },
-          }
+        const detailsData = await detailsRes.json();
+        setSinistroDetails(
+          Array.isArray(detailsData) ? detailsData : [detailsData]
         );
 
-        if (!response.ok) {
-          throw new Error(`Erro ${response.status}: ${response.statusText}`);
-        }
+        // 2. Buscar coberturas apenas se detalhes forem carregados com sucesso
+        try {
+          const coberturasRes = await fetch(
+            `/api/anywhere/api/v1/private/mobile/claim/${id}/risks`,
+            {
+              method: "GET",
+              headers: {
+                Authorization: `Bearer ${token}`,
+                "Content-Type": "application/json",
+                Accept: "application/json",
+              },
+            }
+          );
 
-        const data = await response.json();
-        setSinistroCoberturas(Array.isArray(data) ? data : [data]);
-      } catch (error) {
-        console.error("Erro ao buscar apólices:", error);
-        setError("Erro ao carregar apólices. Tente novamente mais tarde.");
+          if (coberturasRes.ok) {
+            const coberturasData = await coberturasRes.json();
+            if (coberturasData && coberturasData.length !== 0) {
+              setSinistroCoberturas(
+                Array.isArray(coberturasData)
+                  ? coberturasData
+                  : [coberturasData]
+              );
+            } else {
+              // Apenas loga: dados vazios, mas tudo certo
+              console.info("Nenhuma cobertura encontrada para este sinistro.");
+            }
+          } else {
+            // Não lança erro — apenas loga
+            console.warn(
+              `Coberturas não carregadas: ${coberturasRes.status} ${coberturasRes.statusText}`
+            );
+          }
+        } catch (cobError) {
+          console.error("Erro ao buscar coberturas:", cobError);
+          // Opcional: você pode ou não setar um erro aqui
+        }
+      } catch (detailsError) {
+        console.error("Erro ao buscar detalhes do sinistro:", detailsError);
+        setError(
+          "Erro ao carregar detalhes do sinistro. Tente novamente mais tarde."
+        );
       } finally {
         setIsLoading(false);
       }
     };
 
-    fetchSinistroCoberturas();
+    fetchData();
   }, [token, id]);
 
   return (

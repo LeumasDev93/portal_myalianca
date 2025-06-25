@@ -15,6 +15,7 @@ import CopiableNumber from "@/components/ui/copiableNumber";
 import { DotLoading } from "@/components/ui/dot-loading";
 import { LoadingScreen } from "@/components/ui/loading-screen";
 import { useSessionCheckToken } from "@/hooks/useSessionToken";
+import { useUserProfile } from "@/hooks/useUserProfile ";
 import {
   formatCurrency,
   formatDate,
@@ -53,6 +54,10 @@ export default function ReciboPage({}: ReciboPageProps) {
   const [recibos, setRecibos] = useState<ReciboData[]>([]);
   const { token } = useSessionCheckToken();
 
+  const { profile } = useUserProfile();
+
+  const nif = profile?.nif;
+
   useEffect(() => {
     if (!token) return;
 
@@ -62,7 +67,7 @@ export default function ReciboPage({}: ReciboPageProps) {
 
       try {
         const response = await fetch(
-          `/api/anywhere/api/v1/private/mobile/entity/nif/501417303/invoices`,
+          `/api/anywhere/api/v1/private/mobile/entity/nif/${nif}/invoices`,
           {
             method: "GET",
             headers: {
@@ -87,7 +92,7 @@ export default function ReciboPage({}: ReciboPageProps) {
     };
 
     fetchRecibos();
-  }, [token]);
+  }, [token, nif]);
 
   const handleDownload = async (invoiceNumber: string) => {
     setLoadingStates((prev) => ({ ...prev, [invoiceNumber]: true }));
@@ -140,7 +145,9 @@ export default function ReciboPage({}: ReciboPageProps) {
       ) : error ? (
         <p className="text-red-500">{error}</p>
       ) : recibos.length === 0 ? (
-        <LoadingScreen />
+        <div className="flex items-center justify-center ">
+          <p>Sem Dados Disponíveis!</p>
+        </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {recibos.map((recibo) => (

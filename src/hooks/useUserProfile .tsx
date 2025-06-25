@@ -1,80 +1,78 @@
-// hooks/use-user-profile.ts
-import { useState, useEffect } from "react";
-import { useToast } from "@/components/ui/use-toast";
-import { useAuth } from "@/contexts/auth-context";
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { useEffect, useState } from "react";
 
 interface UserProfile {
+  id: string;
   nome: string;
-  data_nascimento: string;
-  nif: number;
-  email: string | null;
-  telefone: number;
-  telemovel: number;
-  bi_cni: number;
-  passaporte: string;
-  username: number;
-  tipo_utilizador: string;
-  tipo_cliente: string;
-  ativo: boolean;
+  username: string;
+  tipo: string;
+  ativo: true;
+  nif: string;
+  email: string;
+  token: string;
+  cliente_id: string;
+  cliente_nome: string;
   criado_em: string;
+  session_id: string;
 }
 
-export function useUserProfile() {
-  const { user } = useAuth();
-  const { toast } = useToast();
-  const [profile, setProfile] = useState<UserProfile | null>(null);
-  const [initialProfile, setInitialProfile] = useState<UserProfile | null>(
-    null
+export function useUserProfile(initialData?: UserProfile) {
+  const [profile, setProfile] = useState<UserProfile | null>(
+    initialData || null
   );
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [initialProfile, setInitialProfile] = useState<UserProfile | null>(
+    initialData || null
+  );
   const [hasChanges, setHasChanges] = useState(false);
+  const [loading, setLoading] = useState(!initialData);
+  const [error, setError] = useState<null | string>(null);
 
+  // ✅ Fetch profile from API using localStorage user_id
   useEffect(() => {
     const fetchProfile = async () => {
-      if (!user?.id) return;
+      if (typeof window === "undefined") return; // SSR protection
+
+      const user = localStorage.getItem("user");
+      //console.log("Stored user_id:", user);
+
+      const userId = user ? JSON.parse(user).id : null;
+
+      if (!userId) {
+        setError("user_id not found in localStorage");
+        setLoading(false);
+        return;
+      }
 
       try {
-        setLoading(true);
-        const response = await fetch(`/api/profile?user_id=${user.id}`);
-
-        if (!response.ok) {
-          throw new Error(`Erro ${response.status}: ${response.statusText}`);
+        const res = await fetch(`/api/profile?user=${userId}`);
+        if (!res.ok) {
+          throw new Error(`Failed to fetch profile: ${res.status}`);
         }
 
-        const data = await response.json();
-
-        if (data.get_profile_by_user_id_element) {
-          const profileData = data.get_profile_by_user_id_element;
-          setProfile(profileData);
-          setInitialProfile(profileData);
-        } else {
-          throw new Error("Estrutura de dados inesperada da API");
-        }
-      } catch (err) {
-        console.error("Erro ao buscar perfil:", err);
-        setError(err instanceof Error ? err.message : "Erro desconhecido");
-        toast({
-          title: "Erro",
-          description: "Falha ao carregar dados do perfil",
-          variant: "destructive",
-        });
+        const data = await res.json();
+        setProfile(data);
+        setInitialProfile(data);
+        setError(null);
+      } catch (err: any) {
+        console.error("Profile fetch error:", err);
+        setError(err.message || "Unknown error");
       } finally {
         setLoading(false);
       }
     };
 
     fetchProfile();
-  }, [user?.id, toast]);
+  }, []);
 
+  // ✅ Detect changes between current and initial profile
   useEffect(() => {
     if (profile && initialProfile) {
-      const changesExist = Object.keys(profile).some(
+      const changed = Object.keys(profile).some(
         (key) =>
           profile[key as keyof UserProfile] !==
           initialProfile[key as keyof UserProfile]
       );
-      setHasChanges(changesExist);
+      setHasChanges(changed);
     } else {
       setHasChanges(false);
     }
@@ -92,7 +90,7 @@ export function useUserProfile() {
   };
 
   const saveChanges = () => {
-    if (initialProfile && profile) {
+    if (profile) {
       setInitialProfile(profile);
       setHasChanges(false);
     }

@@ -107,9 +107,13 @@ export function SinistrosPage({
           <LoadingScreen />
         </div>
       ) : error ? (
-        <p className="text-red-500">{error}</p>
-      ) : sinistros.length === 0 ? (
-        <LoadingScreen />
+        <div className="flex items-center justify-center h-screen">
+          <p className="text-red-500 text-center">{error}</p>
+        </div>
+      ) : !sinistros || sinistros.length === 0 ? (
+        <div className="flex items-center justify-center h-screen">
+          <LoadingScreen />
+        </div>
       ) : (
         <div className="flex flex-col gap-6">
           {sinistros.map((sinistro) => (

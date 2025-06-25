@@ -1,20 +1,20 @@
-// app/api/auth/change-password/route.ts
+// app/api/auth/recover-password/route.ts
 import { NextResponse } from 'next/server';
 
 export const dynamic = 'force-dynamic';
 
 export async function POST(request: Request) {
   try {
-    const { senha_atual, nova_senha, user_id } = await request.json();
+    const { email, otp, newPassword } = await request.json();
 
-    if (!senha_atual || !nova_senha || !user_id) {
+    if (!email || !otp || !newPassword ) {
       return NextResponse.json(
-        { error: 'Todos os campos são obrigatórios' },
+        { error: 'O campo email é obrigatório' },
         { status: 400 }
       );
     }
 
-    const apiUrl = `${process.env.NEXT_PUBLIC_API_BASE_URL}/accounts/password/change`;
+    const apiUrl = `${process.env.NEXT_PUBLIC_API_BASE_URL}/accounts/password/recover-confirm`;
 
     const response = await fetch(apiUrl, {
       method: 'POST',
@@ -22,26 +22,26 @@ export async function POST(request: Request) {
         'Content-Type': 'application/json',
         'ApiKey': process.env.NEXT_PUBLIC_API_KEY || '' // adicione a chave de API aqui
       },
-      body: JSON.stringify({ 
-        senha_atual,
-        nova_senha,
-        user_id
-      })
+      body: JSON.stringify({ email, otp, newPassword }),
     });
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
       return NextResponse.json(
-        { 
-          error: errorData.response?.desc || 'Erro ao alterar senha',
-          details: errorData
+        {
+          error: errorData.message || 'Erro ao solicitar recuperação de senha',
+          details: errorData,
         },
         { status: response.status }
       );
     }
 
     const data = await response.json();
-    return NextResponse.json(data);
+
+    return NextResponse.json({
+      message: data.message,
+      details: data.message_details,
+    });
 
   } catch (error) {
     console.error('Erro interno:', error);

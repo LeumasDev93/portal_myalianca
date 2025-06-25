@@ -81,17 +81,17 @@ export function ApoliceDetailPage({
   };
 
   useEffect(() => {
-    if (!token) return;
+    if (!token || !id) return;
 
-    const fetchApolices = async () => {
+    const fetchData = async () => {
       setIsLoading(true);
       setError(null);
 
       try {
-        const response = await fetch(
+        // 1. Buscar detalhes da apólice
+        const apoliceRes = await fetch(
           `/api/anywhere/api/v1/private/mobile/contract/${id}/info`,
           {
-            method: "GET",
             headers: {
               Authorization: `Bearer ${token}`,
               "Content-Type": "application/json",
@@ -100,103 +100,73 @@ export function ApoliceDetailPage({
           }
         );
 
-        if (!response.ok) {
-          throw new Error(`Erro ${response.status}: ${response.statusText}`);
+        if (!apoliceRes.ok) {
+          throw new Error(`Erro ao buscar apólice: ${apoliceRes.status}`);
         }
 
-        const data = await response.json();
-        setApoliceDetails(Array.isArray(data) ? data : [data]);
-      } catch (error) {
-        console.error("Erro ao buscar apólices:", error);
-        setError("Erro ao carregar apólices. Tente novamente mais tarde.");
+        const apoliceData = await apoliceRes.json();
+        const apoliceArray = Array.isArray(apoliceData)
+          ? apoliceData
+          : [apoliceData];
+        setApoliceDetails(apoliceArray);
+
+        // 2. Buscar cobertura
+        try {
+          const coberturaRes = await fetch(
+            `/api/anywhere/api/v1/private/mobile/contract/${id}/insuredObjects`,
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+                "Content-Type": "application/json",
+                Accept: "application/json",
+              },
+            }
+          );
+
+          if (coberturaRes.ok) {
+            const coberturaData = await coberturaRes.json();
+            setCobertura(
+              Array.isArray(coberturaData) ? coberturaData : [coberturaData]
+            );
+          } else {
+            console.warn("Cobertura não carregada:", coberturaRes.statusText);
+          }
+        } catch (err) {
+          console.warn("Erro ao buscar cobertura:", err);
+        }
+
+        // 3. Buscar sinistros (claims)
+        try {
+          const claimsRes = await fetch(
+            `/api/anywhere/api/v1/private/mobile/contract/${id}/claims`,
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+                "Content-Type": "application/json",
+                Accept: "application/json",
+              },
+            }
+          );
+
+          if (claimsRes.ok) {
+            const claimsData = await claimsRes.json();
+            setSinistros(Array.isArray(claimsData) ? claimsData : [claimsData]);
+          } else {
+            console.warn("Sinistros não carregados:", claimsRes.statusText);
+          }
+        } catch (err) {
+          console.warn("Erro ao buscar sinistros:", err);
+        }
+      } catch (mainErr) {
+        console.error(mainErr);
+        setError("Erro ao carregar detalhes da apólice.");
       } finally {
         setIsLoading(false);
       }
     };
 
-    fetchApolices();
+    fetchData();
   }, [token, id]);
-
-  useEffect(() => {
-    if (!token) return;
-
-    const fetchCoberturaApolices = async () => {
-      setIsLoading(true);
-      setError(null);
-
-      try {
-        const response = await fetch(
-          `/api/anywhere/api/v1/private/mobile/contract/${id}/insuredObjects`,
-          {
-            method: "GET",
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "application/json",
-              Accept: "application/json",
-            },
-          }
-        );
-
-        if (!response.ok) {
-          throw {
-            message: `Erro ao buscar objetos segurados`,
-            status: response.status,
-          };
-        }
-
-        const data: InsurancePolicy[] = await response.json();
-        setCobertura(Array.isArray(data) ? data : [data]);
-      } catch (error) {
-        console.error("Erro ao buscar objetos segurados:", error);
-        setError(
-          "Erro ao carregar objetos segurados. Tente novamente mais tarde."
-        );
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchCoberturaApolices();
-  }, [token, id]);
-
-  useEffect(() => {
-    if (!token || !contractNumber) return;
-
-    const fetchCoberturas = async () => {
-      setIsLoading(true);
-      setError(null);
-
-      try {
-        const response = await fetch(
-          `/api/anywhere/api/v1/private/mobile/contract/${contractNumber}/claims`,
-          {
-            method: "GET",
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "application/json",
-              Accept: "application/json",
-            },
-          }
-        );
-
-        if (!response.ok) {
-          throw new Error("Erro ao buscar coberturas do sinistro");
-        }
-
-        const data = await response.json();
-
-        // Normaliza os dados para sempre trabalhar com array
-        setSinistros(Array.isArray(data) ? data : [data]);
-      } catch (error) {
-        console.error("Erro ao buscar coberturas:", error);
-        setError("Erro ao carregar coberturas. Tente novamente mais tarde.");
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchCoberturas();
-  }, [token, contractNumber]);
 
   const handleDownload = async (invoiceNumber: string) => {
     setLoadingStates((prev) => ({ ...prev, [invoiceNumber]: true }));
@@ -238,6 +208,31 @@ export function ApoliceDetailPage({
   const handleSinistroDetalhes = (claimNumber: string) => {
     window.location.href = `/sinistro/${claimNumber}`;
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <LoadingScreen />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <p className="text-red-500 text-center">{error}</p>
+      </div>
+    );
+  }
+
+  if (!apoliceDetails || apoliceDetails.length === 0) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <LoadingScreen />
+      </div>
+    );
+  }
+
   return (
     <div className="flex-1 space-y-6 p-6 md:p-8">
       <div className="flex items-center justify-between">
@@ -267,406 +262,391 @@ export function ApoliceDetailPage({
           </div>
         ))}
       </div>
-      {isLoading ? (
-        <div className="flex items-center justify-center h-screen">
-          <LoadingScreen />
-        </div>
-      ) : error ? (
-        <p className="text-red-500">{error}</p>
-      ) : sinistros.length === 0 ? (
-        <LoadingScreen />
-      ) : (
-        <>
-          {apoliceDetails.map((apolice, idx) => (
-            <div key={idx} className="space-y-4">
-              <Card>
-                <CardHeader className="">
-                  <div className="flex items-center justify-between">
+
+      {apoliceDetails.map((apolice, idx) => (
+        <div key={idx} className="space-y-4">
+          <Card>
+            <CardHeader className="">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div className="bg-[#002256] p-2 sm:p-3  rounded-full text-white">
+                    <IoShieldCheckmarkSharp className="size-4 sm:size-5 xl:size-6" />
+                  </div>
+                  <div className="flex flex-col ">
+                    <CardTitle className="flex items-center gap-2 text-xl text-[#002256]">
+                      {apolice.productName}
+                    </CardTitle>
+                    <CardDescription>
+                      Apólice #{apolice.contractNumber} • Veículo:{" "}
+                      {apolice.registration}
+                    </CardDescription>
+                  </div>
+                  <div className="hidden sm:flex flex-col ">
+                    <Badge
+                      className={`${getStatusApolicesColors(
+                        apolice.contractStatus
+                      )} px-2 py-1 text-xs xl:text-sm font-medium `}
+                    >
+                      {getApolicesStatusText(apolice.contractStatus)}
+                    </Badge>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="text-right">
+                    <div className="font-semibold text-sm">
+                      {formatCurrency(apolice.totalPremium)}
+                    </div>
+                    <div className="text-xs text-gray-400">
+                      <span>12x de {formatCurrency(apolice.premium)} </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </CardHeader>
+          </Card>
+          <Tabs defaultValue="detalhes" className="">
+            <TabsList className="flex justify-start sm:space-x-2 space-x-0.5">
+              <TabsTrigger
+                className="sm:px-4 xl:text-lg sm:py-2 px-2 py-1 rounded-md text-[#002256] font-semibold hover:bg-[#002256] hover:text-white data-[state=active]:bg-[#002256] data-[state=active]:text-white transition-colors"
+                value="detalhes"
+              >
+                Detalhes
+              </TabsTrigger>
+              <TabsTrigger
+                className="sm:px-4 xl:text-lg sm:py-2 px-2 py-1 rounded-md text-[#002256] font-semibold hover:bg-[#002256] hover:text-white data-[state=active]:bg-[#002256] data-[state=active]:text-white transition-colors"
+                value="coberturas"
+              >
+                Coberturas
+              </TabsTrigger>
+              <TabsTrigger
+                className="sm:px-4 xl:text-lg sm:py-2 ps-2 py-1 rounded-md text-[#002256] font-semibold hover:bg-[#002256] hover:text-white data-[state=active]:bg-[#002256] data-[state=active]:text-white transition-colors"
+                value="recibos"
+              >
+                Recibos
+              </TabsTrigger>
+              <TabsTrigger
+                className="sm:px-4 xl:text-lg sm:py-2 px-2 py-1 rounded-md text-[#002256] font-semibold hover:bg-[#002256] hover:text-white data-[state=active]:bg-[#002256] data-[state=active]:text-white transition-colors"
+                value="sinistros"
+              >
+                Sinistros
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent
+              value="detalhes"
+              className="bg-white rounded-lg px-4 xl:p-6"
+            >
+              <div>
+                <h3 className="text-lg font-semibold uppercase">
+                  Informações da Apólice
+                </h3>
+                <div className="flex flex-col gap-6 py-4 xl:py-6">
+                  <div className="flex justify-between">
                     <div className="flex items-center gap-4">
-                      <div className="bg-[#002256] p-2 sm:p-3  rounded-full text-white">
-                        <IoShieldCheckmarkSharp className="size-4 sm:size-5 xl:size-6" />
+                      <div className="bg-gray-200  p-2 rounded-full ">
+                        <FaRegCalendar className="size-3 sm:size-4 xl:size-5 text-[#002256]" />
                       </div>
-                      <div className="flex flex-col ">
-                        <CardTitle className="flex items-center gap-2 text-xl text-[#002256]">
-                          {apolice.productName}
-                        </CardTitle>
-                        <CardDescription>
-                          Apólice #{apolice.contractNumber} • Veículo:{" "}
-                          {apolice.registration}
-                        </CardDescription>
-                      </div>
-                      <div className="hidden sm:flex flex-col ">
-                        <Badge
-                          className={`${getStatusApolicesColors(
-                            apolice.contractStatus
-                          )} px-2 py-1 text-xs xl:text-sm font-medium `}
-                        >
-                          {getApolicesStatusText(apolice.contractStatus)}
-                        </Badge>
-                      </div>
+                      <p className="font-bold text-gray-900 text-[12px] xl:text-base uppercase">
+                        Data Inicio
+                      </p>
                     </div>
                     <div className="flex items-center gap-2">
-                      <div className="text-right">
-                        <div className="font-semibold text-sm">
-                          {formatCurrency(apolice.totalPremium)}
-                        </div>
-                        <div className="text-xs text-gray-400">
-                          <span>12x de {formatCurrency(apolice.premium)} </span>
-                        </div>
-                      </div>
+                      <p className="font-bold text-gray-900 text-[12px] xl:text-base ">
+                        {formatDate(apolice.startDate)}
+                      </p>
                     </div>
                   </div>
-                </CardHeader>
-              </Card>
-              <Tabs defaultValue="detalhes" className="">
-                <TabsList className="flex justify-start sm:space-x-2 space-x-0.5">
-                  <TabsTrigger
-                    className="sm:px-4 xl:text-lg sm:py-2 px-2 py-1 rounded-md text-[#002256] font-semibold hover:bg-[#002256] hover:text-white data-[state=active]:bg-[#002256] data-[state=active]:text-white transition-colors"
-                    value="detalhes"
-                  >
-                    Detalhes
-                  </TabsTrigger>
-                  <TabsTrigger
-                    className="sm:px-4 xl:text-lg sm:py-2 px-2 py-1 rounded-md text-[#002256] font-semibold hover:bg-[#002256] hover:text-white data-[state=active]:bg-[#002256] data-[state=active]:text-white transition-colors"
-                    value="coberturas"
-                  >
-                    Coberturas
-                  </TabsTrigger>
-                  <TabsTrigger
-                    className="sm:px-4 xl:text-lg sm:py-2 ps-2 py-1 rounded-md text-[#002256] font-semibold hover:bg-[#002256] hover:text-white data-[state=active]:bg-[#002256] data-[state=active]:text-white transition-colors"
-                    value="recibos"
-                  >
-                    Recibos
-                  </TabsTrigger>
-                  <TabsTrigger
-                    className="sm:px-4 xl:text-lg sm:py-2 px-2 py-1 rounded-md text-[#002256] font-semibold hover:bg-[#002256] hover:text-white data-[state=active]:bg-[#002256] data-[state=active]:text-white transition-colors"
-                    value="sinistros"
-                  >
-                    Sinistros
-                  </TabsTrigger>
-                </TabsList>
+                  <div className="flex justify-between">
+                    <div className="flex items-center gap-4">
+                      <div className="bg-gray-200  p-2 rounded-full ">
+                        <FaRegCalendar className="size-3 sm:size-4 xl:size-5 text-[#002256]" />
+                      </div>
+                      <p className="font-bold text-gray-900 text-[12px] xl:text-base uppercase">
+                        Data Vencimento
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <p className="font-bold text-gray-900 text-[12px] xl:text-base ">
+                        {formatDate(apolice.endDate)}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex justify-between">
+                    <div className="flex items-center gap-4">
+                      <div className="bg-gray-200  p-2 rounded-full ">
+                        <FaDollarSign className="size-3 sm:size-4 xl:size-5 text-[#002256]" />
+                      </div>
+                      <p className="font-bold text-gray-900 text-[12px] xl:text-base uppercase">
+                        Prêmio
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <p className="font-bold text-gray-900 text-[12px] xl:text-base ">
+                        {formatCurrency(apolice.premium)}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <Separator className="bg-red-600" />
+              <div className="mt-4">
+                <h3 className="text-lg font-semibold uppercase">
+                  Informações do Segurado
+                </h3>
+                <div className="flex flex-col gap-6 py-4 xl:py-6">
+                  <div className="flex justify-between">
+                    <div className="flex items-center gap-4">
+                      <div className="bg-gray-200  p-2 rounded-full ">
+                        <FaUser className="size-3 sm:size-4 xl:size-5 text-[#002256]" />
+                      </div>
+                      <p className="font-bold text-gray-900 text-[12px] xl:text-base uppercase">
+                        Nome Completo
+                      </p>
+                    </div>
+                    <div className="flex flex-col items-end gap-2">
+                      <p className="font-bold text-gray-900 text-[12px] xl:text-base ">
+                        {apolice.clientName}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex justify-between">
+                    <div className="flex items-center gap-4">
+                      <div className="bg-gray-200  p-2 rounded-full ">
+                        <FaAddressCard className="size-3 sm:size-4 xl:size-5 text-[#002256]" />
+                      </div>
+                      <p className="font-bold text-gray-900 text-[12px] xl:text-base uppercase">
+                        Nif
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <p className="font-bold text-gray-900 text-[12px] xl:text-base ">
+                        {apolice.primaryMobileContact}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex justify-between">
+                    <div className="flex items-center gap-4">
+                      <div className="bg-gray-200  p-2 rounded-full ">
+                        <FaMobile className="size-3 sm:size-4 xl:size-5 text-[#002256]" />
+                      </div>
+                      <p className="font-bold text-gray-900 text-[12px] xl:text-base uppercase">
+                        Telefone
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <p className="font-bold text-gray-900 text-[12px] xl:text-base ">
+                        {apolice.contacts[1]}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex justify-between">
+                    <div className="flex items-center gap-4">
+                      <div className="bg-gray-200  p-2 rounded-full ">
+                        <MdEmail className="size-3 sm:size-4 xl:size-5 text-[#002256]" />
+                      </div>
+                      <p className="font-bold text-gray-900 text-[12px] xl:text-base uppercase">
+                        Email
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <p className="font-bold text-gray-900 text-[12px] xl:text-base ">
+                        {apolice.contacts[0]}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <Separator className="bg-red-600" />
+              <div className="mt-4">
+                <h3 className="text-lg font-semibold uppercase">
+                  Assistência 24h
+                </h3>
+                <div className="flex flex-col gap-6 py-4 xl:py-6">
+                  <div className="flex justify-between">
+                    <div className="flex items-center gap-4">
+                      <div className="bg-gray-200  p-2 rounded-full ">
+                        <FaMobile className="size-3 sm:size-4 xl:size-5 text-[#002256]" />
+                      </div>
+                      <p className="font-bold text-gray-900 text-[12px] xl:text-base uppercase">
+                        Telefone de Emergência
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <p className="font-bold text-gray-900 text-[12px] xl:text-base ">
+                        {apolice.primaryMobileContact}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex justify-between">
+                    <div className="flex items-center gap-4">
+                      <div className="bg-gray-200  p-2 rounded-full ">
+                        <MdEmail className="size-3 sm:size-4 xl:size-5 text-[#002256]" />
+                      </div>
+                      <p className="font-bold text-gray-900 text-[12px] xl:text-base uppercase">
+                        Whatsapp
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <p className="font-bold text-gray-900 text-[12px] xl:text-base ">
+                        {apolice.primaryEmailContact}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <Separator className="bg-red-600" />
+              <div className="py-4">
+                <div className="flex justify-center lg:justify-end gap-1 sm:gap-2">
+                  <Button className="bg-white sm:px-4 sm:py-2 px-1 py-0.5 text-[10px] sm:text-sm  border border-blue-950 hover:bg-blue-950 text-blue-950 hover:text-white">
+                    Abrir Sinistro
+                  </Button>
+                  <Button className="bg-white sm:px-4 sm:py-2 px-1 py-0.5 text-[10px] sm:text-sm  border border-blue-950 hover:bg-blue-950 text-blue-950 hover:text-white">
+                    Solicitar Contacto
+                  </Button>
+                  <Button className="bg-white sm:px-4 sm:py-2 px-1 py-0.5 text-[10px] sm:text-sm border border-blue-950 hover:bg-blue-950 text-blue-950 hover:text-white">
+                    Renovar Apolice
+                  </Button>
+                </div>
+              </div>
+            </TabsContent>
 
-                <TabsContent
-                  value="detalhes"
-                  className="bg-white rounded-lg px-4 xl:p-6"
-                >
-                  <div>
-                    <h3 className="text-lg font-semibold uppercase">
-                      Informações da Apólice
-                    </h3>
-                    <div className="flex flex-col gap-6 py-4 xl:py-6">
-                      <div className="flex justify-between">
-                        <div className="flex items-center gap-4">
-                          <div className="bg-gray-200  p-2 rounded-full ">
-                            <FaRegCalendar className="size-3 sm:size-4 xl:size-5 text-[#002256]" />
-                          </div>
-                          <p className="font-bold text-gray-900 text-[12px] xl:text-base uppercase">
-                            Data Inicio
-                          </p>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <p className="font-bold text-gray-900 text-[12px] xl:text-base ">
-                            {formatDate(apolice.startDate)}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="flex justify-between">
-                        <div className="flex items-center gap-4">
-                          <div className="bg-gray-200  p-2 rounded-full ">
-                            <FaRegCalendar className="size-3 sm:size-4 xl:size-5 text-[#002256]" />
-                          </div>
-                          <p className="font-bold text-gray-900 text-[12px] xl:text-base uppercase">
-                            Data Vencimento
-                          </p>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <p className="font-bold text-gray-900 text-[12px] xl:text-base ">
-                            {formatDate(apolice.endDate)}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="flex justify-between">
-                        <div className="flex items-center gap-4">
-                          <div className="bg-gray-200  p-2 rounded-full ">
-                            <FaDollarSign className="size-3 sm:size-4 xl:size-5 text-[#002256]" />
-                          </div>
-                          <p className="font-bold text-gray-900 text-[12px] xl:text-base uppercase">
-                            Prêmio
-                          </p>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <p className="font-bold text-gray-900 text-[12px] xl:text-base ">
-                            {formatCurrency(apolice.premium)}
-                          </p>
-                        </div>
-                      </div>
+            <TabsContent value="coberturas">
+              <div className="grid grid-cols-1 gap-3">
+                {cobertura.map((item, index) => (
+                  <div
+                    key={index}
+                    className="flex flex-col bg-white rounded-xl p-4 gap-4 shadow-sm hover:shadow-md transition-shadow"
+                  >
+                    <div
+                      className={`flex items-center ${
+                        expandedItems[index] ? " border-b border-red-600" : ""
+                      } pb-2 cursor-pointer`}
+                      onClick={() => toggleExpand(index)}
+                    >
+                      <span className="font-bold flex-grow">
+                        {item.name || "Cobertura sem nome"}
+                      </span>
+                      <span className="text-sm text-gray-500">
+                        {expandedItems[index] ? "▼" : "▶"}
+                      </span>
                     </div>
-                  </div>
-                  <Separator className="bg-red-600" />
-                  <div className="mt-4">
-                    <h3 className="text-lg font-semibold uppercase">
-                      Informações do Segurado
-                    </h3>
-                    <div className="flex flex-col gap-6 py-4 xl:py-6">
-                      <div className="flex justify-between">
-                        <div className="flex items-center gap-4">
-                          <div className="bg-gray-200  p-2 rounded-full ">
-                            <FaUser className="size-3 sm:size-4 xl:size-5 text-[#002256]" />
-                          </div>
-                          <p className="font-bold text-gray-900 text-[12px] xl:text-base uppercase">
-                            Nome Completo
-                          </p>
-                        </div>
-                        <div className="flex flex-col items-end gap-2">
-                          <p className="font-bold text-gray-900 text-[12px] xl:text-base ">
-                            {apolice.clientName}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="flex justify-between">
-                        <div className="flex items-center gap-4">
-                          <div className="bg-gray-200  p-2 rounded-full ">
-                            <FaAddressCard className="size-3 sm:size-4 xl:size-5 text-[#002256]" />
-                          </div>
-                          <p className="font-bold text-gray-900 text-[12px] xl:text-base uppercase">
-                            Nif
-                          </p>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <p className="font-bold text-gray-900 text-[12px] xl:text-base ">
-                            {apolice.primaryMobileContact}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="flex justify-between">
-                        <div className="flex items-center gap-4">
-                          <div className="bg-gray-200  p-2 rounded-full ">
-                            <FaMobile className="size-3 sm:size-4 xl:size-5 text-[#002256]" />
-                          </div>
-                          <p className="font-bold text-gray-900 text-[12px] xl:text-base uppercase">
-                            Telefone
-                          </p>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <p className="font-bold text-gray-900 text-[12px] xl:text-base ">
-                            {apolice.contacts[1]}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="flex justify-between">
-                        <div className="flex items-center gap-4">
-                          <div className="bg-gray-200  p-2 rounded-full ">
-                            <MdEmail className="size-3 sm:size-4 xl:size-5 text-[#002256]" />
-                          </div>
-                          <p className="font-bold text-gray-900 text-[12px] xl:text-base uppercase">
-                            Email
-                          </p>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <p className="font-bold text-gray-900 text-[12px] xl:text-base ">
-                            {apolice.contacts[0]}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  <Separator className="bg-red-600" />
-                  <div className="mt-4">
-                    <h3 className="text-lg font-semibold uppercase">
-                      Assistência 24h
-                    </h3>
-                    <div className="flex flex-col gap-6 py-4 xl:py-6">
-                      <div className="flex justify-between">
-                        <div className="flex items-center gap-4">
-                          <div className="bg-gray-200  p-2 rounded-full ">
-                            <FaMobile className="size-3 sm:size-4 xl:size-5 text-[#002256]" />
-                          </div>
-                          <p className="font-bold text-gray-900 text-[12px] xl:text-base uppercase">
-                            Telefone de Emergência
-                          </p>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <p className="font-bold text-gray-900 text-[12px] xl:text-base ">
-                            {apolice.primaryMobileContact}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="flex justify-between">
-                        <div className="flex items-center gap-4">
-                          <div className="bg-gray-200  p-2 rounded-full ">
-                            <MdEmail className="size-3 sm:size-4 xl:size-5 text-[#002256]" />
-                          </div>
-                          <p className="font-bold text-gray-900 text-[12px] xl:text-base uppercase">
-                            Whatsapp
-                          </p>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <p className="font-bold text-gray-900 text-[12px] xl:text-base ">
-                            {apolice.primaryEmailContact}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  <Separator className="bg-red-600" />
-                  <div className="py-4">
-                    <div className="flex justify-center lg:justify-end gap-1 sm:gap-2">
-                      <Button className="bg-white sm:px-4 sm:py-2 px-1 py-0.5 text-[10px] sm:text-sm  border border-blue-950 hover:bg-blue-950 text-blue-950 hover:text-white">
-                        Abrir Sinistro
-                      </Button>
-                      <Button className="bg-white sm:px-4 sm:py-2 px-1 py-0.5 text-[10px] sm:text-sm  border border-blue-950 hover:bg-blue-950 text-blue-950 hover:text-white">
-                        Solicitar Contacto
-                      </Button>
-                      <Button className="bg-white sm:px-4 sm:py-2 px-1 py-0.5 text-[10px] sm:text-sm border border-blue-950 hover:bg-blue-950 text-blue-950 hover:text-white">
-                        Renovar Apolice
-                      </Button>
-                    </div>
-                  </div>
-                </TabsContent>
 
-                <TabsContent value="coberturas">
-                  <div className="grid grid-cols-1 gap-3">
-                    {cobertura.map((item, index) => (
-                      <div
-                        key={index}
-                        className="flex flex-col bg-white rounded-xl p-4 gap-4 shadow-sm hover:shadow-md transition-shadow"
-                      >
-                        <div
-                          className={`flex items-center ${
-                            expandedItems[index]
-                              ? " border-b border-red-600"
-                              : ""
-                          } pb-2 cursor-pointer`}
-                          onClick={() => toggleExpand(index)}
+                    {expandedItems[index] && (
+                      <div className="flex flex-col font-semibold ml-4 gap-3">
+                        {item.risks.map((risk, idx) => (
+                          <div
+                            key={idx}
+                            className="flex items-center justify-between py-1"
+                          >
+                            <div className="flex items-center gap-3">
+                              <div className="flex items-center bg-green-200 p-1 rounded-full">
+                                <FaCheck className="w-3 h-3 text-green-700" />
+                              </div>
+                              <span className="font-medium">{risk.name}</span>
+                            </div>
+                            {risk.premium > 1 && (
+                              <div className="flex flex-col items-end">
+                                <span>{formatCurrency(risk.capital)}</span>
+                                <span className="text-xs text-gray-400">
+                                  12x de {formatCurrency(risk.premium / 12)}
+                                </span>
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </TabsContent>
+
+            <TabsContent value="recibos">
+              <div className=" bg-white rounded-xl p-4 gap-4 shadow-sm hover:shadow-md transition-shadow">
+                {apolice.invoices.map((item, index) => (
+                  <div key={index} className="flex flex-col">
+                    <div className="flex items-center justify-between py-2">
+                      <div className="flex items-center gap-3">
+                        <div className="flex items-center bg-gray-200 p-2 rounded-full">
+                          <IoReceiptSharp className="size-4 sm:size-6 xl:size-8 text-[#002256]" />
+                        </div>
+                        <div className="flex flex-col">
+                          <span className="font-medium underline text-[#002256]">
+                            Recibo Nº {item.number}
+                          </span>
+                          <span className="text-xs sm:text-sm text-gray-400">
+                            Valor do Prêmio: {formatCurrency(item.value)}
+                          </span>
+                          <span className="text-xs sm:text-sm text-gray-400">
+                            Estado: {getStatusReciverTexts(item.status)}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="flex flex-col items-end">
+                        <Button
+                          onClick={() => handleDownload(item.number)}
+                          disabled={loadingStates[item.number]}
+                          className="bg-[#002256] hover:bg-[#002256]/50 sm:px-4 sm:py-2 px-1 py-0.5 text-[10px] sm:text-sm text-white"
                         >
-                          <span className="font-bold flex-grow">
-                            {item.name || "Cobertura sem nome"}
-                          </span>
-                          <span className="text-sm text-gray-500">
-                            {expandedItems[index] ? "▼" : "▶"}
-                          </span>
-                        </div>
-
-                        {expandedItems[index] && (
-                          <div className="flex flex-col font-semibold ml-4 gap-3">
-                            {item.risks.map((risk, idx) => (
-                              <div
-                                key={idx}
-                                className="flex items-center justify-between py-1"
-                              >
-                                <div className="flex items-center gap-3">
-                                  <div className="flex items-center bg-green-200 p-1 rounded-full">
-                                    <FaCheck className="w-3 h-3 text-green-700" />
-                                  </div>
-                                  <span className="font-medium">
-                                    {risk.name}
-                                  </span>
-                                </div>
-                                {risk.premium > 1 && (
-                                  <div className="flex flex-col items-end">
-                                    <span>{formatCurrency(risk.capital)}</span>
-                                    <span className="text-xs text-gray-400">
-                                      12x de {formatCurrency(risk.premium / 12)}
-                                    </span>
-                                  </div>
-                                )}
-                              </div>
-                            ))}
-                          </div>
-                        )}
+                          {loadingStates[item.number] ? (
+                            <FaSpinner className="animate-spin" />
+                          ) : (
+                            <>
+                              <Download className="size-2 sm:size-4 xl:size-5 text-white" />
+                              <span>Baixar</span>
+                            </>
+                          )}
+                        </Button>
                       </div>
-                    ))}
+                    </div>
                   </div>
-                </TabsContent>
+                ))}
+              </div>
+            </TabsContent>
 
-                <TabsContent value="recibos">
-                  <div className=" bg-white rounded-xl p-4 gap-4 shadow-sm hover:shadow-md transition-shadow">
-                    {apolice.invoices.map((item, index) => (
-                      <div key={index} className="flex flex-col">
-                        <div className="flex items-center justify-between py-2">
-                          <div className="flex items-center gap-3">
-                            <div className="flex items-center bg-gray-200 p-2 rounded-full">
-                              <IoReceiptSharp className="size-4 sm:size-6 xl:size-8 text-[#002256]" />
-                            </div>
-                            <div className="flex flex-col">
-                              <span className="font-medium underline text-[#002256]">
-                                Recibo Nº {item.number}
-                              </span>
-                              <span className="text-xs sm:text-sm text-gray-400">
-                                Valor do Prêmio: {formatCurrency(item.value)}
-                              </span>
-                              <span className="text-xs sm:text-sm text-gray-400">
-                                Estado: {getStatusReciverTexts(item.status)}
-                              </span>
-                            </div>
+            <TabsContent value="sinistros">
+              <div className=" bg-white rounded-xl p-4 gap-4 shadow-sm hover:shadow-md transition-shadow">
+                {sinistros.map((item, index) => (
+                  <div key={index} className="flex flex-col">
+                    <div className="flex items-center justify-between py-2">
+                      <div className="flex items-center gap-3">
+                        <div className="flex items-center bg-gray-200 p-2 rounded-full">
+                          <FaTriangleExclamation className="size-4 sm:size-6 xl:size-8 text-[#002256]" />
+                        </div>
+                        <div className="flex flex-col gap-1">
+                          <div className="flex flex-col">
+                            <span className="font-medium text-[#002256]">
+                              {item.clientName}
+                            </span>
                           </div>
-                          <div className="flex flex-col items-end">
-                            <Button
-                              onClick={() => handleDownload(item.number)}
-                              disabled={loadingStates[item.number]}
-                              className="bg-[#002256] hover:bg-[#002256]/50 sm:px-4 sm:py-2 px-1 py-0.5 text-[10px] sm:text-sm text-white"
-                            >
-                              {loadingStates[item.number] ? (
-                                <FaSpinner className="animate-spin" />
-                              ) : (
-                                <>
-                                  <Download className="size-2 sm:size-4 xl:size-5 text-white" />
-                                  <span>Baixar</span>
-                                </>
-                              )}
-                            </Button>
+                          <div className="flex flex-col">
+                            <span className="text-xs sm:text-xs text-gray-400">
+                              Sinistro: {item.claimNumber}
+                            </span>
+                            <span className="text-xs sm:text-xs text-gray-400">
+                              Estado: {getApolicesStatusText(item.status)}
+                            </span>
                           </div>
                         </div>
                       </div>
-                    ))}
-                  </div>
-                </TabsContent>
-
-                <TabsContent value="sinistros">
-                  <div className=" bg-white rounded-xl p-4 gap-4 shadow-sm hover:shadow-md transition-shadow">
-                    {sinistros.map((item, index) => (
-                      <div key={index} className="flex flex-col">
-                        <div className="flex items-center justify-between py-2">
-                          <div className="flex items-center gap-3">
-                            <div className="flex items-center bg-gray-200 p-2 rounded-full">
-                              <FaTriangleExclamation className="size-4 sm:size-6 xl:size-8 text-[#002256]" />
-                            </div>
-                            <div className="flex flex-col gap-1">
-                              <div className="flex flex-col">
-                                <span className="font-medium text-[#002256]">
-                                  {item.clientName}
-                                </span>
-                              </div>
-                              <div className="flex flex-col">
-                                <span className="text-xs sm:text-xs text-gray-400">
-                                  Sinistro: {item.claimNumber}
-                                </span>
-                                <span className="text-xs sm:text-xs text-gray-400">
-                                  Estado: {getApolicesStatusText(item.status)}
-                                </span>
-                              </div>
-                            </div>
-                          </div>
-                          <div>
-                            <Button
-                              onClick={() =>
-                                onSelectDetail(item.claimNumber.toString())
-                              }
-                              className="bg-[#002256] hover:bg-[#002256]/50 sm:px-4 sm:py-2 px-1 py-0.5 text-[10px] sm:text-sm text-white"
-                            >
-                              <FaEye /> Detalhes
-                            </Button>
-                          </div>
-                        </div>
+                      <div>
+                        <Button
+                          onClick={() =>
+                            onSelectDetail(item.claimNumber.toString())
+                          }
+                          className="bg-[#002256] hover:bg-[#002256]/50 sm:px-4 sm:py-2 px-1 py-0.5 text-[10px] sm:text-sm text-white"
+                        >
+                          <FaEye /> Detalhes
+                        </Button>
                       </div>
-                    ))}
+                    </div>
                   </div>
-                </TabsContent>
-              </Tabs>
-            </div>
-          ))}
-        </>
-      )}
+                ))}
+              </div>
+            </TabsContent>
+          </Tabs>
+        </div>
+      ))}
     </div>
   );
 }

@@ -1,5 +1,5 @@
-/* eslint-disable react-hooks/exhaustive-deps */
 "use client";
+/* eslint-disable react-hooks/exhaustive-deps */
 import {
   createContext,
   useContext,
@@ -16,10 +16,13 @@ type User = {
   id: string;
   nome: string;
   username: string;
-  tipo: "particular" | "empresarial";
-  sessao: string;
+  tipo: "cliente" | "empresarial";
   criado_em?: string;
   ativo?: boolean;
+  nif?: string;
+  email?: string;
+  token: string;
+  session_id: string;
 };
 
 type AuthContextType = {
@@ -29,7 +32,7 @@ type AuthContextType = {
   login: (username: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
   isAuthenticated: boolean;
-  currentProfile: "particular" | "empresarial";
+  currentProfile: "cliente" | "empresarial";
   clearError: () => void;
   token: string | null;
 };
@@ -55,12 +58,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     document.cookie = "token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
   };
 
-  // Initialize auth state from storage
   useEffect(() => {
     const initializeAuth = async () => {
       try {
         const userData = localStorage.getItem("user");
         const authToken = localStorage.getItem("token");
+
+        console.log("Initializing auth with userData:", userData);
 
         if (userData && authToken) {
           setUser(JSON.parse(userData));
@@ -97,18 +101,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           password,
         });
 
-        if (!response.data?.user?.sessao) {
-          throw new Error(response.data?.response.desc);
-        }
+        const { token, ...userData } = response.data;
 
-        const { user } = response.data;
-        const userToken = user.sessao;
+        localStorage.setItem("user", JSON.stringify(userData));
+        localStorage.setItem("token", token);
+        setUser(userData);
+        setToken(token);
+        setAuthCookies(token);
 
-        localStorage.setItem("user", JSON.stringify(user));
-        localStorage.setItem("token", userToken);
-        setUser(user);
-        setToken(userToken);
-        setAuthCookies(userToken);
+        console.log("Login successful, user data:", userData);
 
         router.replace("/backoffice");
       } catch (error) {
@@ -116,7 +117,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         if (axios.isAxiosError(error)) {
           errorMessage =
-            error.response?.data?.response?.desc ||
+            error.response?.data?.error || // <- aqui
             error.response?.data?.desc ||
             "Credenciais inválidas";
         } else if (error instanceof Error) {
@@ -135,11 +136,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = useCallback(async () => {
     clearAuthData();
-    clearAuthCookies();
     router.push("/login");
   }, [router]);
 
-  // Sync auth state with route changes
   useEffect(() => {
     if (isLoading) return;
 
@@ -168,7 +167,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       login,
       logout,
       isAuthenticated: !!user,
-      currentProfile: user?.tipo || "particular",
+      currentProfile: user?.tipo || "cliente",
       clearError: () => setError(null),
       token,
     }),

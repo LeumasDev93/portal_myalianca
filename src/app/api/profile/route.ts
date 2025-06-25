@@ -4,7 +4,7 @@ export async function GET(request: Request) {
   console.log('Request received at:', new Date().toISOString());
   
   const { searchParams } = new URL(request.url);
-  const userId = searchParams.get('user_id');
+  const userId = searchParams.get('user');
   console.log('User ID:', userId);
 
   if (!userId) {
@@ -15,16 +15,17 @@ export async function GET(request: Request) {
     );
   }
 
-  try {
-    const apiUrl = `http://41.221.195.121:8280/aliancaconnect/profile?user_id=${userId}`;
-    console.log('Fetching from API:', apiUrl);
-    
-    const response = await fetch(apiUrl, {
-      headers: {
-        'Authorization': `Bearer 3eb96e29-664b-4bb6-8813-bb7549fcee19`,
-        'Content-Type': 'application/json'
-      }
-    });
+   const apiUrl = `${process.env.NEXT_PUBLIC_API_BASE_URL}/accounts/profile?user_id=${userId}`;
+    const apiToken = process.env.API_SECRET_TOKEN;
+      try {
+        console.log('Fetching from API:', apiUrl);
+        
+        const response = await fetch(apiUrl, {
+          headers: {
+          'Authorization': `Bearer ${apiToken}`,
+          'ApiKey': process.env.NEXT_PUBLIC_API_KEY || '' 
+          }
+        });
 
     console.log('API response status:', response.status);
     

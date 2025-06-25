@@ -13,32 +13,38 @@ export async function POST(request: Request) {
       );
     }
 
-    const apiUrl = `${process.env.NEXT_PUBLIC_API_BASE_URL}/login`;
-    const apiToken = process.env.API_SECRET_TOKEN;
+    const apiUrl = `${process.env.NEXT_PUBLIC_API_BASE_URL}/accounts/login`;
 
     const response = await fetch(apiUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiToken}`
+        'ApiKey': process.env.NEXT_PUBLIC_API_KEY || '' // adicione a chave de API aqui
       },
       body: JSON.stringify({ username, password })
     });
 
+    const responseData = await response.json();
+
+    console.log('Resposta da API:', responseData);
+
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
       return NextResponse.json(
-        { 
-          error: errorData.response?.desc || 'Erro na autenticação',
-          details: errorData
+        {
+          error: responseData.response?.desc || 'Erro ao autenticar',
+          details: responseData,
         },
         { status: response.status }
       );
-    }
+  }
 
-    const data = await response.json();
-    return NextResponse.json(data);
 
+    return NextResponse.json({
+    ...responseData,
+    token: responseData.token,
+  });
+
+    
   } catch (error) {
     console.error('Erro interno:', error);
     return NextResponse.json(

@@ -26,6 +26,12 @@ export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isloading, setIsLoading] = useState(false);
+  const [erro, setErro] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
+  const [step, setStep] = useState<"email" | "otp" | "password">("email");
+  const [otp, setOtp] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     clearError();
@@ -41,18 +47,92 @@ export default function LoginPage() {
     }
   };
 
-  const handleResetPasswordSubmit = async (e: React.FormEvent) => {
+  const handleSendEmail = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    // Lógica para enviar email de recuperação...
-    setIsLoading(false);
+    setErro("");
+    setSuccessMessage("");
+
+    try {
+      const res = await fetch("/api/auth/recover-password", {
+        method: "POST",
+        body: JSON.stringify({ email }),
+      });
+
+      const data = await res.json();
+      if (data.message === "SUCCESS") {
+        setSuccessMessage("Código OTP enviado com sucesso.");
+        setStep("otp");
+      } else {
+        setErro(data.message || "Erro ao enviar código.");
+      }
+    } catch (err) {
+      setErro("Erro ao enviar código.");
+    } finally {
+      setIsLoading(false);
+    }
   };
+
+  const handleValidateOtp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setErro("");
+    setSuccessMessage("");
+
+    try {
+      const res = await fetch("/api/auth/validate-otp", {
+        method: "POST",
+        body: JSON.stringify({ email, otp }),
+      });
+
+      const data = await res.json();
+
+      if (data.message === "SUCCESS") {
+        setSuccessMessage("Código validado com sucesso.");
+        setStep("password");
+      } else {
+        setErro(data.message || "Código inválido.");
+      }
+    } catch (err) {
+      setErro("Erro ao validar código.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleResetPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setErro("");
+    setSuccessMessage("");
+
+    try {
+      const res = await fetch("/api/auth/recover-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, otp, newPassword }),
+      });
+
+      const data = await res.json();
+
+      if (data.message === "SUCCESS") {
+        setSuccessMessage("Senha redefinida com sucesso!");
+      } else {
+        setErro(data.message || "Erro ao redefinir senha.");
+      }
+    } catch (err) {
+      setErro("Erro ao redefinir senha.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   // console.log(useAuth());
   return (
     <div className="flex h-screen flex-col md:flex-row bg-gray-50">
       {/* Banner Side */}
-      <div className="hidden md:flex md:w-1/2 relative bg-gradient-to-br from-blue-900 to-blue-700">
-        <div className="absolute h-full inset-0 opacity-30">
+      <div className="hidden md:flex md:w-1/2 relative bg-gradient-to-br from-blue-800 to-blue-600">
+        <div className="absolute h-full inset-0 opacity-50">
           <Image
             src={ImageBG}
             alt="Insurance portal"
@@ -100,7 +180,6 @@ export default function LoginPage() {
                 : "Acesse sua conta empresarial"}
             </p>
           </div>
-
           {error && (
             <div className="absolute -mt-10 flex items-center justify-center w-full xl:max-w-sm py-2 bg-red-500 border shadow-2xl text-white rounded-md text-sm">
               {error}
@@ -214,62 +293,124 @@ export default function LoginPage() {
             </form>
           ) : (
             // Formulário de Recuperação de Senha
-            <form onSubmit={handleResetPasswordSubmit} className="space-y-4">
+            <form
+              onSubmit={
+                step === "email"
+                  ? handleSendEmail
+                  : step === "otp"
+                  ? handleValidateOtp
+                  : handleResetPassword
+              }
+              className="space-y-4"
+            >
               <div className="text-center">
                 <h3 className="text-lg font-medium text-gray-900">
-                  Recuperar Senha
+                  {step === "email"
+                    ? "Recuperar Senha"
+                    : step === "otp"
+                    ? "Validar Código OTP"
+                    : "Nova Senha"}
                 </h3>
                 <p className="mt-2 text-sm text-gray-600">
-                  Digite seu email para receber instruções de recuperação
+                  {step === "email" &&
+                    "Digite seu email para receber o código OTP"}
+                  {step === "otp" &&
+                    `Digite o código OTP enviado para ${email}`}
+                  {step === "password" && "Digite sua nova senha"}
                 </p>
               </div>
 
-              <div className="space-y-2">
-                <label
-                  htmlFor="recovery-email"
-                  className="block text-sm font-medium text-gray-700"
-                >
-                  Email
-                </label>
-                <input
-                  id="recovery-email"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                  placeholder="seu@email.com"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-sm"
-                />
-              </div>
+              {step === "email" && (
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium text-gray-700">
+                    Email
+                  </label>
+                  <input
+                    type="email"
+                    placeholder="seu@email.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                    className="w-full px-3 py-2 border rounded-md text-sm"
+                    disabled={isLoading}
+                  />
+                </div>
+              )}
 
-              <div className="flex justify-between items-center">
-                <button
-                  type="button"
-                  onClick={() => setIsLoginForm(true)}
-                  className="text-sm text-blue-600 hover:text-blue-800"
-                >
-                  Voltar para login
-                </button>
-              </div>
+              {step === "otp" && (
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium text-gray-700">
+                    Código OTP
+                  </label>
+                  <input
+                    type="text"
+                    value={otp}
+                    onChange={(e) => setOtp(e.target.value)}
+                    required
+                    className="w-full px-3 py-2 border rounded-md text-sm"
+                    disabled={isLoading}
+                  />
+                </div>
+              )}
+
+              {step === "password" && (
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium text-gray-700">
+                    Nova Senha
+                  </label>
+                  <input
+                    type="password"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    required
+                    className="w-full px-3 py-2 border rounded-md text-sm"
+                    disabled={isLoading}
+                  />
+                </div>
+              )}
+
+              {error && (
+                <p className="text-red-600 text-center text-sm">{error}</p>
+              )}
+              {successMessage && (
+                <p className="text-green-600 text-center text-sm">
+                  {successMessage}
+                </p>
+              )}
 
               <button
                 type="submit"
-                disabled={isloading}
-                className="w-full bg-blue-600 text-white text-sm py-2 rounded-md hover:bg-blue-700 disabled:opacity-70 flex justify-center items-center gap-2"
+                className="w-full bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700 disabled:opacity-50 flex justify-center items-center gap-2"
+                disabled={isLoading}
               >
-                {isloading ? (
+                {isLoading ? (
                   <>
-                    <Loader2 className="animate-spin h-4 w-4" />
-                    <span>Entrando...</span>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <span>Carregando...</span>
                   </>
+                ) : step === "email" ? (
+                  "Enviar Código"
+                ) : step === "otp" ? (
+                  "Validar Código"
                 ) : (
-                  "Enviar Instruções"
+                  "Redefinir Senha"
                 )}
               </button>
             </form>
           )}
+          {!isLoginForm && (
+            <div className="mt-6 text-center text-xs xl:text-sm text-gray-600">
+              <button
+                type="button"
+                onClick={() => setIsLoginForm(true)}
+                className="text-sm text-blue-600 hover:text-blue-800"
+              >
+                Voltar para login
+              </button>
+            </div>
+          )}
 
-          <div className="mt-6 text-center text-xs xl:text-sm text-gray-600">
+          <div className="mt-2 text-center text-xs xl:text-sm text-gray-600">
             <p>
               Não tem uma conta?{" "}
               <Link href="/cadastro" className="text-blue-600 hover:underline">

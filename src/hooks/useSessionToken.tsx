@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { getSession, signIn } from "next-auth/react";
 
 export const useSessionCheckToken = () => {
@@ -6,55 +6,55 @@ export const useSessionCheckToken = () => {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const checkAndRefreshToken = async () => {
+  const checkAndRefreshToken = useCallback(async () => {
     try {
       setLoading(true);
+      setError(null);
 
-      // 1. Verifica a sessão atual
-      const session = await getSession();
+      let session = await getSession();
 
-      if (!session?.user?.accessToken) {
-        throw new Error("Nenhuma sessão ativa");
-      }
-
-      // 2. Verifica expiração do token (timestamp em segundos)
       const currentTime = Math.floor(Date.now() / 1000);
-      const tokenExpiry = session.user.tokenExpiry || 0;
+      const tokenExpiry = session?.user?.tokenExpiry ?? 0;
 
-      if (tokenExpiry <= currentTime) {
-        console.log("Token expirado - renovando...");
-        // 3. Força novo login silencioso
+      if (
+        !session ||
+        !session.user?.accessToken ||
+        tokenExpiry <= currentTime
+      ) {
+        console.warn("Sem sessão ou token expirado — tentando renovar...");
+
         const result = await signIn("credentials", { redirect: false });
+        console.log("Resultado do signIn:", result);
 
         if (result?.error) {
-          throw new Error("Falha ao renovar token");
+          throw new Error("Falha ao renovar o token.");
         }
 
-        // 4. Obtém a nova sessão
-        const newSession = await getSession();
-        if (!newSession?.user?.accessToken) {
-          throw new Error("Token renovado não encontrado");
-        }
-
-        setToken(newSession.user.accessToken);
-      } else {
-        console.log("Token válido - usando existente");
-        setToken(session.user.accessToken);
+        session = await getSession();
       }
 
-      setError(null);
+      if (!session?.user?.accessToken) {
+        throw new Error("Token ausente após tentativa de renovação.");
+      }
+
+      setToken(session.user.accessToken);
     } catch (err) {
-      console.error("Erro na verificação do token:", err);
-      setError(err instanceof Error ? err.message : "Erro desconhecido");
+      console.error("Erro ao obter o token:", err);
+      setError(err instanceof Error ? err.message : "Erro desconhecido.");
       setToken(null);
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     checkAndRefreshToken();
-  }, []);
+  }, [checkAndRefreshToken]);
 
-  return { token, error, loading, refresh: checkAndRefreshToken };
+  return {
+    token,
+    error,
+    loading,
+    refresh: checkAndRefreshToken,
+  };
 };

@@ -1,9 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 "use client";
 
-import type React from "react";
-
-import { useState } from "react";
+import React, { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
@@ -22,12 +20,28 @@ export default function RecuperarSenhaPage() {
     setIsLoading(true);
     setError("");
 
-    // Simulando o envio de email
     try {
-      await new Promise((resolve) => setTimeout(resolve, 1500));
-      setSuccess(true);
+      const response = await fetch("/api/auth/recover-password", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        // API retornou erro
+        setError(data.error || "Erro ao enviar email de recuperação.");
+        setSuccess(false);
+      } else {
+        // Sucesso
+        setSuccess(true);
+      }
     } catch (err) {
       setError("Ocorreu um erro ao enviar o email. Tente novamente.");
+      setSuccess(false);
     } finally {
       setIsLoading(false);
     }

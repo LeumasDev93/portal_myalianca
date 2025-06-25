@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useState } from 'react';
 
 interface Agencia {
@@ -6,25 +7,36 @@ interface Agencia {
   localizacao: string;
   latitude: number;
   longitude: number;
-  criado_por: string;
+  criado_por: string | null;
 }
 
 export function useAgencias() {
   const [agencias, setAgencias] = useState<Agencia[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchAgencias = async () => {
-      setLoading(true);
       try {
-        const res = await fetch('/api/agency');
-        const json = await res.json();
+        const res = await fetch('/api/agency'); // rota correta
+        if (!res.ok) throw new Error('Erro na resposta da API');
 
-        const agenciaRow = json.gel_all_agency_element?.gel_all_agency_row;
-        const agenciasArray = Array.isArray(agenciaRow) ? agenciaRow : [agenciaRow];
+        const data = await res.json();
 
-        setAgencias(agenciasArray);
+        // Normaliza a resposta para sempre ser array
+        const agenciasData = Array.isArray(data) ? data : [data];
+
+        // Tipagem segura com fallback para null
+        const agenciasFormatadas = agenciasData.map((agencia: any): Agencia => ({
+          id: agencia.id,
+          nome: agencia.nome,
+          localizacao: agencia.localizacao,
+          latitude: Number(agencia.latitude),
+          longitude: Number(agencia.longitude),
+          criado_por: agencia.criado_por ?? null,
+        }));
+
+        setAgencias(agenciasFormatadas);
         setError(null);
       } catch (err) {
         console.error('Erro ao carregar agências:', err);
