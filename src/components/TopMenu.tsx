@@ -161,7 +161,7 @@ export function TopMenu({
             <Avatar className="w-full h-full flex items-center justify-center">
               <AvatarImage src="" className="rounded-full" />
               <AvatarFallback className="text-white hover:text-[#002256]">
-                {profile?.nome.charAt(0)}
+                {profile?.nome?.charAt(0)}
               </AvatarFallback>
             </Avatar>
           </button>

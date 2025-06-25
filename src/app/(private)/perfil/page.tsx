@@ -199,9 +199,9 @@ export function PerfilPage() {
                 <Avatar className="h-24 w-24">
                   <AvatarImage
                     src={profileImage || "/placeholder.svg"}
-                    alt={profile.nome}
+                    alt={profile?.nome}
                   />
-                  <AvatarFallback>{profile.nome.charAt(0)}</AvatarFallback>
+                  <AvatarFallback>{profile?.nome.charAt(0)}</AvatarFallback>
                 </Avatar>
 
                 <div className="absolute inset-0 bg-black bg-opacity-50 rounded-full opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">

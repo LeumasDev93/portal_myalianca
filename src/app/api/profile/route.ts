@@ -29,9 +29,9 @@ export async function GET(request: Request) {
 
     // console.log('API response status:', response.status);
     
-    // if (!response.ok) {
-    //   throw new Error(`API responded with status ${response.status}`);
-    // }
+    if (!response.ok) {
+      throw new Error(`API responded with status ${response.status}`);
+    }
 
     const data = await response.json();
     // console.log('API data received:', data);
