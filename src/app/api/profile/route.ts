@@ -18,7 +18,7 @@ export async function GET(request: Request) {
    const apiUrl = `${process.env.NEXT_PUBLIC_API_BASE_URL}/accounts/profile?user_id=${userId}`;
     const apiToken = process.env.API_SECRET_TOKEN;
       try {
-        console.log('Fetching from API:', apiUrl);
+        //console.log('Fetching from API:', apiUrl);
         
         const response = await fetch(apiUrl, {
           headers: {
@@ -27,7 +27,7 @@ export async function GET(request: Request) {
           }
         });
 
-    console.log('API response status:', response.status);
+   // console.log('API response status:', response.status);
     
     if (!response.ok) {
       throw new Error(`API responded with status ${response.status}`);
