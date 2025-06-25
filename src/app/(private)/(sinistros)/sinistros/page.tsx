@@ -36,7 +36,7 @@ type SinistroPageProps = {
   onSelectDetail: (id: string) => void;
 };
 
-export function SinistrosPage({
+export default function SinistrosPage({
   onSelectDetail,
   onNewSinistro,
 }: SinistroPageProps) {

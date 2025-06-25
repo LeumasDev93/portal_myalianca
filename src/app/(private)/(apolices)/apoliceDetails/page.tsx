@@ -53,7 +53,7 @@ type ApoliceDetailPageProps = {
 type ReciboLoadingState = {
   [number: string]: boolean;
 };
-export function ApoliceDetailPage({
+export default function ApoliceDetailPage({
   id,
   contractNumber,
   onBack,

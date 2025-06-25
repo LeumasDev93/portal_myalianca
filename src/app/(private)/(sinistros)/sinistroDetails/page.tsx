@@ -56,7 +56,10 @@ type SinistroDetailPageProps = {
   id: string;
   onBack: () => void;
 };
-export function SinistroDetailPage({ id, onBack }: SinistroDetailPageProps) {
+export default function SinistroDetailPage({
+  id,
+  onBack,
+}: SinistroDetailPageProps) {
   const { token } = useSessionCheckToken();
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
