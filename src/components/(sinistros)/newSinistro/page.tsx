@@ -1,10 +1,7 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import type React from "react";
-
-import { useState } from "react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
 import {
   Card,
   CardContent,
@@ -29,35 +26,39 @@ import { ArrowLeft, Upload, X, Camera, AlertTriangle } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { Separator } from "@/components/ui/separator";
 import Image from "next/image";
-// Dados simulados de apólices
-const apolices = [
-  { id: "123456", tipo: "Seguro Auto", item: "Honda Civic 2022" },
-  { id: "789012", tipo: "Seguro Residencial", item: "Residência Principal" },
-  { id: "345678", tipo: "Seguro Vida", item: "Vida Individual" },
-];
+import { useSessionCheckToken } from "@/hooks/useSessionToken";
+import { useUserProfile } from "@/hooks/useUserProfile ";
+import { Toaster } from "@/components/ui/toaster";
 
-// Tipos de sinistro
-const tiposSinistro = {
-  auto: ["Colisão", "Roubo/Furto", "Incêndio", "Alagamento", "Vidros", "Outro"],
-  residencial: [
-    "Incêndio",
-    "Roubo/Furto",
-    "Danos Elétricos",
-    "Alagamento",
-    "Vendaval",
-    "Outro",
-  ],
-  vida: ["Acidente Pessoal", "Doença", "Invalidez", "Outro"],
-};
+interface Apolice {
+  id: string;
+  policyNumber: string;
+  insuranceType: string;
+  productName: string;
+  startDate: string;
+  endDate: string;
+  status: string;
+  contractNumber: number;
+}
 
 type NewSinistroPageProps = {
   onBack: () => void;
 };
-export default function AbrirSinistroPage({ onBack }: NewSinistroPageProps) {
-  const router = useRouter();
-  const { toast } = useToast();
 
-  // Estado para armazenar os dados do formulário
+export default function AbrirSinistroPage({ onBack }: NewSinistroPageProps) {
+  const { toast } = useToast();
+  const { token } = useSessionCheckToken();
+  const { profile } = useUserProfile();
+
+  // Estados do componente
+  const [apolices, setApolices] = useState<Apolice[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [loadingSinistros, setLoadingSinistros] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [sinistrosDisponiveis, setSinistrosDisponiveis] = useState<any[]>([]);
+
+  // Dados do formulário
   const [formData, setFormData] = useState({
     apolice: "",
     tipoSinistro: "",
@@ -70,19 +71,111 @@ export default function AbrirSinistroPage({ onBack }: NewSinistroPageProps) {
     numeroBO: "",
   });
 
-  // Estado para armazenar as fotos
+  // Upload de fotos
   const [fotos, setFotos] = useState<File[]>([]);
   const [previews, setPreviews] = useState<string[]>([]);
 
-  // Estado para controlar o tipo de apólice selecionada
-  const [tipoApolice, setTipoApolice] = useState<
-    "auto" | "residencial" | "vida" | ""
-  >("");
+  useEffect(() => {
+    if (!token || !profile?.nif) return;
 
-  // Estado para controlar o carregamento
-  const [isSubmitting, setIsSubmitting] = useState(false);
+    const controller = new AbortController();
+    const { signal } = controller;
 
-  // Função para atualizar os dados do formulário
+    const fetchApolices = async () => {
+      setIsLoading(true);
+      setError(null);
+
+      try {
+        const response = await fetch(
+          `/api/anywhere/api/v1/private/mobile/entity/nif/${profile.nif}/policies`,
+          {
+            method: "GET",
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+              Accept: "application/json",
+            },
+            signal,
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error(`Erro ${response.status}: ${response.statusText}`);
+        }
+
+        const data = await response.json();
+        const processedApolices = Array.isArray(data) ? data : [data];
+        setApolices(processedApolices);
+      } catch (error) {
+        if (!signal.aborted) {
+          console.error("Erro ao buscar apólices:", error);
+          setError(
+            error instanceof Error ? error.message : "Erro desconhecido"
+          );
+        }
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchApolices();
+    return () => controller.abort();
+  }, [token, profile?.nif]);
+  console.log(`Atualizando apolices:`, apolices);
+
+  const handleSelectChange = (name: string, value: string) => {
+    console.log(`Atualizando ${name} para:`, value);
+
+    setFormData((prev) => {
+      const newData = { ...prev, [name]: value };
+
+      if (name === "apolice") {
+        newData.tipoSinistro = ""; // limpa o tipo de sinistro
+        setSinistrosDisponiveis([]); // limpa lista antiga
+        fetchSinistros(value); // busca sinistros com id da apólice
+      }
+
+      return newData;
+    });
+  };
+
+  // 3. FetchSinistros corrigido para garantir que está usando o ID correto
+  const fetchSinistros = async (apoliceId: string) => {
+    console.log("Buscando sinistros para:", apoliceId);
+    if (!token || !apoliceId) return;
+
+    const apoliceIdNumber = 422;
+    setLoadingSinistros(true);
+    try {
+      const response = await fetch(
+        `/api/anywhere/api/v1/private/mobile/contract/${apoliceIdNumber}/claims`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+            Accept: "application/json",
+          },
+        }
+      );
+
+      if (!response.ok) throw new Error(`Erro ${response.status}`);
+
+      const data = await response.json();
+      console.log("Sinistros recebidos:", data);
+      setSinistrosDisponiveis(Array.isArray(data) ? data : [data]);
+    } catch (error) {
+      console.error("Erro ao buscar sinistros:", error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível carregar os sinistros",
+        variant: "destructive",
+      });
+    } finally {
+      setLoadingSinistros(false);
+    }
+  };
+
+  // Manipuladores de eventos
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
@@ -90,29 +183,11 @@ export default function AbrirSinistroPage({ onBack }: NewSinistroPageProps) {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  // Função para atualizar o select
-  const handleSelectChange = (name: string, value: string) => {
-    setFormData((prev) => ({ ...prev, [name]: value }));
-
-    // Se for a apólice, atualiza o tipo de apólice
-    if (name === "apolice") {
-      const apolice = apolices.find((a) => a.id === value);
-      if (apolice) {
-        if (apolice.tipo === "Seguro Auto") setTipoApolice("auto");
-        else if (apolice.tipo === "Seguro Residencial")
-          setTipoApolice("residencial");
-        else if (apolice.tipo === "Seguro Vida") setTipoApolice("vida");
-      }
-    }
-  };
-
-  // Função para lidar com o upload de fotos
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files.length > 0) {
+    if (e.target.files?.length) {
       const newFiles = Array.from(e.target.files);
-
-      // Limita a 5 fotos no total
       const totalFiles = [...fotos, ...newFiles];
+
       if (totalFiles.length > 5) {
         toast({
           title: "Limite de fotos excedido",
@@ -122,43 +197,99 @@ export default function AbrirSinistroPage({ onBack }: NewSinistroPageProps) {
         return;
       }
 
-      // Adiciona as novas fotos
-      setFotos([...fotos, ...newFiles]);
-
-      // Cria previews para as novas fotos
-      const newPreviews = newFiles.map((file) => URL.createObjectURL(file));
-      setPreviews([...previews, ...newPreviews]);
+      setFotos(totalFiles);
+      setPreviews([
+        ...previews,
+        ...newFiles.map((file) => URL.createObjectURL(file)),
+      ]);
     }
   };
 
-  // Função para remover uma foto
   const handleRemoveFile = (index: number) => {
     const newFotos = [...fotos];
-    newFotos.splice(index, 1);
-    setFotos(newFotos);
-
     const newPreviews = [...previews];
-    URL.revokeObjectURL(newPreviews[index]); // Libera a URL do objeto
+
+    URL.revokeObjectURL(newPreviews[index]);
+    newFotos.splice(index, 1);
     newPreviews.splice(index, 1);
+
+    setFotos(newFotos);
     setPreviews(newPreviews);
   };
 
-  // Função para enviar o formulário
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    const {
+      apolice,
+      tipoSinistro,
+      data,
+      hora,
+      local,
+      descricao,
+      envolvidos,
+      boletimOcorrencia,
+      numeroBO,
+    } = formData;
+
+    // Verificação de campos obrigatórios
+    if (!apolice || !tipoSinistro || !data || !local || !descricao) {
+      toast({
+        title: "Campos obrigatórios",
+        description: "Preencha todos os campos marcados com *",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsSubmitting(true);
 
-    // Simulação de envio
-    setTimeout(() => {
+    try {
+      const payload = {
+        id_apolice: apolice, // ID ou número da apólice
+        nome_apolice: tipoSinistro, // nome ou título do sinistro (ajuste se necessário)
+        tipo_apolice: "sinistro", // valor fixo ou adaptável se tiver tipos
+        descricao,
+        data_ocorrido: `${data}T${hora || "00:00"}:00`,
+        local,
+        envolvidos: envolvidos || "", // string vazia se não informado
+        boletim_ocorrencia: boletimOcorrencia === "sim",
+        numero_bo: numeroBO || "", // ou null, se a API aceitar
+        id_anexo: fotos.length > 0 ? `FOTOS_${Date.now()}` : null,
+        user_id: profile?.id,
+      };
+
+      const response = await fetch("/api/sinistro", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
+
+      const datares = await response.json();
+
+      if (!response.ok) {
+        throw new Error(datares.error || "Erro ao enviar sinistro");
+      }
+
       toast({
-        title: "Sinistro aberto com sucesso",
+        title: "Sinistro enviado com sucesso",
         description:
-          "Seu sinistro foi registrado e será analisado pela nossa equipe.",
+          "Seu sinistro foi registrado com sucesso e está em análise.",
         variant: "success",
       });
+    } catch (error: any) {
+      console.error("Erro ao enviar sinistro:", error);
+      toast({
+        title: "Erro ao enviar sinistro",
+        description:
+          error?.message || "Ocorreu um erro ao registrar o sinistro.",
+        variant: "destructive",
+      });
+    } finally {
       setIsSubmitting(false);
-      router.push("/sinistros");
-    }, 2000);
+    }
   };
 
   return (
@@ -174,6 +305,7 @@ export default function AbrirSinistroPage({ onBack }: NewSinistroPageProps) {
           Abrir Sinistro
         </h1>
       </div>
+      <Toaster />
 
       <Card>
         <CardHeader className="bg-gray-50">
@@ -182,12 +314,20 @@ export default function AbrirSinistroPage({ onBack }: NewSinistroPageProps) {
             Formulário de Abertura de Sinistro
           </CardTitle>
           <CardDescription>
-            Preencha todos os campos obrigatórios e forneça o máximo de
+            Preencha todos os campos obrigatórios (*) e forneça o máximo de
             informações possível.
           </CardDescription>
         </CardHeader>
+
         <CardContent className="pt-6">
+          {error && (
+            <div className="mb-6 p-4 bg-red-100 text-red-700 rounded-md">
+              {error}
+            </div>
+          )}
+
           <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Seção Informações Básicas */}
             <div className="space-y-4">
               <h3 className="text-lg font-semibold">Informações Básicas</h3>
 
@@ -198,19 +338,32 @@ export default function AbrirSinistroPage({ onBack }: NewSinistroPageProps) {
                     <span className="text-company-red-500">*</span>
                   </Label>
                   <Select
-                    value={formData.apolice}
-                    onValueChange={(value) =>
-                      handleSelectChange("apolice", value)
-                    }
+                    value={formData.apolice} // isso é só o ID (contractNumber)
+                    onValueChange={(value) => {
+                      handleSelectChange("apolice", value); // salva apenas o ID
+                    }}
                     required
+                    disabled={isLoading}
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="Selecione uma apólice" />
+                      <SelectValue
+                        placeholder={
+                          isLoading
+                            ? "Carregando..."
+                            : apolices.length === 0
+                            ? "Nenhuma apólice disponível"
+                            : "Selecione uma apólice"
+                        }
+                      />
                     </SelectTrigger>
+
                     <SelectContent>
                       {apolices.map((apolice) => (
-                        <SelectItem key={apolice.id} value={apolice.id}>
-                          {apolice.tipo} - {apolice.item} (#{apolice.id})
+                        <SelectItem
+                          key={apolice.contractNumber}
+                          value={String(apolice.contractNumber)} // envia o ID
+                        >
+                          {apolice.productName} {/* exibe o nome */}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -224,32 +377,47 @@ export default function AbrirSinistroPage({ onBack }: NewSinistroPageProps) {
                   </Label>
                   <Select
                     value={formData.tipoSinistro}
-                    onValueChange={(value) =>
-                      handleSelectChange("tipoSinistro", value)
-                    }
-                    disabled={!tipoApolice}
+                    onValueChange={(value) => {
+                      console.log("Sinistro selecionado:", value);
+                      handleSelectChange("tipoSinistro", value); // Apenas atualiza tipoSinistro
+                    }}
+                    disabled={!formData.apolice || loadingSinistros}
                     required
                   >
                     <SelectTrigger>
                       <SelectValue
                         placeholder={
-                          tipoApolice
-                            ? "Selecione o tipo de sinistro"
-                            : "Selecione uma apólice primeiro"
+                          loadingSinistros
+                            ? "Carregando..."
+                            : !formData.apolice
+                            ? "Selecione uma apólice primeiro"
+                            : sinistrosDisponiveis.length === 0
+                            ? "Nenhum sinistro disponível"
+                            : "Selecione o sinistro"
                         }
                       />
                     </SelectTrigger>
                     <SelectContent>
-                      {tipoApolice &&
-                        tiposSinistro[tipoApolice].map((tipo) => (
-                          <SelectItem key={tipo} value={tipo}>
-                            {tipo}
+                      {sinistrosDisponiveis.length > 0 ? (
+                        sinistrosDisponiveis.map((sinistro) => (
+                          <SelectItem
+                            key={sinistro.claimNumber}
+                            value={String(sinistro.claimNumber)}
+                          >
+                            {sinistro.product}
                           </SelectItem>
-                        ))}
+                        ))
+                      ) : (
+                        <div className="p-2 text-sm text-muted-foreground">
+                          {formData.apolice
+                            ? "Nenhum sinistro encontrado"
+                            : "Selecione uma apólice"}
+                        </div>
+                      )}
                     </SelectContent>
                   </Select>
                 </div>
-
+                {/* Campos Data e Hora */}
                 <div className="space-y-2">
                   <Label htmlFor="data">
                     Data do Ocorrido{" "}
@@ -262,24 +430,22 @@ export default function AbrirSinistroPage({ onBack }: NewSinistroPageProps) {
                     value={formData.data}
                     onChange={handleChange}
                     required
+                    max={new Date().toISOString().split("T")[0]}
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="hora">
-                    Hora do Ocorrido{" "}
-                    <span className="text-company-red-500">*</span>
-                  </Label>
+                  <Label htmlFor="hora">Hora do Ocorrido</Label>
                   <Input
                     id="hora"
                     name="hora"
                     type="time"
                     value={formData.hora}
                     onChange={handleChange}
-                    required
                   />
                 </div>
 
+                {/* Campo Local */}
                 <div className="space-y-2 md:col-span-2">
                   <Label htmlFor="local">
                     Local do Ocorrido{" "}
@@ -299,6 +465,7 @@ export default function AbrirSinistroPage({ onBack }: NewSinistroPageProps) {
 
             <Separator />
 
+            {/* Seção Detalhes do Sinistro */}
             <div className="space-y-4">
               <h3 className="text-lg font-semibold">Detalhes do Sinistro</h3>
 
@@ -373,6 +540,7 @@ export default function AbrirSinistroPage({ onBack }: NewSinistroPageProps) {
 
             <Separator />
 
+            {/* Seção Fotos e Documentos */}
             <div className="space-y-4">
               <h3 className="text-lg font-semibold">Fotos e Documentos</h3>
 
@@ -419,9 +587,11 @@ export default function AbrirSinistroPage({ onBack }: NewSinistroPageProps) {
                               className="relative rounded-md overflow-hidden border"
                             >
                               <Image
-                                src={preview || "/placeholder.svg"}
-                                alt={`Foto ${index + 1}`}
+                                src={preview}
+                                alt={`Foto do sinistro ${index + 1}`}
                                 className="w-full h-24 object-cover"
+                                width={100}
+                                height={100}
                               />
                               <Button
                                 type="button"
@@ -447,25 +617,28 @@ export default function AbrirSinistroPage({ onBack }: NewSinistroPageProps) {
                 </div>
                 <p className="text-sm text-muted-foreground mt-2">
                   Adicione fotos que mostrem os danos ou o local do sinistro.
-                  Isso ajudará na análise do seu caso.
                 </p>
               </div>
             </div>
+
+            {/* Rodapé do Formulário */}
+            <CardFooter className="flex flex-col sm:flex-row justify-between gap-4 ">
+              <Button
+                className="bg-[#b5b7bb] hover:bg-[#b5b7bb]/80"
+                onClick={onBack}
+              >
+                Cancelar
+              </Button>
+              <Button
+                type="submit"
+                className="bg-[#002256] hover:bg-[#002256]/80"
+                disabled={isLoading || isSubmitting}
+              >
+                {isSubmitting ? "Enviando..." : "Enviar Sinistro"}
+              </Button>
+            </CardFooter>
           </form>
         </CardContent>
-        <CardFooter className="flex flex-col sm:flex-row justify-between gap-4 bg-gray-50">
-          <Button variant="outline" asChild>
-            <Link href="/sinistros">Cancelar</Link>
-          </Button>
-          <Button
-            type="submit"
-            onClick={handleSubmit}
-            className="bg-company-blue-600 hover:bg-company-blue-700"
-            disabled={isSubmitting}
-          >
-            {isSubmitting ? "Enviando..." : "Enviar Sinistro"}
-          </Button>
-        </CardFooter>
       </Card>
     </div>
   );
