@@ -201,7 +201,7 @@ export default function Historico({
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
-                            onNewSinistro();
+                            // onNewSinistro();
                           }}
                           className="w-full bg-blue-900 hover:bg-blue-900/70 py-1 xl:px-4 rounded-lg text-white text-center text-xs xl:text-base cursor-pointer transition-colors duration-200 flex items-center justify-center gap-1"
                         >
