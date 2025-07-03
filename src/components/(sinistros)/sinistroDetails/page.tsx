@@ -297,7 +297,18 @@ export default function SinistroDetailPage({
                     value="recibo"
                     className="bg-white rounded-lg px-4 xl:p-6"
                   >
-                    <div>Sem dados no memento!!</div>
+                    <div className="flex flex-col items-center">
+                      <div className="flex items-center gap-3">
+                        <div className="flex items-center bg-gray-200 p-2 rounded-full">
+                          <FaTriangleExclamation className="size-2 sm:size-4 xl:size-6 text-[#002256]" />
+                        </div>
+                        <div className="flex flex-col">
+                          <span className="font-medium text-[#002256]">
+                            Nenhum recibo associado
+                          </span>
+                        </div>
+                      </div>
+                    </div>
                   </TabsContent>
                   <TabsContent
                     value="sinistrados"
