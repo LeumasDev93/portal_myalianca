@@ -94,13 +94,13 @@ export default function SinistrosPage({
         <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-[#002256]">
           Meus Sinistros
         </h1>
-        <Button
+        {/* <Button
           onClick={onNewSinistro}
           className="bg-[#002256] hover:bg-[#002256]/80 flex items-center"
         >
           <FaPlus className="mr-2 xl:h-4 xl:w-4" />
           Novo Sinistro
-        </Button>
+        </Button> */}
       </div>
       {isLoading ? (
         <div className="flex items-center justify-center h-screen">
