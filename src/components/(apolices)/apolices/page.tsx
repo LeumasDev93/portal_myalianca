@@ -145,13 +145,13 @@ export default function ApolicePage({ onSelectDetail }: ApolicePageProps) {
         <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-[#002256]">
           Minhas Apólices
         </h1>
-        <Button
+        {/* <Button
           size="sm"
           className="hidden md:flex bg-[#002256] hover:bg-[#002256]/80"
         >
           <FileText className="mr-2 h-4 w-4" />
           Relatório de Apólices
-        </Button>
+        </Button> */}
       </div>
 
       <div className="grid gap-6">

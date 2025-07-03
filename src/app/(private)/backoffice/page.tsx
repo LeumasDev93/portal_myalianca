@@ -255,7 +255,12 @@ const Page = () => {
               </div>
             ) : (
               <>
-                {currentPage === "Historico" && <Historico />}
+                {currentPage === "Historico" && (
+                  <Historico
+                    onOpenSimulator={() => setCurrentPage("Simulation")}
+                    onNewSinistro={() => setCurrentPage("newSinistro")}
+                  />
+                )}
                 {currentPage === "apolice" && (
                   <ApolicePage onSelectDetail={handleSelectApoliceDetail} />
                 )}
@@ -275,7 +280,7 @@ const Page = () => {
                 )}
                 {currentPage === "newSinistro" && (
                   <AbrirSinistroPage
-                    onBack={() => setCurrentPage("sinistro")}
+                    onBack={() => setCurrentPage("Historico")}
                   />
                 )}
                 {currentPage === "sinistroDetails" && selectedSinistroId && (

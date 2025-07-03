@@ -4,6 +4,8 @@
 import { useState, useEffect } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { IoCalculatorOutline } from "react-icons/io5";
+import { FaExclamationTriangle } from "react-icons/fa";
+import { useRouter } from "next/navigation";
 
 import FavoriteCard from "@/components/FavoriteCard";
 import PaymentHistoryCard from "@/components/PaymentHistoryCard";
@@ -40,21 +42,17 @@ const cardsData: CardData[] = [
     status: "+1 desde o último mês",
     quantity: 3,
   },
-  {
-    icon: IconMaritima,
-    title: "Apólices Ativas",
-    status: "+1 desde o último mês",
-    quantity: 3,
-  },
-  {
-    icon: IconMaritima,
-    title: "Apólices Ativas",
-    status: "+1 desde o último mês",
-    quantity: 3,
-  },
 ];
+type HistoricoPageProps = {
+  onNewSinistro: () => void;
+  onOpenSimulator: () => void;
+};
 
-export default function Historico() {
+export default function Historico({
+  onNewSinistro,
+  onOpenSimulator,
+}: HistoricoPageProps) {
+  const router = useRouter();
   const [cardsPerPage, setCardsPerPage] = useState(1);
   const [currentPage, setCurrentPage] = useState(0);
   const [isMobile, setIsMobile] = useState(false);
@@ -63,30 +61,37 @@ export default function Historico() {
     const updateLayout = () => {
       const width = window.innerWidth;
       setIsMobile(width < 801);
-      if (width < 640) setCardsPerPage(1);
-      else if (width < 1024) setCardsPerPage(2);
-      else if (width < 1920) setCardsPerPage(3);
-      else setCardsPerPage(4);
+
+      if (width < 640) {
+        setCardsPerPage(1); // Mobile - 1 card por página
+      } else if (width < 1024) {
+        setCardsPerPage(isMobile ? 1 : 1); // Tablet - 2 cards (exceto mobile)
+      } else if (width < 1920) {
+        setCardsPerPage(2); // Desktop médio - 3 cards
+      } else {
+        setCardsPerPage(3); // Telas grandes - 4 cards
+      }
     };
 
     updateLayout();
     window.addEventListener("resize", updateLayout);
     return () => window.removeEventListener("resize", updateLayout);
-  }, []);
+  }, [isMobile]);
 
-  // Construção das páginas com lógica de simulador e addCard
+  // Construção das páginas com lógica de simulador, ocorrências e addCard
   const allCards = [...cardsData];
-  const pages: (CardData | "simulator" | "addCard")[][] = [];
+  const pages: (CardData | "simulator" | "ocorrencias" | "addCard")[][] = [];
 
   for (let i = 0; i < allCards.length; i += cardsPerPage) {
     pages.push(allCards.slice(i, i + cardsPerPage));
   }
 
-  // Inserir simulador na primeira página
+  // Inserir simulador e ocorrências na primeira página
   if (pages.length > 0) {
     pages[0].unshift("simulator");
+    pages[0].unshift("ocorrencias");
   } else {
-    pages.push(["simulator"]);
+    pages.push(["ocorrencias", "simulator"]);
   }
 
   // Garantir addCard na última página
@@ -113,6 +118,10 @@ export default function Historico() {
     return () => clearInterval(interval);
   }, [isMobile, needsPagination, totalPages]);
 
+  const handleNavigate = (page: string) => {
+    router.push(`/${page}`);
+  };
+
   return (
     <div className="p-4 w-full">
       <h1 className="text-xl font-bold text-black">Acesso Rápido</h1>
@@ -132,43 +141,90 @@ export default function Historico() {
           <div className="flex justify-center">
             <div className="flex gap-4 items-center">
               {pages[currentPage].map((item, index) => {
-                if (item === "simulator") {
-                  return (
-                    <div
-                      key={"simulator"}
-                      className="flex flex-col items-center justify-between bg-blue-100 border border-[#002855] rounded-xl w-32 h-32 xl:h-40 sm:w-[200px] xl:w-[270px] px-4 py-6 xl:py-8"
-                    >
-                      <div className="w-full flex justify-between items-start">
-                        <div>
-                          <h3 className="text-xs xl:text-lg text-[#002855] font-semibold">
-                            Simulador
-                          </h3>
-                          <span className="text-[10px] xl:text-sm text-[#002855]">
-                            Calcule Valores de seguros
-                          </span>
+                // Mostrar cards especiais APENAS na primeira página
+                if (currentPage === 0) {
+                  if (item === "simulator") {
+                    return (
+                      <div
+                        key={"simulator"}
+                        className="flex flex-col items-center justify-between bg-blue-100 border border-[#002855] rounded-xl w-32 h-32 xl:h-40 sm:w-[200px] xl:w-[270px] px-4 py-6 xl:py-8 cursor-pointer hover:bg-blue-50 transition-colors"
+                        onClick={() => handleNavigate("simulador")}
+                      >
+                        <div className="w-full flex justify-between items-start">
+                          <div>
+                            <h3 className="text-xs xl:text-lg text-[#002855] font-semibold">
+                              Simulador
+                            </h3>
+                            <span className="text-[10px] xl:text-sm text-[#002855]">
+                              Calcule Valores de seguros
+                            </span>
+                          </div>
+                          <IoCalculatorOutline className="text-[#002855] size-4 xl:size-6" />
                         </div>
-                        <IoCalculatorOutline className="text-[#002855] size-4 xl:size-6" />
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation(); // Impede que o evento de clique do card também dispare
+                            onOpenSimulator();
+                          }}
+                          className="w-full cursor-pointer bg-[#002855] hover:bg-[#002855]/70 py-1 xl:px-4 rounded-lg text-white text-center text-xs xl:text-base transition-colors"
+                        >
+                          Simular Agora
+                        </button>
                       </div>
-                      <div className="w-full bg-[#002855] py-1 xl:px-4 rounded-lg text-white text-center text-xs xl:text-base">
-                        Simular Agora
+                    );
+                  }
+                  if (item === "ocorrencias") {
+                    return (
+                      <div
+                        key={"ocorrencias"}
+                        className="flex flex-col items-center justify-between bg-red-50 border border-red-800 rounded-xl w-32 h-32 xl:h-40 sm:w-[200px] xl:w-[270px] px-4 py-6 xl:py-8 cursor-pointer hover:bg-red-100 transition-colors"
+                        onClick={() => handleNavigate("ocorrencias")}
+                      >
+                        <div className="w-full flex justify-between items-start">
+                          <div>
+                            <h3 className="text-xs xl:text-lg text-red-700 font-semibold">
+                              Ocorrências
+                            </h3>
+                            <span className="text-[10px] xl:text-sm text-red-700">
+                              Verifique suas ocorrências
+                            </span>
+                          </div>
+                          <FaExclamationTriangle className="text-red-800 size-4 xl:size-6" />
+                        </div>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation(); // Impede que o evento de clique do card também dispare
+                            onNewSinistro();
+                          }}
+                          className="w-full bg-red-700 hover:bg-red-800/70 py-1 xl:px-4 rounded-lg text-white text-center text-xs xl:text-base cursor-pointer"
+                        >
+                          Acessar
+                        </button>
                       </div>
-                    </div>
-                  );
+                    );
+                  }
                 }
 
+                // Para outros cards (apenas nas páginas seguintes)
                 if (item === "addCard") {
                   return <FavoriteCard key={"addCard"} isAddCard />;
                 }
 
-                return (
-                  <FavoriteCard
-                    key={index}
-                    icon={item.icon}
-                    title={item.title}
-                    status={item.status}
-                    quantity={item.quantity}
-                  />
-                );
+                // FavoriteCards (só devem aparecer após a primeira página)
+                if (typeof item !== "string") {
+                  // Garante que é um CardData
+                  return (
+                    <FavoriteCard
+                      key={index}
+                      icon={item.icon}
+                      title={item.title}
+                      status={item.status}
+                      quantity={item.quantity}
+                    />
+                  );
+                }
+
+                return null; // Não renderiza outros casos
               })}
             </div>
           </div>
@@ -187,6 +243,7 @@ export default function Historico() {
         )}
       </div>
 
+      {/* Restante do código permanece igual */}
       {needsPagination && (
         <div className="flex justify-center gap-2 mt-2">
           {Array.from({ length: totalPages }).map((_, index) => (

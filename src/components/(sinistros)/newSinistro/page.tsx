@@ -144,7 +144,7 @@ export default function AbrirSinistroPage({ onBack }: NewSinistroPageProps) {
     console.log("Buscando sinistros para:", apoliceId);
     if (!token || !apoliceId) return;
 
-    const apoliceIdNumber = 422;
+    const apoliceIdNumber = apoliceId;
     setLoadingSinistros(true);
     try {
       const response = await fetch(
@@ -302,7 +302,7 @@ export default function AbrirSinistroPage({ onBack }: NewSinistroPageProps) {
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <h1 className="text-[16px] sm:text-2xl xl:text-3xl text-[#002256] font-bold tracking-tight">
-          Abrir Sinistro
+          Nova Ocorrência
         </h1>
       </div>
       <Toaster />

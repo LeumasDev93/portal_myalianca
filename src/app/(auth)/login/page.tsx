@@ -4,7 +4,18 @@
 import { useState, FormEvent, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/auth-context";
-import { Eye, EyeOff, Loader2 } from "lucide-react";
+import {
+  AlertCircle,
+  ArrowRight,
+  Eye,
+  EyeOff,
+  Loader2,
+  LockKeyhole,
+  Mail,
+  User,
+  Lock,
+  ArrowLeft,
+} from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import { CheckCircle2 } from "lucide-react";
@@ -132,7 +143,7 @@ export default function LoginPage() {
     <div className="flex h-screen flex-col md:flex-row bg-gray-50">
       {/* Banner Side */}
       <div className="hidden md:flex md:w-1/2 relative bg-gradient-to-br from-blue-800 to-blue-600">
-        <div className="absolute h-full inset-0 opacity-50">
+        <div className="absolute h-full inset-0 opacity-90">
           <Image
             src={ImageBG}
             alt="Insurance portal"
@@ -144,12 +155,12 @@ export default function LoginPage() {
 
         <div className="relative z-10 flex flex-col justify-between h-full p-8 text-white">
           <div className="bg-white/10 p-4 rounded-lg backdrop-blur-sm">
-            <h1 className="text-4xl font-bold">MY ALIANCA</h1>
-            <p className="text-xl mt-2">Descomplicar e ter</p>
+            <h1 className="text-4xl font-bold">MY ALIANÇA</h1>
+            <p className="text-xl mt-2">Descomplicar e ter My Aliança</p>
           </div>
 
-          <div className="bg-white/10 p-6 rounded-lg backdrop-blur-sm">
-            <h2 className="text-xl font-semibold mb-4">Benefícios:</h2>
+          <div className="bg-white/50 p-6 rounded-lg backdrop-blur-sm text-blue-900">
+            <h2 className="text-xl font-semibold mb-4 ">Serviços:</h2>
             <ul className="space-y-3">
               {[
                 "Gerenciamento de apólices",
@@ -158,7 +169,7 @@ export default function LoginPage() {
                 "Atendimento personalizado",
               ].map((benefit) => (
                 <li key={benefit} className="flex items-center gap-2">
-                  <CheckCircle2 className="h-5 w-5 text-green-300" />
+                  <CheckCircle2 className="h-5 w-5 " />
                   <span>{benefit}</span>
                 </li>
               ))}
@@ -169,130 +180,118 @@ export default function LoginPage() {
 
       {/* Login Form */}
       <div className="flex-1 flex items-center justify-center xl:p-6">
-        <div className="w-full sm:max-w-sm xl:max-w-md bg-white p-8 rounded-xl shadow-sm border border-gray-200">
-          <div className="mb-8 text-center">
-            <h1 className="text-lg xl:text-3xl font-bold text-gray-900 mb-2">
-              Bem-vindo
+        <div className="w-full sm:max-w-sm xl:max-w-md bg-white p-8 rounded-xl shadow-lg border border-gray-100 transition-all duration-300 hover:shadow-xl">
+          {/* Cabeçalho com animação sutil */}
+          <div className="mb-8 text-center transform transition-transform duration-300 hover:scale-[1.01]">
+            <h1 className="text-2xl xl:text-3xl font-bold text-gray-900 mb-2 bg-gradient-to-r from-blue-600 to-blue-800 bg-clip-text ">
+              Bem-vindo(a) de volta
             </h1>
-            <p className="text-sm xl:text-lg text-gray-600">
-              {loginType === "personal"
-                ? "Acesse sua conta pessoal"
-                : "Acesse sua conta empresarial"}
-            </p>
+            <div className="w-20 h-1 bg-gradient-to-r from-blue-400 to-blue-600 mx-auto rounded-full"></div>
           </div>
+
+          {/* Mensagem de erro com animação */}
           {error && (
-            <div className="absolute -mt-10 flex items-center justify-center w-full xl:max-w-sm py-2 bg-red-500 border shadow-2xl text-white rounded-md text-sm">
-              {error}
+            <div className="mb-4 animate-fade-in-down">
+              <div className="flex items-center justify-center w-full py-3 px-4 bg-red-50 border border-red-200 text-red-600 rounded-lg text-sm">
+                <AlertCircle className="h-5 w-5 mr-2" />
+                {error}
+              </div>
             </div>
           )}
-          {isLoginForm ? (
-            <form onSubmit={handleSubmit} className="space-y-2 xl:space-y-4">
-              <div>
-                <label className="block text-xs xl:text-sm font-medium text-gray-700 mb-2">
-                  Tipo de Conta
-                </label>
-                <div className="inline-flex rounded-md shadow-sm">
-                  <button
-                    type="button"
-                    onClick={() => setLoginType("personal")}
-                    className={`px-2 py-1 xl:px-4 xl:py-2 text-xs xl:text-sm font-medium rounded-l-lg border ${
-                      loginType === "personal"
-                        ? "bg-blue-600 text-white border-blue-600"
-                        : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
-                    }`}
-                  >
-                    Pessoal
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setLoginType("business")}
-                    className={`px-2 py-1 xl:px-4 xl:py-2 text-xs xl:text-sm font-medium rounded-r-lg border ${
-                      loginType === "business"
-                        ? "bg-blue-600 text-white border-blue-600"
-                        : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
-                    }`}
-                  >
-                    Empresarial
-                  </button>
-                </div>
-              </div>
 
-              <div className="space-y-2">
+          {isLoginForm ? (
+            <form onSubmit={handleSubmit} className="space-y-4">
+              {/* Input de Email/NIF com efeito flutuante */}
+              <div className="relative group">
+                <input
+                  id="email"
+                  type="text"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  required
+                  minLength={8}
+                  className="block w-full px-4 py-3 text-sm bg-white border border-gray-200 rounded-lg transition-all duration-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent peer"
+                  placeholder=" "
+                />
                 <label
                   htmlFor="email"
-                  className="block text-xs xl:text-sm font-medium text-gray-700"
+                  className="absolute text-sm text-gray-500 duration-300 transform -translate-y-4 scale-75 top-3 left-4 z-10 origin-[0] bg-white px-1 peer-focus:px-1 peer-focus:text-blue-600 peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-4"
                 >
                   Email ou NIF
                 </label>
-                <div className="relative">
-                  <input
-                    id="email"
-                    type="text"
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
-                    required
-                    minLength={8}
-                    placeholder="Digite seu email ou NIF"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-xs xl:text-sm"
-                  />
+                <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-gray-400 group-focus-within:text-blue-500 transition-colors">
+                  <User className="h-5 w-5" />
                 </div>
               </div>
 
-              <div className="space-y-2">
+              {/* Input de Senha com toggle integrado */}
+              <div className="relative group">
+                <input
+                  id="password"
+                  type={showPassword ? "text" : "password"}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  minLength={8}
+                  className="block w-full px-4 py-3 text-sm bg-white border border-gray-200 rounded-lg transition-all duration-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent peer"
+                  placeholder=" "
+                />
                 <label
                   htmlFor="password"
-                  className="block text-xs xl:text-sm font-medium text-gray-700"
+                  className="absolute text-sm text-gray-500 duration-300 transform -translate-y-4 scale-75 top-3 left-4 z-10 origin-[0] bg-white px-1 peer-focus:px-1 peer-focus:text-blue-600 peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-4"
                 >
                   Senha
                 </label>
-                <div className="relative">
-                  <input
-                    id="password"
-                    type={showPassword ? "text" : "password"}
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                    minLength={8}
-                    placeholder="••••••••"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-xs xl:text-sm"
-                  />
-                  <button
-                    type="button"
-                    className="absolute right-2 top-2.5 text-gray-500 hover:text-gray-700"
-                    onClick={() => setShowPassword(!showPassword)}
-                  >
-                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                  </button>
-                </div>
+                <button
+                  type="button"
+                  className="absolute right-3 top-3.5 text-gray-400 hover:text-blue-500 transition-colors"
+                  onClick={() => setShowPassword(!showPassword)}
+                  aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"}
+                >
+                  {showPassword ? (
+                    <EyeOff className="h-5 w-5" />
+                  ) : (
+                    <Eye className="h-5 w-5" />
+                  )}
+                </button>
               </div>
 
-              <div className="flex justify-between items-center">
+              {/* Link de esqueci senha com animação */}
+              <div className="flex justify-end">
                 <button
                   type="button"
                   onClick={() => setIsLoginForm(false)}
-                  className="text-xs xl:text-sm text-blue-600 hover:text-blue-800"
+                  className="text-sm text-blue-600 hover:text-blue-800 transition-colors duration-200 underline-offset-4 hover:underline"
                 >
                   Esqueceu a senha?
                 </button>
               </div>
 
+              {/* Botão de submit com efeitos */}
               <button
                 type="submit"
                 disabled={isLoading}
-                className="w-full bg-blue-600 text-white text-xs xl:text-sm py-1 xl:py-3 rounded-md hover:bg-blue-700 disabled:opacity-70 flex justify-center items-center gap-2"
+                className={`w-full py-3 px-4 inline-flex justify-center items-center gap-2 rounded-lg font-medium text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 ${
+                  isLoading
+                    ? "bg-blue-400 cursor-not-allowed"
+                    : "bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 shadow-md hover:shadow-lg"
+                }`}
               >
                 {isLoading ? (
                   <>
-                    <Loader2 className="animate-spin h-3 w-3 xl:h-5 xl:w-5" />
+                    <Loader2 className="animate-spin h-5 w-5" />
                     <span>Entrando...</span>
                   </>
                 ) : (
-                  "Entrar"
+                  <>
+                    <span>Entrar</span>
+                    <ArrowRight className="h-5 w-5" />
+                  </>
                 )}
               </button>
             </form>
           ) : (
-            // Formulário de Recuperação de Senha
+            // Formulário de Recuperação de Senha (estilizado)
             <form
               onSubmit={
                 step === "email"
@@ -303,12 +302,12 @@ export default function LoginPage() {
               }
               className="space-y-4"
             >
-              <div className="text-center">
-                <h3 className="text-lg font-medium text-gray-900">
+              <div className="text-center transform transition-transform duration-300 hover:scale-[1.01]">
+                <h3 className="text-xl font-bold text-gray-900 bg-gradient-to-r from-blue-600 to-blue-800 bg-clip-text">
                   {step === "email"
                     ? "Recuperar Senha"
                     : step === "otp"
-                    ? "Validar Código OTP"
+                    ? "Validar Código"
                     : "Nova Senha"}
                 </h3>
                 <p className="mt-2 text-sm text-gray-600">
@@ -321,72 +320,87 @@ export default function LoginPage() {
               </div>
 
               {step === "email" && (
-                <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-700">
-                    Email
-                  </label>
+                <div className="relative group">
                   <input
                     type="email"
-                    placeholder="seu@email.com"
+                    placeholder=" "
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
-                    className="w-full px-3 py-2 border rounded-md text-sm"
+                    className="block w-full px-4 py-3 text-sm bg-white border border-gray-200 rounded-lg transition-all duration-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent peer"
                     disabled={isLoading}
                   />
+                  <label className="absolute text-sm text-gray-500 duration-300 transform -translate-y-4 scale-75 top-3 left-4 z-10 origin-[0] bg-white px-1 peer-focus:px-1 peer-focus:text-blue-600 peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-4">
+                    Seu Email
+                  </label>
+                  <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-gray-400 group-focus-within:text-blue-500 transition-colors">
+                    <Mail className="h-5 w-5" />
+                  </div>
                 </div>
               )}
 
               {step === "otp" && (
-                <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-700">
-                    Código OTP
-                  </label>
+                <div className="relative group">
                   <input
                     type="text"
+                    placeholder=" "
                     value={otp}
                     onChange={(e) => setOtp(e.target.value)}
                     required
-                    className="w-full px-3 py-2 border rounded-md text-sm"
+                    className="block w-full px-4 py-3 text-sm bg-white border border-gray-200 rounded-lg transition-all duration-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent peer"
                     disabled={isLoading}
                   />
+                  <label className="absolute text-sm text-gray-500 duration-300 transform -translate-y-4 scale-75 top-3 left-4 z-10 origin-[0] bg-white px-1 peer-focus:px-1 peer-focus:text-blue-600 peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-4">
+                    Código OTP
+                  </label>
+                  <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-gray-400 group-focus-within:text-blue-500 transition-colors">
+                    <LockKeyhole className="h-5 w-5" />
+                  </div>
                 </div>
               )}
 
               {step === "password" && (
-                <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-700">
-                    Nova Senha
-                  </label>
+                <div className="relative group">
                   <input
                     type="password"
+                    placeholder=" "
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
                     required
-                    className="w-full px-3 py-2 border rounded-md text-sm"
+                    className="block w-full px-4 py-3 text-sm bg-white border border-gray-200 rounded-lg transition-all duration-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent peer"
                     disabled={isLoading}
                   />
+                  <label className="absolute text-sm text-gray-500 duration-300 transform -translate-y-4 scale-75 top-3 left-4 z-10 origin-[0] bg-white px-1 peer-focus:px-1 peer-focus:text-blue-600 peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-4">
+                    Nova Senha
+                  </label>
+                  <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-gray-400 group-focus-within:text-blue-500 transition-colors">
+                    <Lock className="h-5 w-5" />
+                  </div>
                 </div>
               )}
 
-              {error && (
-                <p className="text-red-600 text-center text-sm">{error}</p>
-              )}
               {successMessage && (
-                <p className="text-green-600 text-center text-sm">
-                  {successMessage}
-                </p>
+                <div className="animate-fade-in-down">
+                  <div className="flex items-center justify-center w-full py-3 px-4 bg-green-50 border border-green-200 text-green-600 rounded-lg text-sm">
+                    <CheckCircle2 className="h-5 w-5 mr-2" />
+                    {successMessage}
+                  </div>
+                </div>
               )}
 
               <button
                 type="submit"
-                className="w-full bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700 disabled:opacity-50 flex justify-center items-center gap-2"
                 disabled={isLoading}
+                className={`w-full py-3 px-4 inline-flex justify-center items-center gap-2 rounded-lg font-medium text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 ${
+                  isLoading
+                    ? "bg-blue-400 cursor-not-allowed"
+                    : "bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 shadow-md hover:shadow-lg"
+                }`}
               >
                 {isLoading ? (
                   <>
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    <span>Carregando...</span>
+                    <Loader2 className="animate-spin h-5 w-5" />
+                    <span>Processando...</span>
                   </>
                 ) : step === "email" ? (
                   "Enviar Código"
@@ -398,26 +412,20 @@ export default function LoginPage() {
               </button>
             </form>
           )}
+
+          {/* Botão de voltar para login */}
           {!isLoginForm && (
-            <div className="mt-6 text-center text-xs xl:text-sm text-gray-600">
+            <div className="mt-6 text-center">
               <button
                 type="button"
                 onClick={() => setIsLoginForm(true)}
-                className="text-sm text-blue-600 hover:text-blue-800"
+                className="text-sm text-blue-600 hover:text-blue-800 transition-colors duration-200 underline-offset-4 hover:underline flex items-center justify-center gap-1"
               >
+                <ArrowLeft className="h-4 w-4" />
                 Voltar para login
               </button>
             </div>
           )}
-
-          <div className="mt-2 text-center text-xs xl:text-sm text-gray-600">
-            <p>
-              Não tem uma conta?{" "}
-              <Link href="/cadastro" className="text-blue-600 hover:underline">
-                Cadastre-se
-              </Link>
-            </p>
-          </div>
         </div>
       </div>
     </div>

@@ -83,15 +83,15 @@ export function DashboardCharts() {
   return (
     <div className="flex flex-col">
       <div className="flex justify-end">
-        <Button
+        {/* <Button
           onClick={handleExport}
           className="bg-[#002855] text-white py-2 cursor-pointer"
         >
           <Download className="mr-2 h-4 w-4" />
           Exportar
-        </Button>
+        </Button> */}
       </div>
-      <Card className=" w-full h-full bg-white rounded-lg shadow-md mt-2">
+      <Card className=" w-full h-full bg-white rounded-lg shadow-md sm:mt-10">
         <CardHeader>
           <CardTitle className="text-xl xl:text-2xl font-bold">
             Dashboard
