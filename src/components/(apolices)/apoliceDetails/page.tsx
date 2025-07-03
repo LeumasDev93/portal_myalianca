@@ -457,7 +457,7 @@ export default function ApoliceDetailPage({
                   </div>
                 </div>
               </div>
-              <Separator className="bg-red-600" />
+              {/* <Separator className="bg-red-600" />
               <div className="mt-4">
                 <h3 className="text-lg font-semibold uppercase">
                   Assistência 24h
@@ -494,7 +494,7 @@ export default function ApoliceDetailPage({
                     </div>
                   </div>
                 </div>
-              </div>
+              </div> */}
               <Separator className="bg-red-600" />
               <div className="py-4">
                 <div className="flex justify-center lg:justify-end gap-1 sm:gap-2">
@@ -607,6 +607,20 @@ export default function ApoliceDetailPage({
 
             <TabsContent value="sinistros">
               <div className=" bg-white rounded-xl p-4 gap-4 shadow-sm hover:shadow-md transition-shadow">
+                {sinistros.length === 0 && (
+                  <div className="flex flex-col items-center">
+                    <div className="flex items-center gap-3">
+                      <div className="flex items-center bg-gray-200 p-2 rounded-full">
+                        <FaTriangleExclamation className="size-2 sm:size-4 xl:size-6 text-[#002256]" />
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="font-medium text-[#002256]">
+                          Nenhum sinistro associado
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                )}
                 {sinistros.map((item, index) => (
                   <div key={index} className="flex flex-col">
                     <div className="flex items-center justify-between py-2">
