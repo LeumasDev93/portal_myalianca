@@ -293,79 +293,76 @@ export default function SinistroDetailPage({
                       </div>
                     </div>
                   </TabsContent>
-                  <TabsContent
-                    value="recibo"
-                    className="bg-white rounded-lg px-4 xl:p-6"
-                  >
-                    <div className="flex flex-col items-center">
-                      <div className="flex items-center gap-3">
-                        <div className="flex items-center bg-gray-200 p-2 rounded-full">
-                          <FaTriangleExclamation className="size-2 sm:size-4 xl:size-6 text-[#002256]" />
-                        </div>
-                        <div className="flex flex-col">
-                          <span className="font-medium text-[#002256]">
-                            Nenhum recibo associado
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  </TabsContent>
-                  <TabsContent
-                    value="sinistrados"
-                    className="bg-white rounded-lg px-4 xl:p-6"
-                  >
-                    <div>
-                      <div className="flex flex-col gap-6 py-4 xl:py-6">
-                        <div className="flex justify-between">
-                          <div className="flex items-center gap-4">
-                            <div className="bg-gray-200  p-2 rounded-full ">
-                              <FaTriangleExclamation className="size-3 sm:size-4 xl:size-5 text-[#002256]" />
-                            </div>
-                            <p className="font-bold text-gray-900 text-[12px] xl:text-base uppercase">
-                              Nome
-                            </p>
+                  <TabsContent value="recibo">
+                    <div className=" bg-gray-100 rounded-xl p-4 gap-4 shadow-sm hover:shadow-md transition-shadow">
+                      <div className="flex flex-col items-center">
+                        <div className="flex items-center gap-3">
+                          <div className="flex items-center bg-gray-200 p-2 rounded-full">
+                            <FaTriangleExclamation className="size-2 sm:size-4 xl:size-6 text-[#002256]" />
                           </div>
-                          <div className="flex items-center gap-2">
-                            <p className="font-bold text-gray-900 text-[12px] xl:text-base ">
-                              {sinistro.insuredObjectName}
-                            </p>
-                          </div>
-                        </div>
-                        <div className="flex justify-between">
-                          <div className="flex items-center gap-4">
-                            <div className="bg-gray-200  p-2 rounded-full ">
-                              <MdCarCrash className="size-3 sm:size-4 xl:size-5 text-[#002256]" />
-                            </div>
-                            <p className="font-bold text-gray-900 text-[12px] xl:text-base uppercase">
-                              Identificação
-                            </p>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <p className="font-bold text-gray-900 text-[12px] xl:text-base ">
-                              {sinistro.insuredObjectDescription}
-                            </p>
+                          <div className="flex flex-col">
+                            <span className="font-medium text-[#002256]">
+                              Nenhum recibo associado
+                            </span>
                           </div>
                         </div>
                       </div>
                     </div>
                   </TabsContent>
-                  <TabsContent
-                    value="riscos"
-                    className="bg-white rounded-lg px-4 xl:p-6"
-                  >
-                    <div>
-                      <h3 className="text-lg text-[#002855] font-semibold uppercase mb-2">
-                        Coberturas
-                      </h3>
-                      {sinistroCoberturas.map((cobertura) => (
-                        <div key={cobertura.code} className="flex flex-col ">
-                          <div className="flex bg-gray-100 px-4 py-2 shadow-2xl border-b-2 border-gray-300">
-                            <h2 className="text-xs sm:text-sm xl:text-[17px] text-[#3d4042] font-semibold">
-                              {cobertura.name}
-                            </h2>
+                  <TabsContent value="sinistrados">
+                    <div className=" bg-gray-100 rounded-xl p-4 gap-4 shadow-sm hover:shadow-md transition-shadow">
+                      <div>
+                        <div className="flex flex-col gap-6 py-4 xl:py-6">
+                          <div className="flex justify-between">
+                            <div className="flex items-center gap-4">
+                              <div className="bg-gray-200  p-2 rounded-full ">
+                                <FaTriangleExclamation className="size-3 sm:size-4 xl:size-5 text-[#002256]" />
+                              </div>
+                              <p className="font-bold text-gray-900 text-[12px] xl:text-base uppercase">
+                                Nome
+                              </p>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <p className="font-bold text-gray-900 text-[12px] xl:text-base ">
+                                {sinistro.insuredObjectName}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex justify-between">
+                            <div className="flex items-center gap-4">
+                              <div className="bg-gray-200  p-2 rounded-full ">
+                                <MdCarCrash className="size-3 sm:size-4 xl:size-5 text-[#002256]" />
+                              </div>
+                              <p className="font-bold text-gray-900 text-[12px] xl:text-base uppercase">
+                                Identificação
+                              </p>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <p className="font-bold text-gray-900 text-[12px] xl:text-base ">
+                                {sinistro.insuredObjectDescription}
+                              </p>
+                            </div>
                           </div>
                         </div>
-                      ))}
+                      </div>
+                    </div>
+                  </TabsContent>
+                  <TabsContent value="riscos">
+                    <div className=" bg-gray-100 rounded-xl p-4 gap-4 shadow-sm hover:shadow-md transition-shadow">
+                      <div>
+                        <h3 className="text-lg text-[#002855] font-semibold uppercase mb-2">
+                          Coberturas
+                        </h3>
+                        {sinistroCoberturas.map((cobertura) => (
+                          <div key={cobertura.code} className="flex flex-col ">
+                            <div className="flex  px-4 py-2">
+                              <h2 className="text-xs sm:text-sm xl:text-[17px] text-[#3d4042] font-semibold">
+                                {cobertura.name}
+                              </h2>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   </TabsContent>
                 </Tabs>

@@ -14,6 +14,14 @@ import {
 import CopiableNumber from "@/components/ui/copiableNumber";
 import { DotLoading } from "@/components/ui/dot-loading";
 import { LoadingScreen } from "@/components/ui/loading-screen";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "@/components/ui/select"; // Importe os componentes do Select
 import { useSessionCheckToken } from "@/hooks/useSessionToken";
 import { useUserProfile } from "@/hooks/useUserProfile ";
 import {
@@ -24,7 +32,13 @@ import {
   getTypesReciver,
 } from "@/lib/utils";
 import { useEffect, useState } from "react";
-import { FaDownload, FaSpinner, FaUser } from "react-icons/fa";
+import {
+  FaDownload,
+  FaSpinner,
+  FaUser,
+  FaSearch,
+  FaFilter,
+} from "react-icons/fa";
 
 type ReciboData = {
   number: string;
@@ -52,10 +66,12 @@ export default function ReciboPage({}: ReciboPageProps) {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [loadingStates, setLoadingStates] = useState<ReciboLoadingState>({});
   const [recibos, setRecibos] = useState<ReciboData[]>([]);
+  const [filteredRecibos, setFilteredRecibos] = useState<ReciboData[]>([]);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
   const { token } = useSessionCheckToken();
 
   const { profile } = useUserProfile();
-
   const nif = profile?.nif;
 
   useEffect(() => {
@@ -83,7 +99,9 @@ export default function ReciboPage({}: ReciboPageProps) {
         }
 
         const data = await response.json();
-        setRecibos(Array.isArray(data) ? data : [data]);
+        const recibosData = Array.isArray(data) ? data : [data];
+        setRecibos(recibosData);
+        setFilteredRecibos(recibosData);
       } catch (error) {
         setError("Erro ao carregar recibos. Tente novamente mais tarde.");
       } finally {
@@ -93,6 +111,29 @@ export default function ReciboPage({}: ReciboPageProps) {
 
     fetchRecibos();
   }, [token, nif]);
+
+  useEffect(() => {
+    let result = [...recibos];
+
+    // Aplicar filtro de texto
+    if (searchTerm.trim() !== "") {
+      const term = searchTerm.toLowerCase();
+      result = result.filter(
+        (recibo) =>
+          recibo.clientName?.toLowerCase().includes(term) ||
+          recibo.number?.toLowerCase().includes(term) ||
+          (recibo.mbref && recibo.mbref.toLowerCase().includes(term))
+      );
+    }
+
+    // Aplicar filtro de status
+    if (statusFilter !== "all") {
+      const statusNum = parseInt(statusFilter);
+      result = result.filter((recibo) => recibo.status === statusNum);
+    }
+
+    setFilteredRecibos(result);
+  }, [searchTerm, statusFilter, recibos]);
 
   const handleDownload = async (invoiceNumber: string) => {
     setLoadingStates((prev) => ({ ...prev, [invoiceNumber]: true }));
@@ -138,19 +179,72 @@ export default function ReciboPage({}: ReciboPageProps) {
           Meus Recibos
         </h1>
       </div>
+
+      {/* Filtros */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full sm:w-1/2">
+        {/* Campo de pesquisa */}
+        <div className="relative bg-white rounded-lg">
+          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <FaSearch className="text-gray-400" />
+          </div>
+          <input
+            type="text"
+            placeholder="Pesquisar por nome, número ou referência..."
+            className="pl-10 pr-4 py-2 border rounded-lg w-full"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </div>
+
+        {/* Filtro por status */}
+        <Select
+          value={statusFilter}
+          onValueChange={(value) => setStatusFilter(value)}
+        >
+          <SelectTrigger className="w-full">
+            <SelectValue
+              placeholder="Selecionar um estado"
+              className="text-gray-200"
+            />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all" className="text-gray-500">
+              -- Selecionar um estado --
+            </SelectItem>
+            <SelectItem value="1">Em Cobrança</SelectItem>
+            <SelectItem value="2">Em Cobrança</SelectItem>
+            <SelectItem value="5">Cobrado</SelectItem>
+            <SelectItem value="8">Regularizado</SelectItem>
+            <SelectItem value="9">Anulado</SelectItem>
+            {/* Adicione outros status conforme necessário */}
+          </SelectContent>
+        </Select>
+      </div>
+
       {isLoading ? (
         <div className="flex items-center justify-center h-screen">
           <LoadingScreen />
         </div>
       ) : error ? (
         <p className="text-red-500">{error}</p>
-      ) : recibos.length === 0 ? (
-        <div className="flex items-center justify-center ">
-          <p>Sem Dados Disponíveis!</p>
+      ) : filteredRecibos.length === 0 ? (
+        <div className="flex flex-col items-center justify-center gap-2 py-8">
+          <div className="relative">
+            <FaSearch className="text-4xl text-gray-400 animate-pulse" />
+            <FaFilter
+              className="absolute -top-2 -right-2 text-xl text-[#2d4e7f] animate-spin-slow"
+              style={{ animationDuration: "3s" }}
+            />
+          </div>
+          <p className="text-gray-500 text-center">
+            Nenhum recibo encontrado para esta pesquisa!
+            <br />
+            Tente ajustar os filtros ou buscar por outros termos.
+          </p>
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-          {recibos.map((recibo) => (
+          {filteredRecibos.map((recibo) => (
             <Card key={recibo.number}>
               <CardHeader className="border-b">
                 <CardTitle className="flex items-center justify-between">
@@ -204,7 +298,7 @@ export default function ReciboPage({}: ReciboPageProps) {
                 <div className="flex flex-col">
                   Data Faturacao:
                   <span className="text-xs xl:text-[14px] text-[#002256] ">
-                    {formatDate(recibo.dueDate)} - {formatDate(recibo.from)}
+                    {formatDate(recibo.from)} - {formatDate(recibo.to)}
                   </span>
                 </div>
               </CardFooter>

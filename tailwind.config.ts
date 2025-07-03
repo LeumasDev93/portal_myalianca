@@ -1,4 +1,4 @@
-import {heroui} from '@heroui/theme';
+import { heroui } from '@heroui/theme';
 import type { Config } from "tailwindcss";
 
 export default {
@@ -14,6 +14,9 @@ export default {
         background: "var(--background)",
         foreground: "var(--foreground)",
       },
+      animation: {
+        'spin-slow': 'spin 3s linear infinite',
+      }
     },
   },
   plugins: [heroui()],

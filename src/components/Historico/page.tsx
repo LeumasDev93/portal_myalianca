@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, SquareKanban } from "lucide-react";
 import { IoCalculatorOutline } from "react-icons/io5";
 import { FaExclamationTriangle } from "react-icons/fa";
 import { useRouter } from "next/navigation";
@@ -67,9 +67,9 @@ export default function Historico({
       } else if (width < 1024) {
         setCardsPerPage(isMobile ? 1 : 1); // Tablet - 2 cards (exceto mobile)
       } else if (width < 1920) {
-        setCardsPerPage(2); // Desktop médio - 3 cards
+        setCardsPerPage(1); // Desktop médio - 3 cards
       } else {
-        setCardsPerPage(3); // Telas grandes - 4 cards
+        setCardsPerPage(2); // Telas grandes - 4 cards
       }
     };
 
@@ -80,7 +80,13 @@ export default function Historico({
 
   // Construção das páginas com lógica de simulador, ocorrências e addCard
   const allCards = [...cardsData];
-  const pages: (CardData | "simulator" | "ocorrencias" | "addCard")[][] = [];
+  const pages: (
+    | CardData
+    | "simulator"
+    | "ocorrencias"
+    | "gestao"
+    | "addCard"
+  )[][] = [];
 
   for (let i = 0; i < allCards.length; i += cardsPerPage) {
     pages.push(allCards.slice(i, i + cardsPerPage));
@@ -90,8 +96,9 @@ export default function Historico({
   if (pages.length > 0) {
     pages[0].unshift("simulator");
     pages[0].unshift("ocorrencias");
+    pages[0].unshift("gestao");
   } else {
-    pages.push(["ocorrencias", "simulator"]);
+    pages.push(["ocorrencias", "simulator", "gestao"]);
   }
 
   // Garantir addCard na última página
@@ -173,7 +180,36 @@ export default function Historico({
                       </div>
                     );
                   }
-                  if (item === "ocorrencias") {
+                  if (item === "gestao") {
+                    return (
+                      <div
+                        key={"gestao"}
+                        className="flex flex-col items-center justify-between bg-blue-50 border border-blue-200 rounded-xl w-32 h-32 xl:h-40 sm:w-[200px] xl:w-[270px] px-4 py-6 xl:py-8 cursor-pointer hover:bg-blue-100 transition-colors duration-300 shadow-sm hover:shadow-md"
+                        onClick={() => handleNavigate("ocorrencias")}
+                      >
+                        <div className="w-full flex justify-between items-start">
+                          <div>
+                            <h3 className="text-xs xl:text-lg text-blue-900 font-semibold">
+                              Gestão de SOAT
+                            </h3>
+                            <span className="text-[10px] xl:text-sm text-blue-900/80">
+                              Gerencie seus seguros
+                            </span>
+                          </div>
+                          <SquareKanban className="text-blue-800 size-6 xl:size-10" />
+                        </div>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onNewSinistro();
+                          }}
+                          className="w-full bg-blue-900 hover:bg-blue-900/70 py-1 xl:px-4 rounded-lg text-white text-center text-xs xl:text-base cursor-pointer transition-colors duration-200 flex items-center justify-center gap-1"
+                        >
+                          <span>Acessar</span>
+                        </button>
+                      </div>
+                    );
+                  } else if (item === "ocorrencias") {
                     return (
                       <div
                         key={"ocorrencias"}
