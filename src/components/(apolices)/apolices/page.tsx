@@ -28,9 +28,9 @@ type ApolicePageProps = {
 };
 
 export default function ApolicePage({ onSelectDetail }: ApolicePageProps) {
-  const { apolices, error, isLoading } = useApolices();
+  const { apolices, errorApolices, isLoadingApolices } = useApolices();
 
-  if (isLoading) {
+  if (isLoadingApolices) {
     return (
       <div className="flex items-center justify-center h-screen">
         <LoadingScreen />
@@ -38,10 +38,10 @@ export default function ApolicePage({ onSelectDetail }: ApolicePageProps) {
     );
   }
 
-  if (error) {
+  if (errorApolices) {
     return (
       <div className="flex items-center justify-center h-screen">
-        <p className="text-red-500 text-center">{error}</p>
+        <p className="text-red-500 text-center">{errorApolices}</p>
       </div>
     );
   }
