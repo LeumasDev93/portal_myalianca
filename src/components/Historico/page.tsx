@@ -47,13 +47,15 @@ const cardsData: CardData[] = [
 type HistoricoPageProps = {
   onNewSinistro: () => void;
   onOpenSimulator: () => void;
-  onSelectDetail: () => void;
+  onSelectDetailApolice: (id: string, contractNumber: string) => void;
+  onSelectDetailSinistro: (id: string) => void;
 };
 
 export default function Historico({
   onNewSinistro,
   onOpenSimulator,
-  onSelectDetail,
+  onSelectDetailApolice,
+  onSelectDetailSinistro,
 }: HistoricoPageProps) {
   const [cardsPerPage, setCardsPerPage] = useState(5);
   const [specialCardsPerPage, setSpecialCardsPerPage] = useState(3); // Default para desktop
@@ -309,7 +311,10 @@ export default function Historico({
             className="w-full lg:w-[65%] xl:w-[70%] overflow-auto"
             style={{ minHeight: "400px", maxHeight: "650px" }}
           >
-            <HistoryTable onSelectDetail={onSelectDetail} />
+            <HistoryTable
+              onSelectDetailApolice={onSelectDetailApolice}
+              onSelectDetailSinistro={onSelectDetailSinistro}
+            />
           </div>
           <div
             className="w-full lg:w-[35%] xl:w-[30%]"

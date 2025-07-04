@@ -257,7 +257,8 @@ const Page = () => {
               <>
                 {currentPage === "Historico" && (
                   <Historico
-                    onSelectDetail={() => handleSelectSinistroDetail}
+                    onSelectDetailApolice={handleSelectApoliceDetail}
+                    onSelectDetailSinistro={handleSelectSinistroDetail}
                     onOpenSimulator={() => setCurrentPage("Simulation")}
                     onNewSinistro={() => setCurrentPage("newSinistro")}
                   />

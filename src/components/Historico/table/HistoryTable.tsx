@@ -3,8 +3,10 @@
 "use client";
 import { useApolices } from "@/hooks/useApolices";
 import { useRecibos } from "@/hooks/useRecibos ";
+import { useSessionCheckToken } from "@/hooks/useSessionToken";
 import { useSinistros } from "@/hooks/useSinistros";
-import { useTableData } from "@/hooks/useTableData";
+import { tableMappeData } from "@/lib/tableMappe";
+import { getFirstAndLastName } from "@/lib/utils";
 import React, { useEffect, useState } from "react";
 import {
   FaCar,
@@ -22,7 +24,7 @@ import {
 import { FaTriangleExclamation } from "react-icons/fa6";
 import { HiDotsVertical } from "react-icons/hi";
 import { IoReceiptSharp, IoShieldCheckmarkSharp } from "react-icons/io5";
-import { MdHealthAndSafety } from "react-icons/md";
+import { MdHealthAndSafety, MdOutlinePayment } from "react-icons/md";
 
 const ramoIcons = {
   Automóvel: <FaCar className="text-white text-sm xl:text-xl" />,
@@ -34,10 +36,18 @@ const ramoIcons = {
 };
 
 type PageProps = {
-  onSelectDetail: (id: string) => void;
+  onSelectDetailApolice: (id: string, contractNumber: string) => void;
+  onSelectDetailSinistro: (id: string) => void;
 };
 
-const HistoryTable = ({ onSelectDetail }: PageProps) => {
+type ReciboLoadingState = {
+  [number: string]: boolean;
+};
+
+const HistoryTable = ({
+  onSelectDetailApolice,
+  onSelectDetailSinistro,
+}: PageProps) => {
   const [activeTab, setActiveTab] =
     useState<keyof typeof tableConfigs>("Apólices");
   const [selectedItem, setSelectedItem] = useState<any>(null);
@@ -45,15 +55,19 @@ const HistoryTable = ({ onSelectDetail }: PageProps) => {
   const [popupPosition, setPopupPosition] = useState({ top: 0, left: 0 });
   const [currentPage, setCurrentPage] = useState(1);
 
+  const [loadingStates, setLoadingStates] = useState<ReciboLoadingState>({});
+  const { token } = useSessionCheckToken();
+
   const { errorRecibo, filteredRecibos, isLoadingRecibos } = useRecibos();
 
   const { apolices, errorApolices, isLoadingApolices } = useApolices();
 
   const { errorSinistros, sinistros, isLoadingSinistros } = useSinistros();
 
-  const { formatRecibos, formatSinistros, formatApolices } = useTableData();
+  const { formatRecibos, formatSinistros, formatApolices } = tableMappeData();
 
   const loading = isLoadingApolices || isLoadingSinistros || isLoadingRecibos;
+
   const tableConfigs = {
     Apólices: {
       icon: <IoShieldCheckmarkSharp />,
@@ -90,6 +104,7 @@ const HistoryTable = ({ onSelectDetail }: PageProps) => {
       headers: [
         { key: "ramo", label: "RAMO" },
         { key: "clientName", label: "NOME DO CLIENTE" },
+        { key: "number", label: "NÚMERO RECIBO" },
         { key: "type", label: "TIPO" },
         { key: "date", label: "Data" },
         { key: "value", label: "VALOR" },
@@ -139,14 +154,6 @@ const HistoryTable = ({ onSelectDetail }: PageProps) => {
   const closePopup = () => {
     setShowPopup(false);
   };
-  const handleViewDetails = () => {
-    alert(
-      `Visualizando detalhes do item: ${
-        selectedItem?.numberapolice || selectedItem?.id
-      }`
-    );
-    closePopup();
-  };
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
@@ -157,21 +164,48 @@ const HistoryTable = ({ onSelectDetail }: PageProps) => {
     setCurrentPage(1); // Reset to first page when changing tabs
   };
 
-  const handleDownloadPolicy = (contractNumber: number) => {
-    // Implementação para baixar apólice
-  };
-
   const handleRenewPolicy = (contractNumber: number) => {
     // Implementação para renovar apólice
   };
-
-  const handleReportSinister = (sinisterId: string) => {
-    // Implementação para gerar relatório de sinistro
+  const handlePayment = (contractNumber: number) => {
+    // Implementação para renovar apólice
   };
 
-  const handleDownloadReceipt = (receiptNumber: string) => {
-    // Implementação para baixar recibo
+  const handleDownload = async (invoiceNumber: string) => {
+    setLoadingStates((prev) => ({ ...prev, [invoiceNumber]: true }));
+
+    try {
+      const response = await fetch(
+        `/api/anywhere/api/v1/private/mobile/invoice/${invoiceNumber}/print/invoice`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            Accept: "application/pdf",
+          },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`Erro ${response.status}: ${response.statusText}`);
+      }
+
+      const arrayBuffer = await response.arrayBuffer();
+      const blob = new Blob([arrayBuffer], { type: "application/pdf" });
+      const url = URL.createObjectURL(blob);
+
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `recibo-${invoiceNumber}.pdf`;
+      a.click();
+
+      URL.revokeObjectURL(url);
+    } catch (error: any) {
+      console.error("Erro ao baixar PDF:", error);
+    } finally {
+      setLoadingStates((prev) => ({ ...prev, [invoiceNumber]: false }));
+    }
   };
+
   return (
     <div className="w-full">
       <div className="flex sm:gap-2">
@@ -297,6 +331,15 @@ const HistoryTable = ({ onSelectDetail }: PageProps) => {
                           </td>
                         );
                       }
+                      if (header.key === "clientName") {
+                        return (
+                          <td key={colIndex} className="px-3 py-4 text-center">
+                            <span>
+                              {getFirstAndLastName(item.rawData.clientName)}
+                            </span>
+                          </td>
+                        );
+                      }
 
                       if (header.key === "status") {
                         return (
@@ -306,6 +349,17 @@ const HistoryTable = ({ onSelectDetail }: PageProps) => {
                             >
                               {item.status}
                             </span>
+                          </td>
+                        );
+                      }
+                      if (
+                        header.key === "numberapolice" ||
+                        header.key === "reference" ||
+                        header.key === "number"
+                      ) {
+                        return (
+                          <td key={colIndex} className="px-3 py-4 text-center">
+                            <span>#{value}</span>
                           </td>
                         );
                       }
@@ -401,48 +455,33 @@ const HistoryTable = ({ onSelectDetail }: PageProps) => {
           onClick={(e) => e.stopPropagation()}
         >
           {/* Opção comum a todas as abas */}
-          <button
-            onClick={() => {
-              if (activeTab === "Apólices") {
-                onSelectDetail(selectedItem.rawData.contractNumber.toString());
-              } else if (activeTab === "Sinistros") {
-                onSelectDetail(
-                  selectedItem.rawData.id?.toString() ||
-                    selectedItem.rawData.sinisterId?.toString()
-                );
-              } else if (activeTab === "Recibos") {
-                onSelectDetail(
-                  selectedItem.rawData.id?.toString() ||
-                    selectedItem.rawData.receiptNumber?.toString()
-                );
-              }
-              setShowPopup(false);
-            }}
-            className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:text-gray-800 flex items-center"
-          >
-            <FaEye className="mr-2" />
-            Ver detalhes
-          </button>
 
           {/* Opções específicas para Apólices */}
           {activeTab === "Apólices" && (
             <>
               <button
                 onClick={() => {
-                  handleDownloadPolicy(selectedItem.rawData.contractNumber);
-                  setShowPopup(false);
+                  try {
+                    if (selectedItem.rawData.contractNumber === null) {
+                      throw new Error("Número de contrato não disponível");
+                    }
+                    const contractId =
+                      selectedItem.rawData.contractNumber.toString();
+                    onSelectDetailApolice(contractId, contractId);
+                  } catch (error) {}
                 }}
-                className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:text-gray-800 flex items-center"
+                className="w-full cursor-pointer text-left px-4 py-2 text-sm text-gray-700 hover:text-gray-800 flex items-center"
               >
-                <FaFileDownload className="mr-2" />
-                Baixar Apólice
+                <FaEye className="mr-2" />
+                Ver detalhes
               </button>
+
               <button
                 onClick={() => {
                   handleRenewPolicy(selectedItem.rawData.contractNumber);
                   setShowPopup(false);
                 }}
-                className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:text-gray-800 flex items-center"
+                className="w-full cursor-pointer text-left px-4 py-2 text-sm text-gray-700 hover:text-gray-800 flex items-center"
               >
                 <FaSync className="mr-2" />
                 Renovar
@@ -454,32 +493,52 @@ const HistoryTable = ({ onSelectDetail }: PageProps) => {
           {activeTab === "Sinistros" && (
             <button
               onClick={() => {
-                handleReportSinister(
-                  selectedItem.rawData.id || selectedItem.rawData.sinisterId
-                );
-                setShowPopup(false);
+                try {
+                  if (selectedItem.rawData.claimNumber === null) {
+                    throw new Error("Número de contrato não disponível");
+                  }
+                  const contractId =
+                    selectedItem.rawData.claimNumber.toString();
+                  onSelectDetailSinistro(contractId);
+                } catch (error) {}
               }}
-              className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:text-gray-800 flex items-center"
+              className="w-full cursor-pointer text-left px-4 py-2 text-sm text-gray-700 hover:text-gray-800 flex items-center"
             >
-              <FaFileAlt className="mr-2" />
-              Relatório
+              <FaEye className="mr-2" />
+              Ver detalhes
             </button>
           )}
 
           {/* Opções específicas para Recibos */}
           {activeTab === "Recibos" && (
-            <button
-              onClick={() => {
-                handleDownloadReceipt(
-                  selectedItem.rawData.id || selectedItem.rawData.receiptNumber
-                );
-                setShowPopup(false);
-              }}
-              className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:text-gray-800 flex items-center"
-            >
-              <FaFileDownload className="mr-2" />
-              Baixar Recibo
-            </button>
+            <>
+              <button
+                onClick={() => {
+                  handleDownload(
+                    selectedItem.rawData.number || selectedItem.rawData.number
+                  );
+                  setShowPopup(false);
+                }}
+                className="w-full cursor-pointer text-left px-4 py-2 text-sm text-gray-700 hover:text-gray-800 flex items-center"
+              >
+                <FaFileDownload className="mr-2" />
+                Baixar Recibo
+              </button>
+              {selectedItem?.rawData?.status &&
+                (selectedItem.rawData.status === 1 ||
+                  selectedItem.rawData.status === 2) && (
+                  <button
+                    onClick={() => {
+                      handlePayment(selectedItem.rawData.contractNumber);
+                      setShowPopup(false);
+                    }}
+                    className="w-full cursor-pointer text-left px-4 py-2 text-sm text-gray-700 hover:text-gray-800 flex items-center"
+                  >
+                    <MdOutlinePayment className="mr-2" />
+                    Pagar Agora
+                  </button>
+                )}
+            </>
           )}
         </div>
       )}

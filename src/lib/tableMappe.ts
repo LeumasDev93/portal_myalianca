@@ -3,10 +3,11 @@
 import { formatCurrency, formatDate, getApolicesStatusText, getSinistroStatusText, getStatusApolicesColors, getStatusReciverColors, getStatusSinistrosColors, getTipoRecibo } from "@/lib/utils";
 import { ApoliceData, ReciboData, SinistroData } from "@/types/typesData";
 
-export const useTableData = () => {
+export const tableMappeData = () => {
     const formatRecibos = (recibos: ReciboData[]) => {
         return recibos.map(recibo => ({
             ramo: getRamoFromType(recibo.type),
+            number: recibo.number,
             clientName: recibo.clientName,
             type: getTipoRecibo(recibo.type),
             date: recibo.from,

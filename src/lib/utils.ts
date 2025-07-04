@@ -280,3 +280,19 @@ export const getStatusReciverColorHex = (status: number) => {
       return { backgroundColor: "#1a75f3", color: "#1a75f3" }; // bg-gray-100, text-gray-800
   }
 };
+
+export function getFirstAndLastName(fullName: string): string {
+  if (!fullName) return '';
+
+  // Remove espaços extras e divide em partes
+  const names = fullName.trim().split(/\s+/);
+
+  if (names.length === 0) return '';
+  if (names.length === 1) return names[0]; // Retorna só o primeiro nome se não tiver sobrenome
+
+  // Pega o primeiro e último nome
+  const firstName = names[0];
+  const lastName = names[names.length - 1];
+
+  return `${firstName} ${lastName}`;
+}
