@@ -29,7 +29,7 @@ import {
   MdOutlineDashboardCustomize,
 } from "react-icons/md";
 import { FaPlus } from "react-icons/fa";
-import { DotLoading } from "./ui/dot-loading";
+import { DotLoading } from "../ui/dot-loading";
 // import { useUserProfile } from "@/hooks/useUserProfile ";
 
 type SinistroData = {

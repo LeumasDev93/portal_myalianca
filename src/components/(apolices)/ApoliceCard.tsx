@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import Link from "next/link";
 import {
   Card,
@@ -15,10 +14,8 @@ import { getSession } from "next-auth/react";
 import { FaUser } from "react-icons/fa";
 import { CiCalendar } from "react-icons/ci";
 import { MdOutlineDashboardCustomize } from "react-icons/md";
-import { LoadingSpinner } from "./ui/loading";
-import { DotLoading } from "./ui/dot-loading";
-import { LoadingScreen } from "./ui/loading-screen";
-import ApoliceDetailPage from "./(apolices)/apoliceDetails/page";
+import ApoliceDetailPage from "./apoliceDetails/page";
+import { DotLoading } from "../ui/dot-loading";
 
 type Invoice = {
   invoiceNumber: number;
