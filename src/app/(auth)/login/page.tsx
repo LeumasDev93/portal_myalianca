@@ -23,6 +23,24 @@ import ImageBG from "@/assets/img_background.png";
 import { Label } from "@radix-ui/react-label";
 import Input from "@/components/Input";
 
+interface ApiErrorDetails {
+  response?: {
+    code: string;
+    desc: string;
+    type: string;
+  };
+}
+
+interface ApiResponse {
+  error?: string;
+  details?: ApiErrorDetails;
+  response?: {
+    code: string;
+    desc?: string;
+    type?: string;
+  };
+}
+
 export default function LoginPage() {
   const { login, isLoading, error, clearError } = useAuth();
   const router = useRouter();
@@ -67,18 +85,41 @@ export default function LoginPage() {
     try {
       const res = await fetch("/api/auth/recover-password", {
         method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify({ email }),
       });
 
-      const data = await res.json();
-      if (data.message === "SUCCESS") {
-        setSuccessMessage("Código OTP enviado com sucesso.");
+      const data: ApiResponse = await res.json();
+
+      // Tratamento de erro
+      if (data.error) {
+        const errorMessage = data.details?.response?.desc || data.error;
+        setErro(errorMessage);
+        setTimeout(() => {
+          setErro("");
+        }, 3000);
+        //console.error("Erro da API:", errorMessage);
+        return;
+      }
+
+      // Tratamento de sucesso
+      if (data.response?.code === "0") {
+        setSuccessMessage(
+          data.response.desc || "Código OTP enviado com sucesso."
+        );
         setStep("otp");
-      } else {
-        setErro(data.message || "Erro ao enviar código.");
+        return;
       }
     } catch (err) {
-      setErro("Erro ao enviar código.");
+      const errorMessage =
+        err instanceof Error ? err.message : "Erro desconhecido";
+      setErro(errorMessage);
+      setTimeout(() => {
+        setErro("");
+      }, 3000);
+      // console.error("Erro na requisição:", errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -98,11 +139,24 @@ export default function LoginPage() {
 
       const data = await res.json();
 
+      if (data.error) {
+        const errorMessage = data.details?.response?.desc || data.error;
+        setErro(errorMessage);
+        setTimeout(() => {
+          setErro("");
+        }, 3000);
+        //console.error("Erro da API:", errorMessage);
+        return;
+      }
+
       if (data.message === "SUCCESS") {
         setSuccessMessage("Código validado com sucesso.");
         setStep("password");
       } else {
         setErro(data.message || "Código inválido.");
+        setTimeout(() => {
+          setErro("");
+        }, 3000);
       }
     } catch (err) {
       setErro("Erro ao validar código.");
@@ -125,6 +179,16 @@ export default function LoginPage() {
       });
 
       const data = await res.json();
+
+      if (data.error) {
+        const errorMessage = data.details?.response?.desc || data.error;
+        setErro(errorMessage);
+        setTimeout(() => {
+          setErro("");
+        }, 3000);
+        //console.error("Erro da API:", errorMessage);
+        return;
+      }
 
       if (data.message === "SUCCESS") {
         setSuccessMessage("Senha redefinida com sucesso!");
@@ -318,7 +382,9 @@ export default function LoginPage() {
                   {step === "password" && "Digite sua nova senha"}
                 </p>
               </div>
-
+              {erro && (
+                <p className="text-red-500 text-center text-sm">{erro}</p>
+              )}
               {step === "email" && (
                 <div className="relative group">
                   <input
