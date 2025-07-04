@@ -37,7 +37,7 @@ type PageProps = {
   onSelectDetail: (id: string) => void;
 };
 
-const HistoryTable = () => {
+const HistoryTable = ({ onSelectDetail }: PageProps) => {
   const [activeTab, setActiveTab] =
     useState<keyof typeof tableConfigs>("Apólices");
   const [selectedItem, setSelectedItem] = useState<any>(null);
@@ -227,127 +227,114 @@ const HistoryTable = () => {
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {/* Content - only shows when not loading */}
-              {loading && (
-                <>
-                  {currentItems.length === 0 ? (
-                    <tr>
-                      <td
-                        colSpan={config.headers.length}
-                        className="text-center py-8"
+              {loading ? (
+                <tr>
+                  <td
+                    colSpan={config.headers.length}
+                    className="text-center py-8"
+                  >
+                    <div className="flex justify-center items-center">
+                      <svg
+                        className="animate-spin -ml-1 mr-3 h-5 w-5 text-[#002855]"
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
                       >
-                        <div className="flex justify-center items-center">
-                          <svg
-                            className="animate-spin -ml-1 mr-3 h-5 w-5 text-[#002855]"
-                            xmlns="http://www.w3.org/2000/svg"
-                            fill="none"
-                            viewBox="0 0 24 24"
+                        <circle
+                          className="opacity-25"
+                          cx="12"
+                          cy="12"
+                          r="10"
+                          stroke="currentColor"
+                          strokeWidth="4"
+                        ></circle>
+                        <path
+                          className="opacity-75"
+                          fill="currentColor"
+                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                        ></path>
+                      </svg>
+                      <span className="text-[#002855]">
+                        A carregar dados...
+                      </span>
+                    </div>
+                  </td>
+                </tr>
+              ) : (
+                /* Data rows */
+                currentItems.map((item, rowIndex) => (
+                  <tr key={rowIndex} className="hover:bg-gray-50">
+                    {config.headers.map((header, colIndex) => {
+                      if (header.key === "options") {
+                        return (
+                          <td
+                            key={colIndex}
+                            className="px-3 py-4 text-center relative"
                           >
-                            <circle
-                              className="opacity-25"
-                              cx="12"
-                              cy="12"
-                              r="10"
-                              stroke="currentColor"
-                              strokeWidth="4"
-                            ></circle>
-                            <path
-                              className="opacity-75"
-                              fill="currentColor"
-                              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                            ></path>
-                          </svg>
-                          <span className="text-[#002855]">
-                            A carregar dados...
-                          </span>
-                        </div>
-                      </td>
-                    </tr>
-                  ) : (
-                    /* Data rows */
-                    currentItems.map((item, rowIndex) => (
-                      <tr key={rowIndex} className="hover:bg-gray-50">
-                        {config.headers.map((header, colIndex) => {
-                          if (header.key === "options") {
-                            return (
-                              <td
-                                key={colIndex}
-                                className="px-3 py-4 text-center relative"
-                              >
-                                <button
-                                  onClick={(e) => handleOptionsClick(e, item)}
-                                  className="text-[#002855] hover:text-[#001a3d] focus:outline-none"
-                                >
-                                  <HiDotsVertical className="text-sm xl:text-xl" />
-                                </button>
-                              </td>
-                            );
-                          }
-
-                          const value =
-                            header.key in item &&
-                            typeof (item as any)[header.key] !== "object"
-                              ? String((item as any)[header.key])
-                              : "";
-
-                          if (header.key === "ramo") {
-                            return (
-                              <td
-                                key={colIndex}
-                                className="px-3 py-4 text-center"
-                              >
-                                <span className="bg-[#002855] rounded-full w-6 h-6 xl:w-8 xl:h-8 flex items-center justify-center mx-auto">
-                                  {ramoIcons[value as keyof typeof ramoIcons] ||
-                                    ramoIcons.Outros}
-                                </span>
-                              </td>
-                            );
-                          }
-
-                          if (header.key === "status") {
-                            return (
-                              <td
-                                key={colIndex}
-                                className="px-3 py-4 text-center"
-                              >
-                                <span
-                                  className={`inline-block text-[10px] xl:text-xs font-semibold py-1 xl:py-2 px-3 rounded-md xl:rounded-lg text-center whitespace-nowrap w-[6rem] xl:w-[8rem] ${item.statusClass}`}
-                                >
-                                  {item.status}
-                                </span>
-                              </td>
-                            );
-                          }
-
-                          if (header.key === "action") {
-                            return (
-                              <td
-                                key={colIndex}
-                                className="px-3 py-4 text-center"
-                              >
-                                {value && (
-                                  <button
-                                    className={`px-4 py-1 xl:py-2 rounded-md xl:rounded-lg text-[10px] xl:text-xs bg-[#002855] text-white hover:bg-[#001a3d]`}
-                                  >
-                                    {value}
-                                  </button>
-                                )}
-                              </td>
-                            );
-                          }
-
-                          return (
-                            <td
-                              key={colIndex}
-                              className="px-3 xl:py-4 text-[10px] xl:text-sm text-center"
+                            <button
+                              onClick={(e) => handleOptionsClick(e, item)}
+                              className="text-[#002855] hover:text-[#001a3d] focus:outline-none"
                             >
-                              {value}
-                            </td>
-                          );
-                        })}
-                      </tr>
-                    ))
-                  )}
-                </>
+                              <HiDotsVertical className="text-sm xl:text-xl" />
+                            </button>
+                          </td>
+                        );
+                      }
+
+                      const value =
+                        header.key in item &&
+                        typeof (item as any)[header.key] !== "object"
+                          ? String((item as any)[header.key])
+                          : "";
+
+                      if (header.key === "ramo") {
+                        return (
+                          <td key={colIndex} className="px-3 py-4 text-center">
+                            <span className="bg-[#002855] rounded-full w-6 h-6 xl:w-8 xl:h-8 flex items-center justify-center mx-auto">
+                              {ramoIcons[value as keyof typeof ramoIcons] ||
+                                ramoIcons.Outros}
+                            </span>
+                          </td>
+                        );
+                      }
+
+                      if (header.key === "status") {
+                        return (
+                          <td key={colIndex} className="px-3 py-4 text-center">
+                            <span
+                              className={`inline-block text-[10px] xl:text-xs font-semibold py-1 xl:py-2 px-3 rounded-md xl:rounded-lg text-center whitespace-nowrap w-[6rem] xl:w-[8rem] ${item.statusClass}`}
+                            >
+                              {item.status}
+                            </span>
+                          </td>
+                        );
+                      }
+
+                      if (header.key === "action") {
+                        return (
+                          <td key={colIndex} className="px-3 py-4 text-center">
+                            {value && (
+                              <button
+                                className={`px-4 py-1 xl:py-2 rounded-md xl:rounded-lg text-[10px] xl:text-xs bg-[#002855] text-white hover:bg-[#001a3d]`}
+                              >
+                                {value}
+                              </button>
+                            )}
+                          </td>
+                        );
+                      }
+
+                      return (
+                        <td
+                          key={colIndex}
+                          className="px-3 xl:py-4 text-[10px] xl:text-sm text-center"
+                        >
+                          {value}
+                        </td>
+                      );
+                    })}
+                  </tr>
+                ))
               )}
             </tbody>
           </table>
@@ -417,8 +404,17 @@ const HistoryTable = () => {
           <button
             onClick={() => {
               if (activeTab === "Apólices") {
+                onSelectDetail(selectedItem.rawData.contractNumber.toString());
               } else if (activeTab === "Sinistros") {
+                onSelectDetail(
+                  selectedItem.rawData.id?.toString() ||
+                    selectedItem.rawData.sinisterId?.toString()
+                );
               } else if (activeTab === "Recibos") {
+                onSelectDetail(
+                  selectedItem.rawData.id?.toString() ||
+                    selectedItem.rawData.receiptNumber?.toString()
+                );
               }
               setShowPopup(false);
             }}
