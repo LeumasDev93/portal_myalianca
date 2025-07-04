@@ -1,4 +1,3 @@
-/* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
@@ -7,8 +6,8 @@ import { useState, useEffect, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
+import { IoSync } from "react-icons/io5";
 
-import * as XLSX from "xlsx";
 import { useApolices } from "@/hooks/useApolices";
 import { useSinistros } from "@/hooks/useSinistros";
 import {
@@ -37,72 +36,75 @@ const customTooltip = ({ active, payload }: any) => {
 
 export function DashboardCharts() {
   const [isXlScreen, setIsXlScreen] = useState(false);
-  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+  const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
+  const [forceRefresh, setForceRefresh] = useState(false);
   const [isValidating, setIsValidating] = useState(false);
-  const [dataVersion, setDataVersion] = useState(0); // Forçar recarregamento
+  const [isLoadingLocal, setIsLoadingLocal] = useState(false);
 
   // Hooks de dados conforme sua estrutura atual
   const { recibos, isLoadingRecibos } = useRecibos();
   const { apolices, isLoadingApolices } = useApolices();
   const { sinistros, isLoadingSinistros } = useSinistros();
 
-  // Função para forçar recarregamento dos dados
-  const revalidateData = () => {
-    setIsValidating(true);
-    setDataVersion((prev) => prev + 1); // Atualiza a versão para forçar recarregamento
-    setLastUpdated(new Date());
-    setIsValidating(false);
+  // Estado local para os dados
+  const [localRecibos, setLocalRecibos] = useState(recibos || []);
+  const [localApolices, setLocalApolices] = useState(apolices || []);
+  const [localSinistros, setLocalSinistros] = useState(sinistros || []);
+
+  // Efeito para sincronizar os dados quando os hooks atualizarem
+  useEffect(() => {
+    if (recibos) setLocalRecibos(recibos);
+    if (apolices) setLocalApolices(apolices);
+    if (sinistros) setLocalSinistros(sinistros);
+  }, [recibos, apolices, sinistros]);
+
+  // Função para atualizar manualmente os dados
+  const revalidateData = async () => {
+    setIsLoadingLocal(true);
+    try {
+      setLastUpdated(new Date());
+    } finally {
+      setTimeout(() => {
+        setIsLoadingLocal(false);
+      }, 2000);
+    }
   };
 
-  // Efeito para revalidação periódica
-  useEffect(() => {
-    // Revalidação inicial
-    revalidateData();
-
-    // Configura intervalo de revalidação
-    const interval = setInterval(() => {
-      revalidateData();
-    }, REVALIDATION_TIME * 1000);
-
-    return () => clearInterval(interval);
-  }, []);
-
-  // compute counts by category
   const apoliceData = useMemo(() => {
-    if (!apolices) return [];
+    if (!localApolices) return [];
     const counts: Record<string, number> = {};
-    apolices.forEach((a: any) => {
+    localApolices.forEach((a: any) => {
       counts[a.contractStatus] = (counts[a.contractStatus] || 0) + 1;
     });
     return Object.entries(counts).map(([Status, Quantidade]) => ({
       Status,
       Quantidade,
     }));
-  }, [apolices, dataVersion]); // Adicionado dataVersion como dependência
+  }, [localApolices]);
 
   const sinistroData = useMemo(() => {
-    if (!sinistros) return [];
+    if (!localSinistros) return [];
     const counts: Record<string, number> = {};
-    sinistros.forEach((s: any) => {
+    localSinistros.forEach((s: any) => {
       counts[s.status] = (counts[s.status] || 0) + 1;
     });
     return Object.entries(counts).map(([Status, Quantidade]) => ({
       Status,
       Quantidade,
     }));
-  }, [sinistros, dataVersion]); // Adicionado dataVersion como dependência
+  }, [localSinistros]);
 
   const reciboData = useMemo(() => {
-    if (!recibos) return [];
+    if (!localRecibos) return [];
     const counts: Record<string, number> = {};
-    recibos.forEach((r: any) => {
+    localRecibos.forEach((r: any) => {
       counts[r.status] = (counts[r.status] || 0) + 1;
     });
     return Object.entries(counts).map(([Status, Quantidade]) => ({
       Status,
       Quantidade,
     }));
-  }, [recibos, dataVersion]); // Adicionado dataVersion como dependência
+  }, [localRecibos]);
 
   // prepare export dataset
   const exportData = useMemo(
@@ -135,11 +137,18 @@ export function DashboardCharts() {
             <CardTitle className="text-xl xl:text-2xl font-bold">
               Dashboard
             </CardTitle>
-            {lastUpdated && (
+            <div className="flex items-center gap-2">
+              <button
+                onClick={revalidateData}
+                disabled={isLoadingLocal}
+                className="text-gray-500 cursor-pointer hover:text-gray-600 transition-colors"
+              >
+                <IoSync className={isLoadingLocal ? "animate-spin" : ""} />
+              </button>
               <span className="text-xs text-gray-500">
                 Atualizado: {lastUpdated.toLocaleTimeString()}
               </span>
-            )}
+            </div>
           </div>
         </CardHeader>
         <CardContent className="px-2 xl:px-6">
