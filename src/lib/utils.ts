@@ -227,25 +227,25 @@ export const getStatusInfo = (type: 'recibos' | 'sinistros' | 'apolices', status
 export const getApolicesStatusColorsHex = (status: string) => {
   switch (status) {
     case "C":
-      return { backgroundColor: "#32727b", color: "#32727b" }; // bg-green-300, text-green-800
+      return { backgroundColor: "#00b34c", color: "#00b34c" }; // bg-green-300, text-green-800
     case "S":
-      return { backgroundColor: "#4a8a93", color: "#4a8a93" }; // bg-blue-300, text-blue-800
+      return { backgroundColor: "#1889ae", color: "#1889ae" }; // bg-blue-300, text-blue-800
     case "D":
     case "T":
-      return { backgroundColor: "#63a2ac", color: "#63a2ac" }; // bg-red-300, text-red-800
+      return { backgroundColor: "#f21f26", color: "#f21f26" }; // bg-red-300, text-red-800
     case "X":
-      return { backgroundColor: "#7bbac4", color: "#7bbac4" }; // bg-orange-300, text-orange-800
+      return { backgroundColor: "#f19601", color: "#f19601" }; // bg-orange-300, text-orange-800
     case "U":
     case "Y":
     case "P":
-      return { backgroundColor: "#93d2dc", color: "#93d2dc" }; // bg-yellow-300, text-yellow-800 (um pouco diferente do padrão tailwind #92400e para melhor contraste)
+      return { backgroundColor: "#ebc83a", color: "#ebc83a" }; // bg-yellow-300, text-yellow-800 (um pouco diferente do padrão tailwind #92400e para melhor contraste)
     case "W":
     case "A":
-      return { backgroundColor: "#a7d4ff", color: "#a7d4ff" }; // bg-purple-300, text-purple-800
+      return { backgroundColor: "#4f504f", color: "#4f504f" }; // bg-purple-300, text-purple-800
     case "I":
-      return { backgroundColor: "#84bcfc", color: "#84bcfc" }; // bg-gray-300, text-gray-800
+      return { backgroundColor: "#33454e", color: "#33454e" }; // bg-gray-300, text-gray-800
     default:
-      return { backgroundColor: "#61a5f9", color: "#61a5f9" }; // bg-gray-100, text-gray-800
+      return { backgroundColor: "#d9d9d9", color: "#d9d9d9" }; // bg-gray-100, text-gray-800
   }
 };
 

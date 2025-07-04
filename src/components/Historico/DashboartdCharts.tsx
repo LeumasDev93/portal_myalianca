@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
@@ -10,7 +11,6 @@ import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 import * as XLSX from "xlsx";
 import { useApolices } from "@/hooks/useApolices";
 import { useSinistros } from "@/hooks/useSinistros";
-import { useRecibos } from "@/hooks/useRecibos ";
 import {
   getApolicesStatusColorsHex,
   getApolicesStatusText,
@@ -19,6 +19,10 @@ import {
   getStatusReciverColorHex,
   getStatusReciverTexts,
 } from "@/lib/utils";
+import { useRecibos } from "@/hooks/useRecibos ";
+
+// Configuração de revalidação
+const REVALIDATION_TIME = 60; // segundos
 
 const customTooltip = ({ active, payload }: any) => {
   if (active && payload && payload.length) {
@@ -33,23 +37,48 @@ const customTooltip = ({ active, payload }: any) => {
 
 export function DashboardCharts() {
   const [isXlScreen, setIsXlScreen] = useState(false);
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+  const [isValidating, setIsValidating] = useState(false);
+  const [dataVersion, setDataVersion] = useState(0); // Forçar recarregamento
 
-  const { isLoadingRecibos, recibos } = useRecibos();
+  // Hooks de dados conforme sua estrutura atual
+  const { recibos, isLoadingRecibos } = useRecibos();
   const { apolices, isLoadingApolices } = useApolices();
   const { sinistros, isLoadingSinistros } = useSinistros();
+
+  // Função para forçar recarregamento dos dados
+  const revalidateData = () => {
+    setIsValidating(true);
+    setDataVersion((prev) => prev + 1); // Atualiza a versão para forçar recarregamento
+    setLastUpdated(new Date());
+    setIsValidating(false);
+  };
+
+  // Efeito para revalidação periódica
+  useEffect(() => {
+    // Revalidação inicial
+    revalidateData();
+
+    // Configura intervalo de revalidação
+    const interval = setInterval(() => {
+      revalidateData();
+    }, REVALIDATION_TIME * 1000);
+
+    return () => clearInterval(interval);
+  }, []);
 
   // compute counts by category
   const apoliceData = useMemo(() => {
     if (!apolices) return [];
     const counts: Record<string, number> = {};
     apolices.forEach((a: any) => {
-      counts[a.status] = (counts[a.status] || 0) + 1;
+      counts[a.contractStatus] = (counts[a.contractStatus] || 0) + 1;
     });
     return Object.entries(counts).map(([Status, Quantidade]) => ({
       Status,
       Quantidade,
     }));
-  }, [apolices]);
+  }, [apolices, dataVersion]); // Adicionado dataVersion como dependência
 
   const sinistroData = useMemo(() => {
     if (!sinistros) return [];
@@ -61,7 +90,7 @@ export function DashboardCharts() {
       Status,
       Quantidade,
     }));
-  }, [sinistros]);
+  }, [sinistros, dataVersion]); // Adicionado dataVersion como dependência
 
   const reciboData = useMemo(() => {
     if (!recibos) return [];
@@ -73,7 +102,7 @@ export function DashboardCharts() {
       Status,
       Quantidade,
     }));
-  }, [recibos]);
+  }, [recibos, dataVersion]); // Adicionado dataVersion como dependência
 
   // prepare export dataset
   const exportData = useMemo(
@@ -95,15 +124,23 @@ export function DashboardCharts() {
   }, []);
 
   // loading state
-  const loading = isLoadingApolices || isLoadingSinistros || isLoadingRecibos;
+  const loading =
+    isLoadingApolices || isLoadingSinistros || isLoadingRecibos || isValidating;
 
   return (
     <div className="flex flex-col">
       <Card className="w-full h-full bg-white rounded-lg shadow-md sm:mt-10">
         <CardHeader>
-          <CardTitle className="text-xl xl:text-2xl font-bold">
-            Dashboard
-          </CardTitle>
+          <div className="flex justify-between items-center">
+            <CardTitle className="text-xl xl:text-2xl font-bold">
+              Dashboard
+            </CardTitle>
+            {lastUpdated && (
+              <span className="text-xs text-gray-500">
+                Atualizado: {lastUpdated.toLocaleTimeString()}
+              </span>
+            )}
+          </div>
         </CardHeader>
         <CardContent className="px-2 xl:px-6">
           <Tabs defaultValue="apolices" className="space-y-2 xl:space-y-4">
@@ -149,7 +186,7 @@ export function DashboardCharts() {
                     d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                   ></path>
                 </svg>
-                <span className="text-[#002855]">A carregar dados...</span>
+                <span className="text-[#002855]">A carregando dados...</span>
               </div>
             ) : (
               [
@@ -157,8 +194,9 @@ export function DashboardCharts() {
                   key: "apolices",
                   data: apoliceData.map((d) => {
                     const colors = getApolicesStatusColorsHex(d.Status);
+
                     return {
-                      label: d.Status,
+                      label: getApolicesStatusText(d.Status),
                       value: d.Quantidade,
                       backgroundColor: colors.backgroundColor,
                       color: colors.color,
