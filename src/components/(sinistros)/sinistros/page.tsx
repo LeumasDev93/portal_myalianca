@@ -9,18 +9,10 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { CiCalendar } from "react-icons/ci";
-import { Eye, AlertCircle, Info, Clock, CheckCircle } from "lucide-react";
+import { Eye } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { useEffect, useState } from "react";
-import { MdManageAccounts, MdOutlineDashboardCustomize } from "react-icons/md";
-import { FaDollarSign, FaPlus, FaRegCalendar } from "react-icons/fa";
-import { DotLoading } from "@/components/ui/dot-loading";
-import { SinistroData } from "@/types/typesData";
-import { useSessionCheckToken } from "@/hooks/useSessionToken";
-import { useUserProfile } from "@/hooks/useUserProfile ";
+import { FaRegCalendar } from "react-icons/fa";
 import {
-  formatCurrency,
   formatDate,
   getBorderCardSinistrosColors,
   getApolicesStatusText,
@@ -30,6 +22,7 @@ import {
 import { LoadingScreen } from "@/components/ui/loading-screen";
 import { FaTriangleExclamation } from "react-icons/fa6";
 import { IoShieldCheckmarkSharp } from "react-icons/io5";
+import { useSinistros } from "@/hooks/useSinistros";
 
 type SinistroPageProps = {
   onNewSinistro: () => void;
@@ -40,53 +33,7 @@ export default function SinistrosPage({
   onSelectDetail,
   onNewSinistro,
 }: SinistroPageProps) {
-  const [sinistros, setSinistros] = useState<SinistroData[]>([]);
-  const { token } = useSessionCheckToken();
-  const [error, setError] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
-
-  const { profile } = useUserProfile();
-
-  const nif = profile?.nif;
-
-  useEffect(() => {
-    if (!token) return;
-
-    const fetchCoberturas = async () => {
-      setIsLoading(true);
-      setError(null);
-
-      try {
-        const response = await fetch(
-          `/api/anywhere/api/v1/private/mobile/entity/nif/${nif}/claims`,
-          {
-            method: "GET",
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "application/json",
-              Accept: "application/json",
-            },
-          }
-        );
-
-        if (!response.ok) {
-          throw new Error("Erro ao buscar coberturas do sinistro");
-        }
-
-        const data = await response.json();
-
-        // Normaliza os dados para sempre trabalhar com array
-        setSinistros(Array.isArray(data) ? data : [data]);
-      } catch (error) {
-        console.error("Erro ao buscar coberturas:", error);
-        setError("Erro ao carregar coberturas. Tente novamente mais tarde.");
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchCoberturas();
-  }, [token, nif]);
+  const { sinistros, isLoadingSinistros, errorSinistros } = useSinistros();
 
   return (
     <div className="flex-1 space-y-6 p-6 md:p-8">
@@ -94,21 +41,14 @@ export default function SinistrosPage({
         <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-[#002256]">
           Meus Sinistros
         </h1>
-        {/* <Button
-          onClick={onNewSinistro}
-          className="bg-[#002256] hover:bg-[#002256]/80 flex items-center"
-        >
-          <FaPlus className="mr-2 xl:h-4 xl:w-4" />
-          Novo Sinistro
-        </Button> */}
       </div>
-      {isLoading ? (
+      {isLoadingSinistros ? (
         <div className="flex items-center justify-center h-screen">
           <LoadingScreen />
         </div>
-      ) : error ? (
+      ) : errorSinistros ? (
         <div className="flex items-center justify-center h-screen">
-          <p className="text-red-500 text-center">{error}</p>
+          <p className="text-red-500 text-center">{errorSinistros}</p>
         </div>
       ) : !sinistros || sinistros.length === 0 ? (
         <div className="flex items-center justify-center h-screen">

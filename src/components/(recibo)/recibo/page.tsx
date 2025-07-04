@@ -12,9 +12,7 @@ import {
   CardFooter,
 } from "@/components/ui/card";
 import CopiableNumber from "@/components/ui/copiableNumber";
-import { DotLoading } from "@/components/ui/dot-loading";
 import { LoadingScreen } from "@/components/ui/loading-screen";
-import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectTrigger,
@@ -23,7 +21,6 @@ import {
   SelectItem,
 } from "@/components/ui/select";
 import { useSessionCheckToken } from "@/hooks/useSessionToken";
-import { useUserProfile } from "@/hooks/useUserProfile ";
 import {
   formatCurrency,
   formatDate,
@@ -41,19 +38,7 @@ import {
   FaTh,
   FaList,
 } from "react-icons/fa";
-
-type ReciboData = {
-  number: string;
-  clientName: string;
-  status: number;
-  dueDate: string;
-  from: string;
-  to: string;
-  value: number;
-  mbref: string;
-  type: number;
-  atm: string;
-};
+import { useRecibos } from "@/hooks/useRecibos ";
 
 type ReciboPageProps = {
   onSelectDetail?: (id: string) => void;
@@ -64,83 +49,24 @@ type ReciboLoadingState = {
 };
 
 export default function ReciboPage({}: ReciboPageProps) {
-  const [error, setError] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
   const [loadingStates, setLoadingStates] = useState<ReciboLoadingState>({});
-  const [recibos, setRecibos] = useState<ReciboData[]>([]);
-  const [filteredRecibos, setFilteredRecibos] = useState<ReciboData[]>([]);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string>("all");
   const [viewMode, setViewMode] = useState<"cards" | "list">("cards");
   const { token } = useSessionCheckToken();
 
-  const { profile } = useUserProfile();
-  const nif = profile?.nif;
-
-  useEffect(() => {
-    if (!token) return;
-
-    const fetchRecibos = async () => {
-      setIsLoading(true);
-      setError(null);
-
-      try {
-        const response = await fetch(
-          `/api/anywhere/api/v1/private/mobile/entity/nif/${nif}/invoices`,
-          {
-            method: "GET",
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "application/json",
-              Accept: "application/json",
-            },
-          }
-        );
-
-        if (!response.ok) {
-          throw new Error(`Erro ${response.status}: ${response.statusText}`);
-        }
-
-        const data = await response.json();
-        const recibosData = Array.isArray(data) ? data : [data];
-        setRecibos(recibosData);
-        setFilteredRecibos(recibosData);
-      } catch (error) {
-        setError("Erro ao carregar recibos. Tente novamente mais tarde.");
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchRecibos();
-  }, [token, nif]);
-
-  useEffect(() => {
-    let result = [...recibos];
-
-    // Aplicar filtro de texto
-    if (searchTerm.trim() !== "") {
-      const term = searchTerm.toLowerCase();
-      result = result.filter(
-        (recibo) =>
-          recibo.clientName?.toLowerCase().includes(term) ||
-          recibo.number?.toLowerCase().includes(term) ||
-          (recibo.mbref && recibo.mbref.toLowerCase().includes(term))
-      );
-    }
-
-    // Aplicar filtro de status
-    if (statusFilter !== "all") {
-      const statusNum = parseInt(statusFilter);
-      result = result.filter((recibo) => recibo.status === statusNum);
-    }
-
-    setFilteredRecibos(result);
-  }, [searchTerm, statusFilter, recibos]);
+  const {
+    filteredRecibos,
+    isLoadingRecibos,
+    recibos,
+    errorRecibo,
+    searchTerm,
+    setSearchTerm,
+    statusFilter,
+    setStatusFilter,
+    resetFilters,
+  } = useRecibos();
 
   const handleDownload = async (invoiceNumber: string) => {
     setLoadingStates((prev) => ({ ...prev, [invoiceNumber]: true }));
-    setError(null);
 
     try {
       const response = await fetch(
@@ -169,7 +95,6 @@ export default function ReciboPage({}: ReciboPageProps) {
       URL.revokeObjectURL(url);
     } catch (error: any) {
       console.error("Erro ao baixar PDF:", error);
-      setError(error.message || "Erro desconhecido ao baixar PDF.");
     } finally {
       setLoadingStates((prev) => ({ ...prev, [invoiceNumber]: false }));
     }
@@ -201,8 +126,7 @@ export default function ReciboPage({}: ReciboPageProps) {
         </div>
       </div>
 
-      {/* Filtros */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full sm:w-1/2">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full sm:w-1/2 mb-6">
         {/* Campo de pesquisa */}
         <div className="relative bg-white rounded-lg">
           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -211,7 +135,7 @@ export default function ReciboPage({}: ReciboPageProps) {
           <input
             type="text"
             placeholder="Pesquisar por nome, número ou referência..."
-            className="pl-10 pr-4 py-2 border rounded-lg w-full"
+            className="pl-10 pr-4 py-2 border rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
@@ -222,11 +146,13 @@ export default function ReciboPage({}: ReciboPageProps) {
           value={statusFilter}
           onValueChange={(value) => setStatusFilter(value)}
         >
-          <SelectTrigger className="w-full">
+          <SelectTrigger className="w-full border rounded-lg focus:ring-2 focus:ring-blue-500">
             <SelectValue placeholder="Selecionar um estado" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">Todos os estados</SelectItem>
+            <SelectItem value="all" className="text-gray-400">
+              -- Selecionar um estado --
+            </SelectItem>
             <SelectItem value="1">Em Cobrança</SelectItem>
             <SelectItem value="2">Em Cobrança</SelectItem>
             <SelectItem value="5">Cobrado</SelectItem>
@@ -236,12 +162,12 @@ export default function ReciboPage({}: ReciboPageProps) {
         </Select>
       </div>
 
-      {isLoading ? (
+      {isLoadingRecibos ? (
         <div className="flex items-center justify-center h-screen">
           <LoadingScreen />
         </div>
-      ) : error ? (
-        <p className="text-red-500">{error}</p>
+      ) : errorRecibo ? (
+        <p className="text-red-500">{errorRecibo}</p>
       ) : filteredRecibos.length === 0 ? (
         <div className="flex flex-col items-center justify-center gap-2 py-8">
           <div className="relative">

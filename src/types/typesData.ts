@@ -65,3 +65,40 @@ export type SinistroData = {
   insuredObjectDescription: string;
   product: string;
 }
+
+export type ReciboData = {
+  number: string;
+  clientName: string;
+  status: number;
+  dueDate: string;
+  from: string;
+  to: string;
+  value: number;
+  mbref: string;
+  type: number;
+  atm: string;
+};
+type InvoiceApolice = {
+  invoiceNumber: number;
+  invoiceDate: string;
+  invoiceValue: number;
+};
+
+export interface ApoliceData {
+  productName: string;
+  contractNumber: number;
+  clientName: string;
+  birthdate: string | null;
+  primaryMobileContact: string;
+  primaryEmailContact: string;
+  producerName: string;
+  contractStatus: string;
+  registration: string | null;
+  premium: number;
+  totalPremium: number;
+  startDate: string;
+  endDate: string | null;
+  atm: string | null;
+  contacts: string[];
+  invoices: InvoiceApolice[];
+}

@@ -6,10 +6,9 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { LuSquareKanban } from "react-icons/lu";
 import { IoCalculatorOutline } from "react-icons/io5";
 import { FaExclamationTriangle } from "react-icons/fa";
-import { useRouter } from "next/navigation";
 
 import FavoriteCard from "@/components/FavoriteCard";
-import PaymentHistoryCard from "@/components/PaymentHistoryCard";
+import HistoryTable from "@/components/HistoryTable";
 import AtivitysLastCard from "@/components/AtivitysLastCard";
 import { DashboardCharts } from "@/components/DashboartdCharts";
 
@@ -54,7 +53,6 @@ export default function Historico({
   onNewSinistro,
   onOpenSimulator,
 }: HistoricoPageProps) {
-  const router = useRouter();
   const [cardsPerPage, setCardsPerPage] = useState(5);
   const [specialCardsPerPage, setSpecialCardsPerPage] = useState(3); // Default para desktop
   const [currentPage, setCurrentPage] = useState(0);
@@ -70,7 +68,10 @@ export default function Historico({
         setCardsPerPage(2); // Mobile mostra 2 cards normais por página
         setSpecialCardsPerPage(2); // Mobile mostra cards especiais 2 a 2
       } else if (width < 1024) {
-        setCardsPerPage(4); // Tablet mostra 4 cards
+        setCardsPerPage(3); // Tablet mostra 4 cards
+        setSpecialCardsPerPage(3); // Tablet mostra todos cards especiais juntos
+      } else if (width < 1920) {
+        setCardsPerPage(3); // Tablet mostra 4 cards
         setSpecialCardsPerPage(3); // Tablet mostra todos cards especiais juntos
       } else {
         setCardsPerPage(5); // Desktop mostra 5 cards
@@ -149,17 +150,12 @@ export default function Historico({
     return () => clearInterval(interval);
   }, [isMobile, needsPagination, totalPages]);
 
-  const handleNavigate = (page: string) => {
-    router.push(`/${page}`);
-  };
-
   const renderCard = (item: any, index: number) => {
     if (item === "simulator") {
       return (
         <div
           key={"simulator"}
           className="flex flex-col items-center justify-between bg-blue-100 border border-[#002855] rounded-xl w-32 h-32 xl:h-40 sm:w-[200px] xl:w-[270px] px-4 py-6 xl:py-8 cursor-pointer hover:bg-blue-50 transition-colors"
-          onClick={() => handleNavigate("simulador")}
         >
           <div className="w-full flex justify-between items-start">
             <div>
@@ -173,8 +169,7 @@ export default function Historico({
             <IoCalculatorOutline className="text-[#002855] size-4 xl:size-6" />
           </div>
           <button
-            onClick={(e) => {
-              e.stopPropagation();
+            onClick={() => {
               onOpenSimulator();
             }}
             className="w-full cursor-pointer bg-[#002855] hover:bg-[#002855]/70 py-1 xl:px-4 rounded-lg text-white text-center text-xs xl:text-base transition-colors"
@@ -189,7 +184,6 @@ export default function Historico({
         <div
           key={"gestao"}
           className="flex flex-col items-center justify-between bg-blue-50 border border-blue-200 rounded-xl w-32 h-32 xl:h-40 sm:w-[200px] xl:w-[270px] px-4 py-6 xl:py-8 cursor-pointer hover:bg-blue-100 transition-colors duration-300 shadow-sm hover:shadow-md"
-          onClick={() => handleNavigate("ocorrencias")}
         >
           <div className="w-full flex justify-between items-start">
             <div>
@@ -216,7 +210,6 @@ export default function Historico({
         <div
           key={"ocorrencias"}
           className="flex flex-col items-center justify-between bg-red-50 border border-red-800 rounded-xl w-32 h-32 xl:h-40 sm:w-[200px] xl:w-[270px] px-4 py-6 xl:py-8 cursor-pointer hover:bg-red-100 transition-colors"
-          onClick={() => handleNavigate("ocorrencias")}
         >
           <div className="w-full flex justify-between items-start">
             <div>
@@ -314,7 +307,7 @@ export default function Historico({
             className="w-full lg:w-[65%] xl:w-[70%] overflow-auto"
             style={{ minHeight: "400px", maxHeight: "650px" }}
           >
-            <PaymentHistoryCard />
+            <HistoryTable />
           </div>
           <div
             className="w-full lg:w-[35%] xl:w-[30%]"

@@ -10,16 +10,9 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { FileText, Eye } from "lucide-react";
+import { Eye } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { useEffect, useState } from "react";
-import { FaCar, FaDollarSign, FaRegCalendar, FaUser } from "react-icons/fa";
-import { CiCalendar } from "react-icons/ci";
-import { MdOutlineDashboardCustomize } from "react-icons/md";
-import { DotLoading } from "@/components/ui/dot-loading";
-import { useSessionCheckToken } from "@/hooks/useSessionToken";
-import { TbPremiumRights } from "react-icons/tb";
-import { RiShieldStarFill } from "react-icons/ri";
+import { FaDollarSign, FaRegCalendar } from "react-icons/fa";
 import {
   formatCurrency,
   formatDate,
@@ -27,93 +20,15 @@ import {
   getStatusApolicesColors,
 } from "@/lib/utils";
 import { IoShieldCheckmarkSharp } from "react-icons/io5";
-import { useAuth } from "@/contexts/auth-context";
-import { useUserProfile } from "@/hooks/useUserProfile ";
 import { LoadingScreen } from "@/components/ui/loading-screen";
-
-type Invoice = {
-  invoiceNumber: number;
-  invoiceDate: string;
-  invoiceValue: number;
-};
-interface ApoliceData {
-  productName: string;
-  contractNumber: number;
-  clientName: string;
-  birthdate: string | null;
-  primaryMobileContact: string;
-  primaryEmailContact: string;
-  producerName: string;
-  contractStatus: string;
-  registration: string | null;
-  premium: number;
-  totalPremium: number;
-  startDate: string;
-  endDate: string | null;
-  atm: string | null;
-  contacts: string[];
-  invoices: Invoice[];
-}
+import { useApolices } from "@/hooks/useApolices";
 
 type ApolicePageProps = {
   onSelectDetail: (id: string, contractNumber: string) => void;
 };
 
 export default function ApolicePage({ onSelectDetail }: ApolicePageProps) {
-  const [apolices, setApolices] = useState<ApoliceData[]>([]);
-  const { token } = useSessionCheckToken();
-  const [error, setError] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-  const { profile } = useUserProfile();
-
-  useEffect(() => {
-    if (!token || !profile?.nif) return;
-
-    const controller = new AbortController();
-    const { signal } = controller;
-
-    const fetchApolices = async () => {
-      setIsLoading(true);
-      setError(null);
-
-      try {
-        const response = await fetch(
-          `/api/anywhere/api/v1/private/mobile/entity/nif/${profile.nif}/policies`,
-          {
-            method: "GET",
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "application/json",
-              Accept: "application/json",
-            },
-            signal,
-          }
-        );
-
-        if (!response.ok) {
-          throw new Error(`Erro ${response.status}: ${response.statusText}`);
-        }
-
-        const data = await response.json();
-        setApolices(Array.isArray(data) ? data : [data]);
-      } catch (error) {
-        if (signal.aborted) {
-          console.log("Requisição cancelada");
-          return;
-        }
-        console.error("Erro ao buscar apólices:", error);
-        setError("Erro ao carregar apólices. Tente novamente mais tarde.");
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchApolices();
-
-    return () => {
-      controller.abort(); // cancela a requisição anterior se o efeito for reexecutado
-    };
-  }, [token, profile?.nif]);
+  const { apolices, error, isLoading } = useApolices();
 
   if (isLoading) {
     return (
@@ -145,13 +60,6 @@ export default function ApolicePage({ onSelectDetail }: ApolicePageProps) {
         <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-[#002256]">
           Minhas Apólices
         </h1>
-        {/* <Button
-          size="sm"
-          className="hidden md:flex bg-[#002256] hover:bg-[#002256]/80"
-        >
-          <FileText className="mr-2 h-4 w-4" />
-          Relatório de Apólices
-        </Button> */}
       </div>
 
       <div className="grid gap-6">
