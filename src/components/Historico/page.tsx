@@ -8,9 +8,9 @@ import { IoCalculatorOutline } from "react-icons/io5";
 import { FaExclamationTriangle } from "react-icons/fa";
 
 import FavoriteCard from "@/components/FavoriteCard";
-import HistoryTable from "@/components/HistoryTable";
+import HistoryTable from "@/components/Historico/HistoryTable";
 import AtivitysLastCard from "@/components/AtivitysLastCard";
-import { DashboardCharts } from "@/components/DashboartdCharts";
+import { DashboardCharts } from "@/components/Historico/DashboartdCharts";
 
 import IconCar from "@/assets/Icones/AliancaAuto_Icone.svg";
 import IconHosp from "@/assets/Icones/AliancaIncendio_Icone.svg";

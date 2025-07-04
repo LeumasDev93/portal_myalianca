@@ -18,7 +18,7 @@ export const getApolicesStatusText = (status: string) => {
     case "I": return "Simulação";
     case "P": return "Pendente";
     case "T": return "Caducada";
-    default: return status;
+    default: return "Não Definido";
   }
 };
 
@@ -221,5 +221,62 @@ export const getStatusInfo = (type: 'recibos' | 'sinistros' | 'apolices', status
       return getStatusApolicesColors(status as string);
     default:
       return { text: "Desconhecido", class: "bg-gray-100 text-gray-800" };
+  }
+};
+
+export const getApolicesStatusColorsHex = (status: string) => {
+  switch (status) {
+    case "C":
+      return { backgroundColor: "#32727b", color: "#32727b" }; // bg-green-300, text-green-800
+    case "S":
+      return { backgroundColor: "#4a8a93", color: "#4a8a93" }; // bg-blue-300, text-blue-800
+    case "D":
+    case "T":
+      return { backgroundColor: "#63a2ac", color: "#63a2ac" }; // bg-red-300, text-red-800
+    case "X":
+      return { backgroundColor: "#7bbac4", color: "#7bbac4" }; // bg-orange-300, text-orange-800
+    case "U":
+    case "Y":
+    case "P":
+      return { backgroundColor: "#93d2dc", color: "#93d2dc" }; // bg-yellow-300, text-yellow-800 (um pouco diferente do padrão tailwind #92400e para melhor contraste)
+    case "W":
+    case "A":
+      return { backgroundColor: "#a7d4ff", color: "#a7d4ff" }; // bg-purple-300, text-purple-800
+    case "I":
+      return { backgroundColor: "#84bcfc", color: "#84bcfc" }; // bg-gray-300, text-gray-800
+    default:
+      return { backgroundColor: "#61a5f9", color: "#61a5f9" }; // bg-gray-100, text-gray-800
+  }
+};
+
+export const getSinistrosStatusColorsHex = (status: string) => {
+  switch (status) {
+    case "E": // Ativo
+      return { backgroundColor: "#16c1c8", color: "#16c1c8" }; // bg-green-300, text-green-900
+    case "A": // Aprovado
+      return { backgroundColor: "#49cccc", color: "#49cccc" }; // bg-blue-300, text-blue-900
+    case "R": // Expirado
+      return { backgroundColor: "#7cd7cf", color: "#7cd7cf" }; // bg-red-300, text-red-800 (text-red-800 para melhor contraste)
+    case "T": // Inativo
+      return { backgroundColor: "#aee1d3", color: "#aee1d3" }; // bg-gray-300, text-gray-800
+    default:
+      return { backgroundColor: "#e1ecd6", color: "#e1ecd6" }; // bg-gray-100, text-gray-800
+  }
+};
+
+export const getStatusReciverColorHex = (status: number) => {
+  switch (status) {
+    case 1:
+      return { backgroundColor: "#415088", color: "#415088" };
+    case 2:
+      return { backgroundColor: "#5967a1", color: "#5967a1" }; // bg-orange-300, text-orange-800
+    case 5:
+      return { backgroundColor: "#717eba", color: "#717eba" }; // bg-blue-300, text-blue-800
+    case 8:
+      return { backgroundColor: "#8994d2", color: "#8994d2" }; // bg-green-300, text-green-800
+    case 9:
+      return { backgroundColor: "#a1abeb", color: "#a1abeb" }; // bg-red-300, text-red-800
+    default:
+      return { backgroundColor: "#1a75f3", color: "#1a75f3" }; // bg-gray-100, text-gray-800
   }
 };

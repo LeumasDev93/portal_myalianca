@@ -5,11 +5,6 @@ import { useApolices } from "@/hooks/useApolices";
 import { useRecibos } from "@/hooks/useRecibos ";
 import { useSinistros } from "@/hooks/useSinistros";
 import { useTableData } from "@/hooks/useTableData";
-import {
-  getStatusApolicesColors,
-  getStatusReciverColors,
-  getStatusSinistrosColors,
-} from "@/lib/utils";
 import React, { useEffect, useState } from "react";
 import {
   FaCar,
@@ -20,6 +15,9 @@ import {
   FaEye,
   FaChevronLeft,
   FaChevronRight,
+  FaFileDownload,
+  FaSync,
+  FaFileAlt,
 } from "react-icons/fa";
 import { FaTriangleExclamation } from "react-icons/fa6";
 import { HiDotsVertical } from "react-icons/hi";
@@ -35,9 +33,11 @@ const ramoIcons = {
   Outros: <FaFileInvoice className="text-white text-sm xl:text-xl" />,
 };
 
-// Cabeçalhos configuráveis por tipo
+type PageProps = {
+  onSelectDetail: (id: string) => void;
+};
 
-const HistoryTable = () => {
+const HistoryTable = ({ onSelectDetail }: PageProps) => {
   const [activeTab, setActiveTab] =
     useState<keyof typeof tableConfigs>("Apólices");
   const [selectedItem, setSelectedItem] = useState<any>(null);
@@ -45,24 +45,15 @@ const HistoryTable = () => {
   const [popupPosition, setPopupPosition] = useState({ top: 0, left: 0 });
   const [currentPage, setCurrentPage] = useState(1);
 
-  const {
-    errorRecibo,
-    filteredRecibos,
-    isLoadingRecibos,
-    recibos,
-    resetFilters,
-    searchTerm,
-    setSearchTerm,
-    setStatusFilter,
-    statusFilter,
-  } = useRecibos();
+  const { errorRecibo, filteredRecibos, isLoadingRecibos } = useRecibos();
 
   const { apolices, errorApolices, isLoadingApolices } = useApolices();
 
-  const { errorSinistros, sinistros, isLoadingSinistros, refetch } =
-    useSinistros();
+  const { errorSinistros, sinistros, isLoadingSinistros } = useSinistros();
+
   const { formatRecibos, formatSinistros, formatApolices } = useTableData();
 
+  const loading = isLoadingApolices || isLoadingSinistros || isLoadingRecibos;
   const tableConfigs = {
     Apólices: {
       icon: <IoShieldCheckmarkSharp />,
@@ -148,7 +139,6 @@ const HistoryTable = () => {
   const closePopup = () => {
     setShowPopup(false);
   };
-
   const handleViewDetails = () => {
     alert(
       `Visualizando detalhes do item: ${
@@ -167,6 +157,21 @@ const HistoryTable = () => {
     setCurrentPage(1); // Reset to first page when changing tabs
   };
 
+  const handleDownloadPolicy = (contractNumber: number) => {
+    // Implementação para baixar apólice
+  };
+
+  const handleRenewPolicy = (contractNumber: number) => {
+    // Implementação para renovar apólice
+  };
+
+  const handleReportSinister = (sinisterId: string) => {
+    // Implementação para gerar relatório de sinistro
+  };
+
+  const handleDownloadReceipt = (receiptNumber: string) => {
+    // Implementação para baixar recibo
+  };
   return (
     <div className="w-full">
       <div className="flex sm:gap-2">
@@ -194,7 +199,7 @@ const HistoryTable = () => {
         })}
       </div>
 
-      <div className="bg-white rounded-b-lg shadow-md p-3 xl:p-6 w-full overflow-x-auto">
+      <div className="bg-white rounded-b-lg rounded-tl-lg shadow-md p-3 xl:p-6 w-full overflow-x-auto">
         <div
           className="overflow-y-auto"
           style={{
@@ -221,53 +226,40 @@ const HistoryTable = () => {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {/* Loading state - shows only when loading */}
-              {isLoadingApolices && (
-                <tr>
-                  <td
-                    colSpan={config.headers.length}
-                    className="text-center py-8"
-                  >
-                    <div className="flex justify-center items-center">
-                      <svg
-                        className="animate-spin -ml-1 mr-3 h-5 w-5 text-[#002855]"
-                        xmlns="http://www.w3.org/2000/svg"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                      >
-                        <circle
-                          className="opacity-25"
-                          cx="12"
-                          cy="12"
-                          r="10"
-                          stroke="currentColor"
-                          strokeWidth="4"
-                        ></circle>
-                        <path
-                          className="opacity-75"
-                          fill="currentColor"
-                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                        ></path>
-                      </svg>
-                      <span className="text-[#002855]">
-                        A carregar dados...
-                      </span>
-                    </div>
-                  </td>
-                </tr>
-              )}
-
               {/* Content - only shows when not loading */}
-              {!isLoadingApolices && (
+              {loading && (
                 <>
-                  {/* Empty state */}
                   {currentItems.length === 0 ? (
                     <tr>
                       <td
                         colSpan={config.headers.length}
-                        className="text-center py-4"
+                        className="text-center py-8"
                       >
-                        Nenhum item encontrado.
+                        <div className="flex justify-center items-center">
+                          <svg
+                            className="animate-spin -ml-1 mr-3 h-5 w-5 text-[#002855]"
+                            xmlns="http://www.w3.org/2000/svg"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                          >
+                            <circle
+                              className="opacity-25"
+                              cx="12"
+                              cy="12"
+                              r="10"
+                              stroke="currentColor"
+                              strokeWidth="4"
+                            ></circle>
+                            <path
+                              className="opacity-75"
+                              fill="currentColor"
+                              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                            ></path>
+                          </svg>
+                          <span className="text-[#002855]">
+                            A carregar dados...
+                          </span>
+                        </div>
                       </td>
                     </tr>
                   ) : (
@@ -412,7 +404,7 @@ const HistoryTable = () => {
         )}
       </div>
 
-      {showPopup && (
+      {showPopup && selectedItem && (
         <div
           className="absolute z-50 bg-white shadow-lg rounded-md py-2 w-48 border border-gray-300"
           style={{
@@ -421,14 +413,87 @@ const HistoryTable = () => {
           }}
           onClick={(e) => e.stopPropagation()}
         >
+          {/* Opção comum a todas as abas */}
           <button
-            onClick={handleViewDetails}
+            onClick={() => {
+              if (activeTab === "Apólices") {
+                onSelectDetail(selectedItem.rawData.contractNumber.toString());
+              } else if (activeTab === "Sinistros") {
+                onSelectDetail(
+                  selectedItem.rawData.id?.toString() ||
+                    selectedItem.rawData.sinisterId?.toString()
+                );
+              } else if (activeTab === "Recibos") {
+                onSelectDetail(
+                  selectedItem.rawData.id?.toString() ||
+                    selectedItem.rawData.receiptNumber?.toString()
+                );
+              }
+              setShowPopup(false);
+            }}
             className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:text-gray-800 flex items-center"
           >
             <FaEye className="mr-2" />
             Ver detalhes
           </button>
-          {/* Adicione mais opções aqui se necessário */}
+
+          {/* Opções específicas para Apólices */}
+          {activeTab === "Apólices" && (
+            <>
+              <button
+                onClick={() => {
+                  handleDownloadPolicy(selectedItem.rawData.contractNumber);
+                  setShowPopup(false);
+                }}
+                className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:text-gray-800 flex items-center"
+              >
+                <FaFileDownload className="mr-2" />
+                Baixar Apólice
+              </button>
+              <button
+                onClick={() => {
+                  handleRenewPolicy(selectedItem.rawData.contractNumber);
+                  setShowPopup(false);
+                }}
+                className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:text-gray-800 flex items-center"
+              >
+                <FaSync className="mr-2" />
+                Renovar
+              </button>
+            </>
+          )}
+
+          {/* Opções específicas para Sinistros */}
+          {activeTab === "Sinistros" && (
+            <button
+              onClick={() => {
+                handleReportSinister(
+                  selectedItem.rawData.id || selectedItem.rawData.sinisterId
+                );
+                setShowPopup(false);
+              }}
+              className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:text-gray-800 flex items-center"
+            >
+              <FaFileAlt className="mr-2" />
+              Relatório
+            </button>
+          )}
+
+          {/* Opções específicas para Recibos */}
+          {activeTab === "Recibos" && (
+            <button
+              onClick={() => {
+                handleDownloadReceipt(
+                  selectedItem.rawData.id || selectedItem.rawData.receiptNumber
+                );
+                setShowPopup(false);
+              }}
+              className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:text-gray-800 flex items-center"
+            >
+              <FaFileDownload className="mr-2" />
+              Baixar Recibo
+            </button>
+          )}
         </div>
       )}
 
