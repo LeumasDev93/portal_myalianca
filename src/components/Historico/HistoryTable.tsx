@@ -37,7 +37,7 @@ type PageProps = {
   onSelectDetail: (id: string) => void;
 };
 
-const HistoryTable = ({ onSelectDetail }: PageProps) => {
+const HistoryTable = () => {
   const [activeTab, setActiveTab] =
     useState<keyof typeof tableConfigs>("Apólices");
   const [selectedItem, setSelectedItem] = useState<any>(null);
@@ -417,17 +417,8 @@ const HistoryTable = ({ onSelectDetail }: PageProps) => {
           <button
             onClick={() => {
               if (activeTab === "Apólices") {
-                onSelectDetail(selectedItem.rawData.contractNumber.toString());
               } else if (activeTab === "Sinistros") {
-                onSelectDetail(
-                  selectedItem.rawData.id?.toString() ||
-                    selectedItem.rawData.sinisterId?.toString()
-                );
               } else if (activeTab === "Recibos") {
-                onSelectDetail(
-                  selectedItem.rawData.id?.toString() ||
-                    selectedItem.rawData.receiptNumber?.toString()
-                );
               }
               setShowPopup(false);
             }}
