@@ -175,14 +175,21 @@ export default function LoginPage() {
         body: JSON.stringify({ email, otp, new_password }),
       });
 
+      console.log(res);
       const data = await res.json();
 
-      if (data.error) {
-        const errorMessage = data.details?.response?.desc || data.error;
-        setErro(errorMessage);
+      // ✅ Se a resposta NÃO for 200–299
+      if (!res.ok) {
+        if (data.code === 0 || data.code === 3) {
+          setErro(data.message_details);
+          return;
+        }
+
+        setErro(data.message);
         return;
       }
 
+      // ✅ Sucesso
       if (data.message === "SUCCESS") {
         setSuccessMessage("Senha redefinida com sucesso!");
         setTimeout(() => {
@@ -196,7 +203,7 @@ export default function LoginPage() {
         setErro(data.message || "Erro ao redefinir senha.");
       }
     } catch (err) {
-      setErro("Erro ao redefinir senha.");
+      setErro("Erro de rede ao redefinir senha.");
     } finally {
       setIsLoading(false);
     }
