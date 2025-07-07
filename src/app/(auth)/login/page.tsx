@@ -4,6 +4,7 @@
 import { useState, FormEvent, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/auth-context";
+import Logo from "@/assets/alianca.png";
 import {
   AlertCircle,
   ArrowRight,
@@ -250,8 +251,9 @@ export default function LoginPage() {
       </div>
 
       {/* Login Form */}
-      <div className="flex-1 flex items-center justify-center xl:p-6">
-        <div className="w-full sm:max-w-sm xl:max-w-md  transition-all duration-300 ">
+      <div className="flex-1 flex flex-col items-center justify-center p-4 xl:p-6">
+        <Image src={Logo} alt="Logo" width={100} height={100} />
+        <div className="w-full sm:max-w-sm xl:max-w-md  transition-all duration-300 mt-10">
           {/* Cabeçalho com animação sutil */}
           <div className="mb-8 text-center transform transition-transform duration-300 hover:scale-[1.01]">
             <h1 className="text-2xl xl:text-3xl font-bold text-gray-900 mb-2 bg-gradient-to-r from-blue-600 to-blue-800 bg-clip-text">
