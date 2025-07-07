@@ -75,7 +75,7 @@ export function Menu({ onMenuClick, menuItems, activePath }: MenuProps) {
               <div className="flex ml-2">
                 <h1 className="text-lg font-extrabold text-[#B7021C]">My</h1>
                 <h1 className="text-lg font-extrabold text-[#002256]">
-                  Alianca
+                  Aliança
                 </h1>
               </div>
             )}

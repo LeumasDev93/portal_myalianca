@@ -20,7 +20,7 @@ import { MdEmail, MdPayment } from "react-icons/md";
 import { IoIosInformationCircle, IoIosLogOut } from "react-icons/io";
 import { IoMdPin } from "react-icons/io";
 import SimulationScreen from "../../../components/Simulation/page";
-import { Avatar, AvatarFallback, AvatarImage } from "@radix-ui/react-avatar";
+import { AiFillFileExclamation } from "react-icons/ai";
 import { useAuth } from "@/contexts/auth-context";
 import { Footer } from "@/components/Footer";
 import Historico from "../../../components/Historico/page";
@@ -35,9 +35,10 @@ import SinistrosPage from "../../../components/(sinistros)/sinistros/page";
 import SinistroDetailPage from "../../../components/(sinistros)/sinistroDetails/page";
 import MensagensPage from "../../../components/(mensagens)/mensagens/page";
 import MensagemDetailPage from "../../../components/(mensagens)/mensagemDetails/page";
-import AbrirSinistroPage from "../../../components/(sinistros)/newSinistro/page";
 import ReciboPage from "../../../components/(recibo)/recibo/page";
 import EncaminharMensagemPage from "../../../components/(mensagens)/encaminhar/page";
+import { useAutoLogout } from "@/hooks/useLogout";
+import OcorrênciasPage from "../../../components/(sinistros)/ocorrencias/page";
 
 const Page = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -62,6 +63,8 @@ const Page = () => {
   >(null);
 
   const { logout, user } = useAuth();
+
+  const { countdown } = useAutoLogout(logout);
 
   useEffect(() => {
     setIsLoading(true);
@@ -110,7 +113,14 @@ const Page = () => {
       onClick: () => handleMenuClick("recibo"),
     },
     {
-      title: "Simulador",
+      title: "Ocorrências",
+      path: "ocorrencias",
+      icon: AiFillFileExclamation,
+      hoverIcon: <AiFillFileExclamation />,
+      onClick: () => handleMenuClick("ocorrencias"),
+    },
+    {
+      title: "Simular & Contratar",
       path: "Simulation",
       icon: TbTopologyStar3,
       hoverIcon: <BsPersonFill />,
@@ -255,12 +265,37 @@ const Page = () => {
               </div>
             ) : (
               <>
+                {countdown !== null && (
+                  <div className="fixed top-25 right-5 bg-orange-100 border-l-4 border-orange-500 text-orange-700 p-4 rounded-lg shadow-lg animate-bounce-in">
+                    <div className="flex items-center gap-3">
+                      <svg
+                        className="w-6 h-6 text-orange-500"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                        xmlns="http://www.w3.org/2000/svg"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth="2"
+                          d="M13 16h-1v-4h-1m1-4h.01M12 9v2m0 4h.01M12 2a10 10 0 100 20 10 10 0 000-20z"
+                        />
+                      </svg>
+                      <span className="text-sm font-medium">
+                        Você será desconectado em <strong>{countdown}</strong>{" "}
+                        segundo{countdown !== 1 ? "s" : ""}
+                        ...
+                      </span>
+                    </div>
+                  </div>
+                )}
                 {currentPage === "Historico" && (
                   <Historico
                     onSelectDetailApolice={handleSelectApoliceDetail}
                     onSelectDetailSinistro={handleSelectSinistroDetail}
                     onOpenSimulator={() => setCurrentPage("Simulation")}
-                    onNewSinistro={() => setCurrentPage("newSinistro")}
+                    onNewSinistro={() => setCurrentPage("ocorrencias")}
                   />
                 )}
                 {currentPage === "apolice" && (
@@ -280,10 +315,8 @@ const Page = () => {
                     onSelectDetail={handleSelectSinistroDetail}
                   />
                 )}
-                {currentPage === "newSinistro" && (
-                  <AbrirSinistroPage
-                    onBack={() => setCurrentPage("Historico")}
-                  />
+                {currentPage === "ocorrencias" && (
+                  <OcorrênciasPage onBack={() => setCurrentPage("Historico")} />
                 )}
                 {currentPage === "sinistroDetails" && selectedSinistroId && (
                   <SinistroDetailPage

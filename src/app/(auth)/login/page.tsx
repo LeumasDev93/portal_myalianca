@@ -59,7 +59,8 @@ export default function LoginPage() {
   const [successMessage, setSuccessMessage] = useState("");
   const [step, setStep] = useState<"email" | "otp" | "password">("email");
   const [otp, setOtp] = useState("");
-  const [newPassword, setNewPassword] = useState("");
+  const [new_password, setNewPassword] = useState("");
+  const [isTransitioning, setIsTransitioning] = useState(false);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -91,35 +92,30 @@ export default function LoginPage() {
         body: JSON.stringify({ email }),
       });
 
-      const data: ApiResponse = await res.json();
+      const data = await res.json();
 
       // Tratamento de erro
       if (data.error) {
         const errorMessage = data.details?.response?.desc || data.error;
         setErro(errorMessage);
-        setTimeout(() => {
-          setErro("");
-        }, 3000);
-        //console.error("Erro da API:", errorMessage);
         return;
       }
 
       // Tratamento de sucesso
-      if (data.response?.code === "0") {
-        setSuccessMessage(
-          data.response.desc || "Código OTP enviado com sucesso."
-        );
-        setStep("otp");
+      if (data.message === "SUCCESS") {
+        setSuccessMessage(data.details || "Código OTP enviado com sucesso.");
+        console.log(data.details, "chedou");
+        setTimeout(() => {
+          setStep("otp");
+          setSuccessMessage("");
+        }, 2000);
         return;
       }
+
+      // Formato não reconhecido
+      setErro("Resposta do servidor não reconhecida");
     } catch (err) {
-      const errorMessage =
-        err instanceof Error ? err.message : "Erro desconhecido";
-      setErro(errorMessage);
-      setTimeout(() => {
-        setErro("");
-      }, 3000);
-      // console.error("Erro na requisição:", errorMessage);
+      setErro("Erro ao conectar com o servidor");
     } finally {
       setIsLoading(false);
     }
@@ -134,6 +130,9 @@ export default function LoginPage() {
     try {
       const res = await fetch("/api/auth/validate-otp", {
         method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify({ email, otp }),
       });
 
@@ -142,21 +141,17 @@ export default function LoginPage() {
       if (data.error) {
         const errorMessage = data.details?.response?.desc || data.error;
         setErro(errorMessage);
-        setTimeout(() => {
-          setErro("");
-        }, 3000);
-        //console.error("Erro da API:", errorMessage);
         return;
       }
 
       if (data.message === "SUCCESS") {
-        setSuccessMessage("Código validado com sucesso.");
-        setStep("password");
+        setSuccessMessage("Código validado com sucesso!");
+        setTimeout(() => {
+          setStep("password");
+          setSuccessMessage("");
+        }, 2000);
       } else {
         setErro(data.message || "Código inválido.");
-        setTimeout(() => {
-          setErro("");
-        }, 3000);
       }
     } catch (err) {
       setErro("Erro ao validar código.");
@@ -172,10 +167,12 @@ export default function LoginPage() {
     setSuccessMessage("");
 
     try {
-      const res = await fetch("/api/auth/recover-password", {
+      const res = await fetch("/api/auth/confirm-password", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, otp, newPassword }),
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email, otp, new_password }),
       });
 
       const data = await res.json();
@@ -183,15 +180,18 @@ export default function LoginPage() {
       if (data.error) {
         const errorMessage = data.details?.response?.desc || data.error;
         setErro(errorMessage);
-        setTimeout(() => {
-          setErro("");
-        }, 3000);
-        //console.error("Erro da API:", errorMessage);
         return;
       }
 
       if (data.message === "SUCCESS") {
         setSuccessMessage("Senha redefinida com sucesso!");
+        setTimeout(() => {
+          setIsLoginForm(true);
+          setStep("email");
+          setEmail("");
+          setOtp("");
+          setNewPassword("");
+        }, 2000);
       } else {
         setErro(data.message || "Erro ao redefinir senha.");
       }
@@ -220,7 +220,7 @@ export default function LoginPage() {
         <div className="relative z-10 flex flex-col justify-between h-full p-8 text-white">
           <div className="bg-white/10 p-4 rounded-lg backdrop-blur-sm">
             <h1 className="text-4xl font-bold">MY ALIANÇA</h1>
-            <p className="text-xl mt-2">Descomplicar e ter My Aliança</p>
+            <p className="text-xl mt-2">Descomplicar é Ter My Aliança</p>
           </div>
 
           <div className="bg-white/50 p-6 rounded-lg backdrop-blur-sm text-blue-900">
@@ -244,11 +244,17 @@ export default function LoginPage() {
 
       {/* Login Form */}
       <div className="flex-1 flex items-center justify-center xl:p-6">
-        <div className="w-full sm:max-w-sm xl:max-w-md bg-white p-8 rounded-xl shadow-lg border border-gray-100 transition-all duration-300 hover:shadow-xl">
+        <div className="w-full sm:max-w-sm xl:max-w-md  transition-all duration-300 ">
           {/* Cabeçalho com animação sutil */}
           <div className="mb-8 text-center transform transition-transform duration-300 hover:scale-[1.01]">
-            <h1 className="text-2xl xl:text-3xl font-bold text-gray-900 mb-2 bg-gradient-to-r from-blue-600 to-blue-800 bg-clip-text ">
-              Bem-vindo(a) de volta
+            <h1 className="text-2xl xl:text-3xl font-bold text-gray-900 mb-2 bg-gradient-to-r from-blue-600 to-blue-800 bg-clip-text">
+              {isLoginForm
+                ? "FAÇA LOGIN NA SUA ÁREA DE CLIENTE"
+                : step === "email"
+                ? "RECUPERAR SENHA"
+                : step === "otp"
+                ? "VALIDAR CÓDIGO"
+                : "REDEFINIR SENHA"}
             </h1>
             <div className="w-20 h-1 bg-gradient-to-r from-blue-400 to-blue-600 mx-auto rounded-full"></div>
           </div>
@@ -367,13 +373,6 @@ export default function LoginPage() {
               className="space-y-4"
             >
               <div className="text-center transform transition-transform duration-300 hover:scale-[1.01]">
-                <h3 className="text-xl font-bold text-gray-900 bg-gradient-to-r from-blue-600 to-blue-800 bg-clip-text">
-                  {step === "email"
-                    ? "Recuperar Senha"
-                    : step === "otp"
-                    ? "Validar Código"
-                    : "Nova Senha"}
-                </h3>
                 <p className="mt-2 text-sm text-gray-600">
                   {step === "email" &&
                     "Digite seu email para receber o código OTP"}
@@ -430,7 +429,7 @@ export default function LoginPage() {
                   <input
                     type="password"
                     placeholder=" "
-                    value={newPassword}
+                    value={new_password}
                     onChange={(e) => setNewPassword(e.target.value)}
                     required
                     className="block w-full px-4 py-3 text-sm bg-white border border-gray-200 rounded-lg transition-all duration-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent peer"
@@ -456,14 +455,14 @@ export default function LoginPage() {
 
               <button
                 type="submit"
-                disabled={isLoading}
+                disabled={isloading}
                 className={`w-full py-3 px-4 inline-flex justify-center items-center gap-2 rounded-lg font-medium text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 ${
-                  isLoading
+                  isloading
                     ? "bg-blue-400 cursor-not-allowed"
                     : "bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 shadow-md hover:shadow-lg"
                 }`}
               >
-                {isLoading ? (
+                {isloading ? (
                   <>
                     <Loader2 className="animate-spin h-5 w-5" />
                     <span>Processando...</span>

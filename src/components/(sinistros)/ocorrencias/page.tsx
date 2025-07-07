@@ -45,7 +45,7 @@ type NewSinistroPageProps = {
   onBack: () => void;
 };
 
-export default function AbrirSinistroPage({ onBack }: NewSinistroPageProps) {
+export default function OcorrênciasPage({ onBack }: NewSinistroPageProps) {
   const { toast } = useToast();
   const { token } = useSessionCheckToken();
   const { profile } = useUserProfile();

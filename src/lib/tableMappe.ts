@@ -8,7 +8,6 @@ export const tableMappeData = () => {
         return recibos.map(recibo => ({
             ramo: getRamoFromType(recibo.type),
             number: recibo.number,
-            clientName: recibo.clientName,
             type: getTipoRecibo(recibo.type),
             date: recibo.from,
             value: formatCurrency(recibo.value),
@@ -33,8 +32,8 @@ export const tableMappeData = () => {
 
     const formatApolices = (apolices: ApoliceData[]) => {
         return apolices.map(apolice => ({
-            ramo: apolice.contractNumber,
             numberapolice: apolice.contractNumber,
+            dateStart: formatDate(apolice.startDate),
             dateEnd: formatDate(apolice.endDate),
             value: formatCurrency(apolice.premium),
             status: getApolicesStatusText(apolice.contractStatus),

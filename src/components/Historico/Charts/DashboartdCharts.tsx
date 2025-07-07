@@ -242,7 +242,7 @@ export function DashboardCharts() {
                   value={key}
                   className="space-y-2 xl:space-y-4"
                 >
-                  <div className="flex items-center justify-center h-[200px] sm:h-[250px] xl:h-[300px] xl:gap-4">
+                  <div className="flex flex-col items-center justify-center h-[200px] sm:h-[250px] xl:h-[300px] xl:gap-4">
                     <div className="w-full h-[180px] sm:h-[200px] xl:h-full">
                       <ResponsiveContainer width="100%" height="100%">
                         <PieChart>
@@ -262,7 +262,7 @@ export function DashboardCharts() {
                         </PieChart>
                       </ResponsiveContainer>
                     </div>
-                    <div className="flex flex-col gap-1 sm:gap-2 text-xs xl:text-sm">
+                    <div className="flex gap-1 sm:gap-3 text-xs xl:text-sm">
                       {data.map((entry, i) => (
                         <div key={i} className="flex items-center gap-2">
                           <span

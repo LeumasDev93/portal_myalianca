@@ -1,13 +1,12 @@
-// app/api/auth/recover-password/route.ts
 import { NextResponse } from 'next/server';
 
 export const dynamic = 'force-dynamic';
 
 export async function POST(request: Request) {
   try {
-    const { email, otp, newPassword } = await request.json();
+    const { email, otp, new_password } = await request.json();
 
-    if (!email || !otp || !newPassword ) {
+    if (!email || !otp || !new_password) {
       return NextResponse.json(
         { error: 'O campo email é obrigatório' },
         { status: 400 }
@@ -22,7 +21,7 @@ export async function POST(request: Request) {
         'Content-Type': 'application/json',
         'ApiKey': process.env.NEXT_PUBLIC_API_KEY || '' // adicione a chave de API aqui
       },
-      body: JSON.stringify({ email, otp, newPassword }),
+      body: JSON.stringify({ email, otp, new_password }),
     });
 
     if (!response.ok) {

@@ -72,12 +72,11 @@ const HistoryTable = ({
     Apólices: {
       icon: <IoShieldCheckmarkSharp />,
       headers: [
-        { key: "ramo", label: "RAMO" },
         { key: "numberapolice", label: "NÚMERO APÓLICE" },
+        { key: "dateStart", label: "DATA INICIO" },
         { key: "dateEnd", label: "DATA FIM" },
         { key: "value", label: "VALOR" },
         { key: "status", label: "ESTADO" },
-        { key: "action", label: "AÇÃO" },
         { key: "options", label: "" },
       ],
       data: formatApolices(apolices),
@@ -87,8 +86,6 @@ const HistoryTable = ({
     Sinistros: {
       icon: <FaTriangleExclamation />,
       headers: [
-        { key: "ramo", label: "RAMO" },
-        { key: "clientName", label: "PRODUTO" },
         { key: "reference", label: "# REFERÊNCIA" },
         { key: "numberapolice", label: "NÚMERO APÓLICE" },
         { key: "occurrenceDate", label: "DATA DA OCORRÊNCIA" },
@@ -102,10 +99,7 @@ const HistoryTable = ({
     Recibos: {
       icon: <IoReceiptSharp />,
       headers: [
-        { key: "ramo", label: "RAMO" },
-        { key: "clientName", label: "NOME DO CLIENTE" },
         { key: "number", label: "NÚMERO RECIBO" },
-        { key: "type", label: "TIPO" },
         { key: "date", label: "Data" },
         { key: "value", label: "VALOR" },
         { key: "status", label: "ESTADO" },
@@ -358,7 +352,10 @@ const HistoryTable = ({
                         header.key === "number"
                       ) {
                         return (
-                          <td key={colIndex} className="px-3 py-4 text-center">
+                          <td
+                            key={colIndex}
+                            className="px-3 xl:py-4 text-[10px] xl:text-sm text-center"
+                          >
                             <span>#{value}</span>
                           </td>
                         );
