@@ -39,6 +39,8 @@ import ReciboPage from "../../../components/(recibo)/recibo/page";
 import EncaminharMensagemPage from "../../../components/(mensagens)/encaminhar/page";
 import { useAutoLogout } from "@/hooks/useLogout";
 import OcorrênciasPage from "../../../components/(sinistros)/ocorrencias/page";
+import NewOcorrênciasPage from "@/components/(sinistros)/ocorrencias/newOcorrencia/page";
+import OcorrenciaDetailsPage from "@/components/(sinistros)/ocorrencias/detailsOcorrencia/page";
 
 const Page = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -55,6 +57,9 @@ const Page = () => {
   const [selectedSinistroId, setSelectedSinistroId] = useState<string | null>(
     null
   );
+  const [selectedOcorrenciaId, setSelectedOcorrenciaId] = useState<
+    string | null
+  >(null);
   const [selectedMensagemId, setSelectedMensagemId] = useState<string | null>(
     null
   );
@@ -207,6 +212,10 @@ const Page = () => {
     setSelectedSinistroId(id);
     setCurrentPage("sinistroDetails");
   }
+  function handleSelectOcorenciasDetail(id: string) {
+    setSelectedOcorrenciaId(id);
+    setCurrentPage("detailsOcorrencia");
+  }
 
   function handleSelectMensagemDetail(id: string) {
     setSelectedMensagemId(id);
@@ -316,7 +325,20 @@ const Page = () => {
                   />
                 )}
                 {currentPage === "ocorrencias" && (
-                  <OcorrênciasPage onBack={() => setCurrentPage("Historico")} />
+                  <OcorrênciasPage
+                    onViewDetails={handleSelectOcorenciasDetail}
+                    onNewOcorrencia={() => setCurrentPage("newOcorrencia")}
+                  />
+                )}
+                {currentPage === "newOcorrencia" && (
+                  <NewOcorrênciasPage
+                    onBack={() => setCurrentPage("ocorrencias")}
+                  />
+                )}{" "}
+                {currentPage === "detailsOcorrencia" && (
+                  <OcorrenciaDetailsPage
+                    onBack={() => setCurrentPage("ocorrencias")}
+                  />
                 )}
                 {currentPage === "sinistroDetails" && selectedSinistroId && (
                   <SinistroDetailPage

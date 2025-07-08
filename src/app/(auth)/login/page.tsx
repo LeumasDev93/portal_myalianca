@@ -227,8 +227,8 @@ export default function LoginPage() {
 
         <div className="relative z-10 flex flex-col justify-between h-full p-8 text-white">
           <div className="bg-white/10 p-4 rounded-lg backdrop-blur-sm">
-            <h1 className="text-4xl font-bold">MY ALIANÇA</h1>
-            <p className="text-xl mt-2">Descomplicar é Ter My Aliança</p>
+            <h1 className="text-4xl font-bold">MYALIANÇA</h1>
+            <p className="text-xl mt-2">Descomplicar É Ter MyAliança</p>
           </div>
 
           <div className="bg-white/50 p-6 rounded-lg backdrop-blur-sm text-blue-900">
@@ -251,12 +251,12 @@ export default function LoginPage() {
       </div>
 
       {/* Login Form */}
-      <div className="flex-1 flex flex-col items-center justify-center p-4 xl:p-6">
+      <div className="flex-1 flex flex-col items-center justify-center p-4">
         <Image src={Logo} alt="Logo" width={100} height={100} />
         <div className="w-full sm:max-w-sm xl:max-w-md  transition-all duration-300 mt-10">
           {/* Cabeçalho com animação sutil */}
           <div className="mb-8 text-center transform transition-transform duration-300 hover:scale-[1.01]">
-            <h1 className="text-2xl xl:text-3xl font-bold text-gray-900 mb-2 bg-gradient-to-r from-blue-600 to-blue-800 bg-clip-text">
+            <h1 className="text-lg xl:text-xl font-bold text-gray-900 mb-2 bg-gradient-to-r from-blue-600 to-blue-800 bg-clip-text">
               {isLoginForm
                 ? "FAÇA LOGIN NA SUA ÁREA DE CLIENTE"
                 : step === "email"

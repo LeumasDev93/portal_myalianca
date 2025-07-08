@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable react-hooks/exhaustive-deps */
 "use client";
 
 import { useState, useEffect } from "react";
@@ -11,9 +12,23 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import {
+  AlertTriangle,
+  // ListChecks,
+  RefreshCw,
+  List,
+  Grid,
+  Eye,
+  Search,
+  Filter,
+  X,
+} from "lucide-react";
+import { useToast } from "@/components/ui/use-toast";
+import { Ocorrencia } from "@/types/typesData";
+import { format } from "date-fns";
+import { pt } from "date-fns/locale";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -21,625 +36,446 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { ArrowLeft, Upload, X, Camera, AlertTriangle } from "lucide-react";
-import { useToast } from "@/components/ui/use-toast";
-import { Separator } from "@/components/ui/separator";
-import Image from "next/image";
-import { useSessionCheckToken } from "@/hooks/useSessionToken";
-import { useUserProfile } from "@/hooks/useUserProfile ";
-import { Toaster } from "@/components/ui/toaster";
+import { LoadingScreen } from "@/components/ui/loading-screen";
 
-interface Apolice {
-  id: string;
-  policyNumber: string;
-  insuranceType: string;
-  productName: string;
-  startDate: string;
-  endDate: string;
-  status: string;
-  contractNumber: number;
-}
+type ViewMode = "grid" | "list";
 
-type NewSinistroPageProps = {
-  onBack: () => void;
+type OcorrenciasPageProps = {
+  onNewOcorrencia: () => void;
+  onViewDetails: (id: string) => void;
 };
 
-export default function OcorrênciasPage({ onBack }: NewSinistroPageProps) {
-  const { toast } = useToast();
-  const { token } = useSessionCheckToken();
-  const { profile } = useUserProfile();
-
-  // Estados do componente
-  const [apolices, setApolices] = useState<Apolice[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [loadingSinistros, setLoadingSinistros] = useState(false);
+export default function OcorrenciasPage({
+  onNewOcorrencia,
+  onViewDetails,
+}: OcorrenciasPageProps) {
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [sinistrosDisponiveis, setSinistrosDisponiveis] = useState<any[]>([]);
+  const [ocorrencias, setOcorrencias] = useState<Ocorrencia[]>([]);
+  const [refreshing, setRefreshing] = useState(false);
+  const [viewMode, setViewMode] = useState<ViewMode>("list");
+  const { toast } = useToast();
 
-  // Dados do formulário
-  const [formData, setFormData] = useState({
-    apolice: "",
-    tipoSinistro: "",
-    data: "",
-    hora: "",
-    local: "",
-    descricao: "",
-    envolvidos: "",
-    boletimOcorrencia: "nao",
-    numeroBO: "",
-  });
+  // Filtros
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [tipoFilter, setTipoFilter] = useState<string>("all");
+  const [dateFilter, setDateFilter] = useState<string>("all");
+  const [showFilters, setShowFilters] = useState(false);
 
-  // Upload de fotos
-  const [fotos, setFotos] = useState<File[]>([]);
-  const [previews, setPreviews] = useState<string[]>([]);
-
-  useEffect(() => {
-    if (!token || !profile?.nif) return;
-
-    const controller = new AbortController();
-    const { signal } = controller;
-
-    const fetchApolices = async () => {
-      setIsLoading(true);
-      setError(null);
-
-      try {
-        const response = await fetch(
-          `/api/anywhere/api/v1/private/mobile/entity/nif/${profile.nif}/policies`,
-          {
-            method: "GET",
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "application/json",
-              Accept: "application/json",
-            },
-            signal,
-          }
-        );
-
-        if (!response.ok) {
-          throw new Error(`Erro ${response.status}: ${response.statusText}`);
-        }
-
-        const data = await response.json();
-        const processedApolices = Array.isArray(data) ? data : [data];
-        setApolices(processedApolices);
-      } catch (error) {
-        if (!signal.aborted) {
-          console.error("Erro ao buscar apólices:", error);
-          setError(
-            error instanceof Error ? error.message : "Erro desconhecido"
-          );
-        }
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchApolices();
-    return () => controller.abort();
-  }, [token, profile?.nif]);
-  console.log(`Atualizando apolices:`, apolices);
-
-  const handleSelectChange = (name: string, value: string) => {
-    console.log(`Atualizando ${name} para:`, value);
-
-    setFormData((prev) => {
-      const newData = { ...prev, [name]: value };
-
-      if (name === "apolice") {
-        newData.tipoSinistro = ""; // limpa o tipo de sinistro
-        setSinistrosDisponiveis([]); // limpa lista antiga
-        fetchSinistros(value); // busca sinistros com id da apólice
-      }
-
-      return newData;
-    });
-  };
-
-  // 3. FetchSinistros corrigido para garantir que está usando o ID correto
-  const fetchSinistros = async (apoliceId: string) => {
-    console.log("Buscando sinistros para:", apoliceId);
-    if (!token || !apoliceId) return;
-
-    const apoliceIdNumber = apoliceId;
-    setLoadingSinistros(true);
+  // Busca ocorrências
+  const fetchOcorrencias = async (signal?: AbortSignal) => {
     try {
-      const response = await fetch(
-        `/api/anywhere/api/v1/private/mobile/contract/${apoliceIdNumber}/claims`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-            Accept: "application/json",
-          },
-        }
-      );
-
-      if (!response.ok) throw new Error(`Erro ${response.status}`);
-
-      const data = await response.json();
-      console.log("Sinistros recebidos:", data);
-      setSinistrosDisponiveis(Array.isArray(data) ? data : [data]);
-    } catch (error) {
-      console.error("Erro ao buscar sinistros:", error);
-      toast({
-        title: "Erro",
-        description: "Não foi possível carregar os sinistros",
-        variant: "destructive",
-      });
-    } finally {
-      setLoadingSinistros(false);
-    }
-  };
-
-  // Manipuladores de eventos
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-  };
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files?.length) {
-      const newFiles = Array.from(e.target.files);
-      const totalFiles = [...fotos, ...newFiles];
-
-      if (totalFiles.length > 5) {
-        toast({
-          title: "Limite de fotos excedido",
-          description: "Você pode enviar no máximo 5 fotos.",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      setFotos(totalFiles);
-      setPreviews([
-        ...previews,
-        ...newFiles.map((file) => URL.createObjectURL(file)),
-      ]);
-    }
-  };
-
-  const handleRemoveFile = (index: number) => {
-    const newFotos = [...fotos];
-    const newPreviews = [...previews];
-
-    URL.revokeObjectURL(newPreviews[index]);
-    newFotos.splice(index, 1);
-    newPreviews.splice(index, 1);
-
-    setFotos(newFotos);
-    setPreviews(newPreviews);
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    const {
-      apolice,
-      tipoSinistro,
-      data,
-      hora,
-      local,
-      descricao,
-      envolvidos,
-      boletimOcorrencia,
-      numeroBO,
-    } = formData;
-
-    // Verificação de campos obrigatórios
-    if (!apolice || !tipoSinistro || !data || !local || !descricao) {
-      toast({
-        title: "Campos obrigatórios",
-        description: "Preencha todos os campos marcados com *",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setIsSubmitting(true);
-
-    try {
-      const payload = {
-        id_apolice: apolice, // ID ou número da apólice
-        nome_apolice: tipoSinistro, // nome ou título do sinistro (ajuste se necessário)
-        tipo_apolice: "sinistro", // valor fixo ou adaptável se tiver tipos
-        descricao,
-        data_ocorrido: `${data}T${hora || "00:00"}:00`,
-        local,
-        envolvidos: envolvidos || "", // string vazia se não informado
-        boletim_ocorrencia: boletimOcorrencia === "sim",
-        numero_bo: numeroBO || "", // ou null, se a API aceitar
-        id_anexo: fotos.length > 0 ? `FOTOS_${Date.now()}` : null,
-        user_id: profile?.id,
-      };
-
-      const response = await fetch("/api/sinistro", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(payload),
-      });
-
-      const datares = await response.json();
+      const response = await fetch("/api/ocorrencia", { signal });
 
       if (!response.ok) {
-        throw new Error(datares.error || "Erro ao enviar sinistro");
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Erro ao buscar ocorrências");
       }
 
-      toast({
-        title: "Sinistro enviado com sucesso",
-        description:
-          "Seu sinistro foi registrado com sucesso e está em análise.",
-        variant: "success",
-      });
+      const data = await response.json();
+      setOcorrencias(data);
+      setError(null);
     } catch (error: any) {
-      console.error("Erro ao enviar sinistro:", error);
-      toast({
-        title: "Erro ao enviar sinistro",
-        description:
-          error?.message || "Ocorreu um erro ao registrar o sinistro.",
-        variant: "destructive",
-      });
+      if (error.name !== "AbortError") {
+        console.error("Erro ao buscar ocorrências:", error);
+        setError(error instanceof Error ? error.message : "Erro desconhecido");
+        toast({
+          title: "Erro",
+          description: "Não foi possível carregar as ocorrências",
+          variant: "destructive",
+        });
+      }
     } finally {
-      setIsSubmitting(false);
+      setIsLoading(false);
+      setRefreshing(false);
     }
   };
+
+  useEffect(() => {
+    const controller = new AbortController();
+    fetchOcorrencias(controller.signal);
+    return () => controller.abort();
+  }, []);
+
+  const handleRefresh = () => {
+    setRefreshing(true);
+    fetchOcorrencias();
+  };
+
+  // Filtra as ocorrências
+  const filteredOcorrencias = ocorrencias.filter((ocorrencia) => {
+    // Filtro por termo de busca
+    const matchesSearch =
+      searchTerm === "" ||
+      ocorrencia.nome_apolice
+        .toLowerCase()
+        .includes(searchTerm.toLowerCase()) ||
+      ocorrencia.descricao?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      ocorrencia.id_apolice.toLowerCase().includes(searchTerm.toLowerCase());
+
+    // Filtro por status
+    const matchesStatus =
+      statusFilter === "all" || ocorrencia.status === statusFilter;
+
+    // Filtro por tipo
+    const matchesTipo =
+      tipoFilter === "all" || ocorrencia.tipo_apolice === tipoFilter;
+
+    // Filtro por data
+    const matchesDate = () => {
+      if (dateFilter === "all") return true;
+
+      const dataRegisto = new Date(ocorrencia.data_registo);
+      const hoje = new Date();
+
+      if (dateFilter === "today") {
+        return dataRegisto.toDateString() === hoje.toDateString();
+      }
+
+      if (dateFilter === "week") {
+        const umaSemanaAtras = new Date();
+        umaSemanaAtras.setDate(hoje.getDate() - 7);
+        return dataRegisto >= umaSemanaAtras;
+      }
+
+      if (dateFilter === "month") {
+        const umMesAtras = new Date();
+        umMesAtras.setMonth(hoje.getMonth() - 1);
+        return dataRegisto >= umMesAtras;
+      }
+
+      return true;
+    };
+
+    return matchesSearch && matchesStatus && matchesTipo && matchesDate();
+  });
+
+  // Obtém tipos únicos para o filtro
+  const getUniqueTipos = () => {
+    const tipos = new Set<string>();
+    ocorrencias.forEach((ocorrencia) => {
+      tipos.add(ocorrencia.tipo_apolice);
+    });
+    return Array.from(tipos).sort();
+  };
+
+  // Limpa todos os filtros
+  const clearFilters = () => {
+    setSearchTerm("");
+    setStatusFilter("all");
+    setTipoFilter("all");
+    setDateFilter("all");
+  };
+
+  // Contadores para badges
+  const activeFilterCount = [
+    searchTerm !== "",
+    statusFilter !== "all",
+    tipoFilter !== "all",
+    dateFilter !== "all",
+  ].filter(Boolean).length;
+
+  if (isLoading && !refreshing) {
+    return (
+      <div className="space-y-4">
+        {[...Array(5)].map((_, i) => (
+          <Skeleton key={i} className="h-24 w-full rounded-lg" />
+        ))}
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center space-y-4 text-center py-12">
+        <AlertTriangle className="h-12 w-12 text-destructive" />
+        <h3 className="text-lg font-medium">Erro ao carregar ocorrências</h3>
+        <p className="text-sm text-muted-foreground">{error}</p>
+        <Button onClick={handleRefresh} disabled={refreshing}>
+          {refreshing && <RefreshCw className="mr-2 h-4 w-4 animate-spin" />}
+          Tentar novamente
+        </Button>
+      </div>
+    );
+  }
 
   return (
     <div className="flex-1 space-y-6 p-6 md:p-8">
-      <div className="flex items-center gap-2 mb-6">
-        <Button
-          onClick={onBack}
-          className="flex items-center bg-gray-200 hover:bg-gray-300 border border-gray-400 text-gray-600 hover:text-gray-800 rounded-md px-2 sm:px-4 py-1 sm:py-2"
-        >
-          <ArrowLeft className="h-4 w-4" />
-        </Button>
-        <h1 className="text-[16px] sm:text-2xl xl:text-3xl text-[#002256] font-bold tracking-tight">
-          Nova Ocorrência
+      {/* Cabeçalho */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-[#002256]">
+          Ocorrências
         </h1>
+
+        <div className="flex flex-col md:flex-row gap-2 w-full md:w-auto">
+          <Button
+            onClick={onNewOcorrencia}
+            className="bg-[#002256] hover:bg-[#002256]/70"
+          >
+            Nova Ocorrência
+          </Button>
+        </div>
       </div>
-      <Toaster />
 
-      <Card>
-        <CardHeader className="bg-gray-50">
-          <CardTitle className="flex items-center gap-2">
-            <AlertTriangle className="h-5 w-5 text-company-red-500" />
-            Formulário de Abertura de Sinistro
-          </CardTitle>
-          <CardDescription>
-            Preencha todos os campos obrigatórios (*) e forneça o máximo de
-            informações possível.
-          </CardDescription>
-        </CardHeader>
-
-        <CardContent className="pt-6">
-          {error && (
-            <div className="mb-6 p-4 bg-red-100 text-red-700 rounded-md">
-              {error}
+      {/* Barra de busca e filtros */}
+      <div className="space-y-4">
+        <div className="relative">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 justify-center w-[70%]">
+              <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Pesquisar ocorrências..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-9 bg-white border border-input text-[#002256] focus-visible:ring-0 focus-visible:ring-offset-0"
+              />
+              <Button
+                variant={
+                  showFilters || activeFilterCount > 0 ? "default" : "outline"
+                }
+                size="icon"
+                onClick={() => setShowFilters(!showFilters)}
+                className="h-8 w-8"
+              >
+                <Filter className="h-4 w-4" />
+                {/* {activeFilterCount > 0 && (
+              <Badge className="absolute -right-1 -top-1 h-5 w-5 p-0 flex items-center justify-center">
+                {activeFilterCount}
+              </Badge>
+            )} */}
+              </Button>
             </div>
-          )}
-
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Seção Informações Básicas */}
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold">Informações Básicas</h3>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="apolice">
-                    Apólice relacionada{" "}
-                    <span className="text-company-red-500">*</span>
-                  </Label>
-                  <Select
-                    value={formData.apolice} // isso é só o ID (contractNumber)
-                    onValueChange={(value) => {
-                      handleSelectChange("apolice", value); // salva apenas o ID
-                    }}
-                    required
-                    disabled={isLoading}
-                  >
-                    <SelectTrigger>
-                      <SelectValue
-                        placeholder={
-                          isLoading
-                            ? "Carregando..."
-                            : apolices.length === 0
-                            ? "Nenhuma apólice disponível"
-                            : "Selecione uma apólice"
-                        }
-                      />
-                    </SelectTrigger>
-
-                    <SelectContent>
-                      {apolices.map((apolice) => (
-                        <SelectItem
-                          key={apolice.contractNumber}
-                          value={String(apolice.contractNumber)} // envia o ID
-                        >
-                          {apolice.productName} {/* exibe o nome */}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="tipoSinistro">
-                    Tipo de Sinistro{" "}
-                    <span className="text-company-red-500">*</span>
-                  </Label>
-                  <Select
-                    value={formData.tipoSinistro}
-                    onValueChange={(value) => {
-                      console.log("Sinistro selecionado:", value);
-                      handleSelectChange("tipoSinistro", value); // Apenas atualiza tipoSinistro
-                    }}
-                    disabled={!formData.apolice || loadingSinistros}
-                    required
-                  >
-                    <SelectTrigger>
-                      <SelectValue
-                        placeholder={
-                          loadingSinistros
-                            ? "Carregando..."
-                            : !formData.apolice
-                            ? "Selecione uma apólice primeiro"
-                            : sinistrosDisponiveis.length === 0
-                            ? "Nenhum sinistro disponível"
-                            : "Selecione o sinistro"
-                        }
-                      />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {sinistrosDisponiveis.length > 0 ? (
-                        sinistrosDisponiveis.map((sinistro) => (
-                          <SelectItem
-                            key={sinistro.claimNumber}
-                            value={String(sinistro.claimNumber)}
-                          >
-                            {sinistro.product}
-                          </SelectItem>
-                        ))
-                      ) : (
-                        <div className="p-2 text-sm text-muted-foreground">
-                          {formData.apolice
-                            ? "Nenhum sinistro encontrado"
-                            : "Selecione uma apólice"}
-                        </div>
-                      )}
-                    </SelectContent>
-                  </Select>
-                </div>
-                {/* Campos Data e Hora */}
-                <div className="space-y-2">
-                  <Label htmlFor="data">
-                    Data do Ocorrido{" "}
-                    <span className="text-company-red-500">*</span>
-                  </Label>
-                  <Input
-                    id="data"
-                    name="data"
-                    type="date"
-                    value={formData.data}
-                    onChange={handleChange}
-                    required
-                    max={new Date().toISOString().split("T")[0]}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="hora">Hora do Ocorrido</Label>
-                  <Input
-                    id="hora"
-                    name="hora"
-                    type="time"
-                    value={formData.hora}
-                    onChange={handleChange}
-                  />
-                </div>
-
-                {/* Campo Local */}
-                <div className="space-y-2 md:col-span-2">
-                  <Label htmlFor="local">
-                    Local do Ocorrido{" "}
-                    <span className="text-company-red-500">*</span>
-                  </Label>
-                  <Input
-                    id="local"
-                    name="local"
-                    placeholder="Endereço completo onde ocorreu o sinistro"
-                    value={formData.local}
-                    onChange={handleChange}
-                    required
-                  />
-                </div>
-              </div>
+            <div className="flex gap-2">
+              <Button
+                variant={viewMode === "list" ? "default" : "outline"}
+                size="icon"
+                onClick={() => setViewMode("list")}
+              >
+                <List className="h-4 w-4" />
+              </Button>
+              <Button
+                variant={viewMode === "grid" ? "default" : "outline"}
+                size="icon"
+                onClick={() => setViewMode("grid")}
+              >
+                <Grid className="h-4 w-4" />
+              </Button>
             </div>
+          </div>
 
-            <Separator />
+          <div className="absolute right-3 top-3 flex gap-2">
+            {searchTerm && (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setSearchTerm("")}
+                className="h-6 w-6"
+              >
+                <X className="h-3 w-3" />
+              </Button>
+            )}
+          </div>
+        </div>
 
-            {/* Seção Detalhes do Sinistro */}
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold">Detalhes do Sinistro</h3>
+        {/* Filtros expandidos */}
+        {showFilters && (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 border rounded-lg bg-muted/50">
+            <Select
+              value={statusFilter}
+              onValueChange={(value) => setStatusFilter(value)}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos os status</SelectItem>
+                <SelectItem value="P">Pendentes</SelectItem>
+                <SelectItem value="R">Resolvidos</SelectItem>
+              </SelectContent>
+            </Select>
 
-              <div className="space-y-2">
-                <Label htmlFor="descricao">
-                  Descrição Detalhada{" "}
-                  <span className="text-company-red-500">*</span>
-                </Label>
-                <Textarea
-                  id="descricao"
-                  name="descricao"
-                  placeholder="Descreva com detalhes o que aconteceu"
-                  rows={5}
-                  value={formData.descricao}
-                  onChange={handleChange}
-                  required
-                />
-                <p className="text-sm text-muted-foreground">
-                  Forneça o máximo de detalhes possível sobre o ocorrido,
-                  incluindo circunstâncias e danos.
-                </p>
-              </div>
+            <Select
+              value={tipoFilter}
+              onValueChange={(value) => setTipoFilter(value)}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Tipo de apólice" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos os tipos</SelectItem>
+                {getUniqueTipos().map((tipo) => (
+                  <SelectItem key={tipo} value={tipo}>
+                    {tipo}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
 
-              <div className="space-y-2">
-                <Label htmlFor="envolvidos">
-                  Pessoas ou Veículos Envolvidos
-                </Label>
-                <Textarea
-                  id="envolvidos"
-                  name="envolvidos"
-                  placeholder="Liste outras pessoas ou veículos envolvidos no sinistro, se houver"
-                  rows={3}
-                  value={formData.envolvidos}
-                  onChange={handleChange}
-                />
-              </div>
+            <Select
+              value={dateFilter}
+              onValueChange={(value) => setDateFilter(value)}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Período" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Qualquer data</SelectItem>
+                <SelectItem value="today">Hoje</SelectItem>
+                <SelectItem value="week">Últimos 7 dias</SelectItem>
+                <SelectItem value="month">Últimos 30 dias</SelectItem>
+              </SelectContent>
+            </Select>
 
-              <div className="space-y-2">
-                <Label>Boletim de Ocorrência</Label>
-                <RadioGroup
-                  value={formData.boletimOcorrencia}
-                  onValueChange={(value) =>
-                    handleSelectChange("boletimOcorrencia", value)
-                  }
+            {activeFilterCount > 0 && (
+              <Button
+                variant="ghost"
+                onClick={clearFilters}
+                className="mt-2 md:col-span-3 text-destructive"
+              >
+                <X className="mr-2 h-4 w-4" />
+                Limpar todos os filtros
+              </Button>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Controles de visualização */}
+      <div className="flex justify-between items-center"></div>
+
+      {/* Lista vazia */}
+      {filteredOcorrencias.length === 0 && !isLoading && (
+        <div className="flex flex-col items-center justify-center space-y-4 text-center py-12">
+          <LoadingScreen />
+          {/* <ListChecks className="h-12 w-12 text-muted-foreground" />
+          <h3 className="text-lg font-medium">Nenhuma ocorrência encontrada</h3>
+          <p className="text-sm text-muted-foreground">
+            {ocorrencias.length === 0
+              ? "Não há ocorrências registradas no momento."
+              : "Nenhuma ocorrência corresponde aos filtros aplicados."}
+          </p>
+          <Button onClick={handleRefresh} disabled={refreshing}>
+            {refreshing && <RefreshCw className="mr-2 h-4 w-4 animate-spin" />}
+            Recarregar
+          </Button>
+          {activeFilterCount > 0 && (
+            <Button variant="outline" onClick={clearFilters}>
+              Limpar filtros
+            </Button>
+          )} */}
+        </div>
+      )}
+
+      {/* Visualização em Grid */}
+      {filteredOcorrencias.length > 0 && viewMode === "grid" && (
+        <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-4 gap-4">
+          {filteredOcorrencias.map((ocorrencia) => (
+            <Card
+              key={ocorrencia.id}
+              className="hover:shadow-md transition-shadow"
+            >
+              <CardHeader className="pb-3">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <CardTitle className="text-lg">
+                      {ocorrencia.nome_apolice}
+                    </CardTitle>
+                    <CardDescription>
+                      {ocorrencia.tipo_apolice} • {ocorrencia.id_apolice}
+                    </CardDescription>
+                  </div>
+                  <span
+                    className={`inline-flex items-center rounded-lg px-3 py-1 text-xs xl:text-sm font-medium ${
+                      ocorrencia.status === "P"
+                        ? "bg-amber-100 text-amber-800"
+                        : "bg-green-100 text-green-800"
+                    }`}
+                  >
+                    {ocorrencia.status === "P" ? "Pendente" : "Resolvido"}
+                  </span>
+                </div>
+              </CardHeader>
+              <CardContent></CardContent>
+              <CardFooter className="flex justify-between items-center">
+                <span className="text-xs text-muted-foreground">
+                  {format(
+                    new Date(ocorrencia.data_registo),
+                    "dd/MM/yyyy HH:mm",
+                    {
+                      locale: pt,
+                    }
+                  )}
+                </span>
+                <Button
+                  className="flex items-center gap-1 bg-[#002256] hover:bg-[#002256] border border-[#002256] text-white hover:text-white rounded-md px-2 sm:px-4 py-1 sm:py-2"
+                  size="sm"
+                  onClick={() => onViewDetails(ocorrencia.id)}
                 >
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="sim" id="bo-sim" />
-                    <Label htmlFor="bo-sim">Sim, já registrei um B.O.</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="nao" id="bo-nao" />
-                    <Label htmlFor="bo-nao">Não registrei um B.O.</Label>
-                  </div>
-                </RadioGroup>
-              </div>
+                  <Eye className="h-4 w-4 mr-2" />
+                  Detalhes
+                </Button>
+              </CardFooter>
+            </Card>
+          ))}
+        </div>
+      )}
 
-              {formData.boletimOcorrencia === "sim" && (
-                <div className="space-y-2">
-                  <Label htmlFor="numeroBO">
-                    Número do Boletim de Ocorrência
-                  </Label>
-                  <Input
-                    id="numeroBO"
-                    name="numeroBO"
-                    placeholder="Informe o número do B.O."
-                    value={formData.numeroBO}
-                    onChange={handleChange}
-                  />
-                </div>
-              )}
-            </div>
-
-            <Separator />
-
-            {/* Seção Fotos e Documentos */}
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold">Fotos e Documentos</h3>
-
-              <div className="space-y-2">
-                <Label>Fotos do Sinistro (máximo 5 fotos)</Label>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
-                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 flex flex-col items-center justify-center text-center">
-                    <Camera className="h-8 w-8 text-gray-400 mb-2" />
-                    <p className="text-sm text-muted-foreground mb-2">
-                      Arraste e solte fotos aqui ou clique para selecionar
+      {/* Visualização em Lista */}
+      {filteredOcorrencias.length > 0 && viewMode === "list" && (
+        <div className="space-y-4">
+          {filteredOcorrencias.map((ocorrencia) => (
+            <Card
+              key={ocorrencia.id}
+              className="hover:shadow-sm transition-shadow"
+            >
+              <CardContent className="p-4">
+                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <h3 className="font-medium text-[#002256]">
+                        {ocorrencia.nome_apolice}
+                      </h3>
+                      <span
+                        className={`inline-flex items-center rounded-lg px-3 py-1 text-xs xl:text-sm font-medium ${
+                          ocorrencia.status === "P"
+                            ? "bg-amber-100 text-amber-800"
+                            : "bg-green-100 text-green-800"
+                        }`}
+                      >
+                        {ocorrencia.status === "P" ? "Pendente" : "Resolvido"}
+                      </span>
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      {ocorrencia.tipo_apolice} • {ocorrencia.id_apolice}
                     </p>
-                    <p className="text-xs text-muted-foreground mb-4">
-                      Formatos aceitos: JPG, PNG, HEIC - Tamanho máximo: 10MB
-                    </p>
-                    <Input
-                      id="fotos"
-                      type="file"
-                      accept="image/*"
-                      multiple
-                      className="hidden"
-                      onChange={handleFileChange}
-                    />
+                    <span className="text-xs text-muted-foreground">
+                      {format(
+                        new Date(ocorrencia.data_registo),
+                        "dd/MM/yyyy HH:mm",
+                        {
+                          locale: pt,
+                        }
+                      )}
+                    </span>
+                  </div>
+
+                  <div className="flex flex-col md:items-end gap-2">
                     <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => document.getElementById("fotos")?.click()}
-                      className="gap-2"
+                      size="sm"
+                      onClick={() => onViewDetails(ocorrencia.id)}
+                      className="flex items-center gap-1 bg-[#002256] hover:bg-[#002256] border border-[#002256] text-white hover:text-white rounded-md px-2 sm:px-4 py-1 sm:py-2"
                     >
-                      <Upload className="h-4 w-4" />
-                      Selecionar Fotos
+                      <Eye className="h-4 w-4" />
+                      <span className="hidden md:inline">Detalhes</span>
                     </Button>
                   </div>
-
-                  <div>
-                    {previews.length > 0 ? (
-                      <div className="space-y-2">
-                        <p className="text-sm font-medium">
-                          Fotos selecionadas ({previews.length}/5)
-                        </p>
-                        <div className="grid grid-cols-2 gap-2">
-                          {previews.map((preview, index) => (
-                            <div
-                              key={index}
-                              className="relative rounded-md overflow-hidden border"
-                            >
-                              <Image
-                                src={preview}
-                                alt={`Foto do sinistro ${index + 1}`}
-                                className="w-full h-24 object-cover"
-                                width={100}
-                                height={100}
-                              />
-                              <Button
-                                type="button"
-                                variant="destructive"
-                                size="icon"
-                                className="absolute top-1 right-1 h-6 w-6"
-                                onClick={() => handleRemoveFile(index)}
-                              >
-                                <X className="h-3 w-3" />
-                              </Button>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="flex items-center justify-center h-full border rounded-lg p-4">
-                        <p className="text-sm text-muted-foreground">
-                          Nenhuma foto selecionada
-                        </p>
-                      </div>
-                    )}
-                  </div>
                 </div>
-                <p className="text-sm text-muted-foreground mt-2">
-                  Adicione fotos que mostrem os danos ou o local do sinistro.
-                </p>
-              </div>
-            </div>
-
-            {/* Rodapé do Formulário */}
-            <CardFooter className="flex flex-col sm:flex-row justify-between gap-4 ">
-              <Button
-                className="bg-[#b5b7bb] hover:bg-[#b5b7bb]/80"
-                onClick={onBack}
-              >
-                Cancelar
-              </Button>
-              <Button
-                type="submit"
-                className="bg-[#002256] hover:bg-[#002256]/80"
-                disabled={isLoading || isSubmitting}
-              >
-                {isSubmitting ? "Enviando..." : "Enviar Sinistro"}
-              </Button>
-            </CardFooter>
-          </form>
-        </CardContent>
-      </Card>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

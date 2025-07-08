@@ -102,3 +102,47 @@ export interface ApoliceData {
   contacts: string[];
   invoices: InvoiceApolice[];
 }
+
+export interface Ocorrencia {
+  id: string;
+  descricao: string;
+  envolvidos: string | null;
+  status: string;
+  id_apolice: string;
+  nome_apolice: string;
+  tipo_apolice: string;
+  id_anexo: string | null;
+  user_id: string;
+  data_registo: string;
+  data_ocorrencia: string | null;
+  hora_ocorrencia: string | null;
+  local_ocorrencia: string | null;
+  boletim_ocorrencia: string | null;
+}
+
+// types/typesData.ts
+export interface Anexo {
+  id: string;
+  nome: string;
+  tipo: string;
+  tamanho: number;
+  url: string;
+  dataUpload: string;
+}
+
+export interface Ocorrencia {
+  id: string;
+  descricao: string;
+  envolvidos: string | null;
+  status: string;
+  id_apolice: string;
+  nome_apolice: string;
+  tipo_apolice: string;
+  id_anexo: string | null;
+  user_id: string;
+  data_registo: string;
+  data_ocorrencia: string | null;
+  hora_ocorrencia: string | null;
+  local_ocorrencia: string | null;
+  boletim_ocorrencia: string | null;
+}
