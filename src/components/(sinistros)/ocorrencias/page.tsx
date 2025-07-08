@@ -12,10 +12,9 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
 import {
   AlertTriangle,
-  // ListChecks,
+  ListChecks,
   RefreshCw,
   List,
   Grid,
@@ -23,6 +22,7 @@ import {
   Search,
   Filter,
   X,
+  SearchX,
 } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { Ocorrencia } from "@/types/typesData";
@@ -37,6 +37,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { LoadingScreen } from "@/components/ui/loading-screen";
+import { useUserProfile } from "@/hooks/useUserProfile ";
 
 type ViewMode = "grid" | "list";
 
@@ -56,6 +57,7 @@ export default function OcorrenciasPage({
   const [viewMode, setViewMode] = useState<ViewMode>("list");
   const { toast } = useToast();
 
+  const { profile } = useUserProfile();
   // Filtros
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
@@ -64,9 +66,9 @@ export default function OcorrenciasPage({
   const [showFilters, setShowFilters] = useState(false);
 
   // Busca ocorrências
-  const fetchOcorrencias = async (signal?: AbortSignal) => {
+  const fetchOcorrencias = async () => {
     try {
-      const response = await fetch("/api/ocorrencia", { signal });
+      const response = await fetch(`/api/ocorrencia?user_id=${profile?.id}`);
 
       if (!response.ok) {
         const errorData = await response.json();
@@ -74,6 +76,7 @@ export default function OcorrenciasPage({
       }
 
       const data = await response.json();
+      console.log(data, "ocorrencias");
       setOcorrencias(data);
       setError(null);
     } catch (error: any) {
@@ -92,11 +95,12 @@ export default function OcorrenciasPage({
     }
   };
 
+  // Uso no componente
   useEffect(() => {
-    const controller = new AbortController();
-    fetchOcorrencias(controller.signal);
-    return () => controller.abort();
-  }, []);
+    if (profile?.id) {
+      fetchOcorrencias();
+    }
+  }, [profile?.id]); // Adicione profile.id como dependência
 
   const handleRefresh = () => {
     setRefreshing(true);
@@ -176,12 +180,10 @@ export default function OcorrenciasPage({
     dateFilter !== "all",
   ].filter(Boolean).length;
 
-  if (isLoading && !refreshing) {
+  if (isLoading) {
     return (
-      <div className="space-y-4">
-        {[...Array(5)].map((_, i) => (
-          <Skeleton key={i} className="h-24 w-full rounded-lg" />
-        ))}
+      <div className="flex flex-col items-center justify-center space-y-4 text-center py-12 ">
+        <LoadingScreen />
       </div>
     );
   }
@@ -203,15 +205,15 @@ export default function OcorrenciasPage({
   return (
     <div className="flex-1 space-y-6 p-6 md:p-8">
       {/* Cabeçalho */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+      <div className="flex flex-row justify-between items-start md:items-center gap-4">
         <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-[#002256]">
           Ocorrências
         </h1>
 
-        <div className="flex flex-col md:flex-row gap-2 w-full md:w-auto">
+        <div className="flex flex-col md:flex-row gap-2">
           <Button
             onClick={onNewOcorrencia}
-            className="bg-[#002256] hover:bg-[#002256]/70"
+            className="bg-[#002256] hover:bg-[#002256]/70 text-xs sm:text-sm px-2 sm:px-4"
           >
             Nova Ocorrência
           </Button>
@@ -228,7 +230,7 @@ export default function OcorrenciasPage({
                 placeholder="Pesquisar ocorrências..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-9 bg-white border border-input text-[#002256] focus-visible:ring-0 focus-visible:ring-offset-0"
+                className="pl-9 bg-white text-xs sm:text-sm border border-input text-[#002256] focus-visible:ring-0 focus-visible:ring-offset-0"
               />
               <Button
                 variant={
@@ -248,14 +250,22 @@ export default function OcorrenciasPage({
             </div>
             <div className="flex gap-2">
               <Button
-                variant={viewMode === "list" ? "default" : "outline"}
+                className={`${
+                  viewMode === "list"
+                    ? "bg-[#002256] hover:bg-[#002256]/70"
+                    : "bg-white border border-input text-[#002256] hover:bg-[#002256]/70"
+                }`}
                 size="icon"
                 onClick={() => setViewMode("list")}
               >
                 <List className="h-4 w-4" />
               </Button>
               <Button
-                variant={viewMode === "grid" ? "default" : "outline"}
+                className={`${
+                  viewMode === "grid"
+                    ? "bg-[#002256] hover:bg-[#002256]/70"
+                    : "bg-white border border-input text-[#002256] hover:bg-[#002256]/70"
+                }`}
                 size="icon"
                 onClick={() => setViewMode("grid")}
               >
@@ -345,31 +355,52 @@ export default function OcorrenciasPage({
       <div className="flex justify-between items-center"></div>
 
       {/* Lista vazia */}
-      {filteredOcorrencias.length === 0 && !isLoading && (
+      {isLoading ? (
         <div className="flex flex-col items-center justify-center space-y-4 text-center py-12">
           <LoadingScreen />
-          {/* <ListChecks className="h-12 w-12 text-muted-foreground" />
-          <h3 className="text-lg font-medium">Nenhuma ocorrência encontrada</h3>
-          <p className="text-sm text-muted-foreground">
-            {ocorrencias.length === 0
-              ? "Não há ocorrências registradas no momento."
-              : "Nenhuma ocorrência corresponde aos filtros aplicados."}
-          </p>
-          <Button onClick={handleRefresh} disabled={refreshing}>
-            {refreshing && <RefreshCw className="mr-2 h-4 w-4 animate-spin" />}
-            Recarregar
-          </Button>
-          {activeFilterCount > 0 && (
-            <Button variant="outline" onClick={clearFilters}>
-              Limpar filtros
-            </Button>
-          )} */}
         </div>
-      )}
+      ) : filteredOcorrencias.length === 0 ? (
+        <div className="flex flex-col items-center justify-center space-y-4 text-center py-12">
+          {activeFilterCount > 0 ? (
+            <>
+              <SearchX className="h-12 w-12 text-muted-foreground" />
+              <h3 className="text-lg font-medium">
+                Nenhum resultado encontrado
+              </h3>
+              <p className="text-sm text-muted-foreground">
+                Sua busca não retornou nenhuma ocorrência com os filtros
+                aplicados.
+              </p>
+              <div className="flex gap-2">
+                <Button onClick={clearFilters} variant="outline">
+                  Limpar filtros
+                </Button>
+                <Button onClick={handleRefresh}>Tentar novamente</Button>
+              </div>
+            </>
+          ) : (
+            <>
+              <ListChecks className="h-12 w-12 text-muted-foreground" />
+              <h3 className="text-lg font-medium">
+                Nenhuma ocorrência registrada
+              </h3>
+              <p className="text-sm text-muted-foreground">
+                Não há ocorrências disponíveis no momento.
+              </p>
+              <Button onClick={handleRefresh}>
+                {refreshing ? (
+                  <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                ) : null}
+                Recarregar
+              </Button>
+            </>
+          )}
+        </div>
+      ) : null}
 
       {/* Visualização em Grid */}
-      {filteredOcorrencias.length > 0 && viewMode === "grid" && (
-        <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-4 gap-4">
+      {viewMode === "grid" && (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {filteredOcorrencias.map((ocorrencia) => (
             <Card
               key={ocorrencia.id}
@@ -382,7 +413,7 @@ export default function OcorrenciasPage({
                       {ocorrencia.nome_apolice}
                     </CardTitle>
                     <CardDescription>
-                      {ocorrencia.tipo_apolice} • {ocorrencia.id_apolice}
+                      #{ocorrencia.tipo_apolice} • #{ocorrencia.id_apolice}
                     </CardDescription>
                   </div>
                   <span
@@ -422,15 +453,15 @@ export default function OcorrenciasPage({
       )}
 
       {/* Visualização em Lista */}
-      {filteredOcorrencias.length > 0 && viewMode === "list" && (
+      {viewMode === "list" && (
         <div className="space-y-4">
           {filteredOcorrencias.map((ocorrencia) => (
             <Card
               key={ocorrencia.id}
               className="hover:shadow-sm transition-shadow"
             >
-              <CardContent className="p-4">
-                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+              <CardContent className="px-4">
+                <div className="flex flex-row  justify-between gap-4">
                   <div className="space-y-1">
                     <div className="flex items-center gap-2">
                       <h3 className="font-medium text-[#002256]">
@@ -447,7 +478,7 @@ export default function OcorrenciasPage({
                       </span>
                     </div>
                     <p className="text-sm text-muted-foreground">
-                      {ocorrencia.tipo_apolice} • {ocorrencia.id_apolice}
+                      #{ocorrencia.tipo_apolice} • #{ocorrencia.id_apolice}
                     </p>
                     <span className="text-xs text-muted-foreground">
                       {format(
@@ -467,7 +498,7 @@ export default function OcorrenciasPage({
                       className="flex items-center gap-1 bg-[#002256] hover:bg-[#002256] border border-[#002256] text-white hover:text-white rounded-md px-2 sm:px-4 py-1 sm:py-2"
                     >
                       <Eye className="h-4 w-4" />
-                      <span className="hidden md:inline">Detalhes</span>
+                      Detalhes
                     </Button>
                   </div>
                 </div>

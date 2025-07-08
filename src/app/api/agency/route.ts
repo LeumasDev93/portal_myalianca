@@ -6,10 +6,10 @@ export async function GET() {
     const apiUrl = `${process.env.NEXT_PUBLIC_API_BASE_URL}/agencys`
     const apiToken = process.env.API_SECRET_TOKEN;
     const response = await fetch(apiUrl, {
-        headers: {
-         'Authorization': `Bearer ${apiToken}`,
-         'ApiKey': process.env.NEXT_PUBLIC_API_KEY || '' 
-       } 
+      headers: {
+        'Authorization': `Bearer ${apiToken}`,
+        'ApiKey': process.env.NEXT_PUBLIC_API_KEY || ''
+      }
     });
 
     if (!response.ok) {

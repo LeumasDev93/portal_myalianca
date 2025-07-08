@@ -123,11 +123,11 @@ export interface Ocorrencia {
 // types/typesData.ts
 export interface Anexo {
   id: string;
-  nome: string;
-  tipo: string;
-  tamanho: number;
-  url: string;
-  dataUpload: string;
+  filename: string;
+  content: string; // conteúdo base64 da imagem
+  mimetype: string; // ex: "image/jpeg", "image/png", etc.
+  userid: string;
+  datecreate: string; // ISO string da data de criação
 }
 
 export interface Ocorrencia {

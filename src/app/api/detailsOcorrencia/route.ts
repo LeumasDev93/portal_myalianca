@@ -4,9 +4,9 @@ import { NextResponse } from 'next/server';
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
-    const userId = searchParams.get('user_id');
+    const id = searchParams.get('id');
 
-    if (!userId) {
+    if (!id) {
       return NextResponse.json(
         { error: 'Parâmetro user_id é obrigatório' },
         { status: 400 }
@@ -17,7 +17,7 @@ export async function GET(request: Request) {
       throw new Error('Variáveis de ambiente não configuradas');
     }
 
-    const apiUrl = `${process.env.NEXT_PUBLIC_API_BASE_URL}/sinistros?user_id=${userId}`;
+    const apiUrl = `${process.env.NEXT_PUBLIC_API_BASE_URL}/sinistros?id=${id}`;
 
     console.log('URL da API chamada:', apiUrl); // Log para debug
 

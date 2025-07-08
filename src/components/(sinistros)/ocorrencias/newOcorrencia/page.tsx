@@ -27,8 +27,8 @@ import { useToast } from "@/components/ui/use-toast";
 import { Separator } from "@/components/ui/separator";
 import Image from "next/image";
 import { useSessionCheckToken } from "@/hooks/useSessionToken";
-import { useUserProfile } from "@/hooks/useUserProfile ";
 import { Toaster } from "@/components/ui/toaster";
+import { useUserProfile } from "@/hooks/useUserProfile ";
 
 interface Apolice {
   id: string;
@@ -57,11 +57,13 @@ export default function NewOcorrênciasPage({ onBack }: NewSinistroPageProps) {
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [sinistrosDisponiveis, setSinistrosDisponiveis] = useState<any[]>([]);
+  const [uploadProgress, setUploadProgress] = useState<number>(0);
 
   // Dados do formulário
   const [formData, setFormData] = useState({
     apolice: "",
     tipoSinistro: "",
+    nomeApolice: "",
     data: "",
     hora: "",
     local: "",
@@ -121,27 +123,22 @@ export default function NewOcorrênciasPage({ onBack }: NewSinistroPageProps) {
     fetchApolices();
     return () => controller.abort();
   }, [token, profile?.nif]);
-  console.log(`Atualizando apolices:`, apolices);
 
   const handleSelectChange = (name: string, value: string) => {
-    console.log(`Atualizando ${name} para:`, value);
-
     setFormData((prev) => {
       const newData = { ...prev, [name]: value };
 
       if (name === "apolice") {
-        newData.tipoSinistro = ""; // limpa o tipo de sinistro
-        setSinistrosDisponiveis([]); // limpa lista antiga
-        fetchSinistros(value); // busca sinistros com id da apólice
+        newData.tipoSinistro = "";
+        setSinistrosDisponiveis([]);
+        fetchSinistros(value);
       }
 
       return newData;
     });
   };
 
-  // 3. FetchSinistros corrigido para garantir que está usando o ID correto
   const fetchSinistros = async (apoliceId: string) => {
-    console.log("Buscando sinistros para:", apoliceId);
     if (!token || !apoliceId) return;
 
     const apoliceIdNumber = apoliceId;
@@ -161,7 +158,6 @@ export default function NewOcorrênciasPage({ onBack }: NewSinistroPageProps) {
       if (!response.ok) throw new Error(`Erro ${response.status}`);
 
       const data = await response.json();
-      console.log("Sinistros recebidos:", data);
       setSinistrosDisponiveis(Array.isArray(data) ? data : [data]);
     } catch (error) {
       console.error("Erro ao buscar sinistros:", error);
@@ -217,12 +213,54 @@ export default function NewOcorrênciasPage({ onBack }: NewSinistroPageProps) {
     setPreviews(newPreviews);
   };
 
+  // Função para upload de documento único
+  const uploadDocument = async (
+    file: File,
+    userId: string
+  ): Promise<string> => {
+    try {
+      // Converter para base64
+      const base64Data = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve((reader.result as string).split(",")[1]);
+        reader.onerror = (error) => reject(error);
+        reader.readAsDataURL(file);
+      });
+
+      // Fazer upload via nossa API
+      const response = await fetch("/api/upload", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          content: base64Data,
+          filename: file.name,
+          mimetype: file.type,
+          userid: userId,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Falha no upload do documento");
+      }
+
+      const data = await response.json();
+      return data.id; // Retorna o ID do documento
+    } catch (error) {
+      console.error("Erro no upload do documento:", error);
+      throw error;
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     const {
       apolice,
       tipoSinistro,
+      nomeApolice,
       data,
       hora,
       local,
@@ -243,19 +281,36 @@ export default function NewOcorrênciasPage({ onBack }: NewSinistroPageProps) {
     }
 
     setIsSubmitting(true);
+    setUploadProgress(0);
 
     try {
+      let documentosIds: string[] = [];
+
+      // 1. Upload dos documentos (se houver)
+      if (fotos.length > 0) {
+        toast({
+          title: "Enviando documentos...",
+          description: "Aguarde enquanto seus arquivos são enviados.",
+        });
+
+        documentosIds = await Promise.all(
+          fotos.map((file) => uploadDocument(file, profile?.id || ""))
+        );
+      }
+
+      // 2. Envio dos dados do sinistro
       const payload = {
-        id_apolice: apolice, // ID ou número da apólice
-        nome_apolice: tipoSinistro, // nome ou título do sinistro (ajuste se necessário)
-        tipo_apolice: "sinistro", // valor fixo ou adaptável se tiver tipos
+        id_apolice: apolice,
+        nome_apolice: nomeApolice,
+        tipo_apolice: tipoSinistro,
         descricao,
-        data_ocorrido: `${data}T${hora || "00:00"}:00`,
-        local,
-        envolvidos: envolvidos || "", // string vazia se não informado
+        id_anexos: documentosIds,
+        data_ocorrencia: data,
+        hora_ocorrencia: hora || "00:00",
+        local_ocorrencia: local,
+        envolvidos: envolvidos || "",
         boletim_ocorrencia: boletimOcorrencia === "sim",
-        numero_bo: numeroBO || "", // ou null, se a API aceitar
-        id_anexo: fotos.length > 0 ? `FOTOS_${Date.now()}` : null,
+        numero_bo: numeroBO || null,
         user_id: profile?.id,
       };
 
@@ -263,32 +318,48 @@ export default function NewOcorrênciasPage({ onBack }: NewSinistroPageProps) {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify(payload),
       });
 
-      const datares = await response.json();
+      const responseData = await response.json();
 
       if (!response.ok) {
-        throw new Error(datares.error || "Erro ao enviar sinistro");
+        throw new Error(responseData.error || "Erro ao enviar sinistro");
       }
 
       toast({
-        title: "Sinistro enviado com sucesso",
-        description:
-          "Seu sinistro foi registrado com sucesso e está em análise.",
+        title: "Sucesso!",
+        description: "Sinistro registrado com sucesso.",
         variant: "success",
       });
+
+      // Limpar formulário após sucesso
+      setFormData({
+        apolice: "",
+        nomeApolice: "",
+        tipoSinistro: "",
+        data: "",
+        hora: "",
+        local: "",
+        descricao: "",
+        envolvidos: "",
+        boletimOcorrencia: "nao",
+        numeroBO: "",
+      });
+      setFotos([]);
+      setPreviews([]);
     } catch (error: any) {
-      console.error("Erro ao enviar sinistro:", error);
+      console.error("Erro no processo:", error);
       toast({
-        title: "Erro ao enviar sinistro",
-        description:
-          error?.message || "Ocorreu um erro ao registrar o sinistro.",
+        title: "Erro",
+        description: error.message || "Ocorreu um erro ao registrar o sinistro",
         variant: "destructive",
       });
     } finally {
       setIsSubmitting(false);
+      setUploadProgress(0);
     }
   };
 
@@ -338,9 +409,18 @@ export default function NewOcorrênciasPage({ onBack }: NewSinistroPageProps) {
                     <span className="text-company-red-500">*</span>
                   </Label>
                   <Select
-                    value={formData.apolice} // isso é só o ID (contractNumber)
+                    value={formData.apolice}
                     onValueChange={(value) => {
-                      handleSelectChange("apolice", value); // salva apenas o ID
+                      handleSelectChange("apolice", value);
+                      // Ao selecionar a apólice, atualiza tanto id_apolice quanto nome_apolice
+                      const apoliceSelecionada = apolices.find(
+                        (apolice) => String(apolice.contractNumber) === value
+                      );
+                      setFormData((prev) => ({
+                        ...prev,
+                        apolice: value,
+                        nomeApolice: apoliceSelecionada?.productName || "",
+                      }));
                     }}
                     required
                     disabled={isLoading}
@@ -356,14 +436,13 @@ export default function NewOcorrênciasPage({ onBack }: NewSinistroPageProps) {
                         }
                       />
                     </SelectTrigger>
-
                     <SelectContent>
                       {apolices.map((apolice) => (
                         <SelectItem
                           key={apolice.contractNumber}
-                          value={String(apolice.contractNumber)} // envia o ID
+                          value={String(apolice.contractNumber)}
                         >
-                          {apolice.productName} {/* exibe o nome */}
+                          {apolice.productName}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -377,10 +456,9 @@ export default function NewOcorrênciasPage({ onBack }: NewSinistroPageProps) {
                   </Label>
                   <Select
                     value={formData.tipoSinistro}
-                    onValueChange={(value) => {
-                      console.log("Sinistro selecionado:", value);
-                      handleSelectChange("tipoSinistro", value); // Apenas atualiza tipoSinistro
-                    }}
+                    onValueChange={(value) =>
+                      handleSelectChange("tipoSinistro", value)
+                    }
                     disabled={!formData.apolice || loadingSinistros}
                     required
                   >
@@ -417,7 +495,7 @@ export default function NewOcorrênciasPage({ onBack }: NewSinistroPageProps) {
                     </SelectContent>
                   </Select>
                 </div>
-                {/* Campos Data e Hora */}
+
                 <div className="space-y-2">
                   <Label htmlFor="data">
                     Data do Ocorrido{" "}
@@ -445,7 +523,6 @@ export default function NewOcorrênciasPage({ onBack }: NewSinistroPageProps) {
                   />
                 </div>
 
-                {/* Campo Local */}
                 <div className="space-y-2 md:col-span-2">
                   <Label htmlFor="local">
                     Local do Ocorrido{" "}
@@ -483,10 +560,6 @@ export default function NewOcorrênciasPage({ onBack }: NewSinistroPageProps) {
                   onChange={handleChange}
                   required
                 />
-                <p className="text-sm text-muted-foreground">
-                  Forneça o máximo de detalhes possível sobre o ocorrido,
-                  incluindo circunstâncias e danos.
-                </p>
               </div>
 
               <div className="space-y-2">
@@ -615,14 +688,21 @@ export default function NewOcorrênciasPage({ onBack }: NewSinistroPageProps) {
                     )}
                   </div>
                 </div>
-                <p className="text-sm text-muted-foreground mt-2">
-                  Adicione fotos que mostrem os danos ou o local do sinistro.
-                </p>
               </div>
+
+              {/* Barra de progresso do upload */}
+              {uploadProgress > 0 && uploadProgress < 100 && (
+                <div className="w-full bg-gray-200 rounded-full h-2.5 mt-4">
+                  <div
+                    className="bg-blue-600 h-2.5 rounded-full"
+                    style={{ width: `${uploadProgress}%` }}
+                  ></div>
+                </div>
+              )}
             </div>
 
             {/* Rodapé do Formulário */}
-            <CardFooter className="flex flex-col sm:flex-row justify-between gap-4 ">
+            <CardFooter className="flex flex-col sm:flex-row justify-between gap-4">
               <Button
                 className="bg-[#b5b7bb] hover:bg-[#b5b7bb]/80"
                 onClick={onBack}
@@ -634,7 +714,7 @@ export default function NewOcorrênciasPage({ onBack }: NewSinistroPageProps) {
                 className="bg-[#002256] hover:bg-[#002256]/80"
                 disabled={isLoading || isSubmitting}
               >
-                {isSubmitting ? "Enviando..." : "Enviar Ocorrências"}
+                {isSubmitting ? "Enviando..." : "Enviar Ocorrência"}
               </Button>
             </CardFooter>
           </form>

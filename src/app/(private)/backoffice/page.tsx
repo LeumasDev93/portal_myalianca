@@ -334,9 +334,10 @@ const Page = () => {
                   <NewOcorrênciasPage
                     onBack={() => setCurrentPage("ocorrencias")}
                   />
-                )}{" "}
+                )}
                 {currentPage === "detailsOcorrencia" && (
                   <OcorrenciaDetailsPage
+                    id={selectedOcorrenciaId || ""}
                     onBack={() => setCurrentPage("ocorrencias")}
                   />
                 )}

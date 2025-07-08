@@ -1,142 +1,175 @@
-// components/ocorrencias/OcorrenciaDetails.tsx
 "use client";
 
-import { useRouter } from "next/navigation";
-import { format } from "date-fns";
-import { pt } from "date-fns/locale";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Ocorrencia, Anexo } from "@/types/typesData";
-import { ArrowLeft, Printer, Share2, Edit, Trash2 } from "lucide-react";
 import { Gallery } from "./Gallery";
+import { CalendarDays, Clock, MapPin, FileText, Users } from "lucide-react";
 
-export function OcorrenciaDetails({
-  ocorrencia,
-  anexos,
-}: {
+interface Props {
   ocorrencia: Ocorrencia;
   anexos: Anexo[];
-}) {
-  const router = useRouter();
+}
+
+export function OcorrenciaDetails({ ocorrencia, anexos }: Props) {
+  // Funções de formatação
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString("pt-BR", {
+      day: "2-digit",
+      month: "long",
+      year: "numeric",
+    });
+  };
+
+  // Status com cores específicas
+  const statusVariant =
+    {
+      P: "bg-yellow-100 text-yellow-800 border-yellow-200",
+      C: "bg-green-100 text-green-800 border-green-200",
+    }[ocorrencia.status] || "default";
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="space-y-6">
       {/* Cabeçalho */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
-        <div className="flex items-center gap-4">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => router.back()}
-            className="h-8 w-8"
-          >
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
-          <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-[#002256]">
-            Detalhes da Ocorrência
-          </h1>
-        </div>
-
-        <div className="flex gap-2">
-          <Button variant="outline" size="sm">
-            <Printer className="h-4 w-4 mr-2" />
-            Imprimir
-          </Button>
-          <Button variant="outline" size="sm">
-            <Share2 className="h-4 w-4 mr-2" />
-            Compartilhar
-          </Button>
-        </div>
-      </div>
-
-      {/* Informações principais */}
-      <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
-        <div className="flex flex-col md:flex-row justify-between gap-4 mb-6">
-          <div>
-            <h2 className="text-xl font-semibold">{ocorrencia.nome_apolice}</h2>
-            <div className="flex items-center gap-2 mt-2">
-              <Badge
-                variant={ocorrencia.status === "P" ? "default" : "success"}
-              >
-                {ocorrencia.status === "P" ? "Pendente" : "Resolvido"}
-              </Badge>
-              <span className="text-sm text-muted-foreground">
-                {ocorrencia.tipo_apolice} • {ocorrencia.id_apolice}
-              </span>
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+        <div className="p-6 pb-4">
+          <div className="flex flex-col md:flex-row justify-between gap-4">
+            <div>
+              <h2 className="text-2xl font-bold text-[#002256]">
+                {ocorrencia.nome_apolice}
+              </h2>
+              <div className="flex items-center gap-3 mt-2">
+                <Badge className={`px-3 py-1 text-sm  ${statusVariant}`}>
+                  {ocorrencia.status === "P"
+                    ? "Pendente"
+                    : ocorrencia.status === "C"
+                    ? "Concluído"
+                    : "Arquivado"}
+                </Badge>
+                <span className="text-sm text-gray-500">
+                  Apólice: {ocorrencia.id_apolice} • {ocorrencia.tipo_apolice}
+                </span>
+              </div>
             </div>
-          </div>
-
-          <div className="text-sm text-muted-foreground">
-            Registrado em{" "}
-            {format(new Date(ocorrencia.data_registo), "PPPp", {
-              locale: pt,
-            })}
+            <div className="text-sm text-gray-500 flex items-center gap-1">
+              <CalendarDays className="h-4 w-4" />
+              <span>Registrado em {formatDate(ocorrencia.data_registo)}</span>
+            </div>
           </div>
         </div>
 
-        <Separator className="my-4" />
+        <Separator className="my-2" />
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          <div className="space-y-4">
-            <div>
-              <h3 className="text-sm font-medium text-muted-foreground mb-1">
-                Descrição
-              </h3>
-              <p className="text-sm">
-                {ocorrencia.descricao || "Sem descrição"}
-              </p>
+        {/* Detalhes principais */}
+        <div className="p-6 pt-2">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Coluna esquerda */}
+            <div className="space-y-5">
+              <DetailItem
+                icon={<FileText className="h-5 w-5 text-gray-400" />}
+                title="Descrição"
+                value={ocorrencia.descricao}
+                placeholder="Nenhuma descrição fornecida"
+              />
+
+              <DetailItem
+                icon={<Users className="h-5 w-5 text-gray-400" />}
+                title="Envolvidos"
+                value={ocorrencia.envolvidos}
+                placeholder="Não informado"
+              />
             </div>
 
-            <div>
-              <h3 className="text-sm font-medium text-muted-foreground mb-1">
-                Envolvidos
-              </h3>
-              <p className="text-sm">
-                {ocorrencia.envolvidos || "Não informado"}
-              </p>
-            </div>
-          </div>
+            {/* Coluna direita */}
+            <div className="space-y-5">
+              <DetailItem
+                icon={<MapPin className="h-5 w-5 text-gray-400" />}
+                title="Local da Ocorrência"
+                value={ocorrencia.local_ocorrencia}
+                placeholder="Local não especificado"
+              />
 
-          <div className="space-y-4">
-            <div>
-              <h3 className="text-sm font-medium text-muted-foreground mb-1">
-                Local da Ocorrência
-              </h3>
-              <p className="text-sm">
-                {ocorrencia.local_ocorrencia || "Não informado"}
-              </p>
-            </div>
-
-            <div>
-              <h3 className="text-sm font-medium text-muted-foreground mb-1">
-                Boletim de Ocorrência
-              </h3>
-              <p className="text-sm">
-                {ocorrencia.boletim_ocorrencia || "Não registrado"}
-              </p>
+              <DetailItem
+                icon={<CalendarDays className="h-5 w-5 text-gray-400" />}
+                title="Data do Ocorrido"
+                value={
+                  ocorrencia.data_ocorrencia
+                    ? formatDate(ocorrencia.data_ocorrencia)
+                    : "Não informado"
+                }
+              />
+              <DetailItem
+                icon={<Clock className="h-5 w-5 text-gray-400" />}
+                title="Hora do Ocorrido"
+                value={
+                  ocorrencia.hora_ocorrencia
+                    ? ocorrencia.hora_ocorrencia.substring(0, 5)
+                    : "Não informado"
+                }
+              />
+              {ocorrencia.boletim_ocorrencia && (
+                <DetailItem
+                  icon={<FileText className="h-5 w-5 text-gray-400" />}
+                  title="Número do BO"
+                  value={ocorrencia.boletim_ocorrencia}
+                />
+              )}
             </div>
           </div>
         </div>
       </div>
 
-      {/* Galeria de Fotos */}
-      <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
-        <h2 className="text-xl font-semibold mb-4">Galeria de Fotos</h2>
-        <Gallery anexos={anexos} />
-      </div>
-
-      {/* Ações */}
-      <div className="flex justify-end gap-2">
-        <Button variant="destructive" size="sm">
-          <Trash2 className="h-4 w-4 mr-2" />
-          Excluir
-        </Button>
-        <Button variant="default" size="sm">
-          <Edit className="h-4 w-4 mr-2" />
-          Editar
-        </Button>
-      </div>
+      {/* Seção de anexos */}
+      {anexos.length > 0 && (
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-semibold flex items-center gap-2">
+              <FileText className="h-5 w-5 text-gray-500" />
+              Documentos Anexados
+            </h2>
+            <span className="text-sm text-gray-500 bg-gray-50 px-3 py-1 rounded-full">
+              {anexos.length} {anexos.length === 1 ? "documento" : "documentos"}
+            </span>
+          </div>
+          <Gallery anexos={anexos} />
+        </div>
+      )}
     </div>
   );
 }
+
+// Componente DetailItem melhorado
+const DetailItem = ({
+  icon,
+  title,
+  value,
+  placeholder = "Não informado",
+}: {
+  icon?: React.ReactNode;
+  title: string;
+  value?: string | null;
+  placeholder?: string;
+}) => (
+  <div className="flex gap-3">
+    <div className="mt-0.5">{icon}</div>
+    <div>
+      <h3 className="text-sm font-medium text-gray-500 mb-1">{title}</h3>
+      <p className="text-sm text-gray-800">
+        {value ? (
+          typeof value === "string" ? (
+            value.split("\n").map((paragraph, i) => (
+              <span key={i}>
+                {paragraph}
+                <br />
+              </span>
+            ))
+          ) : (
+            value
+          )
+        ) : (
+          <span className="text-gray-400 italic">{placeholder}</span>
+        )}
+      </p>
+    </div>
+  </div>
+);
