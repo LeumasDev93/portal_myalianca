@@ -16,14 +16,15 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
+  AlertCircle,
   Camera,
   Check,
+  CheckCircle,
   Eye,
   EyeOff,
   Loader2,
   Mail,
   Phone,
-  Shield,
   User,
 } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
@@ -52,7 +53,6 @@ export interface UserProfile {
 export function PerfilPage() {
   const { profile, loading, hasChanges, updateProfile, saveChanges } =
     useUserProfile();
-  const user = useAuth();
   const [profileImage, setProfileImage] =
     useState<string>("/diverse-group.png");
   const [isUploading, setIsUploading] = useState(false);
@@ -132,19 +132,19 @@ export function PerfilPage() {
         body: JSON.stringify({
           senha_atual: senhaAtual,
           nova_senha: novaSenha,
-          user_id: user?.user?.id,
+          user_id: profile?.user?.id,
         }),
       });
 
       const data = await response.json();
 
       if (!response.ok) {
-        if (data.response?.desc?.includes("Nova senha invalida")) {
-          throw new Error(data.response.desc);
+        if (data.details?.info?.errors?.length > 0) {
+          setError(data.details.info.errors.join(" / "));
+        } else {
+          setError(data.message || data.error || "Erro desconhecido");
         }
-        throw new Error(
-          data.error || data.response?.desc || "Erro ao alterar senha"
-        );
+        return;
       }
 
       setSuccess("Senha alterada com sucesso!");
@@ -177,14 +177,6 @@ export function PerfilPage() {
     );
   }
 
-  if (error) {
-    return (
-      <div className="flex-1 flex items-center justify-center p-6">
-        <div className="text-red-500">{error}</div>
-      </div>
-    );
-  }
-
   if (!profile) {
     return (
       <div className="flex-1 flex items-center justify-center p-6">
@@ -196,7 +188,7 @@ export function PerfilPage() {
   return (
     <div className="flex-1 space-y-6 p-6 md:p-8">
       <div className="flex items-center gap-2 mb-6">
-        <h1 className="text-xl sm:text-2xl xl:text-3xl font-bold tracking-tight">
+        <h1 className="text-xl sm:text-2xl xl:text-3xl font-bold tracking-tight text-[#002855]">
           Meu Perfil
         </h1>
       </div>
@@ -217,9 +209,11 @@ export function PerfilPage() {
                 <Avatar className="h-24 w-24">
                   <AvatarImage
                     src={profileImage || "/placeholder.svg"}
-                    alt={profile?.nome}
+                    alt={profile?.user?.nome}
                   />
-                  <AvatarFallback>{profile?.nome.charAt(0)}</AvatarFallback>
+                  <AvatarFallback>
+                    {profile?.user?.nome.charAt(0)}
+                  </AvatarFallback>
                 </Avatar>
 
                 <div className="absolute inset-0 bg-black bg-opacity-50 rounded-full opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
@@ -251,16 +245,16 @@ export function PerfilPage() {
                 <span className="sr-only">Alterar foto</span>
               </Button>
             </div>
-            <h3 className="text-xl font-semibold">{profile.nome}</h3>
-            {profile.email && (
+            <h3 className="text-xl font-semibold">{profile.user?.nome}</h3>
+            {profile.user?.email && (
               <div className="flex items-center gap-1 text-muted-foreground mt-1">
                 <Mail className="h-4 w-4" />
-                <span className="text-sm">{profile.email}</span>
+                <span className="text-sm">{profile.user?.email}</span>
               </div>
             )}
             <div className="flex items-center gap-1 text-muted-foreground mt-1">
               <Phone className="h-4 w-4" />
-              <span className="text-sm">{profile.telemovel}</span>
+              <span className="text-sm">{profile.user?.telemovel}</span>
             </div>
 
             <Separator className="my-6" />
@@ -268,22 +262,10 @@ export function PerfilPage() {
             <div className="space-y-3 w-full">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <Shield className="h-5 w-5 text-[#002256]" />
-                  <span className="font-medium">
-                    {profile.tipo === "cliente"
-                      ? "Plano Individual"
-                      : "Plano Empresarial"}
-                  </span>
-                </div>
-                <Button variant="link" size="sm" className="text-[#002256]">
-                  Detalhes
-                </Button>
-              </div>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
                   <User className="h-5 w-5 text-[#002256]" />
                   <span className="font-medium">
-                    Cliente desde {new Date(profile.criado_em).getFullYear()}
+                    Cliente desde{" "}
+                    {new Date(profile.user?.criado_em).getFullYear()}
                   </span>
                 </div>
               </div>
@@ -313,11 +295,14 @@ export function PerfilPage() {
                       <Label htmlFor="nome">Nome Completo</Label>
                       <Input
                         id="nome"
-                        value={profile.nome}
+                        value={profile.user?.nome}
                         onChange={(e) =>
                           updateProfile({
                             ...profile,
-                            nome: e.target.value,
+                            user: {
+                              ...profile.user,
+                              nome: e.target.value,
+                            },
                           })
                         }
                       />
@@ -327,11 +312,14 @@ export function PerfilPage() {
                       <Input
                         id="email"
                         type="email"
-                        value={profile.email || ""}
+                        value={profile.user?.email || ""}
                         onChange={(e) =>
                           updateProfile({
                             ...profile,
-                            email: e.target.value,
+                            user: {
+                              ...profile.user,
+                              email: e.target.value,
+                            },
                           })
                         }
                       />
@@ -341,11 +329,14 @@ export function PerfilPage() {
                       <Input
                         id="telefone"
                         type="tel"
-                        value={profile.telefone}
+                        value={profile.user?.telefone}
                         onChange={(e) =>
                           updateProfile({
                             ...profile,
-                            telemovel: e.target.value,
+                            user: {
+                              ...profile.user,
+                              telemovel: e.target.value,
+                            },
                           })
                         }
                       />
@@ -355,11 +346,14 @@ export function PerfilPage() {
                       <Input
                         id="telemovel"
                         type="tel"
-                        value={profile.telemovel}
+                        value={profile.user?.telemovel}
                         onChange={(e) =>
                           updateProfile({
                             ...profile,
-                            telemovel: e.target.value,
+                            user: {
+                              ...profile.user,
+                              telemovel: e.target.value,
+                            },
                           })
                         }
                       />
@@ -368,11 +362,14 @@ export function PerfilPage() {
                       <Label htmlFor="dataNascimento">Data de Nascimento</Label>
                       <Input
                         id="dataNascimento"
-                        value={formatBirthDate(profile.criado_em)}
+                        value={formatBirthDate(profile.user?.criado_em)}
                         onChange={(e) =>
                           updateProfile({
                             ...profile,
-                            criado_em: e.target.value,
+                            user: {
+                              ...profile.user,
+                              criado_em: e.target.value,
+                            },
                           })
                         }
                       />
@@ -381,11 +378,14 @@ export function PerfilPage() {
                       <Label htmlFor="nif">NIF</Label>
                       <Input
                         id="nif"
-                        value={profile.nif}
+                        value={profile.user?.nif}
                         onChange={(e) =>
                           updateProfile({
                             ...profile,
-                            nif: e.target.value,
+                            user: {
+                              ...profile.user,
+                              nif: e.target.value,
+                            },
                           })
                         }
                         disabled
@@ -413,11 +413,14 @@ export function PerfilPage() {
                       <Label htmlFor="bi_cni">BI/CNI</Label>
                       <Input
                         id="bi_cni"
-                        value={profile.nif}
+                        value={profile.user?.nif}
                         onChange={(e) =>
                           updateProfile({
                             ...profile,
-                            nif: e.target.value,
+                            user: {
+                              ...profile.user,
+                              nif: e.target.value,
+                            },
                           })
                         }
                       />
@@ -426,11 +429,14 @@ export function PerfilPage() {
                       <Label htmlFor="passaporte">Passaporte</Label>
                       <Input
                         id="passaporte"
-                        value={profile.nif}
+                        value={profile.user?.nif}
                         onChange={(e) =>
                           updateProfile({
                             ...profile,
-                            nif: e.target.value,
+                            user: {
+                              ...profile.user,
+                              nif: e.target.value,
+                            },
                           })
                         }
                       />
@@ -537,25 +543,19 @@ export function PerfilPage() {
 
                   {/* Mantenha as mensagens de feedback e o botão de submit como estão */}
                   {error && (
-                    <div className="p-4 text-sm text-red-700 bg-red-100 rounded-lg">
-                      {error.includes("Nova senha invalida") ? (
-                        <>
-                          <strong>Requisitos da senha:</strong>
-                          <ul className="list-disc pl-5 mt-1">
-                            <li>Mínimo 8 caracteres</li>
-                            <li>Pelo menos 1 letra</li>
-                            <li>Pelo menos 1 número</li>
-                            <li>Pelo menos 1 símbolo</li>
-                          </ul>
-                        </>
-                      ) : (
-                        error
-                      )}
+                    <div className="mb-4 animate-fade-in-down">
+                      <div className="flex items-center justify-center w-full py-3 px-4 bg-red-50 border border-red-200 text-red-600 rounded-lg text-sm">
+                        <AlertCircle className="h-5 w-5 mr-2" />
+                        {error}
+                      </div>
                     </div>
                   )}
                   {success && (
-                    <div className="p-4 text-sm text-green-700 bg-green-100 rounded-lg">
-                      {success}
+                    <div className="mb-4 animate-fade-in-down">
+                      <div className="flex items-center justify-center w-full py-3 px-4 bg-green-50 border border-green-200 text-green-600 rounded-lg text-sm">
+                        <CheckCircle className="h-5 w-5 mr-2" />
+                        {success}
+                      </div>
                     </div>
                   )}
 

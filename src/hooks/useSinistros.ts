@@ -11,10 +11,10 @@ export const useSinistros = () => {
     const { token } = useSessionCheckToken();
     const { profile } = useUserProfile();
 
-    const nif = profile?.nif;
+    const nifUser = profile?.user?.nif;
 
     useEffect(() => {
-        if (!token || !nif) return;
+        if (!token || !nifUser) return;
 
         const controller = new AbortController();
         const { signal } = controller;
@@ -25,7 +25,7 @@ export const useSinistros = () => {
 
             try {
                 const response = await fetch(
-                    `/api/anywhere/api/v1/private/mobile/entity/nif/${nif}/claims`,
+                    `/api/anywhere/api/v1/private/mobile/entity/nif/${nifUser}/claims`,
                     {
                         method: "GET",
                         headers: {
@@ -65,7 +65,7 @@ export const useSinistros = () => {
         return () => {
             controller.abort();
         };
-    }, [token, nif]);
+    }, [token, nifUser]);
 
     return {
         sinistros,

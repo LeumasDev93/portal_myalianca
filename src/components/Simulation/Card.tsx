@@ -1,8 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 // components/Card.tsx
+import { Product } from "@/hooks/useProducts";
 import { IoCalculatorOutline } from "react-icons/io5";
-import { Product } from "./page";
-import Image from "next/image";
 
 interface CardProps {
   product: Product;

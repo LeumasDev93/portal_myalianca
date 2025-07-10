@@ -20,29 +20,33 @@ export async function POST(request: Request) {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'ApiKey': process.env.NEXT_PUBLIC_API_KEY || '' // adicione a chave de API aqui
+        'ApiKey': process.env.NEXT_PUBLIC_API_KEY || ''
       },
-      body: JSON.stringify({ 
+      body: JSON.stringify({
         senha_atual,
         nova_senha,
         user_id
       })
     });
 
+    const data = await response.json();
+
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
+      const errorMessage =
+        data?.info?.errors?.length > 0
+          ? data.info.errors.join(' / ')
+          : data?.response?.desc || 'Erro ao alterar senha';
+
       return NextResponse.json(
-        { 
-          error: errorData.response?.desc || 'Erro ao alterar senha',
-          details: errorData
+        {
+          error: errorMessage,
+          details: data
         },
         { status: response.status }
       );
     }
 
-    const data = await response.json();
     return NextResponse.json(data);
-
   } catch (error) {
     console.error('Erro interno:', error);
     return NextResponse.json(

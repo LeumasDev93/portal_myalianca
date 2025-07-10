@@ -2,20 +2,22 @@
 import { useEffect, useState } from "react";
 
 interface UserProfile {
-  id: string;
-  nome: string;
-  username: string;
-  tipo: string;
-  ativo: boolean;
-  nif: string;
-  email: string;
-  telefone: string;
-  morada: string | null;
-  telemovel: string;
-  display_name: string;
-  cliente_id: string;
-  cliente_nome: string;
-  criado_em: string; // ou Date, se você parsear
+  user: {
+    id: string;
+    nome: string;
+    username: string;
+    tipo: string;
+    ativo: boolean;
+    nif: string;
+    email: string;
+    telefone: string;
+    morada: string | null;
+    telemovel: string;
+    display_name: string;
+    cliente_id: string;
+    cliente_nome: string;
+    criado_em: string;
+  };
   session_id: string | null;
 }
 
@@ -24,48 +26,37 @@ export function useUserProfile(initialData?: UserProfile) {
   const [initialProfile, setInitialProfile] = useState<UserProfile | null>(
     initialData || null
   );
+
   const [hasChanges, setHasChanges] = useState(false);
   const [loading, setLoading] = useState(!initialData);
   const [error, setError] = useState<null | string>(null);
 
-  // ✅ Fetch profile from API using localStorage user_id
+  // ✅ Pega dados direto do localStorage (já armazenados no login)
   useEffect(() => {
-    const fetchProfile = async () => {
-      if (typeof window === "undefined") return; // SSR protection
+    if (typeof window === "undefined") return; // SSR check
 
-      const user = localStorage.getItem("user");
-      //console.log("Stored user_id:", user);
+    const storedUser = localStorage.getItem("user");
 
-      const userId = user ? JSON.parse(user).id : null;
+    if (!storedUser) {
+      setError("Dados do usuário não encontrados no localStorage.");
+      setLoading(false);
+      return;
+    }
 
-      if (!userId) {
-        setError("user_id not found in localStorage");
-        setLoading(false);
-        return;
-      }
-
-      try {
-        const res = await fetch(`/api/profile?user=${userId}`);
-        if (!res.ok) {
-          throw new Error(`Failed to fetch profile: ${res.status}`);
-        }
-
-        const data = await res.json();
-        setProfile(data);
-        setInitialProfile(data);
-        setError(null);
-      } catch (err: any) {
-        console.error("Profile fetch error:", err);
-        setError(err.message || "Unknown error");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchProfile();
+    try {
+      const user: UserProfile = JSON.parse(storedUser);
+      setProfile(user);
+      setInitialProfile(user);
+      setError(null);
+    } catch (err: any) {
+      console.error("Erro ao processar dados do usuário:", err);
+      setError("Erro ao carregar dados do usuário.");
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
-  // ✅ Detect changes between current and initial profile
+  // ✅ Detecta mudanças entre profile atual e original
   useEffect(() => {
     if (profile && initialProfile) {
       const changed = Object.keys(profile).some(

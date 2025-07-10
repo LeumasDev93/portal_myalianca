@@ -12,9 +12,10 @@ export const useApolices = () => {
     const { token } = useSessionCheckToken();
     const { profile } = useUserProfile();
 
+    const nifUser = profile?.user?.nif;
 
     useEffect(() => {
-        if (!token || !profile?.nif) return;
+        if (!token || !nifUser) return;
 
         const controller = new AbortController();
         const { signal } = controller;
@@ -25,7 +26,7 @@ export const useApolices = () => {
 
             try {
                 const response = await fetch(
-                    `/api/anywhere/api/v1/private/mobile/entity/nif/${profile.nif}/policies`,
+                    `/api/anywhere/api/v1/private/mobile/entity/nif/${nifUser}/policies`,
                     {
                         method: "GET",
                         headers: {
@@ -65,7 +66,7 @@ export const useApolices = () => {
         return () => {
             controller.abort();
         };
-    }, [token, profile?.nif]);
+    }, [token, nifUser]);
 
     return { apolices, isLoadingApolices, errorApolices };
 };

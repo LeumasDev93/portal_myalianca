@@ -455,50 +455,10 @@ export default function ApoliceDetailPage({
                       </div>
                     </div>
                   </div>
-                  {/* <Separator className="bg-red-600" />
-              <div className="mt-4">
-                <h3 className="text-lg font-semibold uppercase">
-                  Assistência 24h
-                </h3>
-                <div className="flex flex-col gap-6 py-4 xl:py-6">
-                  <div className="flex justify-between">
-                    <div className="flex items-center gap-4">
-                      <div className="bg-gray-200  p-2 rounded-full ">
-                        <FaMobile className="size-3 sm:size-4 xl:size-5 text-[#002256]" />
-                      </div>
-                      <p className="font-bold text-gray-900 text-[12px] xl:text-base uppercase">
-                        Telefone de Emergência
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <p className="font-bold text-gray-900 text-[12px] xl:text-base ">
-                        {apolice.primaryMobileContact}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex justify-between">
-                    <div className="flex items-center gap-4">
-                      <div className="bg-gray-200  p-2 rounded-full ">
-                        <MdEmail className="size-3 sm:size-4 xl:size-5 text-[#002256]" />
-                      </div>
-                      <p className="font-bold text-gray-900 text-[12px] xl:text-base uppercase">
-                        Whatsapp
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <p className="font-bold text-gray-900 text-[12px] xl:text-base ">
-                        {apolice.primaryEmailContact}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div> */}
+
                   <Separator className="bg-red-600" />
                   <div className="py-4">
                     <div className="flex justify-center lg:justify-end gap-1 sm:gap-2">
-                      <Button className="bg-white sm:px-4 sm:py-2 px-1 py-0.5 text-[10px] sm:text-sm  border border-blue-950 hover:bg-blue-950 text-blue-950 hover:text-white">
-                        Abrir Sinistro
-                      </Button>
                       <Button className="bg-white sm:px-4 sm:py-2 px-1 py-0.5 text-[10px] sm:text-sm  border border-blue-950 hover:bg-blue-950 text-blue-950 hover:text-white">
                         Solicitar Contacto
                       </Button>

@@ -13,8 +13,9 @@ export const useRecibos = () => {
     const { token } = useSessionCheckToken();
     const { profile } = useUserProfile();
     // Busca os recibos da API
+    const nifUser = profile?.user?.nif;
     useEffect(() => {
-        if (!token || !profile?.nif) return;
+        if (!token || !nifUser) return;
 
         const controller = new AbortController();
         const { signal } = controller;
@@ -25,7 +26,7 @@ export const useRecibos = () => {
 
             try {
                 const response = await fetch(
-                    `/api/anywhere/api/v1/private/mobile/entity/nif/${profile.nif}/invoices`,
+                    `/api/anywhere/api/v1/private/mobile/entity/nif/${nifUser}/invoices`,
                     {
                         method: "GET",
                         headers: {
@@ -61,7 +62,7 @@ export const useRecibos = () => {
         fetchRecibos();
 
         return () => controller.abort();
-    }, [token, profile?.nif]);
+    }, [token, nifUser]);
 
     // Aplica os filtros sempre que houver mudanças
     useEffect(() => {

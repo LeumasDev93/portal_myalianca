@@ -68,7 +68,9 @@ export default function OcorrenciasPage({
   // Busca ocorrências
   const fetchOcorrencias = async () => {
     try {
-      const response = await fetch(`/api/ocorrencia?user_id=${profile?.id}`);
+      const response = await fetch(
+        `/api/ocorrencia?user_id=${profile?.user?.id}`
+      );
 
       if (!response.ok) {
         const errorData = await response.json();
@@ -97,10 +99,10 @@ export default function OcorrenciasPage({
 
   // Uso no componente
   useEffect(() => {
-    if (profile?.id) {
+    if (profile?.user?.id) {
       fetchOcorrencias();
     }
-  }, [profile?.id]); // Adicione profile.id como dependência
+  }, [profile?.user?.id]); // Adicione profile.id como dependência
 
   const handleRefresh = () => {
     setRefreshing(true);

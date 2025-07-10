@@ -23,7 +23,6 @@ export function TopMenu({
 }: TopMenuProps) {
   const { profile } = useUserProfile();
 
-  console.log(profile?.email, "perfil do usuário no TopMenu");
   const unreadCount = useUnreadCount();
 
   const [showSearch, setShowSearch] = useState(false);
@@ -105,7 +104,14 @@ export function TopMenu({
           {getPageTitle()}
         </h1>
         <p className="font-medium text-gray-900 text-sm hidden md:block">
-          {getSaudacao()}, {profile?.nome}! {formatarDataCompleta()}
+          {getSaudacao()},
+          {profile?.user?.nome &&
+            profile.user.nome
+              .split(" ")
+              .filter(Boolean)
+              .filter((_, i, arr) => i === 0 || i === arr.length - 1)
+              .join(" ")}
+          ! {formatarDataCompleta()}
         </p>
       </div>
 
@@ -162,7 +168,7 @@ export function TopMenu({
             <Avatar className="w-full h-full flex items-center justify-center">
               <AvatarImage src="" className="rounded-full" />
               <AvatarFallback className="text-white hover:text-[#002256]">
-                {profile?.nome?.charAt(0)}
+                {profile?.user?.nome?.charAt(0)}
               </AvatarFallback>
             </Avatar>
           </button>

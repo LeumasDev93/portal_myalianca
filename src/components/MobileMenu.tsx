@@ -9,7 +9,7 @@ import { X } from "lucide-react";
 import { IconType } from "react-icons";
 import { MdEmail } from "react-icons/md";
 import { IoNotifications } from "react-icons/io5";
-import { useAuth } from "@/contexts/auth-context";
+import { useUserProfile } from "@/hooks/useUserProfile ";
 
 interface MenuItem {
   title: string;
@@ -26,7 +26,7 @@ interface MobileMenuProps {
 
 export const MobileMenu = ({ menuItems, onMenuClick }: MobileMenuProps) => {
   const [menuOpen, setMenuOpen] = useState(false);
-  const { user } = useAuth();
+  const { profile } = useUserProfile();
   const renderIcon = (icon: string | IconType | React.ReactNode) => {
     if (typeof icon === "string") {
       // Se for string, assume que é um caminho de imagem
@@ -98,7 +98,7 @@ export const MobileMenu = ({ menuItems, onMenuClick }: MobileMenuProps) => {
           <aside className="fixed top-0 left-0 w-64 h-full bg-white z-50 shadow-xl p-6 transition-transform transform translate-x-0">
             <button
               onClick={() => setMenuOpen(false)}
-              className="absolute top-4 right-4 p-2 text-black hover:bg-gray-100 rounded-full"
+              className="absolute top-2 right-2 p-2 text-black hover:bg-gray-100 rounded-full"
             >
               <X size={24} />
             </button>
@@ -106,11 +106,18 @@ export const MobileMenu = ({ menuItems, onMenuClick }: MobileMenuProps) => {
               <div className="flex items-center justify-center bg-[#878b92] rounded-full cursor-pointer hover:bg-gray-300 transition duration-200 ease-in-out">
                 <Avatar className="w-8 h-8 sm:w-10 sm:h-10 rounded-full">
                   <AvatarImage className="rounded-full w-full h-full" />
-                  <AvatarFallback>{user?.nome.charAt(0)}</AvatarFallback>
+                  <AvatarFallback>
+                    {profile?.user?.nome.charAt(0)}
+                  </AvatarFallback>
                 </Avatar>
               </div>
               <span className="font-semibold text-black text-sm md:text-lg">
-                {user?.nome}
+                {profile?.user?.nome &&
+                  profile.user.nome
+                    .split(" ")
+                    .filter(Boolean)
+                    .filter((_, i, arr) => i === 0 || i === arr.length - 1)
+                    .join(" ")}
               </span>
             </div>
             <hr className="border-b border-[#170766] my-4" />
@@ -122,12 +129,12 @@ export const MobileMenu = ({ menuItems, onMenuClick }: MobileMenuProps) => {
                       menu.onClick?.();
                       setMenuOpen(false);
                     }}
-                    className="flex items-center w-full p-3 rounded-md hover:bg-[#B7021C] group transition-colors"
+                    className="flex items-center w-full p-3 rounded-md hover:bg-[#002256] group transition-colors"
                   >
-                    <span className="text-[#002256] group-hover:text-white text-xl mr-4">
+                    <span className="text-[#002256] group-hover:text-white text-lg mr-2">
                       {renderIcon(menu.icon)}
                     </span>
-                    <span className="text-[#002256] group-hover:text-white font-medium">
+                    <span className="text-[#002256] text-sm group-hover:text-white font-medium">
                       {menu.title}
                     </span>
                   </button>

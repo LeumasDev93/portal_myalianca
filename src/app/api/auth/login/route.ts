@@ -8,7 +8,7 @@ export async function POST(request: Request) {
 
     if (!username || !password) {
       return NextResponse.json(
-        { error: 'Username e password são obrigatórios' },
+        { error: 'Username e password são obrigatórios.' },
         { status: 400 }
       );
     }
@@ -19,36 +19,39 @@ export async function POST(request: Request) {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'ApiKey': process.env.NEXT_PUBLIC_API_KEY || '' // adicione a chave de API aqui
+        'ApiKey': process.env.NEXT_PUBLIC_API_KEY || '',
       },
-      body: JSON.stringify({ username, password })
+      body: JSON.stringify({ username, password }),
     });
 
     const responseData = await response.json();
+    const { info, results } = responseData;
 
     console.log('Resposta da API:', responseData);
 
-    if (!response.ok) {
+    // Verifica se a resposta da API tem erro
+    if (!info || info.status !== 200 || !results) {
+      const errorMessage = info?.errors?.[0] || 'Erro ao autenticar.';
+
       return NextResponse.json(
         {
-          error: responseData.response?.desc || 'Erro ao autenticar',
-          details: responseData,
+          error: errorMessage,
+          details: info?.errors || null,
         },
-        { status: response.status }
+        { status: info?.status || 500 }
       );
-  }
+    }
 
-
+    // Resposta com sucesso
     return NextResponse.json({
-    ...responseData,
-    token: responseData.token,
-  });
+      user: results,
+      sessionId: results.session_id,
+    });
 
-    
   } catch (error) {
     console.error('Erro interno:', error);
     return NextResponse.json(
-      { error: 'Erro interno no servidor' },
+      { error: 'Erro interno no servidor.' },
       { status: 500 }
     );
   }

@@ -18,16 +18,17 @@ export function useAgencias() {
   useEffect(() => {
     const fetchAgencias = async () => {
       try {
-        const res = await fetch('/api/agency'); // rota correta
+        const res = await fetch('/api/agency');
         if (!res.ok) throw new Error('Erro na resposta da API');
 
         const data = await res.json();
 
-        // Normaliza a resposta para sempre ser array
-        const agenciasData = Array.isArray(data) ? data : [data];
+        // Verifica se a resposta tem o formato esperado
+        if (!data.results || !Array.isArray(data.results)) {
+          throw new Error('Formato de resposta inválido da API');
+        }
 
-        // Tipagem segura com fallback para null
-        const agenciasFormatadas = agenciasData.map((agencia: any): Agencia => ({
+        const agenciasFormatadas = data.results.map((agencia: any): Agencia => ({
           id: agencia.id,
           nome: agencia.nome,
           localizacao: agencia.localizacao,

@@ -2,13 +2,7 @@ import { NextResponse } from 'next/server';
 
 export const dynamic = 'force-dynamic';
 
-function extractUserMessage(desc: string): string {
-  const matches = [...desc.matchAll(/default message \[(.*?)\]/g)];
-  if (matches.length > 0) {
-    return matches.map((m) => m[1]).join(' / ');
-  }
-  return desc;
-}
+
 export async function POST(request: Request) {
   try {
     const { email, otp, new_password } = await request.json();
@@ -36,24 +30,25 @@ export async function POST(request: Request) {
       return NextResponse.json(
         {
           error: errorData.message || 'Erro ao solicitar recuperação de senha',
+          details: errorData, // aqui mantém o erro original da API, com info.errors
+        },
+        { status: response.status }
+      );
+    }
+
+
+    const data = await response.json();
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      return NextResponse.json(
+        {
+          error: errorData.message || 'Erro ao solicitar recuperação de senha',
           details: errorData,
         },
         { status: response.status }
       );
     }
 
-    const data = await response.json();
-    if (data.response?.code === "0") {
-      const desc = data.response?.desc;
-      return NextResponse.json(
-        {
-          code: 0,
-          message: desc,
-          message_details: extractUserMessage(desc),
-        },
-        { status: 400 }
-      );
-    }
 
     // Caso 2: Erro com code === 2
     if (data.code === 2) {

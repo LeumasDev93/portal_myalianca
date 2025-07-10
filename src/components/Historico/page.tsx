@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
@@ -23,26 +24,7 @@ type CardData = {
   quantity: number;
 };
 
-const cardsData: CardData[] = [
-  {
-    icon: IconCar,
-    title: "Sinistros Abertos",
-    status: "Em processamento",
-    quantity: 1,
-  },
-  {
-    icon: IconHosp,
-    title: "Pagamentos Pendentes",
-    status: "Próximo vencimento em 5 dias",
-    quantity: 2,
-  },
-  {
-    icon: IconMaritima,
-    title: "Apólices Ativas",
-    status: "+1 desde o último mês",
-    quantity: 3,
-  },
-];
+const cardsData: CardData[] = [];
 
 type HistoricoPageProps = {
   onNewSinistro: () => void;

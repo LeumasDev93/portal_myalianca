@@ -78,7 +78,7 @@ export default function NewOcorrênciasPage({ onBack }: NewSinistroPageProps) {
   const [previews, setPreviews] = useState<string[]>([]);
 
   useEffect(() => {
-    if (!token || !profile?.nif) return;
+    if (!token || !profile?.user?.nif) return;
 
     const controller = new AbortController();
     const { signal } = controller;
@@ -89,7 +89,7 @@ export default function NewOcorrênciasPage({ onBack }: NewSinistroPageProps) {
 
       try {
         const response = await fetch(
-          `/api/anywhere/api/v1/private/mobile/entity/nif/${profile.nif}/policies`,
+          `/api/anywhere/api/v1/private/mobile/entity/nif/${profile?.user?.nif}/policies`,
           {
             method: "GET",
             headers: {
@@ -122,7 +122,7 @@ export default function NewOcorrênciasPage({ onBack }: NewSinistroPageProps) {
 
     fetchApolices();
     return () => controller.abort();
-  }, [token, profile?.nif]);
+  }, [token, profile?.user?.nif]);
 
   const handleSelectChange = (name: string, value: string) => {
     setFormData((prev) => {
@@ -294,7 +294,7 @@ export default function NewOcorrênciasPage({ onBack }: NewSinistroPageProps) {
         });
 
         documentosIds = await Promise.all(
-          fotos.map((file) => uploadDocument(file, profile?.id || ""))
+          fotos.map((file) => uploadDocument(file, profile?.user?.id || ""))
         );
       }
 
@@ -311,7 +311,7 @@ export default function NewOcorrênciasPage({ onBack }: NewSinistroPageProps) {
         envolvidos: envolvidos || "",
         boletim_ocorrencia: boletimOcorrencia === "sim",
         numero_bo: numeroBO || null,
-        user_id: profile?.id,
+        user_id: profile?.user?.id,
       };
 
       const response = await fetch("/api/sinistro", {

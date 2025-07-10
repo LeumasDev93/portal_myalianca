@@ -104,12 +104,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const { token, ...userData } = response.data;
 
         localStorage.setItem("user", JSON.stringify(userData));
+
         localStorage.setItem("token", token);
         setUser(userData);
         setToken(token);
         setAuthCookies(token);
-
-        console.log("Login successful, user data:", userData);
 
         router.replace("/backoffice");
       } catch (error) {

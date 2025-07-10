@@ -3,15 +3,6 @@ import { NextResponse } from 'next/server';
 
 export const dynamic = 'force-dynamic';
 
-// Função para extrair mensagens do campo 'desc'
-function extractUserMessage(desc: string): string {
-  const matches = [...desc.matchAll(/default message \[(.*?)\]/g)];
-  if (matches.length > 0) {
-    return matches.map((m) => m[1]).join(' / ');
-  }
-  return desc;
-}
-
 export async function POST(request: Request) {
   try {
     const { email, otp } = await request.json();
@@ -41,29 +32,30 @@ export async function POST(request: Request) {
     const data = await response.json();
 
     // Caso 1: Erro do Spring (response.code === "0")
-    if (data.response?.code === "0") {
-      const desc = data.response?.desc;
+    if (data.info?.status === 400 && Array.isArray(data.info.errors)) {
+      const errors = data.info.errors.join(' / ');
       return NextResponse.json(
         {
           code: 0,
-          message: desc,
-          message_details: extractUserMessage(desc),
+          message: errors,
+          message_details: errors,
         },
         { status: 400 }
       );
     }
 
-    // Caso 2: Erro com code === 3
-    if (data.code === 3) {
+    // Só trata o code === 3 se message_details realmente existir
+    if (data.code === 3 && data.message_details) {
       return NextResponse.json(
         {
           code: 3,
           message: data.message_details,
-          message_details: data.message_details
+          message_details: data.message_details,
         },
         { status: 400 }
       );
     }
+
 
     // Caso de sucesso
     return NextResponse.json({

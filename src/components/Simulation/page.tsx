@@ -1,52 +1,12 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
-/* eslint-disable react-hooks/exhaustive-deps */
-// components/SimulationScreen.tsx
 "use client";
 
-import { useEffect, useState } from "react";
 import Card from "./Card";
 import { LoadingScreen } from "../ui/loading-screen";
-
-// types/Product.ts
-export interface Product {
-  productId: string;
-  name: string;
-  description: string;
-  category: string;
-  mainProduct: boolean;
-  icon: string;
-  parentProductId: string | null;
-  active: boolean;
-}
+import { useProducts } from "@/hooks/useProducts";
+import { FaFilter, FaSearch } from "react-icons/fa";
 
 export default function SimulationScreen() {
-  const [products, setProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-  const apiUrl = `${process.env.NEXT_PUBLIC_API_BASE_URL_SIMULATOR}/simulador/1.0.0/products`;
-  const apiToken = process.env.API_SECRET_TOKEN;
-
-  useEffect(() => {
-    const fetchProducts = async () => {
-      try {
-        const res = await fetch(apiUrl, {
-          headers: {
-            Authorization: `Bearer ${apiToken}`,
-            ApiKey: process.env.NEXT_PUBLIC_API_KEY || "",
-          },
-        });
-
-        const data = await res.json();
-        setProducts(data);
-      } catch (error) {
-        setError("Erro ao buscar produtos");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchProducts();
-  }, []);
+  const { products, loading, error } = useProducts();
 
   return (
     <div className="container p-6">
@@ -66,9 +26,22 @@ export default function SimulationScreen() {
       ) : error ? (
         <p className="text-red-500">{error}</p>
       ) : products.length === 0 ? (
-        <LoadingScreen />
+        <div className="flex flex-col items-center justify-center gap-2 py-8">
+          <div className="relative">
+            <FaSearch className="text-4xl text-gray-400 animate-pulse" />
+            <FaFilter
+              className="absolute -top-2 -right-2 text-xl text-[#2d4e7f] animate-spin-slow"
+              style={{ animationDuration: "3s" }}
+            />
+          </div>
+          <p className="text-gray-500 text-center">
+            Nenhum dado encontrado!
+            <br />
+            Tente novamnete mas tarde.
+          </p>
+        </div>
       ) : (
-        <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-4 gap-6">
+        <div className="max-w-7xl mx-auto grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
           {products.map((product) => (
             <Card key={product.productId} product={product} />
           ))}

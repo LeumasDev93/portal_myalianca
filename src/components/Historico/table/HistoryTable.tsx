@@ -20,6 +20,8 @@ import {
   FaFileDownload,
   FaSync,
   FaFileAlt,
+  FaSearch,
+  FaFilter,
 } from "react-icons/fa";
 import { FaTriangleExclamation } from "react-icons/fa6";
 import { HiDotsVertical } from "react-icons/hi";
@@ -254,7 +256,6 @@ const HistoryTable = ({
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {/* Content - only shows when not loading */}
               {loading ? (
                 <tr>
                   <td
@@ -285,6 +286,24 @@ const HistoryTable = ({
                       <span className="text-[#002855]">
                         A carregar dados...
                       </span>
+                    </div>
+                  </td>
+                </tr>
+              ) : currentItems.length === 0 ? (
+                <tr>
+                  <td
+                    colSpan={config.headers.length}
+                    className="text-center py-8 text-gray-500"
+                  >
+                    <div className="flex justify-center items-center space-x-2">
+                      <div className="relative">
+                        <FaSearch className="text-4xl text-gray-400 animate-pulse" />
+                        <FaFilter
+                          className="absolute -top-2 -right-2 text-xl text-[#2d4e7f] animate-spin-slow"
+                          style={{ animationDuration: "3s" }}
+                        />
+                      </div>
+                      <span>Nenhum dado encontrado.</span>
                     </div>
                   </td>
                 </tr>

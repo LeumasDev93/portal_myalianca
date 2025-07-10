@@ -2,7 +2,6 @@
 "use client";
 
 import { useState, FormEvent, useEffect } from "react";
-import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/auth-context";
 import Logo from "@/assets/alianca.png";
 import {
@@ -14,15 +13,12 @@ import {
   LockKeyhole,
   Mail,
   User,
-  Lock,
   ArrowLeft,
 } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import { CheckCircle2 } from "lucide-react";
 import ImageBG from "@/assets/img_background.png";
-import { Label } from "@radix-ui/react-label";
-import Input from "@/components/Input";
 
 interface ApiErrorDetails {
   response?: {
@@ -44,13 +40,10 @@ interface ApiResponse {
 
 export default function LoginPage() {
   const { login, isLoading, error, clearError } = useAuth();
-  const router = useRouter();
   const [showNewPassword, setShowNewPassword] = useState(false);
 
   const [isLoginForm, setIsLoginForm] = useState(true);
-  const [loginType, setLoginType] = useState<"personal" | "business">(
-    "personal"
-  );
+
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [email, setEmail] = useState("");
@@ -61,7 +54,6 @@ export default function LoginPage() {
   const [step, setStep] = useState<"email" | "otp" | "password">("email");
   const [otp, setOtp] = useState("");
   const [new_password, setNewPassword] = useState("");
-  const [isTransitioning, setIsTransitioning] = useState(false);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -99,6 +91,9 @@ export default function LoginPage() {
       if (data.error) {
         const errorMessage = data.details?.response?.desc || data.error;
         setErro(errorMessage);
+        setTimeout(() => {
+          setErro("");
+        }, 5000);
         return;
       }
 
@@ -115,8 +110,14 @@ export default function LoginPage() {
 
       // Formato não reconhecido
       setErro("Resposta do servidor não reconhecida");
+      setTimeout(() => {
+        setErro("");
+      }, 5000);
     } catch (err) {
       setErro("Erro ao conectar com o servidor");
+      setTimeout(() => {
+        setErro("");
+      }, 5000);
     } finally {
       setIsLoading(false);
     }
@@ -142,6 +143,9 @@ export default function LoginPage() {
       if (data.error) {
         const errorMessage = data.details?.response?.desc || data.error;
         setErro(errorMessage);
+        setTimeout(() => {
+          setErro("");
+        }, 5000);
         return;
       }
 
@@ -153,9 +157,15 @@ export default function LoginPage() {
         }, 2000);
       } else {
         setErro(data.message || "Código inválido.");
+        setTimeout(() => {
+          setErro("");
+        }, 5000);
       }
     } catch (err) {
       setErro("Erro ao validar código.");
+      setTimeout(() => {
+        setErro("");
+      }, 5000);
     } finally {
       setIsLoading(false);
     }
@@ -181,12 +191,14 @@ export default function LoginPage() {
 
       // ✅ Se a resposta NÃO for 200–299
       if (!res.ok) {
-        if (data.code === 0 || data.code === 3) {
-          setErro(data.message_details);
-          return;
+        // Se existir o array de erros dentro de info, mostre só a mensagem do array
+        if (data.details?.info?.errors?.length > 0) {
+          setErro(data.details.info.errors.join(" / "));
+        } else {
+          // Outras mensagens
+          setErro(data.message || data.error || "Erro desconhecido");
         }
-
-        setErro(data.message);
+        setTimeout(() => setErro(""), 5000);
         return;
       }
 
@@ -202,9 +214,15 @@ export default function LoginPage() {
         }, 2000);
       } else {
         setErro(data.message || "Erro ao redefinir senha.");
+        setTimeout(() => {
+          setErro("");
+        }, 5000);
       }
     } catch (err) {
       setErro("Erro de rede ao redefinir senha.");
+      setTimeout(() => {
+        setErro("");
+      }, 5000);
     } finally {
       setIsLoading(false);
     }
@@ -339,7 +357,10 @@ export default function LoginPage() {
               <div className="flex justify-end">
                 <button
                   type="button"
-                  onClick={() => setIsLoginForm(false)}
+                  onClick={() => {
+                    setIsLoginForm(false);
+                    setStep("email");
+                  }}
                   className="text-sm text-blue-600 hover:text-blue-800 transition-colors duration-200 underline-offset-4 hover:underline"
                 >
                   Esqueceu a senha?
@@ -391,7 +412,12 @@ export default function LoginPage() {
                 </p>
               </div>
               {erro && (
-                <p className="text-red-500 text-center text-sm">{erro}</p>
+                <div className="mb-4 animate-fade-in-down">
+                  <div className="flex items-center justify-center w-full py-3 px-4 bg-red-50 border border-red-200 text-red-600 rounded-lg text-sm">
+                    <AlertCircle className="h-5 w-5 mr-2" />
+                    {erro}
+                  </div>
+                </div>
               )}
               {step === "email" && (
                 <div className="relative group">
@@ -436,7 +462,7 @@ export default function LoginPage() {
               {step === "password" && (
                 <div className="relative group">
                   <input
-                    type="password"
+                    type={showNewPassword ? "text" : "password"}
                     placeholder=" "
                     value={new_password}
                     onChange={(e) => setNewPassword(e.target.value)}
@@ -447,9 +473,20 @@ export default function LoginPage() {
                   <label className="absolute text-sm text-gray-500 duration-300 transform -translate-y-4 scale-75 top-3 left-4 z-10 origin-[0] bg-white px-1 peer-focus:px-1 peer-focus:text-blue-600 peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-4">
                     Nova Senha
                   </label>
-                  <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-gray-400 group-focus-within:text-blue-500 transition-colors">
-                    <Lock className="h-5 w-5" />
-                  </div>
+                  <button
+                    type="button"
+                    className="absolute right-3 top-3.5 text-gray-400 hover:text-blue-500 transition-colors"
+                    onClick={() => setShowNewPassword(!showNewPassword)}
+                    aria-label={
+                      showNewPassword ? "Ocultar senha" : "Mostrar senha"
+                    }
+                  >
+                    {showNewPassword ? (
+                      <EyeOff className="h-5 w-5" />
+                    ) : (
+                      <Eye className="h-5 w-5" />
+                    )}
+                  </button>
                 </div>
               )}
 

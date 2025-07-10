@@ -12,7 +12,12 @@ import {
 import { Button } from "@/components/ui/button";
 import { Eye } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { FaDollarSign, FaRegCalendar } from "react-icons/fa";
+import {
+  FaDollarSign,
+  FaFilter,
+  FaRegCalendar,
+  FaSearch,
+} from "react-icons/fa";
 import {
   formatCurrency,
   formatDate,
@@ -40,8 +45,19 @@ export default function ApolicePage({ onSelectDetail }: ApolicePageProps) {
 
   if (errorApolices) {
     return (
-      <div className="flex items-center justify-center h-screen">
-        <p className="text-red-500 text-center">{errorApolices}</p>
+      <div className="flex flex-col items-center justify-center gap-2 py-8">
+        <div className="relative">
+          <FaSearch className="text-4xl text-gray-400 animate-pulse" />
+          <FaFilter
+            className="absolute -top-2 -right-2 text-xl text-[#2d4e7f] animate-spin-slow"
+            style={{ animationDuration: "3s" }}
+          />
+        </div>
+        <p className="text-gray-500 text-center">
+          Nenhum apolice encontrado!
+          <br />
+          Tente novamnete mas tarde.
+        </p>
       </div>
     );
   }

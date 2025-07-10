@@ -1,4 +1,3 @@
-// app/api/auth/recover-password/route.ts
 import { NextResponse } from 'next/server';
 
 export const dynamic = 'force-dynamic';
@@ -25,18 +24,26 @@ export async function POST(request: Request) {
       body: JSON.stringify({ email }),
     });
 
+    const data = await response.json().catch(() => ({}));
+
+    // Verifica se veio um erro no formato específico:
+    if (data.info?.status === 500 && Array.isArray(data.info.errors) && data.info.errors.length > 0) {
+      return NextResponse.json(
+        { error: data.info.errors[0] },
+        { status: 500 }
+      );
+    }
+
+    // Verifica erro genérico (quando o response não é ok)
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
       return NextResponse.json(
         {
-          error: errorData.message || 'Erro ao solicitar recuperação de senha',
-          details: errorData,
+          error: data.message || 'Erro ao solicitar recuperação de senha',
+          details: data,
         },
         { status: response.status }
       );
     }
-
-    const data = await response.json();
 
     return NextResponse.json({
       message: data.message,

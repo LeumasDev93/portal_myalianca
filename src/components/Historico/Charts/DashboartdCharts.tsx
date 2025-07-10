@@ -19,6 +19,7 @@ import {
   getStatusReciverTexts,
 } from "@/lib/utils";
 import { useRecibos } from "@/hooks/useRecibos ";
+import { FaFilter, FaSearch } from "react-icons/fa";
 
 // Configuração de revalidação
 const REVALIDATION_TIME = 60; // segundos
@@ -242,38 +243,51 @@ export function DashboardCharts() {
                   value={key}
                   className="space-y-2 xl:space-y-4"
                 >
-                  <div className="flex flex-col items-center justify-center h-[200px] sm:h-[250px] xl:h-[300px] xl:gap-4">
-                    <div className="w-full h-[180px] sm:h-[200px] xl:h-full">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <PieChart>
-                          <Pie
-                            data={data}
-                            cx="50%"
-                            cy="50%"
-                            innerRadius={isXlScreen ? 70 : 50}
-                            outerRadius={isXlScreen ? 100 : 80}
-                            dataKey="value"
-                          >
-                            {data.map((entry, i) => (
-                              <Cell key={`cell-${i}`} fill={entry.color} />
-                            ))}
-                          </Pie>
-                          <Tooltip content={customTooltip} />
-                        </PieChart>
-                      </ResponsiveContainer>
+                  {data.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center h-[200px] sm:h-[250px] xl:h-[270px] text-gray-500 space-y-2">
+                      <div className="relative">
+                        <FaSearch className="text-4xl text-gray-400 animate-pulse" />
+                        <FaFilter
+                          className="absolute -top-2 -right-2 text-xl text-[#2d4e7f] animate-spin-slow"
+                          style={{ animationDuration: "3s" }}
+                        />
+                      </div>
+                      <span>Nenhum dado encontrado.</span>
                     </div>
-                    <div className="flex gap-1 sm:gap-3 text-xs xl:text-sm">
-                      {data.map((entry, i) => (
-                        <div key={i} className="flex items-center gap-2">
-                          <span
-                            className="w-2 h-4 sm:h-6 rounded-full"
-                            style={{ backgroundColor: entry.color }}
-                          />
-                          {entry.label || "Não Definido"}
-                        </div>
-                      ))}
+                  ) : (
+                    <div className="flex flex-col items-center justify-center h-[200px] sm:h-[250px] xl:h-[300px] xl:gap-4">
+                      <div className="w-full h-[180px] sm:h-[200px] xl:h-full">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <PieChart>
+                            <Pie
+                              data={data}
+                              cx="50%"
+                              cy="50%"
+                              innerRadius={isXlScreen ? 70 : 50}
+                              outerRadius={isXlScreen ? 100 : 80}
+                              dataKey="value"
+                            >
+                              {data.map((entry, i) => (
+                                <Cell key={`cell-${i}`} fill={entry.color} />
+                              ))}
+                            </Pie>
+                            <Tooltip content={customTooltip} />
+                          </PieChart>
+                        </ResponsiveContainer>
+                      </div>
+                      <div className="flex gap-1 sm:gap-3 text-xs xl:text-sm">
+                        {data.map((entry, i) => (
+                          <div key={i} className="flex items-center gap-2">
+                            <span
+                              className="w-2 h-4 sm:h-6 rounded-full"
+                              style={{ backgroundColor: entry.color }}
+                            />
+                            {entry.label || "Não Definido"}
+                          </div>
+                        ))}
+                      </div>
                     </div>
-                  </div>
+                  )}
                 </TabsContent>
               ))
             )}
