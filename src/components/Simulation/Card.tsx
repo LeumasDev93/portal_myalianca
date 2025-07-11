@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 // components/Card.tsx
-import { Product } from "@/hooks/useProducts";
+import { Product } from "@/types/typesData";
 import { IoCalculatorOutline } from "react-icons/io5";
 
 interface CardProps {
