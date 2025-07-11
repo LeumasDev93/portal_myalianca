@@ -230,7 +230,15 @@ const Page = () => {
           </div>
         )}
         <div
-          className={`flex-1 flex flex-col ${isMobile ? "" : "ml-16 xl:ml-64"}`}
+          className={`flex-1 flex flex-col ${
+            currentPage === "Simulation"
+              ? isMobile
+                ? "-mt-4" // Simulation no mobile
+                : "ml-12 md:ml-12 xl:ml-60 -mt-4 xl:-mt-2 " // Simulation no desktop
+              : isMobile
+              ? "" // outras páginas no mobile
+              : "ml-16 xl:ml-64" // outras páginas no desktop
+          }`}
         >
           <div className="flex-grow p-4">
             {isLoading ? (

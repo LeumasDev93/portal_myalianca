@@ -4,14 +4,14 @@ const nextConfig: NextConfig = {
   devIndicators: false,
   reactStrictMode: true,
   experimental: {
-     typedRoutes: false
+    typedRoutes: false
   },
   images: {
-    domains: ["st2.depositphotos.com", "via.placeholder.com", "gestao.aliancaseguros.cv"], 
+    domains: ["st2.depositphotos.com", "via.placeholder.com", "gestao.aliancaseguros.cv", "www.bradescoseguros.com.br"],
     remotePatterns: [
       {
         protocol: "https",
-        hostname: "gestao.aliancaseguros.cv", 
+        hostname: "gestao.aliancaseguros.cv",
         pathname: "/uploads/**",
       },
     ],
@@ -21,7 +21,7 @@ const nextConfig: NextConfig = {
     return [
       {
         source: '/api/anywhere/:path*',
-        destination: 'https://aliancacvtest.rtcom.pt/anywhere/:path*', 
+        destination: 'https://aliancacvtest.rtcom.pt/anywhere/:path*',
       },
     ];
   }

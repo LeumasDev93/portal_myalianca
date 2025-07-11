@@ -35,10 +35,9 @@ import {
   FaUser,
   FaSearch,
   FaFilter,
-  FaTh,
-  FaList,
 } from "react-icons/fa";
 import { useRecibos } from "@/hooks/useRecibos ";
+import { Grid, List } from "lucide-react";
 
 type ReciboPageProps = {
   onSelectDetail?: (id: string) => void;
@@ -47,10 +46,10 @@ type ReciboPageProps = {
 type ReciboLoadingState = {
   [number: string]: boolean;
 };
-
+type ViewMode = "grid" | "list";
 export default function ReciboPage({}: ReciboPageProps) {
   const [loadingStates, setLoadingStates] = useState<ReciboLoadingState>({});
-  const [viewMode, setViewMode] = useState<"cards" | "list">("cards");
+  const [viewMode, setViewMode] = useState<ViewMode>("list");
   const { token } = useSessionCheckToken();
 
   const {
@@ -108,20 +107,26 @@ export default function ReciboPage({}: ReciboPageProps) {
         </h1>
         <div className="flex gap-2">
           <Button
-            variant={viewMode === "cards" ? "default" : "outline"}
-            onClick={() => setViewMode("cards")}
-            className="p-2"
-            title="Visualização em cards"
+            className={`${
+              viewMode === "list"
+                ? "bg-[#002256] hover:bg-[#002256]/70"
+                : "bg-white border border-input text-[#002256] hover:bg-[#002256]/70"
+            }`}
+            size="icon"
+            onClick={() => setViewMode("list")}
           >
-            <FaTh className="text-sm" />
+            <List className="h-4 w-4" />
           </Button>
           <Button
-            variant={viewMode === "list" ? "default" : "secondary"}
-            onClick={() => setViewMode("list")}
-            className="p-2"
-            title="Visualização em lista"
+            className={`${
+              viewMode === "grid"
+                ? "bg-[#002256] hover:bg-[#002256]/70"
+                : "bg-white border border-input text-[#002256] hover:bg-[#002256]/70"
+            }`}
+            size="icon"
+            onClick={() => setViewMode("grid")}
           >
-            <FaList className="text-sm" />
+            <Grid className="h-4 w-4" />
           </Button>
         </div>
       </div>
@@ -183,7 +188,7 @@ export default function ReciboPage({}: ReciboPageProps) {
             Tente ajustar os filtros ou buscar por outros termos.
           </p>
         </div>
-      ) : viewMode === "cards" ? (
+      ) : viewMode === "grid" ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 3xl:grid-cols-5 gap-4">
           {filteredRecibos.map((recibo) => (
             <Card key={recibo.number}>
@@ -193,36 +198,31 @@ export default function ReciboPage({}: ReciboPageProps) {
                     Número:
                     <CopiableNumber number={recibo.number} />
                   </div>
-                  <Button
-                    onClick={() => handleDownload(recibo.number)}
-                    disabled={loadingStates[recibo.number]}
-                    className="flex items-center bg-[#002856] hover:bg-[#002856]/50 gap-2"
-                  >
-                    {loadingStates[recibo.number] ? (
-                      <FaSpinner className="animate-spin" />
-                    ) : (
-                      <FaDownload />
-                    )}
-                  </Button>
+                  {recibo.status === 9 ||
+                    recibo.status === 1 ||
+                    (recibo.status === 2 && (
+                      <Button
+                        onClick={() => handleDownload(recibo.number)}
+                        disabled={loadingStates[recibo.number]}
+                        className="flex items-center bg-[#002856] hover:bg-[#002856]/50 gap-2"
+                      >
+                        {loadingStates[recibo.number] ? (
+                          <FaSpinner className="animate-spin" />
+                        ) : (
+                          <FaDownload />
+                        )}
+                      </Button>
+                    ))}
                 </CardTitle>
                 <CardDescription>
                   <div>Referencia: {recibo.mbref}</div>
                   <div className="flex flex-col gap-2">
                     <span>Valor: {formatCurrency(recibo.value)}</span>
                   </div>
-                  <div className="flex flex-col gap-2">
-                    <span>Tipo: {getTypesReciver(recibo.type)}</span>
-                  </div>
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="flex justify-between">
-                  <div className="flex items-center just gap-2">
-                    <span className="bg-blue-100 rounded-full p-2">
-                      <FaUser />
-                    </span>
-                    <span>{recibo.clientName}</span>
-                  </div>
                   <div className="flex flex-col gap-2">
                     <span>Estado:</span>
                     <span
@@ -259,16 +259,20 @@ export default function ReciboPage({}: ReciboPageProps) {
                     <span className="font-semibold">Número:</span>
                     <CopiableNumber number={recibo.number} />
                   </div>
-                  <div className="flex items-center gap-2">
-                    <span className="font-semibold">Cliente:</span>
-                    <span>{recibo.clientName}</span>
-                  </div>
+
                   <div className="flex items-center gap-2">
                     <span className="font-semibold">Valor:</span>
                     <span>{formatCurrency(recibo.value)}</span>
                   </div>
                 </div>
-
+                <div className="mt-3 grid grid-cols-2 md:grid-cols-4 gap-2 text-sm">
+                  <div>
+                    <span className="text-gray-500"> Data Faturacao:</span>
+                    <p>
+                      {formatDate(recibo.from)} - {formatDate(recibo.to)}
+                    </p>
+                  </div>
+                </div>
                 <div className="flex flex-col items-end gap-2">
                   <span
                     className={`text-xs px-2 py-1 rounded-sm ${getStatusReciverColors(
@@ -277,38 +281,25 @@ export default function ReciboPage({}: ReciboPageProps) {
                   >
                     {getStatusReciverTexts(recibo.status)}
                   </span>
-                  <Button
-                    onClick={() => handleDownload(recibo.number)}
-                    disabled={loadingStates[recibo.number]}
-                    className="flex items-center gap-2"
-                    size="sm"
-                  >
-                    {loadingStates[recibo.number] ? (
-                      <FaSpinner className="animate-spin" />
-                    ) : (
-                      <>
-                        <FaDownload />
-                        <span>Baixar</span>
-                      </>
-                    )}
-                  </Button>
-                </div>
-              </div>
-
-              <div className="mt-3 grid grid-cols-2 md:grid-cols-4 gap-2 text-sm">
-                <div>
-                  <span className="text-gray-500">Referência:</span>
-                  <p>{recibo.mbref}</p>
-                </div>
-                <div>
-                  <span className="text-gray-500">Tipo:</span>
-                  <p>{getTypesReciver(recibo.type)}</p>
-                </div>
-                <div>
-                  <span className="text-gray-500">Período:</span>
-                  <p>
-                    {formatDate(recibo.from)} - {formatDate(recibo.to)}
-                  </p>
+                  {recibo.status === 9 ||
+                    recibo.status === 1 ||
+                    (recibo.status === 2 && (
+                      <Button
+                        onClick={() => handleDownload(recibo.number)}
+                        disabled={loadingStates[recibo.number]}
+                        className="flex items-center gap-2 bg-[#002256] hover:bg-[#002256]/70"
+                        size="sm"
+                      >
+                        {loadingStates[recibo.number] ? (
+                          <FaSpinner className="animate-spin" />
+                        ) : (
+                          <>
+                            <FaDownload />
+                            <span>Baixar</span>
+                          </>
+                        )}
+                      </Button>
+                    ))}
                 </div>
               </div>
             </div>

@@ -9,8 +9,6 @@ import { LoadingScreen } from "../../ui/loading-screen";
 import { useProductDetails } from "@/hooks/useProdutsDetails";
 import { Tabs, TabsContent, TabsList } from "@radix-ui/react-tabs";
 import { FaUser, FaUserTie, FaCar, FaCalculator } from "react-icons/fa";
-import { useToast } from "@/components/ui/use-toast";
-import { Toaster } from "@/components/ui/toaster";
 
 const iconMap: Record<string, JSX.Element> = {
   "Dados Pessoais": <FaUser />,
@@ -29,8 +27,8 @@ export default function SimulationForm({
 }) {
   const { product, loading, error } = useProductDetails(productId);
   const [formValues, setFormValues] = useState<Record<string, any>>({});
+  const [errors, setErrors] = useState<Record<string, string>>({});
   const [activeTab, setActiveTab] = useState<string>("");
-  const { toast } = useToast();
 
   useEffect(() => {
     if (product) {
@@ -41,8 +39,6 @@ export default function SimulationForm({
         });
       });
       setFormValues(initialValues);
-
-      // Define a aba ativa como a primeira do produto
       if (product.tabs.length > 0) {
         setActiveTab(product.tabs[0].title);
       }
@@ -54,25 +50,31 @@ export default function SimulationForm({
       ...prev,
       [name]: value,
     }));
+
+    // Limpa erro se já corrigido
+    if (errors[name]) {
+      setErrors((prev) => {
+        const newErrors = { ...prev };
+        delete newErrors[name];
+        return newErrors;
+      });
+    }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    // Aqui você pode enviar os dados para o backend
-    console.log("Formulário enviado com valores:", formValues);
+  const validateTabFields = (tab: any): boolean => {
+    const newErrors: Record<string, string> = {};
+
+    tab.form.fields.forEach((field: any) => {
+      const value = formValues[field.name];
+      const isRequired = field.required ?? true;
+      if (isRequired && (!value || value.trim() === "")) {
+        newErrors[field.name] = "Este campo é obrigatório.";
+      }
+    });
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
   };
-
-  if (loading) {
-    return <LoadingScreen />;
-  }
-
-  if (error) {
-    return <ErrorState error={error} onClose={onClose} />;
-  }
-
-  if (!product) {
-    return <EmptyState />;
-  }
 
   const goToNextTab = () => {
     if (!product) return;
@@ -82,26 +84,12 @@ export default function SimulationForm({
     );
     const currentTab = product.tabs[currentIndex];
 
-    // Verifica se todos os campos da aba atual estão preenchidos
-    const hasEmptyRequiredFields = currentTab.form.fields.some((field) => {
-      const value = formValues[field.name];
-      const isRequired = field.required ?? true; // Se não tiver 'required', assume que é obrigatório
-      return isRequired && (!value || value.trim() === "");
-    });
+    if (!validateTabFields(currentTab)) return;
 
-    if (hasEmptyRequiredFields) {
-      toast({
-        title: "Campos obrigatórios",
-        description: "Preencha todos os campos marcados com *",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    // Avança para a próxima aba
     const nextTab = product.tabs[currentIndex + 1];
     if (nextTab) {
       setActiveTab(nextTab.title);
+      setErrors({});
     }
   };
 
@@ -115,13 +103,11 @@ export default function SimulationForm({
     const previousTab = product.tabs[currentIndex - 1];
     if (previousTab) {
       setActiveTab(previousTab.title);
+      setErrors({});
     } else {
-      // Se não houver aba anterior, fecha o formulário
       onClose();
     }
   };
-
-  const currentIndex = product.tabs.findIndex((tab) => tab.title === activeTab);
 
   const handleTabChange = (nextTabTitle: string) => {
     if (!product) return;
@@ -133,39 +119,37 @@ export default function SimulationForm({
       (tab) => tab.title === nextTabTitle
     );
 
-    if (nextIndex === currentIndex) {
-      // Clicou na aba atual, não faz nada
-      return;
-    }
+    if (nextIndex === currentIndex) return;
 
     if (nextIndex < currentIndex) {
-      // Clicou em aba anterior: permite mudar direto
       setActiveTab(nextTabTitle);
       return;
     }
 
-    // Clicou em aba futura: validar campos da aba atual
     const currentTab = product.tabs[currentIndex];
+    if (!validateTabFields(currentTab)) return;
 
-    const hasEmptyRequiredFields = currentTab.form.fields.some((field) => {
-      const value = formValues[field.name];
-      const isRequired = field.required ?? true;
-      return isRequired && (!value || value.trim() === "");
-    });
-
-    if (hasEmptyRequiredFields) {
-      toast({
-        title: "Campos obrigatórios",
-        description:
-          "Preencha todos os campos marcados com * antes de continuar.",
-        variant: "destructive", // ou "error"
-      });
-      return;
-    }
-
-    // Validação ok, muda para próxima aba
     setActiveTab(nextTabTitle);
+    setErrors({});
   };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    const currentTab = product?.tabs.find((tab) => tab.title === activeTab);
+    if (!currentTab) return;
+
+    if (!validateTabFields(currentTab)) return;
+
+    console.log("Formulário enviado com valores:", formValues);
+    // Aqui você pode enviar os dados para o backend
+  };
+
+  if (loading) return <LoadingScreen />;
+  if (error) return <ErrorState error={error} onClose={onClose} />;
+  if (!product) return <EmptyState />;
+
+  const currentIndex = product.tabs.findIndex((tab) => tab.title === activeTab);
 
   return (
     <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
@@ -188,7 +172,6 @@ export default function SimulationForm({
         ))}
       </TabsList>
 
-      <Toaster />
       {product.tabs.map((tab) => (
         <TabsContent key={tab.title} value={tab.title}>
           <form onSubmit={handleSubmit}>
@@ -202,14 +185,20 @@ export default function SimulationForm({
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
                   {tab.form.fields
-                    .sort((a, b) => a.position - b.position)
-                    .map((field) => (
-                      <FormField
-                        key={field.name}
-                        field={field}
-                        value={formValues[field.name] || ""}
-                        onChange={handleFieldChange}
-                      />
+                    .sort((a: any, b: any) => a.position - b.position)
+                    .map((field: any) => (
+                      <div key={field.name}>
+                        <FormField
+                          field={field}
+                          value={formValues[field.name] || ""}
+                          onChange={handleFieldChange}
+                        />
+                        {errors[field.name] && (
+                          <p className="text-red-500 text-sm mt-1">
+                            {errors[field.name]}
+                          </p>
+                        )}
+                      </div>
                     ))}
                 </div>
               </div>

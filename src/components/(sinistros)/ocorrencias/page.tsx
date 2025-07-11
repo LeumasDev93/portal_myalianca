@@ -72,14 +72,15 @@ export default function OcorrenciasPage({
         `/api/ocorrencia?user_id=${profile?.user?.id}`
       );
 
+      const data = await response.json();
+
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Erro ao buscar ocorrências");
+        throw new Error(
+          data?.info?.errors?.[0] || "Erro ao buscar ocorrências"
+        );
       }
 
-      const data = await response.json();
-      console.log(data, "ocorrencias");
-      setOcorrencias(data);
+      setOcorrencias(data.results);
       setError(null);
     } catch (error: any) {
       if (error.name !== "AbortError") {

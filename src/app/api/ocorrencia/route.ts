@@ -8,7 +8,15 @@ export async function GET(request: Request) {
 
     if (!userId) {
       return NextResponse.json(
-        { error: 'Parâmetro user_id é obrigatório' },
+        {
+          info: {
+            count: 0,
+            page: 1,
+            status: 400,
+            errors: ['Parâmetro user_id é obrigatório']
+          },
+          results: []
+        },
         { status: 400 }
       );
     }
@@ -18,41 +26,69 @@ export async function GET(request: Request) {
     }
 
     const apiUrl = `${process.env.NEXT_PUBLIC_API_BASE_URL}/sinistros?user_id=${userId}`;
-
-    console.log('URL da API chamada:', apiUrl); // Log para debug
-
     const response = await fetch(apiUrl, {
       headers: {
         'Authorization': `Bearer ${process.env.API_SECRET_TOKEN}`,
         'ApiKey': process.env.NEXT_PUBLIC_API_KEY || '',
         'Content-Type': 'application/json'
-      },
-      // next: { revalidate: 3600 } // Comente temporariamente para testes
+      }
     });
 
     const responseText = await response.text();
-    console.log('Resposta bruta:', responseText); // Log da resposta bruta
 
     if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+      return NextResponse.json(
+        {
+          info: {
+            count: 0,
+            page: 1,
+            status: response.status,
+            errors: [`Erro na API externa: ${response.statusText}`]
+          },
+          results: []
+        },
+        { status: response.status }
+      );
     }
 
-    const data = JSON.parse(responseText); // Parse manual para evitar problemas
+    const data = JSON.parse(responseText);
 
-    if (!Array.isArray(data)) {
-      console.error('Dados recebidos não são array:', data);
-      throw new Error('Formato de dados inválido - esperado array');
+    // ✅ Verifica se 'results' é um array dentro do objeto retornado
+    if (!data || !Array.isArray(data.results)) {
+      return NextResponse.json(
+        {
+          info: {
+            count: 0,
+            page: 1,
+            status: 500,
+            errors: ['Formato de dados inválido - esperado objeto com array em "results"']
+          },
+          results: []
+        },
+        { status: 500 }
+      );
     }
 
-    console.log('Dados retornados:', data.length, 'itens'); // Log do tamanho
-    return NextResponse.json(data);
+    return NextResponse.json({
+      info: {
+        count: data.results.length,
+        page: 1,
+        status: 200,
+        errors: null
+      },
+      results: data.results
+    });
 
   } catch (error) {
-    console.error('Erro completo:', error);
     return NextResponse.json(
       {
-        error: 'Falha ao buscar ocorrências',
-        details: error instanceof Error ? error.message : String(error)
+        info: {
+          count: 0,
+          page: 1,
+          status: 500,
+          errors: [error instanceof Error ? error.message : 'Erro desconhecido']
+        },
+        results: []
       },
       { status: 500 }
     );
