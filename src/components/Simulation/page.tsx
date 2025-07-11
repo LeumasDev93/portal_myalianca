@@ -1,52 +1,70 @@
-"use client";
-
-import Card from "./Card";
-import { LoadingScreen } from "../ui/loading-screen";
+import { useState } from "react";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "../ui/tabs";
 import { useProducts } from "@/hooks/useProducts";
-import { FaFilter, FaSearch } from "react-icons/fa";
+import SimulationForm from "./Form/SimulationForm";
+import ProductsTab from "./ProductsTab";
+import MySimulationsTab from "./MySimulationsTab";
+import { Product } from "@/types/typesData";
 
 export default function SimulationScreen() {
   const { products, loading, error } = useProducts();
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
 
   return (
-    <div className="container p-6">
+    <div className="container p-6 relative">
       <div className="mb-8">
         <h1 className="text-xl lg:text-2xl xl:text-3xl font-bold mb-2 text-[#002256]">
           Simulação
         </h1>
-        <p className="text-gray-600 mb-6">
-          Faz uma simulação e encontre a agência mais próxima de você para
-          atendimento presencial.
-        </p>
       </div>
-      {loading ? (
-        <div className="flex items-center justify-center h-screen">
-          <LoadingScreen />
-        </div>
-      ) : error ? (
-        <p className="text-red-500">{error}</p>
-      ) : products.length === 0 ? (
-        <div className="flex flex-col items-center justify-center gap-2 py-8">
-          <div className="relative">
-            <FaSearch className="text-4xl text-gray-400 animate-pulse" />
-            <FaFilter
-              className="absolute -top-2 -right-2 text-xl text-[#2d4e7f] animate-spin-slow"
-              style={{ animationDuration: "3s" }}
+
+      <Tabs defaultValue="types" className="space-y-4">
+        <TabsList className="flex justify-start sm:space-x-2 space-x-0.5">
+          <TabsTrigger
+            value="types"
+            className="sm:px-4 xl:text-lg sm:py-2 px-2 py-1 rounded-md text-[#002256] font-semibold hover:bg-[#002256] hover:text-white data-[state=active]:bg-[#002256] data-[state=active]:text-white transition-colors"
+          >
+            Produtos
+          </TabsTrigger>
+          <TabsTrigger
+            value="mySimulations"
+            className="sm:px-4 xl:text-lg sm:py-2 px-2 py-1 rounded-md text-[#002256] font-semibold hover:bg-[#002256] hover:text-white data-[state=active]:bg-[#002256] data-[state=active]:text-white transition-colors"
+          >
+            Minhas Simulações
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent
+          value="types"
+          className="bg-white rounded-lg shadow-xl p-4 xl:p-8"
+        >
+          {selectedProduct ? (
+            <SimulationForm
+              productId={selectedProduct.productId}
+              onClose={() => setSelectedProduct(null)}
             />
-          </div>
-          <p className="text-gray-500 text-center">
-            Nenhum dado encontrado!
-            <br />
-            Tente novamnete mas tarde.
-          </p>
-        </div>
-      ) : (
-        <div className="max-w-7xl mx-auto grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-          {products.map((product) => (
-            <Card key={product.productId} product={product} />
-          ))}
-        </div>
-      )}
+          ) : (
+            <>
+              <p className="text-[#002256] mb-6">
+                Escolha um Produto e faça uma simulação.
+              </p>
+              <ProductsTab
+                loading={loading}
+                error={error}
+                products={products}
+                onSelect={setSelectedProduct}
+              />
+            </>
+          )}
+        </TabsContent>
+
+        <TabsContent
+          value="mySimulations"
+          className="bg-white rounded-lg shadow-xl p-4 xl:p-8"
+        >
+          <MySimulationsTab />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

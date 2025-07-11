@@ -146,3 +146,48 @@ export interface Ocorrencia {
   local_ocorrencia: string | null;
   boletim_ocorrencia: string | null;
 }
+
+export interface FormFieldData {
+  name: string;
+  label: string;
+  type: string;
+  fieldSize: number;
+  position: number;
+  format: string;
+  fieldMaxSize: number | null;
+  fieldMinSize: number | null;
+  required: boolean;
+}
+
+export interface FormTab {
+  title: string;
+  description: string;
+  lasttab: boolean;
+  form: {
+    title: string;
+    description: string;
+    fields: FormFieldData[];
+  };
+}
+
+export interface Product {
+  name: string;
+  description: string;
+  category: string;
+  mainProduct: boolean;
+  icon: string;
+  parentProductId: string | null;
+  active: boolean;
+  tabs: FormTab[];
+  productId: string;
+}
+
+export interface ApiResponse<T> {
+  info: {
+    count: number;
+    page: number;
+    status: number;
+    errors: null | string;
+  };
+  results: T;
+}
