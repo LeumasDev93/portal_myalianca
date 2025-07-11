@@ -160,7 +160,7 @@ export default function SimulationForm({
   return (
     <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
       <div className="border-b ">
-        <div className="flex flex-col p-2 md:px-6 md:py-4 bg-[#e6e3e3] shadow-xl rounded-t-xl flex-1 md:pb-6 w-96">
+        <div className="flex flex-col p-2 md:px-6 md:py-4 bg-[#e6e3e3] shadow-xl rounded-t-xl flex-1 md:pb-6 w-full sm:w-96">
           <div className="flex items-center cursor-pointer space-x-2">
             <div className="flex items-center gap-2">
               <h2 className="text-sm text-[#002B5B] sm:text-lg md:font-semibold uppercase">
