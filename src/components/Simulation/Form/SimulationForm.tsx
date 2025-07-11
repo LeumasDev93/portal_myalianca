@@ -8,7 +8,13 @@ import ErrorState from "./ErrorState";
 import { LoadingScreen } from "../../ui/loading-screen";
 import { useProductDetails } from "@/hooks/useProdutsDetails";
 import { Tabs, TabsContent, TabsList } from "@radix-ui/react-tabs";
-import { FaUser, FaUserTie, FaCar, FaCalculator } from "react-icons/fa";
+import {
+  FaUser,
+  FaUserTie,
+  FaCar,
+  FaCalculator,
+  FaChevronDown,
+} from "react-icons/fa";
 
 const iconMap: Record<string, JSX.Element> = {
   "Dados Pessoais": <FaUser />,
@@ -153,25 +159,62 @@ export default function SimulationForm({
 
   return (
     <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-      <h2 className="text-2xl font-bold text-[#002256] mb-4 uppercase">
-        SIMULADOR SEGURO {product.category}
-      </h2>
-      <TabsList className="flex flex-wrap gap-2">
-        {product.tabs.map((tab) => (
-          <button
-            key={tab.title}
-            type="button"
-            onClick={() => handleTabChange(tab.title)}
-            className={`flex items-center gap-2 sm:px-4 xl:text-lg sm:py-2 px-2 py-1 rounded-md text-[#002256] font-semibold hover:bg-[#002256] hover:text-white transition-colors ${
-              activeTab === tab.title ? "bg-[#002256] text-white" : ""
-            }`}
-          >
-            {iconMap[tab.title] || <FaUser />}
-            {tab.title}
-          </button>
-        ))}
-      </TabsList>
+      <div className="border-b ">
+        <div className="flex flex-col p-2 md:px-6 md:py-4 bg-[#e6e3e3] shadow-xl rounded-t-xl flex-1 md:pb-6 w-96">
+          <div className="flex items-center cursor-pointer space-x-2">
+            <div className="flex items-center gap-2">
+              <h2 className="text-sm text-[#002B5B] sm:text-lg md:font-semibold uppercase">
+                SIMULADOR SEGURO {product.category}
+              </h2>
+            </div>
+            <FaChevronDown
+              className={`text-[#002B5B] transition-transform duration-200 `}
+            />
+          </div>
 
+          <div className="w-full text-left mt-2">
+            <span className="text-sm text-[#002B5B] md:font-semibold">
+              Seguro Obrigatório
+            </span>
+          </div>
+        </div>
+      </div>
+      <div className="border-b w-full">
+        <TabsList className="flex items-center justify-center w-full gap-1">
+          {product.tabs.map((tab) => (
+            <button
+              key={tab.title}
+              type="button"
+              onClick={() => handleTabChange(tab.title)}
+              className={`
+          relative py-1 md:py-4 px-2 md:px-10 md:w-full 
+          transition-all duration-300 font-serif text-xs md:text-xl
+          group overflow-hidden
+          ${
+            activeTab === tab.title
+              ? "text-[#002B5B] border-b-2 border-b-[#771c2b] font-medium"
+              : "text-[#6f7070] hover:text-[#002B5B] hover:scale-[1.02]"
+          }
+        `}
+            >
+              {activeTab !== tab.title && (
+                <span className="absolute inset-0 bg-[#767071] opacity-0 group-hover:opacity-10 transition-opacity duration-300"></span>
+              )}
+
+              <div className="flex justify-center items-center gap-1 md:gap-2 relative z-10">
+                <span className="text-lg md:text-2xl">
+                  {iconMap[tab.title] || <FaUser />}
+                </span>
+                <span>{tab.title}</span>
+              </div>
+
+              {activeTab !== tab.title && (
+                <span className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-0 h-[2px] bg-[#771c2b] group-hover:w-3/4 transition-all duration-300"></span>
+              )}
+            </button>
+          ))}
+        </TabsList>
+      </div>
       {product.tabs.map((tab) => (
         <TabsContent key={tab.title} value={tab.title}>
           <form onSubmit={handleSubmit}>

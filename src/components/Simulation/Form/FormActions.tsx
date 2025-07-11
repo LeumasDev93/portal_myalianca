@@ -22,7 +22,7 @@ export default function FormActions({
   const leftButtonLabel = onPrevious ? "◀ VOLTAR" : "CANCELAR";
 
   return (
-    <div className="flex justify-end space-x-3 mt-6">
+    <div className="flex justify-center space-x-3 mt-6">
       {(onPrevious || onCancel) && (
         <button
           type="button"
