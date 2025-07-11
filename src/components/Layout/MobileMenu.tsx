@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import { HiMenu } from "react-icons/hi";
 import Image from "next/image";
 import Logo from "@/assets/alianca.png";
-import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { X } from "lucide-react";
 import { IconType } from "react-icons";
 import { MdEmail } from "react-icons/md";

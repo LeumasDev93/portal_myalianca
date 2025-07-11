@@ -154,6 +154,9 @@ export interface FormFieldData {
   fieldSize: number;
   position: number;
   format: string;
+  fieldPlaceholder: string;
+  sourceDataType: string;
+  sourceData: string;
   fieldMaxSize: number | null;
   fieldMinSize: number | null;
   required: boolean;
@@ -162,10 +165,14 @@ export interface FormFieldData {
 export interface FormTab {
   title: string;
   description: string;
+  webIcon: string;
+  mobileIcon: string;
   lasttab: boolean;
   form: {
     title: string;
     description: string;
+    mobileGridSize: string;
+    webGridSize: string;
     fields: FormFieldData[];
   };
 }

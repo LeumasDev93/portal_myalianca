@@ -147,7 +147,11 @@ export function DashboardCharts() {
                 <IoSync className={isLoadingLocal ? "animate-spin" : ""} />
               </button>
               <span className="text-xs text-gray-500">
-                Atualizado: {lastUpdated.toLocaleTimeString()}
+                {isLoadingLocal
+                  ? "Atualizando..."
+                  : `Atualizado às ${
+                      lastUpdated?.toLocaleTimeString?.() || "desconhecido"
+                    }`}
               </span>
             </div>
           </div>

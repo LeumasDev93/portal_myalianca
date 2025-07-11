@@ -22,6 +22,7 @@ export default function FormField({
         type={field.type}
         name={field.name}
         value={value || ""}
+        placeholder={field.fieldPlaceholder}
         onChange={(e) => onChange(field.name, e.target.value)}
         className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#002256] focus:border-transparent"
         required={field.required}

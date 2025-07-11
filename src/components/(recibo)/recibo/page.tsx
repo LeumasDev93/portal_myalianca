@@ -35,9 +35,12 @@ import {
   FaUser,
   FaSearch,
   FaFilter,
+  FaEye,
 } from "react-icons/fa";
 import { useRecibos } from "@/hooks/useRecibos ";
 import { Grid, List } from "lucide-react";
+import { ReciboPDFModal } from "../ModalRecibo";
+import ReactDOM from "react-dom/client";
 
 type ReciboPageProps = {
   onSelectDetail?: (id: string) => void;
@@ -49,6 +52,7 @@ type ReciboLoadingState = {
 type ViewMode = "grid" | "list";
 export default function ReciboPage({}: ReciboPageProps) {
   const [loadingStates, setLoadingStates] = useState<ReciboLoadingState>({});
+  const [loadingView, setLoadingView] = useState<ReciboLoadingState>({});
   const [viewMode, setViewMode] = useState<ViewMode>("list");
   const { token } = useSessionCheckToken();
 
@@ -69,7 +73,7 @@ export default function ReciboPage({}: ReciboPageProps) {
 
     try {
       const response = await fetch(
-        `/api/anywhere/api/v1/private/mobile/invoice/${invoiceNumber}/print/invoice`,
+        `/api/anywhere/api/v1/private/mobile/invoice/${invoiceNumber}/print/receipt`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -97,6 +101,44 @@ export default function ReciboPage({}: ReciboPageProps) {
     } finally {
       setLoadingStates((prev) => ({ ...prev, [invoiceNumber]: false }));
     }
+  };
+
+  const visualizarPDF = async (invoiceNumber: string) => {
+    setLoadingView((prev) => ({ ...prev, [invoiceNumber]: true }));
+    const response = await fetch(
+      `/api/anywhere/api/v1/private/mobile/invoice/${invoiceNumber}/print/receipt`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Accept: "application/pdf",
+        },
+      }
+    );
+
+    if (!response.ok) {
+      setLoadingView((prev) => ({ ...prev, [invoiceNumber]: false }));
+      return;
+    }
+
+    const arrayBuffer = await response.arrayBuffer();
+    const blob = new Blob([arrayBuffer], { type: "application/pdf" });
+    const url = URL.createObjectURL(blob);
+
+    // Cria um container temporário
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+
+    const root = ReactDOM.createRoot(container);
+
+    const closeModal = () => {
+      root.unmount(); // desmonta o componente
+      document.body.removeChild(container); // remove o DOM
+      URL.revokeObjectURL(url); // limpa a URL blob
+    };
+
+    // Renderiza o modal
+    root.render(<ReciboPDFModal pdfUrl={url} onClose={closeModal} />);
+    setLoadingView((prev) => ({ ...prev, [invoiceNumber]: false }));
   };
 
   return (
@@ -173,7 +215,7 @@ export default function ReciboPage({}: ReciboPageProps) {
         </div>
       ) : errorRecibo ? (
         <p className="text-red-500">{errorRecibo}</p>
-      ) : filteredRecibos.length === 0 ? (
+      ) : filteredRecibos.length < 1 && !isLoadingRecibos ? (
         <div className="flex flex-col items-center justify-center gap-2 py-8">
           <div className="relative">
             <FaSearch className="text-4xl text-gray-400 animate-pulse" />
@@ -198,21 +240,37 @@ export default function ReciboPage({}: ReciboPageProps) {
                     Número:
                     <CopiableNumber number={recibo.number} />
                   </div>
-                  {recibo.status === 9 ||
-                    recibo.status === 1 ||
-                    (recibo.status === 2 && (
-                      <Button
-                        onClick={() => handleDownload(recibo.number)}
-                        disabled={loadingStates[recibo.number]}
-                        className="flex items-center bg-[#002856] hover:bg-[#002856]/50 gap-2"
-                      >
-                        {loadingStates[recibo.number] ? (
-                          <FaSpinner className="animate-spin" />
-                        ) : (
-                          <FaDownload />
-                        )}
-                      </Button>
-                    ))}
+                  <div className="flex flex-col gap-2">
+                    <Button
+                      onClick={() => visualizarPDF(recibo.number)}
+                      disabled={loadingView[recibo.number]}
+                      className="flex items-center gap-2 bg-[#002256] hover:bg-[#002256]/70"
+                      size="sm"
+                    >
+                      {loadingView[recibo.number] ? (
+                        <FaSpinner className="animate-spin" />
+                      ) : (
+                        <>
+                          <FaEye />
+                        </>
+                      )}
+                    </Button>
+                    {recibo.status === 9 ||
+                      recibo.status === 1 ||
+                      (recibo.status === 2 ? null : (
+                        <Button
+                          onClick={() => handleDownload(recibo.number)}
+                          disabled={loadingStates[recibo.number]}
+                          className="flex items-center bg-[#002856] hover:bg-[#002856]/50 gap-2"
+                        >
+                          {loadingStates[recibo.number] ? (
+                            <FaSpinner className="animate-spin" />
+                          ) : (
+                            <FaDownload />
+                          )}
+                        </Button>
+                      ))}
+                  </div>
                 </CardTitle>
                 <CardDescription>
                   <div>Referencia: {recibo.mbref}</div>
@@ -281,9 +339,26 @@ export default function ReciboPage({}: ReciboPageProps) {
                   >
                     {getStatusReciverTexts(recibo.status)}
                   </span>
-                  {recibo.status === 9 ||
+                  <div className="flex gap-2">
+                    <Button
+                      onClick={() => visualizarPDF(recibo.number)}
+                      disabled={loadingView[recibo.number]}
+                      className="flex items-center gap-2 bg-[#002256] hover:bg-[#002256]/70"
+                      size="sm"
+                    >
+                      {loadingView[recibo.number] ? (
+                        <FaSpinner className="animate-spin" />
+                      ) : (
+                        <>
+                          <FaEye />
+                          <span className="hidden sm:block">Ver detalhes</span>
+                        </>
+                      )}
+                    </Button>
+
+                    {recibo.status === 9 ||
                     recibo.status === 1 ||
-                    (recibo.status === 2 && (
+                    recibo.status === 2 ? null : (
                       <Button
                         onClick={() => handleDownload(recibo.number)}
                         disabled={loadingStates[recibo.number]}
@@ -299,7 +374,8 @@ export default function ReciboPage({}: ReciboPageProps) {
                           </>
                         )}
                       </Button>
-                    ))}
+                    )}
+                  </div>
                 </div>
               </div>
             </div>

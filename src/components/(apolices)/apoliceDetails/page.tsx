@@ -298,9 +298,6 @@ export default function ApoliceDetailPage({
                     <div className="font-semibold text-sm">
                       {formatCurrency(apolice.totalPremium)}
                     </div>
-                    <div className="text-xs text-gray-400">
-                      <span>12x de {formatCurrency(apolice.premium)} </span>
-                    </div>
                   </div>
                 </div>
               </div>

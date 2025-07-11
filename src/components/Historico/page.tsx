@@ -8,9 +8,9 @@ import { LuSquareKanban } from "react-icons/lu";
 import { IoCalculatorOutline } from "react-icons/io5";
 import { FaExclamationTriangle } from "react-icons/fa";
 
-import FavoriteCard from "@/components/FavoriteCard";
+import FavoriteCard from "@/components/Layout/FavoriteCard";
 import HistoryTable from "@/components/Historico/table/HistoryTable";
-import AtivitysLastCard from "@/components/AtivitysLastCard";
+import AtivitysLastCard from "@/components/Layout/AtivitysLastCard";
 
 import IconCar from "@/assets/Icones/AliancaAuto_Icone.svg";
 import IconHosp from "@/assets/Icones/AliancaIncendio_Icone.svg";

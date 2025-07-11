@@ -174,9 +174,6 @@ export default function ApolicePage({ onSelectDetail }: ApolicePageProps) {
                       <p className="font-bold text-gray-900 text-[12px] xl:text-base ">
                         {formatCurrency(apolice.totalPremium)}
                       </p>
-                      <p className=" text-gray-900 text-[10px] xl:text-xs ">
-                        12x de {formatCurrency(apolice.premium)}
-                      </p>
                     </div>
                   </div>
                 </div>

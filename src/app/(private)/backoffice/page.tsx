@@ -3,8 +3,8 @@
 
 import { useState, useEffect } from "react";
 import { FaSearch, FaSpinner } from "react-icons/fa";
-import { MobileMenu } from "@/components/MobileMenu";
-import { Menu, MenuItem } from "@/components/Menu";
+import { MobileMenu } from "@/components/Layout/MobileMenu";
+import { Menu, MenuItem } from "@/components/Layout/Menu";
 
 import {
   IoGrid,
@@ -22,12 +22,12 @@ import { IoMdPin } from "react-icons/io";
 import SimulationScreen from "../../../components/Simulation/page";
 import { AiFillFileExclamation } from "react-icons/ai";
 import { useAuth } from "@/contexts/auth-context";
-import { Footer } from "@/components/Footer";
+import { Footer } from "@/components/Layout/Footer";
 import Historico from "../../../components/Historico/page";
 import { getSession, signIn } from "next-auth/react";
 import { PerfilPage } from "../../../components/perfil/page";
 import { LoadingScreen } from "@/components/ui/loading-screen";
-import { TopMenu } from "@/components/TopMenu";
+import { TopMenu } from "@/components/Layout/TopMenu";
 import AgenciasPage from "../../../components/agencias/page";
 import ApolicePage from "../../../components/(apolices)/apolices/page";
 import ApoliceDetailPage from "../../../components/(apolices)/apoliceDetails/page";

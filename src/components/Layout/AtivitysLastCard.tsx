@@ -2,7 +2,7 @@
 
 import React from "react";
 import { FaCar, FaExclamationTriangle, FaHome } from "react-icons/fa";
-import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 
 type Activity = {
   id: number;

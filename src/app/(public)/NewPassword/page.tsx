@@ -10,7 +10,7 @@ import { useRouter } from "next/navigation";
 
 import Banner from "@/assets/img_background.png";
 import Logo from "@/assets/alianca.png";
-import Input from "@/components/Input";
+import Input from "@/components/Layout/Input";
 
 interface FormData {
   password: string;

@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
+import { ReciboPDFModal } from "@/components/(recibo)/ModalRecibo";
 import { useApolices } from "@/hooks/useApolices";
 import { useRecibos } from "@/hooks/useRecibos ";
 import { useSessionCheckToken } from "@/hooks/useSessionToken";
@@ -27,6 +28,7 @@ import { FaTriangleExclamation } from "react-icons/fa6";
 import { HiDotsVertical } from "react-icons/hi";
 import { IoReceiptSharp, IoShieldCheckmarkSharp } from "react-icons/io5";
 import { MdHealthAndSafety, MdOutlinePayment } from "react-icons/md";
+import ReactDOM from "react-dom/client";
 
 const ramoIcons = {
   Automóvel: <FaCar className="text-white text-sm xl:text-xl" />,
@@ -69,6 +71,46 @@ const HistoryTable = ({
   const { formatRecibos, formatSinistros, formatApolices } = tableMappeData();
 
   const loading = isLoadingApolices || isLoadingSinistros || isLoadingRecibos;
+
+  const [loadingView, setLoadingView] = useState<ReciboLoadingState>({});
+
+  const visualizarPDF = async (invoiceNumber: string, token: string) => {
+    setLoadingView((prev) => ({ ...prev, [invoiceNumber]: true }));
+    const response = await fetch(
+      `/api/anywhere/api/v1/private/mobile/invoice/${invoiceNumber}/print/receipt`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Accept: "application/pdf",
+        },
+      }
+    );
+
+    if (!response.ok) {
+      setLoadingView((prev) => ({ ...prev, [invoiceNumber]: false }));
+      return;
+    }
+
+    const arrayBuffer = await response.arrayBuffer();
+    const blob = new Blob([arrayBuffer], { type: "application/pdf" });
+    const url = URL.createObjectURL(blob);
+
+    // Cria um container temporário
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+
+    const root = ReactDOM.createRoot(container);
+
+    const closeModal = () => {
+      root.unmount(); // desmonta o componente
+      document.body.removeChild(container); // remove o DOM
+      URL.revokeObjectURL(url); // limpa a URL blob
+    };
+
+    // Renderiza o modal
+    root.render(<ReciboPDFModal pdfUrl={url} onClose={closeModal} />);
+    setLoadingView((prev) => ({ ...prev, [invoiceNumber]: false }));
+  };
 
   const tableConfigs = {
     Apólices: {
@@ -172,7 +214,7 @@ const HistoryTable = ({
 
     try {
       const response = await fetch(
-        `/api/anywhere/api/v1/private/mobile/invoice/${invoiceNumber}/print/invoice`,
+        `/api/anywhere/api/v1/private/mobile/invoice/${invoiceNumber}/print/receipt`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -525,21 +567,8 @@ const HistoryTable = ({
             </button>
           )}
 
-          {/* Opções específicas para Recibos */}
           {activeTab === "Recibos" && (
             <>
-              <button
-                onClick={() => {
-                  handleDownload(
-                    selectedItem.rawData.number || selectedItem.rawData.number
-                  );
-                  setShowPopup(false);
-                }}
-                className="w-full cursor-pointer text-left px-4 py-2 text-sm text-gray-700 hover:text-gray-800 flex items-center"
-              >
-                <FaFileDownload className="mr-2" />
-                Baixar Recibo
-              </button>
               {selectedItem?.rawData?.status &&
                 (selectedItem.rawData.status === 1 ||
                   selectedItem.rawData.status === 2) && (
@@ -554,6 +583,33 @@ const HistoryTable = ({
                     Pagar Agora
                   </button>
                 )}
+
+              <button
+                onClick={() => {
+                  visualizarPDF(selectedItem.rawData.contractNumber, token!);
+                  setShowPopup(false);
+                }}
+                className="w-full cursor-pointer text-left px-4 py-2 text-sm text-gray-700 hover:text-gray-800 flex items-center"
+              >
+                <FaEye className="mr-2" />
+                <span>Ver detalhes</span>
+              </button>
+              {(!selectedItem?.rawData?.status ||
+                (selectedItem.rawData.status !== 1 &&
+                  selectedItem.rawData.status !== 2)) && (
+                <button
+                  onClick={() => {
+                    handleDownload(
+                      selectedItem.rawData.number || selectedItem.rawData.number
+                    );
+                    setShowPopup(false);
+                  }}
+                  className="w-full cursor-pointer text-left px-4 py-2 text-sm text-gray-700 hover:text-gray-800 flex items-center"
+                >
+                  <FaFileDownload className="mr-2" />
+                  Baixar Recibo
+                </button>
+              )}
             </>
           )}
         </div>

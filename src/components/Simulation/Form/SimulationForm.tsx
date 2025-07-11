@@ -226,7 +226,9 @@ export default function SimulationForm({
                   {tab.title}
                 </h3>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+                <div
+                  className={`grid  ${tab.form.webGridSize} ${tab.form.mobileGridSize}  gap-4`}
+                >
                   {tab.form.fields
                     .sort((a: any, b: any) => a.position - b.position)
                     .map((field: any) => (
