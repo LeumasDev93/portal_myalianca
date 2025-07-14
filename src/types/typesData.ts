@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // types/insurance.ts
 
 export interface InsuranceRisk {
@@ -197,4 +198,88 @@ export interface ApiResponse<T> {
     errors: null | string;
   };
   results: T;
+}
+
+
+//---------------------------------Simulaction-----------------------------------//
+
+
+interface Taxes {
+  [key: string]: number;
+}
+
+interface InstallmentValue {
+  name: string;
+  value: number;
+  annualValue: number;
+  taxes: Taxes;
+}
+
+interface SimulationObjectProperty {
+  name: string;
+  type: string;
+  value: string;
+  rank: number;
+  translationCode: string;
+}
+
+interface PropertyGroup {
+  name: string;
+  values: SimulationObjectProperty[];
+}
+
+interface Risk {
+  name: string;
+  order: number;
+  code: string;
+  active: boolean;
+  capital: number;
+  capitalOption: string;
+  premium: number;
+  taxes: Taxes;
+  bonusMalus: any;
+  deductibleValue: number;
+}
+
+interface SimulationObject {
+  idSimulationObject: number | null;
+  reference: string;
+  capital: number;
+  premium: number;
+  premiumTotal: number | null;
+  startDate: string;
+  endDate: string | null;
+  code: string | null;
+  status: string;
+  description: string | null;
+  type: string | null;
+  discount: number;
+  franchise: number | null;
+  propertyGroup: PropertyGroup | null;
+  properties: any;
+  risks: Risk[];
+  children: SimulationObject[] | null;
+  dependents: any;
+}
+
+export interface SimulationResponse {
+  idSimulationTel: number;
+  idContract: number;
+  reference: string;
+  totalPremium: number;
+  premium: number;
+  renewalDate: string;
+  continuedDate: string | null;
+  clientReference: string | null;
+  producerReference: string;
+  product: any;
+  propertyGroup: any;
+  installmentValues: InstallmentValue[];
+  simulationObjects: SimulationObject[];
+  currency: string;
+  currencySymbol: string;
+  hasError: boolean;
+  errors: string[];
+  hasWarnings: boolean;
+  warnings: string[];
 }

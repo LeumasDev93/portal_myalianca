@@ -10,7 +10,7 @@ export function useAutoLogout(logout: () => void) {
         const startIdleTimer = () => {
             idleTimeoutRef.current = setTimeout(() => {
                 startCountdownToLogout();
-            }, 3 * 60 * 1000); // 5 minutos
+            }, 30 * 60 * 1000); // 3 minutos
         };
 
         const clearAllTimers = () => {

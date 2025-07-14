@@ -1,5 +1,6 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { JSX, useEffect, useState } from "react";
+import React, { JSX, useEffect, useState } from "react";
 import FormHeader from "./FormHeader";
 import FormField from "./FormField";
 import FormActions from "./FormActions";
@@ -8,15 +9,11 @@ import ErrorState from "./ErrorState";
 import { LoadingScreen } from "../../ui/loading-screen";
 import { useProductDetails } from "@/hooks/useProdutsDetails";
 import { Tabs, TabsContent, TabsList } from "@radix-ui/react-tabs";
-import {
-  FaUser,
-  FaUserTie,
-  FaCar,
-  FaCalculator,
-  FaChevronDown,
-} from "react-icons/fa";
+import * as Icons from "react-icons/fc";
+import { FaUser, FaUserTie, FaCar, FaCalculator } from "react-icons/fa";
+import { fetchSimulation } from "@/service/simulationService";
 
-const iconMap: Record<string, JSX.Element> = {
+const defaultIconMap: Record<string, JSX.Element> = {
   "Dados Pessoais": <FaUser />,
   Tomador: <FaUser />,
   "Condutor Habitual": <FaUserTie />,
@@ -24,23 +21,34 @@ const iconMap: Record<string, JSX.Element> = {
   Simulação: <FaCalculator />,
 };
 
+function getDynamicIcon(iconName: string): JSX.Element {
+  const IconComponent = (Icons as any)[iconName];
+  return IconComponent ? <IconComponent /> : <FaUser />;
+}
+
+interface SimulationFormProps {
+  productId: string;
+  onClose: () => void;
+}
+
 export default function SimulationForm({
   productId,
   onClose,
-}: {
-  productId: string;
-  onClose: () => void;
-}) {
+}: SimulationFormProps) {
   const { product, loading, error } = useProductDetails(productId);
   const [formValues, setFormValues] = useState<Record<string, any>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [activeTab, setActiveTab] = useState<string>("");
 
+  const [simulationResult, setSimulationResult] = useState<any>(null);
+  const [isLoadingSimulation, setIsLoadingSimulation] = useState(false);
+  const [simulationError, setSimulationError] = useState<string | null>(null);
+
   useEffect(() => {
     if (product) {
       const initialValues: Record<string, any> = {};
-      product.tabs.forEach((tab) => {
-        tab.form.fields.forEach((field) => {
+      product.tabs.forEach((tab: any) => {
+        tab.form.fields.forEach((field: any) => {
           initialValues[field.name] = "";
         });
       });
@@ -57,7 +65,6 @@ export default function SimulationForm({
       [name]: value,
     }));
 
-    // Limpa erro se já corrigido
     if (errors[name]) {
       setErrors((prev) => {
         const newErrors = { ...prev };
@@ -82,15 +89,36 @@ export default function SimulationForm({
     return Object.keys(newErrors).length === 0;
   };
 
-  const goToNextTab = () => {
+  const goToNextTab = async () => {
     if (!product) return;
 
     const currentIndex = product.tabs.findIndex(
-      (tab) => tab.title === activeTab
+      (tab: any) => tab.title === activeTab
     );
     const currentTab = product.tabs[currentIndex];
 
     if (!validateTabFields(currentTab)) return;
+
+    if (currentIndex === product.tabs.length - 1) {
+      try {
+        setIsLoadingSimulation(true);
+        setSimulationError(null);
+
+        const data = await fetchSimulation(
+          formValues,
+          setIsLoadingSimulation,
+          setSimulationError
+        );
+
+        setSimulationResult(data);
+        alert("Simulação realizada com sucesso!");
+      } catch (error: any) {
+        setSimulationError(error.message || "Erro ao executar simulação.");
+      } finally {
+        setIsLoadingSimulation(false);
+      }
+      return;
+    }
 
     const nextTab = product.tabs[currentIndex + 1];
     if (nextTab) {
@@ -103,7 +131,7 @@ export default function SimulationForm({
     if (!product) return;
 
     const currentIndex = product.tabs.findIndex(
-      (tab) => tab.title === activeTab
+      (tab: any) => tab.title === activeTab
     );
 
     const previousTab = product.tabs[currentIndex - 1];
@@ -119,10 +147,10 @@ export default function SimulationForm({
     if (!product) return;
 
     const currentIndex = product.tabs.findIndex(
-      (tab) => tab.title === activeTab
+      (tab: any) => tab.title === activeTab
     );
     const nextIndex = product.tabs.findIndex(
-      (tab) => tab.title === nextTabTitle
+      (tab: any) => tab.title === nextTabTitle
     );
 
     if (nextIndex === currentIndex) return;
@@ -142,21 +170,27 @@ export default function SimulationForm({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    const currentTab = product?.tabs.find((tab) => tab.title === activeTab);
+    const currentTab = product?.tabs.find(
+      (tab: any) => tab.title === activeTab
+    );
     if (!currentTab) return;
 
     if (!validateTabFields(currentTab)) return;
 
     console.log("Formulário enviado com valores:", formValues);
-    // Aqui você pode enviar os dados para o backend
   };
 
   if (loading) return <LoadingScreen />;
   if (error) return <ErrorState error={error} onClose={onClose} />;
   if (!product) return <EmptyState />;
 
-  const currentIndex = product.tabs.findIndex((tab) => tab.title === activeTab);
-
+  const currentIndex = product.tabs.findIndex(
+    (tab: any) => tab.title === activeTab
+  );
+  const activeTabObject = product.tabs.find(
+    (tab: any) => tab.title === activeTab
+  );
+  console.log("clasName:", activeTabObject?.form.webGridSize);
   return (
     <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
       <div className="border-b ">
@@ -167,11 +201,7 @@ export default function SimulationForm({
                 SIMULADOR SEGURO {product.category}
               </h2>
             </div>
-            <FaChevronDown
-              className={`text-[#002B5B] transition-transform duration-200 `}
-            />
           </div>
-
           <div className="w-full text-left mt-2">
             <span className="text-sm text-[#002B5B] md:font-semibold">
               Seguro Obrigatório
@@ -179,56 +209,58 @@ export default function SimulationForm({
           </div>
         </div>
       </div>
+
       <div className="border-b w-full">
         <TabsList className="flex items-center justify-center w-full gap-1">
-          {product.tabs.map((tab) => (
+          {product.tabs.map((tab: any) => (
             <button
               key={tab.title}
               type="button"
               onClick={() => handleTabChange(tab.title)}
               className={`
-          relative py-1 md:py-4 px-2 md:px-10 md:w-full 
-          transition-all duration-300 font-serif text-xs md:text-xl
-          group overflow-hidden
-          ${
-            activeTab === tab.title
-              ? "text-[#002B5B] border-b-2 border-b-[#771c2b] font-medium"
-              : "text-[#6f7070] hover:text-[#002B5B] hover:scale-[1.02]"
-          }
-        `}
+                relative py-1 md:py-4 px-2 md:px-10 md:w-full 
+                transition-all duration-300 font-serif text-xs md:text-xl
+                group overflow-hidden
+                ${
+                  activeTab === tab.title
+                    ? "text-white bg-[#002B5B] font-medium"
+                    : "text-[#6f7070] hover:text-[#002B5B] hover:scale-[1.02] bg-[#e6e3e3]"
+                }
+              `}
             >
               {activeTab !== tab.title && (
                 <span className="absolute inset-0 bg-[#767071] opacity-0 group-hover:opacity-10 transition-opacity duration-300"></span>
               )}
 
               <div className="flex justify-center items-center gap-1 md:gap-2 relative z-10">
-                <span className="text-lg md:text-2xl">
-                  {iconMap[tab.title] || <FaUser />}
+                <span
+                  className={`${
+                    activeTab === tab.title ? "text-white" : ""
+                  } text-lg md:text-2xl`}
+                >
+                  {getDynamicIcon(tab.webIcon) || defaultIconMap[tab.title]}
                 </span>
                 <span>{tab.title}</span>
               </div>
 
               {activeTab !== tab.title && (
-                <span className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-0 h-[2px] bg-[#771c2b] group-hover:w-3/4 transition-all duration-300"></span>
+                <span className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-0 h-[2px] bg-[#002B5B] group-hover:w-3/4 transition-all duration-300"></span>
               )}
             </button>
           ))}
         </TabsList>
       </div>
-      {product.tabs.map((tab) => (
+      {product.tabs.map((tab: any) => (
         <TabsContent key={tab.title} value={tab.title}>
           <form onSubmit={handleSubmit}>
-            <FormHeader onClose={onClose} />
-
+            <FormHeader
+              onClose={onClose}
+              description={activeTabObject?.form.description || ""}
+              title={activeTabObject?.form.title || ""}
+            />
             <div className="space-y-8 mt-6">
               <div className="border-b border-gray-200 pb-8 last:border-0">
-                <h3 className="text-lg font-semibold text-[#002256] mb-2">
-                  {tab.title}
-                </h3>
-
-                <div
-                  className={`grid  ${tab.form.webGridSize} ${tab.form.mobileGridSize}  gap-4`}
-                >
+                <div className={tab.form.webGridSize?.replace(/\u00a0/g, " ")}>
                   {tab.form.fields
                     .sort((a: any, b: any) => a.position - b.position)
                     .map((field: any) => (
@@ -248,12 +280,16 @@ export default function SimulationForm({
                 </div>
               </div>
             </div>
-
             <FormActions
               onNext={goToNextTab}
               onPrevious={currentIndex > 0 ? goToPreviousTab : undefined}
               onCancel={onClose}
-              submitting={false}
+              submitting={isLoadingSimulation}
+              nextLabel={
+                currentIndex === product.tabs.length - 1
+                  ? "FINALIZAR"
+                  : "AVANÇAR ▶"
+              }
             />
           </form>
         </TabsContent>

@@ -1,29 +1,38 @@
 import { FaSpinner } from "react-icons/fa";
 
+type FormActionsProps = {
+  onNext: () => void;
+  onPrevious?: () => void;
+  onCancel?: () => void; // Tornar opcional para maior flexibilidade
+  submitting: boolean;
+  nextLabel?: string;
+};
+
 export default function FormActions({
   submitting,
   onCancel,
   onNext,
   onPrevious,
-}: {
-  submitting: boolean;
-  onCancel?: () => void;
-  onNext?: () => void;
-  onPrevious?: () => void;
-}) {
-  const handleLeftButton = () => {
+  nextLabel = "AVANÇAR ▶",
+}: FormActionsProps) {
+  // Decide qual função chamar no botão esquerdo
+  const handleLeftButton = (): void => {
     if (onPrevious) {
-      return onPrevious();
+      onPrevious();
     } else if (onCancel) {
-      return onCancel();
+      onCancel();
     }
   };
 
+  // Decide o texto do botão esquerdo
   const leftButtonLabel = onPrevious ? "◀ VOLTAR" : "CANCELAR";
+
+  // Mostrar o botão esquerdo só se houver alguma função para chamar
+  const showLeftButton = !!onPrevious || !!onCancel;
 
   return (
     <div className="flex justify-center space-x-3 mt-6">
-      {(onPrevious || onCancel) && (
+      {showLeftButton && (
         <button
           type="button"
           onClick={handleLeftButton}
@@ -35,12 +44,13 @@ export default function FormActions({
       )}
 
       <button
+        type="button"
         onClick={onNext}
         disabled={submitting}
-        className="px-6 py-2 bg-[#002256] text-white rounded-md hover:bg-[#003380] disabled:opacity-50 flex items-center"
+        className="px-6 py-2 bg-[#002256] text-white rounded-md hover:bg-[#003380] disabled:opacity-50 flex items-center justify-center"
       >
         {submitting && <FaSpinner className="animate-spin mr-2" />}
-        {submitting ? "Enviando..." : "AVANÇAR ▶"}
+        {submitting ? "Enviando..." : nextLabel}
       </button>
     </div>
   );

@@ -1,25 +1,28 @@
 import { FaTimes } from "react-icons/fa";
 
 export default function FormHeader({
-  title,
   description,
   onClose,
 }: {
   title?: string;
-  description?: string;
+  description: string;
   onClose?: () => void;
 }) {
   return (
-    <div className="flex justify-between items-start mb-4">
-      <div>
-        <h2 className="text-xl font-bold text-[#002256]">{title}</h2>
-        <p className="text-gray-600">{description}</p>
-      </div>
+    <div className="relative mb-4">
       {onClose && (
-        <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
+        <button
+          onClick={onClose}
+          className="absolute top-0 right-0 p-2 text-gray-400 hover:text-gray-600"
+        >
           <FaTimes />
         </button>
       )}
+      <div className="flex justify-center items-center">
+        <div className="text-center max-w-xl px-4">
+          <p className="text-gray-600 ">{description}</p>
+        </div>
+      </div>
     </div>
   );
 }
