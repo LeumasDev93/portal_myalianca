@@ -12,6 +12,7 @@ import { Tabs, TabsContent, TabsList } from "@radix-ui/react-tabs";
 import * as Icons from "react-icons/fc";
 import { FaUser, FaUserTie, FaCar, FaCalculator } from "react-icons/fa";
 import { fetchSimulation } from "@/service/simulationService";
+import { getSafeGridClass } from "@/lib/utils";
 
 const defaultIconMap: Record<string, JSX.Element> = {
   "Dados Pessoais": <FaUser />,
@@ -260,7 +261,7 @@ export default function SimulationForm({
             />
             <div className="space-y-8 mt-6">
               <div className="border-b border-gray-200 pb-8 last:border-0">
-                <div className={tab.form.webGridSize?.replace(/\u00a0/g, " ")}>
+                <div className={getSafeGridClass(tab.form.webGridSize)}>
                   {tab.form.fields
                     .sort((a: any, b: any) => a.position - b.position)
                     .map((field: any) => (
