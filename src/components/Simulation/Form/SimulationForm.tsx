@@ -13,6 +13,8 @@ import * as Icons from "react-icons/fc";
 import { FaUser, FaUserTie, FaCar, FaCalculator } from "react-icons/fa";
 import { fetchSimulation } from "@/service/simulationService";
 import { getSafeGridClass } from "@/lib/utils";
+import { fetchVehicleBrands } from "@/service/marcaService";
+import { getSession } from "next-auth/react";
 
 const defaultIconMap: Record<string, JSX.Element> = {
   "Dados Pessoais": <FaUser />,
@@ -40,11 +42,61 @@ export default function SimulationForm({
   const [formValues, setFormValues] = useState<Record<string, any>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [activeTab, setActiveTab] = useState<string>("");
-
+  const [brands, setBrands] = useState<{ id: number; name: string }[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [fetchError, setError] = useState<string | null>(null);
+  const [selectedBrandId, setSelectedBrandId] = useState<number | null>(null);
+  const [token, setToken] = useState<string | null>(null);
   const [simulationResult, setSimulationResult] = useState<any>(null);
   const [isLoadingSimulation, setIsLoadingSimulation] = useState(false);
   const [simulationError, setSimulationError] = useState<string | null>(null);
 
+  // Load token on mount
+  useEffect(() => {
+    const loadToken = async () => {
+      const session = await getSession();
+      setToken(session?.user.accessToken || null);
+    };
+    loadToken();
+  }, []);
+
+  // Load vehicle brands when token available or brand changes
+  useEffect(() => {
+    if (!token) return;
+
+    const loadBrands = async () => {
+      setIsLoading(true);
+      setError(null);
+
+      try {
+        const data = await fetchVehicleBrands(); // Passa token se precisar autenticar
+        setBrands(data);
+
+        // Se o campo brand já estiver preenchido no formValues, atualiza selectedBrandId
+        if (formValues.brand) {
+          const selectedBrand = data.find(
+            (brand) => brand.name === formValues.brand
+          );
+          if (selectedBrand) {
+            setSelectedBrandId(selectedBrand.id);
+            // Aqui poderia chamar fetchModels(selectedBrand.id) se tiver essa função
+          } else {
+            setSelectedBrandId(null);
+          }
+        }
+      } catch (err) {
+        console.error("Erro ao buscar marcas:", err);
+        setError("Erro ao carregar marcas. Tente novamente mais tarde.");
+        setBrands([]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadBrands();
+  }, [token, formValues.brand]);
+
+  // Inicializa valores do formulário quando o produto carregar
   useEffect(() => {
     if (product) {
       const initialValues: Record<string, any> = {};
@@ -60,6 +112,7 @@ export default function SimulationForm({
     }
   }, [product]);
 
+  // Atualiza valores do formulário e limpa erro no campo
   const handleFieldChange = (name: string, value: string) => {
     setFormValues((prev) => ({
       ...prev,
@@ -75,6 +128,7 @@ export default function SimulationForm({
     }
   };
 
+  // Valida campos obrigatórios de uma aba
   const validateTabFields = (tab: any): boolean => {
     const newErrors: Record<string, string> = {};
 
@@ -90,6 +144,7 @@ export default function SimulationForm({
     return Object.keys(newErrors).length === 0;
   };
 
+  // Avança para a próxima aba ou finaliza a simulação
   const goToNextTab = async () => {
     if (!product) return;
 
@@ -110,7 +165,6 @@ export default function SimulationForm({
           setIsLoadingSimulation,
           setSimulationError
         );
-
         setSimulationResult(data);
         alert("Simulação realizada com sucesso!");
       } catch (error: any) {
@@ -128,13 +182,13 @@ export default function SimulationForm({
     }
   };
 
+  // Volta para a aba anterior ou fecha o formulário
   const goToPreviousTab = () => {
     if (!product) return;
 
     const currentIndex = product.tabs.findIndex(
       (tab: any) => tab.title === activeTab
     );
-
     const previousTab = product.tabs[currentIndex - 1];
     if (previousTab) {
       setActiveTab(previousTab.title);
@@ -144,6 +198,7 @@ export default function SimulationForm({
     }
   };
 
+  // Muda a aba ao clicar no menu de abas, validando antes se for avanço
   const handleTabChange = (nextTabTitle: string) => {
     if (!product) return;
 
@@ -156,11 +211,13 @@ export default function SimulationForm({
 
     if (nextIndex === currentIndex) return;
 
+    // Se for para aba anterior, permite direto
     if (nextIndex < currentIndex) {
       setActiveTab(nextTabTitle);
       return;
     }
 
+    // Se for para aba seguinte, valida os campos da aba atual
     const currentTab = product.tabs[currentIndex];
     if (!validateTabFields(currentTab)) return;
 
@@ -168,6 +225,7 @@ export default function SimulationForm({
     setErrors({});
   };
 
+  // Submit no formulário atual (não usado no seu fluxo, mas mantido)
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -191,26 +249,22 @@ export default function SimulationForm({
   const activeTabObject = product.tabs.find(
     (tab: any) => tab.title === activeTab
   );
-  console.log("clasName:", activeTabObject?.form.webGridSize);
+
   return (
     <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-      <div className="border-b ">
-        <div className="flex flex-col p-2 md:px-6 md:py-4 bg-[#e6e3e3] shadow-xl rounded-t-xl flex-1 md:pb-6 w-full sm:w-96">
-          <div className="flex items-center cursor-pointer space-x-2">
-            <div className="flex items-center gap-2">
-              <h2 className="text-sm text-[#002B5B] sm:text-lg md:font-semibold uppercase">
-                SIMULADOR SEGURO {product.category}
-              </h2>
-            </div>
-          </div>
-          <div className="w-full text-left mt-2">
-            <span className="text-sm text-[#002B5B] md:font-semibold">
-              Seguro Obrigatório
-            </span>
-          </div>
+      {/* Header */}
+      <div className="border-b">
+        <div className="flex flex-col p-2 md:px-6 md:py-4 bg-[#e6e3e3] shadow-xl rounded-t-xl w-full sm:w-96">
+          <h2 className="text-sm text-[#002B5B] sm:text-lg md:font-semibold uppercase">
+            SIMULADOR SEGURO {product.category}
+          </h2>
+          <span className="text-sm text-[#002B5B] md:font-semibold mt-2">
+            Seguro Obrigatório
+          </span>
         </div>
       </div>
 
+      {/* Tabs List */}
       <div className="border-b w-full">
         <TabsList className="flex items-center justify-center w-full gap-1">
           {product.tabs.map((tab: any) => (
@@ -219,9 +273,7 @@ export default function SimulationForm({
               type="button"
               onClick={() => handleTabChange(tab.title)}
               className={`
-                relative py-1 md:py-4 px-2 md:px-10 md:w-full 
-                transition-all duration-300 font-serif text-xs md:text-xl
-                group overflow-hidden
+                relative py-1 md:py-4 px-2 md:px-10 md:w-full transition-all duration-300 font-serif text-xs md:text-xl group overflow-hidden
                 ${
                   activeTab === tab.title
                     ? "text-white bg-[#002B5B] font-medium"
@@ -229,35 +281,25 @@ export default function SimulationForm({
                 }
               `}
             >
-              {activeTab !== tab.title && (
-                <span className="absolute inset-0 bg-[#767071] opacity-0 group-hover:opacity-10 transition-opacity duration-300"></span>
-              )}
-
               <div className="flex justify-center items-center gap-1 md:gap-2 relative z-10">
-                <span
-                  className={`${
-                    activeTab === tab.title ? "text-white" : ""
-                  } text-lg md:text-2xl`}
-                >
+                <span className="text-lg md:text-2xl">
                   {getDynamicIcon(tab.webIcon) || defaultIconMap[tab.title]}
                 </span>
                 <span>{tab.title}</span>
               </div>
-
-              {activeTab !== tab.title && (
-                <span className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-0 h-[2px] bg-[#002B5B] group-hover:w-3/4 transition-all duration-300"></span>
-              )}
             </button>
           ))}
         </TabsList>
       </div>
+
+      {/* Tabs Content */}
       {product.tabs.map((tab: any) => (
         <TabsContent key={tab.title} value={tab.title}>
           <form onSubmit={handleSubmit}>
             <FormHeader
               onClose={onClose}
-              description={activeTabObject?.form.description || ""}
-              title={activeTabObject?.form.title || ""}
+              description={tab.form.description}
+              title={tab.form.title}
             />
             <div className="space-y-8 mt-6">
               <div className="border-b border-gray-200 pb-8 last:border-0">
@@ -265,22 +307,21 @@ export default function SimulationForm({
                   {tab.form.fields
                     .sort((a: any, b: any) => a.position - b.position)
                     .map((field: any) => (
-                      <div key={field.name}>
-                        <FormField
-                          field={field}
-                          value={formValues[field.name] || ""}
-                          onChange={handleFieldChange}
-                        />
-                        {errors[field.name] && (
-                          <p className="text-red-500 text-sm mt-1">
-                            {errors[field.name]}
-                          </p>
-                        )}
-                      </div>
+                      <FormField
+                        key={field.name}
+                        field={field}
+                        value={formValues[field.name]}
+                        error={errors[field.name]}
+                        onChange={(value: string) =>
+                          handleFieldChange(field.name, value)
+                        }
+                        options={[]}
+                      />
                     ))}
                 </div>
               </div>
             </div>
+
             <FormActions
               onNext={goToNextTab}
               onPrevious={currentIndex > 0 ? goToPreviousTab : undefined}
@@ -295,6 +336,16 @@ export default function SimulationForm({
           </form>
         </TabsContent>
       ))}
+
+      {/* Mostrar resultado da simulação, se houver */}
+      {simulationResult && (
+        <div className="p-4 mt-4 border rounded bg-green-50 text-green-900">
+          <h3 className="text-lg font-semibold mb-2">
+            Resultado da Simulação:
+          </h3>
+          <pre>{JSON.stringify(simulationResult, null, 2)}</pre>
+        </div>
+      )}
     </Tabs>
   );
 }
