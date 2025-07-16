@@ -1,7 +1,9 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable react-hooks/exhaustive-deps */
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { fetchVehicleBrands } from "@/service/marcaService";
 import { fetchVehicleModels } from "@/service/modeloService";
+import Select from "react-select";
 
 interface Option {
   id: number | string;
@@ -61,11 +63,6 @@ const setGlobalModelOptions = (models: Option[]) => {
   globalState.listeners.forEach((listener) => listener());
 };
 
-const subscribeToGlobalState = (callback: () => void) => {
-  globalState.listeners.add(callback);
-  return () => globalState.listeners.delete(callback);
-};
-
 export default function FormField({
   field,
   value,
@@ -92,10 +89,19 @@ export default function FormField({
     setLocalGlobalState({ ...globalState });
   }, []);
 
-  // Subscreve às mudanças do estado global
+  const subscribeToGlobalState = (callback: () => void): void => {
+    globalState.listeners.add(callback);
+    // Não retorna nada
+  };
+
+  const unsubscribeFromGlobalState = (callback: () => void): void => {
+    globalState.listeners.delete(callback);
+  };
   useEffect(() => {
-    const unsubscribe = subscribeToGlobalState(updateLocalState);
-    return unsubscribe; // Retorna diretamente a função de unsubscribe
+    subscribeToGlobalState(updateLocalState);
+    return () => {
+      unsubscribeFromGlobalState(updateLocalState);
+    };
   }, [updateLocalState]);
 
   // Atualiza filtro quando value muda
@@ -302,7 +308,6 @@ export default function FormField({
         {field.label}
         {field.required && <span className="text-red-500 ml-1">*</span>}
       </label>
-
       {/* Campo de Marca */}
       {field.name === "brand" ? (
         loadingMarca ? (
@@ -317,25 +322,49 @@ export default function FormField({
             {errorMarca}
           </div>
         ) : (
-          <select
+          <Select
             id={field.name}
             name={field.name}
-            value={value}
-            onChange={handleMarcaChange}
-            className={`w-full p-2 border rounded-md focus:ring-2 focus:ring-[#002256] ${
-              error ? "border-red-500" : "border-gray-300"
+            value={value ? { value, label: value } : null}
+            onChange={(selectedOption) => {
+              const newValue = selectedOption ? selectedOption.value : "";
+              onChange(newValue);
+              setFilter(newValue);
+
+              // Lógica adicional para marca, se necessário
+              if (field.name === "brand") {
+                const selectedBrand = marcaOptions.find(
+                  (m) => m.name === newValue
+                );
+                if (selectedBrand) {
+                  const brandId = Number(selectedBrand.id);
+                  setGlobalBrandState({
+                    id: brandId,
+                    name: selectedBrand.name,
+                    options: marcaOptions,
+                  });
+                }
+              }
+            }}
+            options={marcaOptions.map((brand) => ({
+              value: brand.name,
+              label: brand.name,
+            }))}
+            className={`react-select-container ${
+              error ? "react-select--error" : ""
             }`}
+            classNamePrefix="react-select"
+            placeholder={field.fieldPlaceholder || "Selecione uma marca"}
+            isClearable
+            noOptionsMessage={({ inputValue }) =>
+              inputValue.length < 3
+                ? "Digite pelo menos 3 letras"
+                : "Nenhuma marca encontrada"
+            }
+            loadingMessage={() => "Carregando..."}
+            isLoading={loadingMarca}
             required={field.required}
-          >
-            <option value="">
-              {field.fieldPlaceholder || "Selecione uma marca"}
-            </option>
-            {marcaOptions.map((brand) => (
-              <option key={brand.id} value={brand.name}>
-                {brand.name}
-              </option>
-            ))}
-          </select>
+          />
         )
       ) : field.sourceData === "modelo" ? (
         /* Campo de Modelo */
@@ -457,9 +486,25 @@ export default function FormField({
           required={field.required}
         />
       )}
-
       {/* Mensagem de erro */}
       {error && <p className="text-red-500 text-sm mt-1">{error}</p>}
+      <style jsx>{`
+        .react-select-container {
+          width: 100%;
+        }
+        .react-select__control {
+          min-height: 42px;
+          border-radius: 0.375rem;
+          border: 1px solid #d1d5db;
+        }
+        .react-select__control--is-focused {
+          box-shadow: 0 0 0 2px #002256;
+          border-color: #002256;
+        }
+        .react-select--error .react-select__control {
+          border-color: #ef4444;
+        }
+      `}</style>
     </div>
   );
 }
