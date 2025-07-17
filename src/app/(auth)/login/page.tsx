@@ -15,10 +15,9 @@ import {
   User,
   ArrowLeft,
 } from "lucide-react";
-import Link from "next/link";
 import Image from "next/image";
 import { CheckCircle2 } from "lucide-react";
-import ImageBG from "@/assets/img_background.png";
+import ImageBG from "@/assets/imagelogin.jpg";
 
 interface ApiErrorDetails {
   response?: {
@@ -243,13 +242,13 @@ export default function LoginPage() {
           />
         </div>
 
-        <div className="relative z-10 flex flex-col justify-between h-full p-8 text-white">
+        <div className="relative z-10 flex flex-col items-end justify-between w-full h-full p-8 text-white">
           <div className="bg-white/10 p-4 rounded-lg backdrop-blur-sm">
             <h1 className="text-4xl font-bold">MYALIANÇA</h1>
             <p className="text-xl mt-2">Descomplicar É Ter MyAliança</p>
           </div>
 
-          <div className="bg-white/50 p-6 rounded-lg backdrop-blur-sm text-blue-900">
+          <div className="bg-white/90 p-6 rounded-lg backdrop-blur-sm text-blue-900">
             <h2 className="text-xl font-semibold mb-4 ">Serviços:</h2>
             <ul className="space-y-3">
               {[

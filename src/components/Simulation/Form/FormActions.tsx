@@ -50,7 +50,7 @@ export default function FormActions({
         className="px-6 py-2 bg-[#002256] text-white rounded-md hover:bg-[#003380] disabled:opacity-50 flex items-center justify-center"
       >
         {submitting && <FaSpinner className="animate-spin mr-2" />}
-        {submitting ? "Enviando..." : nextLabel}
+        {submitting ? "Simulando..." : nextLabel}
       </button>
     </div>
   );

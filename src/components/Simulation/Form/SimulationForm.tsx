@@ -33,11 +33,13 @@ function getDynamicIcon(iconName: string): JSX.Element {
 interface SimulationFormProps {
   productId: string;
   onClose: () => void;
+  reset: () => void;
 }
 
 export default function SimulationForm({
   productId,
   onClose,
+  reset,
 }: SimulationFormProps) {
   const { product, loading, error } = useProductDetails(productId);
   const [formValues, setFormValues] = useState<Record<string, any>>({});
@@ -331,7 +333,7 @@ export default function SimulationForm({
               submitting={isLoadingSimulation}
               nextLabel={
                 currentIndex === product.tabs.length - 1
-                  ? "FINALIZAR"
+                  ? "SIMULAR"
                   : "AVANÇAR ▶"
               }
             />
@@ -342,9 +344,13 @@ export default function SimulationForm({
       {/* Mostrar resultado da simulação, se houver */}
       {isModalOpen && (
         <SimulationResults
+          reset={reset}
           data={simulationResult}
           isOpen={isModalOpen}
-          onClose={() => setIsModalOpen(false)}
+          onClose={() => {
+            setIsModalOpen(false);
+            onClose();
+          }}
         />
       )}
     </Tabs>

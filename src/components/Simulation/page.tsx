@@ -15,6 +15,7 @@ export default function SimulationScreen() {
   const { products, loading, error } = useProducts();
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [currentSlide, setCurrentSlide] = useState(0);
+  const [activeTab, setActiveTab] = useState("types");
 
   const bannerImages = [
     {
@@ -37,6 +38,10 @@ export default function SimulationScreen() {
     },
   ];
 
+  const handleCloseForm = () => {
+    setSelectedProduct(null);
+    setActiveTab("mySimulations");
+  };
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrentSlide((prev) =>
@@ -60,7 +65,7 @@ export default function SimulationScreen() {
 
   return (
     <div className="w-full">
-      <Tabs defaultValue="types" className="">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="">
         {/* Banner */}
         {!selectedProduct && (
           <div className="relative bg-[#C41E3A] overflow-hidden  md:h-[300px] flex items-center">
@@ -175,7 +180,8 @@ export default function SimulationScreen() {
           {selectedProduct ? (
             <SimulationForm
               productId={selectedProduct.productId}
-              onClose={() => setSelectedProduct(null)}
+              onClose={handleCloseForm}
+              reset={handleCloseForm}
             />
           ) : (
             <>

@@ -135,11 +135,17 @@ export default function FormField({
   const [loadingModel, setLoadingModel] = useState(false);
   const [errorMarca, setErrorMarca] = useState<string | null>(null);
   const [errorModel, setErrorModel] = useState<string | null>(null);
-
+  // Estado local para o erro da data
+  const [dateError, setDateError] = useState("");
+  const [birthDateError, setBirthDateError] = useState("");
+  const [licenseDateError, setLicenseDateError] = useState("");
   // Estado local que sincroniza com o global
   const [localGlobalState, setLocalGlobalState] = useState(globalState);
-
-  // Função para atualizar estado local
+  const [licenseDuration, setLicenseDuration] = useState<{
+    years: number;
+    months: number;
+    days: number;
+  } | null>(null); // Função para atualizar estado local
   const updateLocalState = useCallback(() => {
     setLocalGlobalState({ ...globalState });
   }, []);
@@ -377,8 +383,213 @@ export default function FormField({
         {field.label}
         {field.required && <span className="text-red-500 ml-1">*</span>}
       </label>
-      {/* Campo de Marca */}
-      {field.name === "brand" ? (
+      {field.name === "licenseDate" ? (
+        <div>
+          <input
+            id={field.name}
+            name={field.name}
+            type="date"
+            value={value}
+            onChange={(e) => {
+              const selectedDate = e.target.value;
+              const today = new Date();
+              today.setHours(0, 0, 0, 0); // Normaliza a data atual
+
+              if (selectedDate) {
+                const licenseDate = new Date(selectedDate);
+                licenseDate.setHours(0, 0, 0, 0); // Normaliza a data selecionada
+
+                // Validação principal: data não pode ser futura
+                if (licenseDate > today) {
+                  setLicenseDateError("A data da carta não pode ser futura");
+                  onChange("");
+                  return;
+                }
+
+                // Validação adicional: data mínima (exemplo: 1900)
+                const minDate = new Date(1900, 0, 1);
+                if (licenseDate < minDate) {
+                  setLicenseDateError("Data inválida");
+                  onChange("");
+                  return;
+                }
+
+                setLicenseDateError("");
+                onChange(selectedDate);
+
+                // Cálculo do tempo com carta (opcional)
+                const diffTime = Math.abs(
+                  today.getTime() - licenseDate.getTime()
+                );
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                const diffYears = Math.floor(diffDays / 365);
+                const remainingDays = diffDays % 365;
+                const diffMonths = Math.floor(remainingDays / 30);
+                const diffDaysFinal = remainingDays % 30;
+
+                console.log(
+                  `Tempo com carta: ${diffYears} anos, ${diffMonths} meses e ${diffDaysFinal} dias`
+                );
+              } else {
+                onChange("");
+              }
+            }}
+            className={`w-full p-2 border rounded-md focus:ring-2 focus:ring-[#002256] ${
+              licenseDateError ? "border-red-500" : "border-gray-300"
+            }`}
+            required={field.required}
+            max={new Date().toISOString().split("T")[0]} // Usa new Date() diretamente aqui
+            min="1900-01-01" // Data mínima razoável
+          />
+          {licenseDateError && (
+            <p className="text-red-500 text-sm mt-1">{licenseDateError}</p>
+          )}
+        </div>
+      ) : field.name === "birthDate" ? (
+        <div>
+          <input
+            id={field.name}
+            name={field.name}
+            type="date"
+            value={value}
+            onChange={(e) => {
+              const selectedDate = e.target.value;
+              const today = new Date();
+              today.setHours(0, 0, 0, 0);
+
+              if (selectedDate) {
+                const birthDate = new Date(selectedDate);
+                birthDate.setHours(0, 0, 0, 0);
+
+                // Calcula a idade
+                let age = today.getFullYear() - birthDate.getFullYear();
+                const monthDiff = today.getMonth() - birthDate.getMonth();
+
+                if (
+                  monthDiff < 0 ||
+                  (monthDiff === 0 && today.getDate() < birthDate.getDate())
+                ) {
+                  age--;
+                }
+
+                // Validação da idade mínima (18 anos)
+                if (age < 18) {
+                  setBirthDateError(
+                    "É necessário ter pelo menos 18 anos de idade"
+                  );
+                  onChange("");
+                  return;
+                } else {
+                  setBirthDateError("");
+                }
+
+                onChange(selectedDate);
+              } else {
+                onChange("");
+              }
+            }}
+            className={`w-full p-2 border rounded-md focus:ring-2 focus:ring-[#002256] ${
+              birthDateError ? "border-red-500" : "border-gray-300"
+            }`}
+            required={field.required}
+            max={
+              new Date(new Date().setFullYear(new Date().getFullYear() - 18))
+                .toISOString()
+                .split("T")[0]
+            }
+          />
+          {birthDateError && (
+            <p className="text-red-500 text-sm mt-1">{birthDateError}</p>
+          )}
+        </div>
+      ) : field.name === "driverLicenseDate" ? (
+        <div>
+          <input
+            id={field.name}
+            name={field.name}
+            type="date"
+            value={value}
+            onChange={(e) => {
+              const selectedDate = e.target.value;
+              const today = new Date();
+              today.setHours(0, 0, 0, 0);
+
+              if (selectedDate) {
+                const licenseDate = new Date(selectedDate);
+                licenseDate.setHours(0, 0, 0, 0);
+
+                // Validação da data
+                if (licenseDate > today) {
+                  setDateError(
+                    "A data da carta de condução não pode ser futura"
+                  );
+                  onChange("");
+                  setLicenseDuration(null);
+                  return;
+                } else {
+                  setDateError("");
+                }
+
+                // Cálculo da diferença
+                let years = today.getFullYear() - licenseDate.getFullYear();
+                let months = today.getMonth() - licenseDate.getMonth();
+                let days = today.getDate() - licenseDate.getDate();
+
+                if (days < 0) {
+                  months--;
+                  const lastDayOfMonth = new Date(
+                    today.getFullYear(),
+                    today.getMonth(),
+                    0
+                  ).getDate();
+                  days += lastDayOfMonth;
+                }
+
+                if (months < 0) {
+                  years--;
+                  months += 12;
+                }
+
+                setLicenseDuration({ years, months, days });
+                onChange(selectedDate);
+              } else {
+                setLicenseDuration(null);
+                onChange("");
+              }
+            }}
+            className={`w-full p-2 border rounded-md focus:ring-2 focus:ring-[#002256] ${
+              dateError ? "border-red-500" : "border-gray-300"
+            }`}
+            required={field.required}
+            max={new Date().toISOString().split("T")[0]}
+          />
+          {licenseDuration && (
+            <p className="text-sm text-gray-600 mt-1">
+              Tem{" "}
+              {licenseDuration.years > 0 &&
+                `${licenseDuration.years} ano${
+                  licenseDuration.years !== 1 ? "s" : ""
+                }`}
+              {licenseDuration.years > 0 && licenseDuration.months > 0 && ", "}
+              {licenseDuration.months > 0 &&
+                `${licenseDuration.months} mês${
+                  licenseDuration.months !== 1 ? "es" : ""
+                }`}
+              {(licenseDuration.years > 0 || licenseDuration.months > 0) &&
+                licenseDuration.days > 0 &&
+                " e "}
+              {licenseDuration.days > 0 &&
+                `${licenseDuration.days} dia${
+                  licenseDuration.days !== 1 ? "s" : ""
+                }`}
+              {" com carta de condução"}
+            </p>
+          )}
+          {dateError && (
+            <p className="text-red-500 text-sm mt-1">{dateError}</p>
+          )}
+        </div>
+      ) : field.name === "brand" ? (
         loadingMarca ? (
           <div className="p-2 border rounded-md bg-blue-50 text-blue-600 border-blue-200">
             <div className="flex items-center">
