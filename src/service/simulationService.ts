@@ -2,13 +2,12 @@
 
 import { getSession, signIn } from "next-auth/react";
 
-export const generateRandomSimulationId = (): number => {
-    const min = 100000000000; // Menor número de 12 dígitos
-    const max = 999999999999; // Maior número de 12 dígitos
-    return Math.floor(Math.random() * (max - min + 1)) + min;
-};
 
-export const fetchSimulation = async (formData: any, setIsLoading: (loading: boolean) => void, setSimulationResult: (result: any) => void) => {
+export const fetchSimulation = async (
+    formData: any,
+    setIsLoading: (loading: boolean) => void,
+    setSimulationResult: (result: any) => void
+) => {
     setIsLoading(true);
     const session = await getSession();
 
@@ -18,30 +17,63 @@ export const fetchSimulation = async (formData: any, setIsLoading: (loading: boo
         return null;
     }
 
+    const generateRandomSimulationId = (): number => {
+        const min = 100000000000; // Menor número de 12 dígitos
+        const max = 999999999999; // Maior número de 12 dígitos
+        return Math.floor(Math.random() * (max - min + 1)) + min;
+    };
+
     const idSimulationTel = generateRandomSimulationId();
     console.log(idSimulationTel, "id gerado");
+    // Extrai os dados do formulário
+    const {
+        licensePlate,
+        licenseDate,
+        brand,
+        model,
+        seats,
+        cylinderCap,
+        weight,
+        chassis,
+        Ilha,
+        TipoDeUtilizacao,
+        name,
+        birthDate,
+        driverLicenseNumber,
+        driverLicenseDate,
+        gender,
+        description,
+        nif,
+        bi,
+        passport,
+        entityType,
+        maritalStatus,
+        email,
+        mobile
+    } = formData;
 
+    // Monta o payload com os dados do formulário
     const payload = {
-        idSimulationTel: 915650239898,
+        idSimulationTel: 956212547672,
         producer: 2,
-        registerDateSimulationTel: "2025-01-30T10:45:00",
+        registerDateSimulationTel: new Date().toISOString(),
         product: "EXTERNAL_AUTO",
         currency: "CVE",
         totalPremium: 0,
-        startDate: "2025-01-30",
+        startDate: new Date().toISOString().split('T')[0],
         simulationObjects: [
             {
                 properties: {
-                    licensePlate: "LD-00-DG",
-                    licenseDate: "2022-05-22",
-                    brand: "Toyota",
-                    model: "Corolla",
-                    seats: 5,
-                    cylinderCap: 1800,
-                    weight: 1200,
-                    chassis: "47835638",
-                    Ilha: "3",
-                    TipoDeUtilizacao: "99"
+                    licensePlate: licensePlate,
+                    licenseDate: licenseDate,
+                    brand: brand,
+                    model: model,
+                    seats: seats ? parseInt(seats) : undefined,
+                    cylinderCap: cylinderCap ? parseInt(cylinderCap) : undefined,
+                    weight: weight ? parseInt(weight) : undefined,
+                    chassis: chassis,
+                    Ilha: Ilha,
+                    TipoDeUtilizacao: TipoDeUtilizacao
                 },
                 risks: [
                     {
@@ -56,25 +88,35 @@ export const fetchSimulation = async (formData: any, setIsLoading: (loading: boo
                     {
                         type: "AUTO_C",
                         properties: {
-                            name: "teste",
-                            birthDate: "1970-06-02",
-                            driverLicenseNumber: "123456",
-                            driverLicenseDate: "1990-06-02",
-                            gender: "M"
+                            name: name,
+                            birthDate: birthDate,
+                            driverLicenseNumber: driverLicenseNumber,
+                            driverLicenseDate: driverLicenseDate,
+                            gender: gender
                         }
                     },
                     {
                         type: "AUTO_R",
                         properties: {
-                            description: "teste"
+                            description: description
                         }
                     }
                 ]
             }
-        ]
+        ],
+        client: {
+            nif: nif,
+            name: name,
+            bi: bi,
+            birthDate: birthDate,
+            entityType: entityType,
+            maritalStatus: maritalStatus,
+            passport: passport,
+            gender: gender,
+            emails: email ? [email] : [],
+            mobiles: mobile ? [mobile] : []
+        }
     };
-
-
 
     try {
         const response = await fetch("/api/simulation", {
@@ -98,17 +140,17 @@ export const fetchSimulation = async (formData: any, setIsLoading: (loading: boo
         const data = await response.json();
         console.log("Simulação criada:", data.installmentValues);
         setSimulationResult(data.installmentValues);
-        setIsLoading(false);
         return data;
     } catch (error) {
         console.error("Falha na simulação:", {
             error: error instanceof Error ? error.message : error,
             timestamp: new Date().toISOString(),
         });
-        setIsLoading(false);
         if (error instanceof Error && error.message.includes("401")) {
             signIn();
         }
         throw error;
+    } finally {
+        setIsLoading(false);
     }
 };

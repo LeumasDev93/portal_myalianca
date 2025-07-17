@@ -4,7 +4,60 @@ import React, { useState, useEffect, useRef, useCallback } from "react";
 import { fetchVehicleBrands } from "@/service/marcaService";
 import { fetchVehicleModels } from "@/service/modeloService";
 import Select from "react-select";
+import { useUserProfile } from "@/hooks/useUserProfile ";
 
+const tipoUtilizadorOptions = [
+  { value: "1", label: "Taxi" },
+  { value: "10", label: "VeiculoLigeiroInstrucao" },
+  { value: "16", label: "VeículoIndustrial" },
+  { value: "17", label: "VeículoAgrícola" },
+  { value: "18", label: "MáquinaAgrícola" },
+  { value: "2", label: "AmbulanciaProntoSocorro" },
+  { value: "23", label: "TransporteMercadorias" },
+  { value: "30", label: "Transporte de passageiros em caixa de carga" },
+  { value: "31", label: "Reboque de proprietário sem rebocador próprio" },
+  { value: "32", label: "Veículos de abastecimento de água às populações" },
+  { value: "33", label: "Bombeiros de instituição de utilidade pública" },
+  {
+    value: "34",
+    label: "Veículo rebocador com seguro de reboque dispensado pelo proponente",
+  },
+  { value: "35", label: "Transporte coletivo de passageiros" },
+  { value: "36", label: "VeiculoPesadoInstrucao" },
+  { value: "37", label: "TaxiAluguer" },
+  { value: "38", label: "TransporteMateriasPerigosas" },
+  { value: "39", label: "MaquinaIndustrialRebocavel" },
+  { value: "4", label: "Aluguer" },
+  { value: "40", label: "TransporteMercadoriasAluguer" },
+  { value: "41", label: "ReboqueCargaPassageiros" },
+  { value: "42", label: "ReboqueCarga" },
+  {
+    value: "43",
+    label: "Veículo de aluguer sem condutor passageiros ate 9 lugares",
+  },
+  {
+    value: "44",
+    label: "Veículo de aluguer sem condutor passageiros ou carga até 1600kg",
+  },
+  {
+    value: "45",
+    label:
+      "Veículo de aluguer sem condutor passageiros ou carga 1601kg a 3500kg",
+  },
+  { value: "99", label: "Normal" },
+];
+
+const ilhaOptions = [
+  { id: 1967, name: "Ilha Santo Antão", value: "1", rank: "1" },
+  { id: 1968, name: "Ilha São Vicente", value: "2", rank: "2" },
+  { id: 1969, name: "Ilha São Nicolau", value: "3", rank: "3" },
+  { id: 1970, name: "Ilha do Sal", value: "4", rank: "4" },
+  { id: 1971, name: "Ilha da Boa Vista", value: "5", rank: "5" },
+  { id: 1972, name: "Ilha de Santiago", value: "6", rank: "6" },
+  { id: 1973, name: "Ilha do Maio", value: "7", rank: "7" },
+  { id: 1974, name: "Ilha do Fogo", value: "8", rank: "8" },
+  { id: 1975, name: "Ilha Brava", value: "9", rank: "9" },
+];
 interface Option {
   id: number | string;
   name: string;
@@ -70,6 +123,8 @@ export default function FormField({
   error,
   options = [],
 }: FormFieldProps) {
+  const { profile } = useUserProfile();
+
   const [filter, setFilter] = useState(value || "");
   const [showOptions, setShowOptions] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -108,6 +163,20 @@ export default function FormField({
   useEffect(() => {
     setFilter(value || "");
   }, [value]);
+
+  useEffect(() => {
+    if (!value && profile) {
+      if (field.name === "name" && profile.user.nome) {
+        onChange(profile.user.nome);
+      }
+      if (field.name === "nif" && profile.user.nif) {
+        onChange(profile.user.nif);
+      }
+      if (field.name === "emails" && profile.user.email) {
+        onChange(profile.user.email);
+      }
+    }
+  }, [profile, field.name, value, onChange]);
 
   // Carrega marcas apenas uma vez quando o componente monta
   useEffect(() => {
@@ -414,6 +483,58 @@ export default function FormField({
               ))}
           </select>
         )
+      ) : field.name === "TipoDeUtilizacao" ? (
+        <Select
+          id={field.name}
+          name={field.name}
+          value={
+            tipoUtilizadorOptions.find((opt) => opt.value === value) || null
+          }
+          onChange={(selectedOption) => {
+            const newValue = selectedOption ? selectedOption.value : "";
+            onChange(newValue);
+          }}
+          options={tipoUtilizadorOptions}
+          className={`react-select-container ${
+            error ? "react-select--error" : ""
+          }`}
+          classNamePrefix="react-select"
+          placeholder={
+            field.fieldPlaceholder || "Selecione o tipo de utilização"
+          }
+          isClearable
+          noOptionsMessage={() => "Nenhuma opção disponível"}
+          required={field.required}
+        />
+      ) : field.name === "Ilha" ? (
+        <Select
+          id={field.name}
+          name={field.name}
+          value={
+            ilhaOptions.find((opt) => opt.value === value)
+              ? {
+                  value: value,
+                  label: ilhaOptions.find((opt) => opt.value === value)?.name,
+                }
+              : null
+          }
+          onChange={(selectedOption) => {
+            const newValue = selectedOption ? selectedOption.value : "";
+            onChange(newValue);
+          }}
+          options={ilhaOptions.map((ilha) => ({
+            value: ilha.value,
+            label: ilha.name,
+          }))}
+          className={`react-select-container ${
+            error ? "react-select--error" : ""
+          }`}
+          classNamePrefix="react-select"
+          placeholder={field.fieldPlaceholder || "Selecione a ilha"}
+          isClearable
+          noOptionsMessage={() => "Nenhuma opção disponível"}
+          required={field.required}
+        />
       ) : field.type === "select" ? (
         /* Select genérico */
         <select
@@ -482,8 +603,13 @@ export default function FormField({
           onChange={(e) => onChange(e.target.value)}
           className={`w-full p-2 border rounded-md focus:ring-2 focus:ring-[#002256] ${
             error ? "border-red-500" : "border-gray-300"
+          } ${
+            ["nif", "emails"].includes(field.name)
+              ? "bg-gray-100 text-gray-500 cursor-not-allowed"
+              : "bg-white"
           }`}
           required={field.required}
+          disabled={["nif", "emails"].includes(field.name)}
         />
       )}
       {/* Mensagem de erro */}

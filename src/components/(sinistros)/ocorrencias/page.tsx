@@ -71,13 +71,16 @@ export default function OcorrenciasPage({
       const response = await fetch(
         `/api/ocorrencia?user_id=${profile?.user?.id}`
       );
-
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(
-          data?.info?.errors?.[0] || "Erro ao buscar ocorrências"
-        );
+        const apiError =
+          data?.info?.errors?.[0] || "Erro ao buscar ocorrências.";
+        throw new Error(apiError);
+      }
+
+      if (!Array.isArray(data.results)) {
+        throw new Error("Dados inválidos: 'results' não é um array.");
       }
 
       setOcorrencias(data.results);
@@ -85,10 +88,13 @@ export default function OcorrenciasPage({
     } catch (error: any) {
       if (error.name !== "AbortError") {
         console.error("Erro ao buscar ocorrências:", error);
-        setError(error instanceof Error ? error.message : "Erro desconhecido");
+        setError(error.message || "Erro desconhecido");
+
         toast({
-          title: "Erro",
-          description: "Não foi possível carregar as ocorrências",
+          title: "Erro ao carregar",
+          description:
+            error.message ||
+            "Ocorreu um erro inesperado ao carregar as ocorrências.",
           variant: "destructive",
         });
       }

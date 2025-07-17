@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // app/api/ocorrencia/route.ts
 import { NextResponse } from 'next/server';
 
@@ -13,47 +14,58 @@ export async function GET(request: Request) {
             count: 0,
             page: 1,
             status: 400,
-            errors: ['Parâmetro user_id é obrigatório']
+            errors: ['Parâmetro "user_id" é obrigatório.'],
           },
-          results: []
+          results: [],
         },
         { status: 400 }
       );
     }
 
-    if (!process.env.NEXT_PUBLIC_API_BASE_URL || !process.env.API_SECRET_TOKEN) {
-      throw new Error('Variáveis de ambiente não configuradas');
-    }
+    const { NEXT_PUBLIC_API_BASE_URL, API_SECRET_TOKEN, NEXT_PUBLIC_API_KEY } = process.env;
 
-    const apiUrl = `${process.env.NEXT_PUBLIC_API_BASE_URL}/sinistros?user_id=${userId}`;
-    const response = await fetch(apiUrl, {
-      headers: {
-        'Authorization': `Bearer ${process.env.API_SECRET_TOKEN}`,
-        'ApiKey': process.env.NEXT_PUBLIC_API_KEY || '',
-        'Content-Type': 'application/json'
-      }
-    });
-
-    const responseText = await response.text();
-
-    if (!response.ok) {
+    if (!NEXT_PUBLIC_API_BASE_URL || !API_SECRET_TOKEN) {
       return NextResponse.json(
         {
           info: {
             count: 0,
             page: 1,
-            status: response.status,
-            errors: [`Erro na API externa: ${response.statusText}`]
+            status: 500,
+            errors: ['Variáveis de ambiente obrigatórias não configuradas.'],
           },
-          results: []
+          results: [],
         },
-        { status: response.status }
+        { status: 500 }
       );
     }
 
-    const data = JSON.parse(responseText);
+    const apiUrl = `${NEXT_PUBLIC_API_BASE_URL}/sinistros?user_id=${userId}`;
+    const externalResponse = await fetch(apiUrl, {
+      headers: {
+        Authorization: `Bearer ${API_SECRET_TOKEN}`,
+        ApiKey: NEXT_PUBLIC_API_KEY || '',
+        'Content-Type': 'application/json',
+      },
+    });
 
-    // ✅ Verifica se 'results' é um array dentro do objeto retornado
+    const rawData = await externalResponse.text();
+    const data = rawData ? JSON.parse(rawData) : null;
+
+    if (!externalResponse.ok) {
+      return NextResponse.json(
+        {
+          info: {
+            count: 0,
+            page: 1,
+            status: externalResponse.status,
+            errors: [`Erro na API externa: ${externalResponse.statusText}`],
+          },
+          results: [],
+        },
+        { status: externalResponse.status }
+      );
+    }
+
     if (!data || !Array.isArray(data.results)) {
       return NextResponse.json(
         {
@@ -61,9 +73,9 @@ export async function GET(request: Request) {
             count: 0,
             page: 1,
             status: 500,
-            errors: ['Formato de dados inválido - esperado objeto com array em "results"']
+            errors: ['Formato inválido: era esperado "results" como array.'],
           },
-          results: []
+          results: [],
         },
         { status: 500 }
       );
@@ -74,21 +86,20 @@ export async function GET(request: Request) {
         count: data.results.length,
         page: 1,
         status: 200,
-        errors: null
+        errors: null,
       },
-      results: data.results
+      results: data.results,
     });
-
-  } catch (error) {
+  } catch (error: any) {
     return NextResponse.json(
       {
         info: {
           count: 0,
           page: 1,
           status: 500,
-          errors: [error instanceof Error ? error.message : 'Erro desconhecido']
+          errors: [error?.message || 'Erro interno inesperado.'],
         },
-        results: []
+        results: [],
       },
       { status: 500 }
     );

@@ -15,6 +15,7 @@ import { fetchSimulation } from "@/service/simulationService";
 import { getSafeGridClass } from "@/lib/utils";
 import { fetchVehicleBrands } from "@/service/marcaService";
 import { getSession } from "next-auth/react";
+import { SimulationResults } from "../SimulationResults";
 
 const defaultIconMap: Record<string, JSX.Element> = {
   "Dados Pessoais": <FaUser />,
@@ -51,6 +52,7 @@ export default function SimulationForm({
   const [isLoadingSimulation, setIsLoadingSimulation] = useState(false);
   const [simulationError, setSimulationError] = useState<string | null>(null);
 
+  const [isModalOpen, setIsModalOpen] = useState(false);
   // Load token on mount
   useEffect(() => {
     const loadToken = async () => {
@@ -162,11 +164,11 @@ export default function SimulationForm({
 
         const data = await fetchSimulation(
           formValues,
-          setIsLoadingSimulation,
-          setSimulationError
+          setIsLoading,
+          setSimulationResult
         );
         setSimulationResult(data);
-        alert("Simulação realizada com sucesso!");
+        setIsModalOpen(true);
       } catch (error: any) {
         setSimulationError(error.message || "Erro ao executar simulação.");
       } finally {
@@ -253,7 +255,7 @@ export default function SimulationForm({
   return (
     <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
       {/* Header */}
-      <div className="border-b">
+      <div className="border-b flex  justify-between">
         <div className="flex flex-col p-2 md:px-6 md:py-4 bg-[#e6e3e3] shadow-xl rounded-t-xl w-full sm:w-96">
           <h2 className="text-sm text-[#002B5B] sm:text-lg md:font-semibold uppercase">
             SIMULADOR SEGURO {product.category}
@@ -262,6 +264,7 @@ export default function SimulationForm({
             Seguro Obrigatório
           </span>
         </div>
+        <FormHeader onClose={onClose} />
       </div>
 
       {/* Tabs List */}
@@ -297,7 +300,6 @@ export default function SimulationForm({
         <TabsContent key={tab.title} value={tab.title}>
           <form onSubmit={handleSubmit}>
             <FormHeader
-              onClose={onClose}
               description={tab.form.description}
               title={tab.form.title}
             />
@@ -338,13 +340,12 @@ export default function SimulationForm({
       ))}
 
       {/* Mostrar resultado da simulação, se houver */}
-      {simulationResult && (
-        <div className="p-4 mt-4 border rounded bg-green-50 text-green-900">
-          <h3 className="text-lg font-semibold mb-2">
-            Resultado da Simulação:
-          </h3>
-          <pre>{JSON.stringify(simulationResult, null, 2)}</pre>
-        </div>
+      {isModalOpen && (
+        <SimulationResults
+          data={simulationResult}
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+        />
       )}
     </Tabs>
   );

@@ -19,7 +19,7 @@ export default function ProductsTab({
   if (products.length === 0) return <EmptyState />;
 
   return (
-    <div className="max-w-7xl mx-auto grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+    <div className="flex gap-4 items-center justify-center">
       {products.map((product) => (
         <div
           key={product.productId}

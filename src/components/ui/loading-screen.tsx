@@ -1,27 +1,24 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useState } from "react";
-import LogoAlianca from "@/assets/alianca.png";
+// import { useEffect, useState } from "react";
+import LogoAlianca from "@/assets/Icones/logo.gif";
 
 export function LoadingScreen({ message = "POR FAVOR AGUARDE..." }) {
-  const [rotation, setRotation] = useState(0);
+  // const [rotation, setRotation] = useState(0);
 
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setRotation((prev) => (prev + 5) % 360);
-    }, 50);
+  // useEffect(() => {
+  //   const interval = setInterval(() => {
+  //     setRotation((prev) => (prev + 5) % 360);
+  //   }, 50);
 
-    return () => clearInterval(interval);
-  }, []);
+  //   return () => clearInterval(interval);
+  // }, []);
 
   return (
     <div className="flex flex-col items-center justify-center">
       <div className="relative w-16 h-16 sm:w-20 sm:h-20 xl:w-32 xl:h-32 mb-6">
-        <div
-          className="absolute inset-0 flex items-center justify-center"
-          style={{ transform: `rotate(${rotation}deg)` }}
-        >
+        <div className="absolute inset-0 flex items-center justify-center">
           <Image
             src={LogoAlianca}
             alt="MYALIANCA Loading"

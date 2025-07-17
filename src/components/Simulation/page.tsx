@@ -62,110 +62,112 @@ export default function SimulationScreen() {
     <div className="w-full">
       <Tabs defaultValue="types" className="">
         {/* Banner */}
-        <div className="relative bg-[#C41E3A] overflow-hidden  md:h-[300px] flex items-center">
-          {bannerImages.map((image, index) => (
-            <div
-              key={index}
-              className={`absolute inset-0 flex transition-opacity duration-500 ${
-                index === currentSlide
-                  ? "opacity-100 z-10"
-                  : "opacity-0 z-0 pointer-events-none"
-              }`}
-            >
-              <div className="container w-[100%] xl:w-full h-full flex flex-col items-center justify-center mt-12 md:mt-0 font-thin text-white z-10 relative px-4">
-                <h1 className="text-3xl md:text-5xl font-bold mb-2 text-center md:text-left">
-                  {image.title}
-                </h1>
-                <h2 className="text-xl md:text-3xl text-center md:text-left">
-                  {image.subtitle}
-                </h2>
-              </div>
-              <Image
-                src={image.src}
-                alt={image.alt}
-                width={800}
-                height={300}
-                className="hidden md:block object-cover rounded-l-full"
-                priority={index === 0}
-              />
-            </div>
-          ))}
-
-          {/* Navegação do banner */}
-          <button
-            onClick={prevSlide}
-            aria-label="Previous slide"
-            className="absolute left-3 top-1/2 -translate-y-1/2 bg-white/30 hover:bg-white/50 p-2 rounded-full z-20"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-6 w-6 text-white"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M15 19l-7-7 7-7"
-              />
-            </svg>
-          </button>
-          <button
-            onClick={nextSlide}
-            aria-label="Next slide"
-            className="absolute right-3 top-1/2 -translate-y-1/2 bg-white/30 hover:bg-white/50 p-2 rounded-full z-20"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-6 w-6 text-white"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M9 5l7 7-7 7"
-              />
-            </svg>
-          </button>
-
-          {/* Indicators */}
-          <div className="absolute bottom-0 left-0 right-0 h-1 md:h-2 bg-[#002B5B] z-20"></div>
-          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex space-x-2 z-20 md:hidden">
-            {bannerImages.map((_, i) => (
-              <button
-                key={i}
-                onClick={() => setCurrentSlide(i)}
-                className={`w-3 h-3 rounded-full ${
-                  i === currentSlide ? "bg-white" : "bg-white/50"
+        {!selectedProduct && (
+          <div className="relative bg-[#C41E3A] overflow-hidden  md:h-[300px] flex items-center">
+            {bannerImages.map((image, index) => (
+              <div
+                key={index}
+                className={`absolute inset-0 flex transition-opacity duration-500 ${
+                  index === currentSlide
+                    ? "opacity-100 z-10"
+                    : "opacity-0 z-0 pointer-events-none"
                 }`}
-                aria-label={`Go to slide ${i + 1}`}
-              />
+              >
+                <div className="container w-[100%] xl:w-full h-full flex flex-col items-center justify-center mt-12 md:mt-0 font-thin text-white z-10 relative px-4">
+                  <h1 className="text-3xl md:text-5xl font-bold mb-2 text-center md:text-left">
+                    {image.title}
+                  </h1>
+                  <h2 className="text-xl md:text-3xl text-center md:text-left">
+                    {image.subtitle}
+                  </h2>
+                </div>
+                <Image
+                  src={image.src}
+                  alt={image.alt}
+                  width={800}
+                  height={300}
+                  className="hidden md:block object-cover rounded-l-full"
+                  priority={index === 0}
+                />
+              </div>
             ))}
-          </div>
 
-          {/* Aqui o TabsList fica no rodapé do banner, à esquerda */}
-          <TabsList className="absolute bottom-2 -left-2 flex z-10 bg-transparent space-x-2">
-            <TabsTrigger
-              value="types"
-              className=" flex items-center justify-center bg-gray-200 hover:bg-gray-300 text-[#002B5B] font-bold text-sm md:text-lg md:w-64 p-2 md:px-6 md:py-4 rounded-b-none rounded-t-xl 
-       data-[state=active]:bg-[#002B5B] data-[state=active]:text-white "
+            {/* Navegação do banner */}
+            <button
+              onClick={prevSlide}
+              aria-label="Previous slide"
+              className="absolute left-3 top-1/2 -translate-y-1/2 bg-white/30 hover:bg-white/50 p-2 rounded-full z-20"
             >
-              Produtos
-            </TabsTrigger>
-            <TabsTrigger
-              value="mySimulations"
-              className=" flex items-center justify-center bg-gray-200 hover:bg-gray-300 text-[#002B5B] font-bold text-sm md:text-lg md:w-64 p-2 md:px-6 md:py-4 rounded-t-xl  rounded-b-none
-       data-[state=active]:bg-[#002B5B] data-[state=active]:text-white "
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-6 w-6 text-white"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M15 19l-7-7 7-7"
+                />
+              </svg>
+            </button>
+            <button
+              onClick={nextSlide}
+              aria-label="Next slide"
+              className="absolute right-3 top-1/2 -translate-y-1/2 bg-white/30 hover:bg-white/50 p-2 rounded-full z-20"
             >
-              Minhas Simulações
-            </TabsTrigger>
-          </TabsList>
-        </div>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-6 w-6 text-white"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M9 5l7 7-7 7"
+                />
+              </svg>
+            </button>
+
+            {/* Indicators */}
+            <div className="absolute bottom-0 left-0 right-0 h-1 md:h-2 bg-[#002B5B] z-20"></div>
+            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex space-x-2 z-20 md:hidden">
+              {bannerImages.map((_, i) => (
+                <button
+                  key={i}
+                  onClick={() => setCurrentSlide(i)}
+                  className={`w-3 h-3 rounded-full ${
+                    i === currentSlide ? "bg-white" : "bg-white/50"
+                  }`}
+                  aria-label={`Go to slide ${i + 1}`}
+                />
+              ))}
+            </div>
+
+            {/* Aqui o TabsList fica no rodapé do banner, à esquerda */}
+            <TabsList className="absolute bottom-2 -left-2 flex z-10 bg-transparent space-x-2">
+              <TabsTrigger
+                value="types"
+                className=" flex items-center justify-center bg-gray-200 hover:bg-gray-300 text-[#002B5B] font-bold text-sm md:text-lg md:w-64 p-2 md:px-6 md:py-4 rounded-b-none rounded-t-xl 
+       data-[state=active]:bg-[#002B5B] data-[state=active]:text-white "
+              >
+                Produtos
+              </TabsTrigger>
+              <TabsTrigger
+                value="mySimulations"
+                className=" flex items-center justify-center bg-gray-200 hover:bg-gray-300 text-[#002B5B] font-bold text-sm md:text-lg md:w-64 p-2 md:px-6 md:py-4 rounded-t-xl  rounded-b-none
+       data-[state=active]:bg-[#002B5B] data-[state=active]:text-white "
+              >
+                Minhas Simulações
+              </TabsTrigger>
+            </TabsList>
+          </div>
+        )}
         <TabsContent
           value="types"
           className="bg-white flex flex-col  rounded-b-lg shadow-xl px-6 xl:p-8 py-10"
@@ -198,7 +200,7 @@ export default function SimulationScreen() {
               )}
 
               {products && products.length > 0 && (
-                <div className="grid gap-4 grid-cols-2 md:grid-cols-3 2xl:grid-cols-4">
+                <div className="flex gap-4 items-center justify-center">
                   {products.map((product) => (
                     <ProductsTab
                       key={product.productId}

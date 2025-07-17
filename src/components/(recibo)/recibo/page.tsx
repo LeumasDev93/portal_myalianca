@@ -41,6 +41,7 @@ import { useRecibos } from "@/hooks/useRecibos ";
 import { Grid, List } from "lucide-react";
 import { ReciboPDFModal } from "../ModalRecibo";
 import ReactDOM from "react-dom/client";
+import { MdPayment } from "react-icons/md";
 
 type ReciboPageProps = {
   onSelectDetail?: (id: string) => void;
@@ -141,6 +142,9 @@ export default function ReciboPage({}: ReciboPageProps) {
     setLoadingView((prev) => ({ ...prev, [invoiceNumber]: false }));
   };
 
+  const handlePayment = () => {
+    // Implementação para renovar apólice
+  };
   return (
     <div className="flex-1 space-y-6 p-6 md:p-8">
       <div className="flex items-center justify-between">
@@ -257,7 +261,19 @@ export default function ReciboPage({}: ReciboPageProps) {
                     </Button>
                     {recibo.status === 9 ||
                       recibo.status === 1 ||
-                      (recibo.status === 2 ? null : (
+                      (recibo.status === 2 ? (
+                        <Button
+                          onClick={() => handlePayment()}
+                          disabled={loadingStates[recibo.number]}
+                          className="flex items-center bg-[#002856] hover:bg-[#002856]/50 gap-2"
+                        >
+                          {loadingStates[recibo.number] ? (
+                            <FaSpinner className="animate-spin" />
+                          ) : (
+                            <MdPayment />
+                          )}
+                        </Button>
+                      ) : (
                         <Button
                           onClick={() => handleDownload(recibo.number)}
                           disabled={loadingStates[recibo.number]}
@@ -358,7 +374,23 @@ export default function ReciboPage({}: ReciboPageProps) {
 
                     {recibo.status === 9 ||
                     recibo.status === 1 ||
-                    recibo.status === 2 ? null : (
+                    recibo.status === 2 ? (
+                      <Button
+                        onClick={() => handlePayment()}
+                        disabled={loadingStates[recibo.number]}
+                        className="flex items-center gap-2 bg-[#002256] hover:bg-[#002256]/70"
+                        size="sm"
+                      >
+                        {loadingStates[recibo.number] ? (
+                          <FaSpinner className="animate-spin" />
+                        ) : (
+                          <>
+                            <MdPayment />
+                            <span>Pagar Agora</span>
+                          </>
+                        )}
+                      </Button>
+                    ) : (
                       <Button
                         onClick={() => handleDownload(recibo.number)}
                         disabled={loadingStates[recibo.number]}

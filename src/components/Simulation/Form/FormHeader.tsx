@@ -5,7 +5,7 @@ export default function FormHeader({
   onClose,
 }: {
   title?: string;
-  description: string;
+  description?: string;
   onClose?: () => void;
 }) {
   return (
