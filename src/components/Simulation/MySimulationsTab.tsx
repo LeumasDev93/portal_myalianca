@@ -216,10 +216,7 @@ export default function MySimulationsTab() {
                       {simulation.totalPremium}
                     </p>
                   </div>
-                  <div className="flex flex-col gap-2">
-                    <Button className="flex items-center bg-[#002256] hover:bg-[#002256]/70 gap-2">
-                      Contratar
-                    </Button>
+                  <div className="flex ">
                     <Button className="flex items-center bg-[#002256] hover:bg-[#002256]/70 gap-2">
                       <FaRegEdit />
                       Editar
