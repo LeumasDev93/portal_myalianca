@@ -182,6 +182,7 @@ export interface Product {
   name: string;
   description: string;
   category: string;
+  webIcon: string;
   mainProduct: boolean;
   icon: string;
   parentProductId: string | null;

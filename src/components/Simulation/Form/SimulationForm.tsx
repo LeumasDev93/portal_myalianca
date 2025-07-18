@@ -276,16 +276,20 @@ export default function SimulationForm({
   return (
     <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
       {/* Header */}
-      <div className="border-b flex  justify-between">
-        <div className="flex flex-col p-2 md:px-6 md:py-4 bg-[#e6e3e3] shadow-xl rounded-t-xl w-full sm:w-96">
+      <div className="border-b relative flex justify-center">
+        <div className="flex flex-col p-2 md:px-6 md:py-4 bg-[#e6e3e3] shadow-xl rounded-t-xl w-full sm:w-96 relative items-center">
           <h2 className="text-sm text-[#002B5B] sm:text-lg md:font-semibold uppercase">
             SIMULADOR SEGURO {product.category}
           </h2>
-          <span className="text-sm text-[#002B5B] md:font-semibold mt-2">
-            Seguro Obrigatório
+
+          <span className="text-[#002B5B] text-2xl sm:text-3xl md:text-4xl">
+            {" "}
+            {getDynamicIcon(product.webIcon)}
           </span>
         </div>
-        <FormHeader onClose={onClose} />
+        <div className="absolute top-0 right-4 -translate-y-1/2">
+          <FormHeader onClose={onClose} />
+        </div>
       </div>
 
       {/* Tabs List */}
