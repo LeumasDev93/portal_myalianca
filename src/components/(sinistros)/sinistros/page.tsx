@@ -65,12 +65,19 @@ export default function SinistrosPage({
   }
 
   const filteredSinistros = sinistros.filter((sinistro) => {
-    // Filtro por termo de busca (número do sinistro ou nome do objeto segurado)
+    // Converte o termo de busca para minúsculas uma única vez
+    const searchTermLower = searchTerm.toLowerCase();
+
+    // Filtro unificado por termo de busca
     const matchesSearch =
-      sinistro.claimNumber.toString().includes(searchTerm.toLowerCase()) ||
-      sinistro.insuredObjectName
+      sinistro.contractNumber
+        .toString()
         .toLowerCase()
-        .includes(searchTerm.toLowerCase());
+        .includes(searchTermLower) || // Número do sinistro
+      (sinistro.insuredObjectDescription &&
+        sinistro.insuredObjectDescription
+          .toLowerCase()
+          .includes(searchTermLower)); // Descrição do objeto segurado
 
     // Filtro por status
     const matchesStatus =
@@ -111,7 +118,7 @@ export default function SinistrosPage({
           <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
           <input
             type="text"
-            placeholder="Buscar por número ou objeto segurado"
+            placeholder="Buscar por número apólice ou objeto seguro "
             className="pl-10 bg-white rounded-md border w-full border-gray-300 py-2 px-4 focus:outline-none focus:ring-1 focus:ring-gray-200 focus:border-gray-200"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}

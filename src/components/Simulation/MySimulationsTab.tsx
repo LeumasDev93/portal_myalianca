@@ -72,36 +72,33 @@ export default function MySimulationsTab() {
     };
   }, [profile?.user.nif]);
 
-  // Aplicar filtros
   useEffect(() => {
     if (!simulations) return;
 
     let result = [...simulations];
 
-    // Filtro por termo de busca
     if (searchTerm) {
       const term = searchTerm.toLowerCase();
       result = result.filter(
         (sim) =>
-          sim.productName.toLowerCase().includes(term) ||
-          sim.clientName.toLowerCase().includes(term) ||
-          sim.simulationNumber.toString().includes(term)
-      );
+          sim.productName.toLowerCase().includes(term) || // Nome do produto
+          sim.clientName.toLowerCase().includes(term) || // Nome do cliente
+          sim.simulationNumber.toString().includes(term) || // Número da simulação
+          (sim.registration && sim.registration.toLowerCase().includes(term)) // Registration
+      ); // Fechamento do filter que estava faltando
     }
 
-    // Filtro por status
+    // Mantém os outros filtros
     if (statusFilter !== "all") {
       result = result.filter((sim) => sim.contractStatus === statusFilter);
     }
 
-    // Filtro por produto
     if (productFilter !== "all") {
       result = result.filter((sim) => sim.productName === productFilter);
     }
 
     setFilteredSimulations(result);
   }, [searchTerm, statusFilter, productFilter, simulations]);
-
   // Obter produtos únicos para o filtro
   const uniqueProducts = simulations
     ? Array.from(new Set(simulations.map((sim) => sim.productName))).sort()
@@ -145,7 +142,7 @@ export default function MySimulationsTab() {
           <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
           <input
             type="text"
-            placeholder="Buscar por nome, cliente ou número"
+            placeholder="Buscar por número simulação ou objeto seguro"
             className="pl-10 bg-white w-full sm:w-96 2xl:w-[500px] rounded-md border border-gray-300 py-2 px-4 focus:outline-none focus:ring-1 focus:ring-gray-200 focus:border-gray-200"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}

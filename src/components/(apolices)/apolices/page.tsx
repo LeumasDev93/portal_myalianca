@@ -85,10 +85,13 @@ export default function ApolicePage({ onSelectDetail }: ApolicePageProps) {
   }
 
   const filteredApolices = apolices.filter((apolice) => {
-    // Filtro por termo de busca (número da apólice ou nome do produto)
+    // Filtro unificado por termo de busca
+    const term = searchTerm.toLowerCase();
     const matchesSearch =
-      apolice.contractNumber.toString().includes(searchTerm.toLowerCase()) ||
-      apolice.productName.toLowerCase().includes(searchTerm.toLowerCase());
+      apolice.contractNumber.toString().includes(term) || // Número do contrato
+      apolice.productName.toLowerCase().includes(term) || // Nome do produto
+      (apolice.registration &&
+        apolice.registration.toLowerCase().includes(term)); // Registration
 
     // Filtro por status
     const matchesStatus =
@@ -111,7 +114,7 @@ export default function ApolicePage({ onSelectDetail }: ApolicePageProps) {
           <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
           <input
             type="text"
-            placeholder="Buscar por número ou nome da apólice"
+            placeholder="Buscar por número apólice ou objeto seguro "
             className="pl-10 bg-white rounded-md border w-full border-gray-300 py-2 px-4 focus:outline-none focus:ring-1 focus:ring-gray-200 focus:border-gray-200"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}

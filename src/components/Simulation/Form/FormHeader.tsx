@@ -13,7 +13,7 @@ export default function FormHeader({
       {onClose && (
         <button
           onClick={onClose}
-          className="absolute top-0 right-0 p-2 text-gray-400 hover:text-gray-600"
+          className="absolute top-0 right-0 p-2 text-[#002B5B] hover:text-[#002B5B]/70"
         >
           <FaTimes />
         </button>
