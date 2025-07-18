@@ -283,3 +283,22 @@ export interface SimulationResponse {
   hasWarnings: boolean;
   warnings: string[];
 }
+
+export interface Simulation {
+  productName: string;
+  clientName: string;
+  birthdate: string | null;
+  primaryMobileContact: string;
+  primaryEmailContact: string | null;
+  producerName: string;
+  contractStatus: string;
+  simulationNumber: number;
+  registration: string | null;
+  premium: number;
+  totalPremium: number;
+  startDate: string | null;
+  endDate: string | null;
+  atm: string | null;
+  contacts: string[];
+  invoices: any[];
+}

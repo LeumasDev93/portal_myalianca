@@ -22,6 +22,20 @@ export const getApolicesStatusText = (status: string) => {
   }
 };
 
+export const STATUS_OPTIONS = [
+  { value: "all", label: "--Selecionar um estado--" },
+  { value: "C", label: "Ativo" },
+  { value: "S", label: "Proposta" },
+  { value: "D", label: "Anulado" },
+  { value: "X", label: "Em Anulação" },
+  { value: "U", label: "Suspensa (Falta Pag.)" },
+  { value: "Y", label: "Suspensa (Falta Pag.)" },
+  { value: "W", label: "Suspensa Técnica" },
+  { value: "A", label: "Suspensa Técnica" },
+  { value: "I", label: "Simulação" },
+  { value: "P", label: "Pendente" },
+  { value: "T", label: "Caducada" },
+];
 // Função para obter a classe CSS do status
 export const getStatusApolicesColors = (status: string) => {
   switch (status) {
@@ -193,6 +207,17 @@ export const STATUS_COLORS = {
   8: "bg-blue-100 text-blue-800",     // Regularizado
   9: "bg-red-100 text-red-800",       // Anulado
 };
+
+export const STATUS_OPTIONS_RECIBOS = [
+  { value: "all", label: "--Selecionar um estado--" },
+  { value: "A", label: "Em Curso / Aberto" },
+  { value: "E", label: "Encerrado" },
+  { value: "T", label: "Encerrado Técnicamente" },
+  { value: "N", label: "Sem Efeito" },
+  { value: "I", label: "Sem Efeito" },
+  { value: "R", label: "Recusado" },
+  { value: "P", label: "Pendente" },
+];
 
 // Funções de mapeamento
 export const getRamoFromType = (type: number): string => {

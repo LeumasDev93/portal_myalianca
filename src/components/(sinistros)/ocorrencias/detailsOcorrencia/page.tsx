@@ -27,7 +27,7 @@ export default function OcorrenciaDetailsPage({
     try {
       setIsLoading(true);
       setError(null);
-
+      console.log(id);
       const response = await fetch(`/api/detailsOcorrencia?id=${id}`);
       if (!response.ok)
         throw new Error("Erro ao buscar detalhes da ocorrência");

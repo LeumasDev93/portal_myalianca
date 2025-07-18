@@ -181,6 +181,9 @@ export default function FormField({
       if (field.name === "emails" && profile.user.email) {
         onChange(profile.user.email);
       }
+      if (field.name === "mobiles" && profile.user.telemovel) {
+        onChange(profile.user.telemovel);
+      }
     }
   }, [profile, field.name, value, onChange]);
 

@@ -8,51 +8,49 @@ export async function GET(request: Request) {
 
     if (!id) {
       return NextResponse.json(
-        { error: 'Parâmetro user_id é obrigatório' },
+        { error: 'Parâmetro "id" é obrigatório' },
         { status: 400 }
       );
     }
 
-    if (!process.env.NEXT_PUBLIC_API_BASE_URL || !process.env.API_SECRET_TOKEN) {
+    const { NEXT_PUBLIC_API_BASE_URL, API_SECRET_TOKEN, NEXT_PUBLIC_API_KEY } = process.env;
+
+    if (!NEXT_PUBLIC_API_BASE_URL || !API_SECRET_TOKEN) {
       throw new Error('Variáveis de ambiente não configuradas');
     }
 
-    const apiUrl = `${process.env.NEXT_PUBLIC_API_BASE_URL}/sinistros?id=${id}`;
-
-    console.log('URL da API chamada:', apiUrl); // Log para debug
+    const apiUrl = `${NEXT_PUBLIC_API_BASE_URL}/sinistros?id=${id}`;
+    console.log('[API Request]', apiUrl);
 
     const response = await fetch(apiUrl, {
       headers: {
-        'Authorization': `Bearer ${process.env.API_SECRET_TOKEN}`,
-        'ApiKey': process.env.NEXT_PUBLIC_API_KEY || '',
-        'Content-Type': 'application/json'
-      },
-      // next: { revalidate: 3600 } // Comente temporariamente para testes
+        Authorization: `Bearer ${API_SECRET_TOKEN}`,
+        ApiKey: NEXT_PUBLIC_API_KEY || '',
+        'Content-Type': 'application/json',
+      }
     });
 
     const responseText = await response.text();
-    console.log('Resposta bruta:', responseText); // Log da resposta bruta
+    console.log('[API Raw Response]', responseText);
 
     if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+      throw new Error(`Erro HTTP: ${response.status}`);
     }
 
-    const data = JSON.parse(responseText); // Parse manual para evitar problemas
+    const parsed = JSON.parse(responseText);
 
-    if (!Array.isArray(data)) {
-      console.error('Dados recebidos não são array:', data);
-      throw new Error('Formato de dados inválido - esperado array');
+    if (!parsed || !Array.isArray(parsed.results)) {
+      throw new Error('Formato de resposta inesperado: campo "results" não encontrado ou inválido.');
     }
 
-    console.log('Dados retornados:', data.length, 'itens'); // Log do tamanho
-    return NextResponse.json(data);
+    return NextResponse.json(parsed.results, { status: 200 });
 
   } catch (error) {
-    console.error('Erro completo:', error);
+    console.error('[Erro interno]', error);
     return NextResponse.json(
       {
-        error: 'Falha ao buscar ocorrências',
-        details: error instanceof Error ? error.message : String(error)
+        error: 'Falha ao buscar detalhes da ocorrência',
+        details: error instanceof Error ? error.message : String(error),
       },
       { status: 500 }
     );

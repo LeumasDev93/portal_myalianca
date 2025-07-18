@@ -18,11 +18,22 @@ import {
   getApolicesStatusText,
   getStatusSinistrosColors,
   getSinistroStatusText,
+  STATUS_OPTIONS_RECIBOS,
 } from "@/lib/utils";
 import { LoadingScreen } from "@/components/ui/loading-screen";
 import { FaTriangleExclamation } from "react-icons/fa6";
 import { IoShieldCheckmarkSharp } from "react-icons/io5";
 import { useSinistros } from "@/hooks/useSinistros";
+import { useState } from "react";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { IoMdClose } from "react-icons/io";
 
 type SinistroPageProps = {
   onNewSinistro: () => void;
@@ -34,7 +45,58 @@ export default function SinistrosPage({
   onNewSinistro,
 }: SinistroPageProps) {
   const { sinistros, isLoadingSinistros, errorSinistros } = useSinistros();
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
 
+  if (isLoadingSinistros) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <LoadingScreen />
+      </div>
+    );
+  }
+
+  if (errorSinistros) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <p className="text-red-500 text-center">{errorSinistros}</p>
+      </div>
+    );
+  }
+
+  const filteredSinistros = sinistros.filter((sinistro) => {
+    // Filtro por termo de busca (número do sinistro ou nome do objeto segurado)
+    const matchesSearch =
+      sinistro.claimNumber.toString().includes(searchTerm.toLowerCase()) ||
+      sinistro.insuredObjectName
+        .toLowerCase()
+        .includes(searchTerm.toLowerCase());
+
+    // Filtro por status
+    const matchesStatus =
+      statusFilter === "all" || sinistro.status === statusFilter;
+
+    return matchesSearch && matchesStatus;
+  });
+
+  if (sinistros.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center gap-2 py-8">
+        <div className="relative">
+          <FaSearch className="text-4xl text-gray-400 animate-pulse" />
+          <FaFilter
+            className="absolute -top-2 -right-2 text-xl text-[#2d4e7f] animate-spin-slow"
+            style={{ animationDuration: "3s" }}
+          />
+        </div>
+        <p className="text-gray-500 text-center">
+          Nenhum sinistro encontrado!
+          <br />
+          Tente novamente mais tarde.
+        </p>
+      </div>
+    );
+  }
   return (
     <div className="flex-1 space-y-6 p-6 md:p-8">
       <div className="flex items-center justify-between">
@@ -42,32 +104,54 @@ export default function SinistrosPage({
           Meus Sinistros
         </h1>
       </div>
-      {isLoadingSinistros ? (
-        <div className="flex items-center justify-center h-screen">
-          <LoadingScreen />
+
+      {/* Filtros */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="relative">
+          <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+          <input
+            type="text"
+            placeholder="Buscar por número ou objeto segurado"
+            className="pl-10 bg-white rounded-md border w-full border-gray-300 py-2 px-4 focus:outline-none focus:ring-1 focus:ring-gray-200 focus:border-gray-200"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
         </div>
-      ) : errorSinistros ? (
-        <div className="flex items-center justify-center h-screen">
-          <p className="text-red-500 text-center">{errorSinistros}</p>
+        <div className="flex gap-4">
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="bg-white rounded-md border w-1/2 border-gray-300 py-2 px-4 focus:outline-none focus:ring-1 focus:ring-gray-200 focus:border-gray-200">
+              <SelectValue placeholder="Filtrar por status" />
+            </SelectTrigger>
+            <SelectContent>
+              {STATUS_OPTIONS_RECIBOS.map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Button
+            className=" flex items-center justify-cente bg-white rounded-md border border-gray-300 hover:bg-gray-200 p-2 text-gray-700"
+            onClick={() => {
+              setSearchTerm("");
+              setStatusFilter("all");
+            }}
+          >
+            <IoMdClose className="size-5" />
+          </Button>
         </div>
-      ) : !sinistros || sinistros.length === 0 ? (
-        <div className="flex flex-col items-center justify-center gap-2 py-8">
-          <div className="relative">
-            <FaSearch className="text-4xl text-gray-400 animate-pulse" />
-            <FaFilter
-              className="absolute -top-2 -right-2 text-xl text-[#2d4e7f] animate-spin-slow"
-              style={{ animationDuration: "3s" }}
-            />
+      </div>
+
+      <div className="flex flex-col gap-6">
+        {filteredSinistros.length === 0 ? (
+          <div className="flex flex-col items-center justify-center gap-4 py-8">
+            <FaSearch className="text-4xl text-gray-400" />
+            <p className="text-gray-500 text-center">
+              Nenhum sinistro encontrado com os filtros aplicados.
+            </p>
           </div>
-          <p className="text-gray-500 text-center">
-            Nenhum sinistro encontrado!
-            <br />
-            Tente novamnete mas tarde.
-          </p>
-        </div>
-      ) : (
-        <div className="flex flex-col gap-6">
-          {sinistros.map((sinistro) => (
+        ) : (
+          filteredSinistros.map((sinistro) => (
             <Card
               key={sinistro.claimNumber}
               className={`overflow-hidden border-b-4 sm:border-b-0 sm:border-l-4 rounded-xl ${getBorderCardSinistrosColors(
@@ -153,9 +237,9 @@ export default function SinistrosPage({
                 </div>
               </CardContent>
             </Card>
-          ))}
-        </div>
-      )}
+          ))
+        )}
+      </div>
     </div>
   );
 }

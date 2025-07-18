@@ -9,7 +9,6 @@ import ErrorState from "./ErrorState";
 import { LoadingScreen } from "../../ui/loading-screen";
 import { useProductDetails } from "@/hooks/useProdutsDetails";
 import { Tabs, TabsContent, TabsList } from "@radix-ui/react-tabs";
-import * as Icons from "react-icons/fa";
 import { FaUser, FaUserTie, FaCar, FaCalculator } from "react-icons/fa";
 import { fetchSimulation } from "@/service/simulationService";
 import { getSafeGridClass } from "@/lib/utils";
