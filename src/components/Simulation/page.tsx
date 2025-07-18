@@ -180,7 +180,7 @@ export default function SimulationScreen() {
           {selectedProduct ? (
             <SimulationForm
               productId={selectedProduct.productId}
-              onClose={handleCloseForm}
+              onClose={() => setSelectedProduct(null)}
               reset={handleCloseForm}
             />
           ) : (

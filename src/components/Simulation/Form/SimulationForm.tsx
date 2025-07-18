@@ -9,7 +9,7 @@ import ErrorState from "./ErrorState";
 import { LoadingScreen } from "../../ui/loading-screen";
 import { useProductDetails } from "@/hooks/useProdutsDetails";
 import { Tabs, TabsContent, TabsList } from "@radix-ui/react-tabs";
-import * as Icons from "react-icons/fc";
+import * as Icons from "react-icons/fa";
 import { FaUser, FaUserTie, FaCar, FaCalculator } from "react-icons/fa";
 import { fetchSimulation } from "@/service/simulationService";
 import { getSafeGridClass } from "@/lib/utils";
@@ -25,9 +25,29 @@ const defaultIconMap: Record<string, JSX.Element> = {
   Simulação: <FaCalculator />,
 };
 
-function getDynamicIcon(iconName: string): JSX.Element {
-  const IconComponent = (Icons as any)[iconName];
-  return IconComponent ? <IconComponent /> : <FaUser />;
+import * as RiIcons from "react-icons/ri";
+import * as FaIcons from "react-icons/fa";
+import * as MdIcons from "react-icons/md";
+import * as AiIcons from "react-icons/ai";
+
+const iconPacks: Record<string, any> = {
+  Ri: RiIcons,
+  Fa: FaIcons,
+  Md: MdIcons,
+  Ai: AiIcons,
+};
+
+export function getDynamicIcon(iconName?: string | null): JSX.Element | null {
+  if (!iconName) return null; // Se for null, undefined ou vazio, retorna null
+
+  const prefix = iconName.slice(0, 2); // Ex: FaUser -> Fa
+  const icons = iconPacks[prefix];
+  if (!icons) return null;
+
+  const IconComponent = icons[iconName];
+  return IconComponent ? (
+    <IconComponent className="w-6 h-6 md:w-8 md:h-8" />
+  ) : null;
 }
 
 interface SimulationFormProps {
@@ -270,30 +290,63 @@ export default function SimulationForm({
       </div>
 
       {/* Tabs List */}
-      <div className="border-b w-full">
-        <TabsList className="flex items-center justify-center w-full gap-1">
-          {product.tabs.map((tab: any) => (
-            <button
-              key={tab.title}
-              type="button"
-              onClick={() => handleTabChange(tab.title)}
-              className={`
-                relative py-1 md:py-4 px-2 md:px-10 md:w-full transition-all duration-300 font-serif text-xs md:text-xl group overflow-hidden
-                ${
-                  activeTab === tab.title
-                    ? "text-white bg-[#002B5B] font-medium"
-                    : "text-[#6f7070] hover:text-[#002B5B] hover:scale-[1.02] bg-[#e6e3e3]"
-                }
-              `}
-            >
-              <div className="flex justify-center items-center gap-1 md:gap-2 relative z-10">
-                <span className="text-lg md:text-2xl">
-                  {getDynamicIcon(tab.webIcon) || defaultIconMap[tab.title]}
+      <div className="w-full py-6">
+        <TabsList className="flex items-center justify-between w-full relative">
+          {product.tabs.map((tab: any, index: number) => {
+            const isActive = activeTab === tab.title;
+            const activeIndex = product.tabs.findIndex(
+              (t: any) => t.title === activeTab
+            );
+            const isCompleted = activeIndex > index;
+            const isLast = index === product.tabs.length - 1;
+
+            return (
+              <div
+                key={tab.title}
+                className="flex-1 flex flex-col items-center relative"
+              >
+                {!isLast && (
+                  <div className="absolute top-7 left-1/2 w-full h-1 -translate-y-1/2">
+                    <div
+                      className={`h-1 transition-all duration-300 ${
+                        isCompleted ? "bg-[#002B5B]" : "bg-gray-300"
+                      }`}
+                    ></div>
+                  </div>
+                )}
+
+                {/* Botão do step */}
+                <button
+                  type="button"
+                  onClick={() => handleTabChange(tab.title)}
+                  className={`
+              z-10 w-10 h-10 md:w-14 md:h-14 flex items-center justify-center rounded-full transition-all duration-300
+              ${
+                isActive || isCompleted
+                  ? "bg-[#002B5B] text-white"
+                  : "border-2 border-gray-300 bg-white text-gray-400"
+              }
+            `}
+                >
+                  <span className="flex items-center justify-center">
+                    {getDynamicIcon(tab.webIcon)}
+                  </span>
+                </button>
+
+                <span
+                  className={`mt-2 text-xs md:text-lg text-center font-semibold
+              ${
+                isActive || isCompleted
+                  ? "text-[#002B5B] font-bold"
+                  : "text-gray-400"
+              }
+            `}
+                >
+                  {tab.title}
                 </span>
-                <span>{tab.title}</span>
               </div>
-            </button>
-          ))}
+            );
+          })}
         </TabsList>
       </div>
 
