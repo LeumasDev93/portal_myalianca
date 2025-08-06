@@ -197,18 +197,18 @@ export function ModalDetails({ selectedSimulation, setOpenModal }: propsModal) {
               <div className="space-y-2">
                 <p>
                   <span className="font-medium text-gray-600">Prêmio:</span>{" "}
-                  {selectedSimulation.premium.toLocaleString("pt-PT", {
+                  {selectedSimulation.premium.toLocaleString(undefined, {
                     style: "currency",
-                    currency: "EUR",
+                    currency: "ECV",
                   })}
                 </p>
                 <p>
                   <span className="font-medium text-gray-600">
                     Prêmio Total:
-                  </span>{" "}
-                  {selectedSimulation.totalPremium.toLocaleString("pt-PT", {
+                  </span>
+                  {selectedSimulation.totalPremium.toLocaleString(undefined, {
                     style: "currency",
-                    currency: "EUR",
+                    currency: "ECV",
                   })}
                 </p>
               </div>

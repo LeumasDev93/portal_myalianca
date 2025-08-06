@@ -5,7 +5,7 @@ import EmptyState from "../Form/EmptyState";
 import { LoadingScreen } from "../../ui/loading-screen";
 import { Card, CardHeader, CardTitle } from "../../ui/card";
 import { formatDate } from "@/lib/utils";
-import { FaRegEdit, FaSearch } from "react-icons/fa";
+import { FaRegEdit, FaRegEye, FaSearch } from "react-icons/fa";
 import { fetchSimulations } from "@/service/listSimulationsService";
 import { Simulation } from "@/types/typesData";
 import {
@@ -33,26 +33,34 @@ export default function MySimulationsTab() {
   const [error, setError] = useState<string | null>(null);
   const { profile } = useUserProfile();
 
-  // Estados para filtros
+  // Filtros
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [productFilter, setProductFilter] = useState("all");
+
+  // Paginação
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5;
 
   useEffect(() => {
     let isMounted = true;
 
     const loadSimulations = async () => {
       setLoading(true);
-      if (!profile?.user.nif) {
-        return;
-      }
+      if (!profile?.user.nif) return;
 
       try {
         const data = await fetchSimulations(profile.user.nif);
 
+        const sortedData = data.sort((a, b) => {
+          const dateA = new Date(a.startDate ?? "").getTime();
+          const dateB = new Date(b.startDate ?? "").getTime();
+          return dateB - dateA;
+        });
+
         if (isMounted) {
-          setSimulations(data);
-          setFilteredSimulations(data);
+          setSimulations(sortedData);
+          setFilteredSimulations(sortedData);
           setError(null);
         }
       } catch (err) {
@@ -64,14 +72,11 @@ export default function MySimulationsTab() {
           setFilteredSimulations(null);
         }
       } finally {
-        if (isMounted) {
-          setLoading(false);
-        }
+        if (isMounted) setLoading(false);
       }
     };
 
     loadSimulations();
-
     return () => {
       isMounted = false;
     };
@@ -86,14 +91,13 @@ export default function MySimulationsTab() {
       const term = searchTerm.toLowerCase();
       result = result.filter(
         (sim) =>
-          sim.productName.toLowerCase().includes(term) || // Nome do produto
-          sim.clientName.toLowerCase().includes(term) || // Nome do cliente
-          sim.simulationNumber.toString().includes(term) || // Número da simulação
-          (sim.registration && sim.registration.toLowerCase().includes(term)) // Registration
-      ); // Fechamento do filter que estava faltando
+          sim.productName.toLowerCase().includes(term) ||
+          sim.clientName.toLowerCase().includes(term) ||
+          sim.simulationNumber.toString().includes(term) ||
+          (sim.registration && sim.registration.toLowerCase().includes(term))
+      );
     }
 
-    // Mantém os outros filtros
     if (statusFilter !== "all") {
       result = result.filter((sim) => sim.contractStatus === statusFilter);
     }
@@ -103,13 +107,26 @@ export default function MySimulationsTab() {
     }
 
     setFilteredSimulations(result);
+    setCurrentPage(1); // resetar página ao filtrar
   }, [searchTerm, statusFilter, productFilter, simulations]);
-  // Obter produtos únicos para o filtro
+
+  // Produtos únicos para filtro
   const uniqueProducts = simulations
     ? Array.from(new Set(simulations.map((sim) => sim.productName))).sort()
     : [];
 
-  // Skeleton loading enquanto carrega
+  // Paginação
+  const totalPages = filteredSimulations
+    ? Math.ceil(filteredSimulations.length / itemsPerPage)
+    : 1;
+
+  const paginatedSimulations = filteredSimulations
+    ? filteredSimulations.slice(
+        (currentPage - 1) * itemsPerPage,
+        currentPage * itemsPerPage
+      )
+    : [];
+
   if (loading) {
     return (
       <div className="h-[calc(100vh-200px)] flex items-center justify-center">
@@ -118,7 +135,6 @@ export default function MySimulationsTab() {
     );
   }
 
-  // Tratamento de erros
   if (error) {
     return (
       <div className="h-[calc(100vh-200px)] flex items-center justify-center">
@@ -127,7 +143,6 @@ export default function MySimulationsTab() {
     );
   }
 
-  // Quando não há simulações
   if (!simulations || simulations.length === 0) {
     return (
       <div className="h-[calc(100vh-200px)] flex items-center justify-center">
@@ -140,39 +155,26 @@ export default function MySimulationsTab() {
   }
 
   const handleEdit = (simulation: Simulation) => {
-    setSelectedSimulation(simulation); // passa os dados
-    setOpenModal(true); // abre o modal
+    setSelectedSimulation(simulation);
+    setOpenModal(true);
   };
 
   return (
-    <div className="h-[calc(100vh-200px)] overflow-y-auto">
-      {/* Filtros */}
+    <div className="">
       <div className="flex sm:flex-row flex-col gap-4 mb-6 p-4 bg-white sticky top-0 z-10 shadow-sm">
-        <div className="relative">
+        <div className="relative sm:w-1/2">
           <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
           <input
             type="text"
-            placeholder="Buscar por número simulação ou objeto seguro"
-            className="pl-10 bg-white w-full sm:w-96 2xl:w-[500px] rounded-md border border-gray-300 py-2 px-4 focus:outline-none focus:ring-1 focus:ring-gray-200 focus:border-gray-200"
+            placeholder="Buscar por nº simulação ou objeto seguro"
+            className="pl-10 bg-white w-full rounded-md border border-gray-300 py-2 px-4 focus:outline-none focus:ring-1 focus:ring-gray-200 focus:border-gray-200"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
 
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="bg-white sm:w-1/2 rounded-md border border-gray-300 py-2 px-4 focus:outline-none focus:ring-1 focus:ring-gray-200 focus:border-gray-200">
-            <SelectValue placeholder="Filtrar por status" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">--Selecionar um estado--</SelectItem>
-            <SelectItem value="I">Simulação</SelectItem>
-            <SelectItem value="A">Ativo</SelectItem>
-            <SelectItem value="P">Pendente</SelectItem>
-          </SelectContent>
-        </Select>
-
         <Select value={productFilter} onValueChange={setProductFilter}>
-          <SelectTrigger className="bg-white sm:w-1/2 rounded-md border border-gray-300 py-2 px-4 focus:outline-none focus:ring-1 focus:ring-gray-200 focus:border-gray-200">
+          <SelectTrigger className="bg-white sm:w-1/3 rounded-md border border-gray-300 py-2 px-4 focus:outline-none focus:ring-1 focus:ring-gray-200 focus:border-gray-200">
             <SelectValue placeholder="Filtrar por produto" />
           </SelectTrigger>
           <SelectContent>
@@ -184,8 +186,9 @@ export default function MySimulationsTab() {
             ))}
           </SelectContent>
         </Select>
+
         <Button
-          className=" flex items-center justify-cente bg-white rounded-md border border-gray-300 hover:bg-gray-200 p-2 text-gray-700"
+          className="flex items-center justify-center bg-white rounded-md border border-gray-300 hover:bg-gray-200 p-2 text-gray-700"
           onClick={() => {
             setSearchTerm("");
             setProductFilter("all");
@@ -196,12 +199,11 @@ export default function MySimulationsTab() {
         </Button>
       </div>
 
-      {/* Lista de simulações */}
       <div className="space-y-4 pb-4 px-4">
-        {filteredSimulations && filteredSimulations.length > 0 ? (
-          filteredSimulations.map((simulation) => (
+        {paginatedSimulations.length > 0 ? (
+          paginatedSimulations.map((simulation) => (
             <Card key={simulation.simulationNumber} className="overflow-hidden">
-              <CardHeader className="">
+              <CardHeader>
                 <div className="flex sm:flex-row flex-col items-center justify-between">
                   <div className="flex flex-col">
                     <CardTitle className="text-company-blue-600 text-[#002256]">
@@ -210,6 +212,9 @@ export default function MySimulationsTab() {
                     <p className="text-sm text-gray-500">
                       Número Simulação: #{simulation.simulationNumber}
                     </p>
+                    <span className="text-sm text-gray-400">
+                      Objeto seguro: {simulation.registration}
+                    </span>
                   </div>
                   <div>
                     <p className="text-sm text-gray-500">Data Simulação</p>
@@ -220,12 +225,22 @@ export default function MySimulationsTab() {
                   <div>
                     <p className="text-sm text-gray-500">Premio Total</p>
                     <p className="font-medium text-[#002256]">
-                      {simulation.totalPremium}
+                      {simulation.totalPremium.toLocaleString(undefined, {
+                        style: "currency",
+                        currency: "ECV",
+                      })}
                     </p>
                   </div>
-                  <div className="flex ">
+                  <div className="flex space-x-4">
                     <Button
                       onClick={() => handleEdit(simulation)}
+                      className="flex items-center bg-[#002256] hover:bg-[#002256]/70 gap-2"
+                    >
+                      <FaRegEye />
+                      Ver Detalhes
+                    </Button>
+                    <Button
+                      onClick={() => console.log(simulation)}
                       className="flex items-center bg-[#002256] hover:bg-[#002256]/70 gap-2"
                     >
                       <FaRegEdit />
@@ -255,6 +270,50 @@ export default function MySimulationsTab() {
           </div>
         )}
       </div>
+
+      {totalPages > 1 && (
+        <div className="flex justify-center items-center gap-2 mt-4 pb-6">
+          <Button
+            className={`px-4 py-2 rounded-lg border ${
+              currentPage === 1
+                ? "bg-[#E5E7EB] text-[#002256] opacity-50 cursor-not-allowed"
+                : "bg-[#002256] text-white hover:bg-[#002256]/70"
+            }`}
+            onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+            disabled={currentPage === 1}
+          >
+            Anterior
+          </Button>
+
+          {Array.from({ length: totalPages }, (_, i) => (
+            <Button
+              key={i + 1}
+              onClick={() => setCurrentPage(i + 1)}
+              className={`px-4 py-2 rounded-lg border ${
+                currentPage === i + 1
+                  ? "bg-[#002256] text-white"
+                  : "bg-[#E5E7EB] text-[#002256] hover:bg-[#D1D5DB]"
+              }`}
+            >
+              {i + 1}
+            </Button>
+          ))}
+
+          <Button
+            className={`px-4 py-2 rounded-lg border ${
+              currentPage === totalPages
+                ? "bg-[#E5E7EB] text-[#002256] opacity-50 cursor-not-allowed"
+                : "bg-[#002256] text-white hover:bg-[#002256]/70"
+            }`}
+            onClick={() =>
+              setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+            }
+            disabled={currentPage === totalPages}
+          >
+            Próximo
+          </Button>
+        </div>
+      )}
 
       {openModal && selectedSimulation && (
         <ModalDetails
