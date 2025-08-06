@@ -1,35 +1,53 @@
-// app/api/upload/route.ts
-import { NextResponse } from 'next/server';
+import type { NextApiRequest, NextApiResponse } from "next";
+import formidable from "formidable";
+import fs from "fs";
 
-export async function POST(request: Request) {
-  try {
-    const apiUrl = `${process.env.NEXT_PUBLIC_API_BASE_URL}/documents/upload`;
-    const apiToken = process.env.API_SECRET_TOKEN;
+export const config = {
+  api: {
+    bodyParser: false, // DESABILITA o body parser padrão para lidar com form-data
+  },
+};
 
-    const body = await request.json();
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  if (req.method !== "POST") {
+    return res.status(405).json({ message: "Method Not Allowed" });
+  }
 
-    const response = await fetch(apiUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiToken}`,
-        'ApiKey': process.env.NEXT_PUBLIC_API_KEY || ''
-      },
-      body: JSON.stringify(body)
-    });
+  const form = new formidable.IncomingForm();
 
-    if (!response.ok) {
-      throw new Error(`Erro no upload: ${response.status}`);
+  form.parse(req, async (err, fields, files) => {
+    if (err) {
+      console.error("Erro formidable:", err);
+      return res.status(500).json({ message: "Erro ao processar arquivo" });
     }
 
-    const data = await response.json();
-    return NextResponse.json(data);
+    const fileInput = files.file;
+    const file = Array.isArray(fileInput) ? fileInput[0] : fileInput;
 
-  } catch (error) {
-    console.error('Erro no upload de documento:', error);
-    return NextResponse.json(
-      { error: 'Falha ao enviar documento', details: error instanceof Error ? error.message : 'Erro desconhecido' },
-      { status: 500 }
-    );
-  }
+    if (!file) return res.status(400).json({ message: "Arquivo não enviado" });
+
+    try {
+      const fileBuffer = fs.readFileSync(file.filepath);
+
+      const fetchResponse = await fetch("https://api.aliancaseguros.cv/files/1.0.0/upload", {
+        method: "POST",
+        headers: {
+          "x-api-key": process.env.NEXT_PUBLIC_API_KEY || "",
+        },
+        body: fileBuffer,
+      });
+
+      if (!fetchResponse.ok) {
+        const text = await fetchResponse.text();
+        return res.status(fetchResponse.status).json({ message: "Erro na API externa", details: text });
+      }
+
+      const json = await fetchResponse.json();
+
+      return res.status(200).json(json);
+    } catch (error) {
+      console.error("Erro upload API externa:", error);
+      return res.status(500).json({ message: "Erro no upload para API externa" });
+    }
+  });
 }

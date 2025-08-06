@@ -24,7 +24,7 @@ export function TopMenu({
   const { profile } = useUserProfile();
 
   const unreadCount = useUnreadCount();
-
+  const base_url = process.env.NEXT_PUBLIC_API_BASE_URL_IMAGE;
   const [showSearch, setShowSearch] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const getSaudacao = () => {
@@ -144,9 +144,9 @@ export function TopMenu({
             aria-label="Mensagens"
           >
             <MdEmail className="text-[#002256] size-5 xl:size-6" />
-            {unreadCount.unreadCount > 0 && (
+            {unreadCount.messages.length > 0 && (
               <span className="absolute -top-1 -right-1 bg-[#B7021C] text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                {unreadCount.unreadCount}
+                {unreadCount.messages.length}
               </span>
             )}
           </button>
@@ -168,7 +168,10 @@ export function TopMenu({
             aria-label="Perfil"
           >
             <Avatar className="w-full h-full flex items-center justify-center">
-              <AvatarImage src="" className="rounded-full" />
+              <AvatarImage
+                src={`${base_url}/${profile?.user?.imagem_id}`}
+                className="rounded-full"
+              />
               <AvatarFallback className="text-white hover:text-[#002256]">
                 {profile?.user?.nome?.charAt(0)}
               </AvatarFallback>

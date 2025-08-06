@@ -3,7 +3,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "../ui/tabs";
 import { useProducts } from "@/hooks/useProducts";
 import SimulationForm from "./Form/SimulationForm";
 import ProductsTab from "./ProductsTab";
-import MySimulationsTab from "./MySimulationsTab";
+import MySimulationsTab from "./MySimulations/MySimulationsTab";
 import { Product } from "@/types/typesData";
 import Image from "next/image";
 

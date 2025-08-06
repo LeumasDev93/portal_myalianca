@@ -121,7 +121,7 @@ const Page = () => {
       title: "Simular & Contratar",
       path: "Simulation",
       icon: TbTopologyStar3,
-      hoverIcon: <BsPersonFill />,
+      hoverIcon: <TbTopologyStar3 />,
       onClick: () => handleMenuClick("Simulation"),
     },
     {

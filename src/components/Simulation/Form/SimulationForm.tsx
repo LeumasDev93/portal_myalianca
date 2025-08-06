@@ -14,7 +14,7 @@ import { fetchSimulation } from "@/service/simulationService";
 import { getSafeGridClass } from "@/lib/utils";
 import { fetchVehicleBrands } from "@/service/marcaService";
 import { getSession } from "next-auth/react";
-import { SimulationResults } from "../SimulationResults";
+import { SimulationResults } from "../MySimulations/SimulationResults";
 
 const defaultIconMap: Record<string, JSX.Element> = {
   "Dados Pessoais": <FaUser />,

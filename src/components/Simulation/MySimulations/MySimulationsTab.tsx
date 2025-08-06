@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import EmptyState from "./Form/EmptyState";
-import { LoadingScreen } from "../ui/loading-screen";
-import { Card, CardHeader, CardTitle } from "../ui/card";
+import EmptyState from "../Form/EmptyState";
+import { LoadingScreen } from "../../ui/loading-screen";
+import { Card, CardHeader, CardTitle } from "../../ui/card";
 import { formatDate } from "@/lib/utils";
 import { FaRegEdit, FaSearch } from "react-icons/fa";
 import { fetchSimulations } from "@/service/listSimulationsService";
@@ -14,12 +14,17 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "../ui/select";
-import { Button } from "../ui/button";
+} from "../../ui/select";
+import { Button } from "../../ui/button";
 import { useUserProfile } from "@/hooks/useUserProfile ";
 import { IoMdClose } from "react-icons/io";
+import { ModalDetails } from "./ModalDetalhes";
 
 export default function MySimulationsTab() {
+  const [openModal, setOpenModal] = useState(false);
+  const [selectedSimulation, setSelectedSimulation] =
+    useState<Simulation | null>(null);
+
   const [simulations, setSimulations] = useState<Simulation[] | null>(null);
   const [filteredSimulations, setFilteredSimulations] = useState<
     Simulation[] | null
@@ -134,6 +139,11 @@ export default function MySimulationsTab() {
     );
   }
 
+  const handleEdit = (simulation: Simulation) => {
+    setSelectedSimulation(simulation); // passa os dados
+    setOpenModal(true); // abre o modal
+  };
+
   return (
     <div className="h-[calc(100vh-200px)] overflow-y-auto">
       {/* Filtros */}
@@ -214,7 +224,10 @@ export default function MySimulationsTab() {
                     </p>
                   </div>
                   <div className="flex ">
-                    <Button className="flex items-center bg-[#002256] hover:bg-[#002256]/70 gap-2">
+                    <Button
+                      onClick={() => handleEdit(simulation)}
+                      className="flex items-center bg-[#002256] hover:bg-[#002256]/70 gap-2"
+                    >
                       <FaRegEdit />
                       Editar
                     </Button>
@@ -242,6 +255,13 @@ export default function MySimulationsTab() {
           </div>
         )}
       </div>
+
+      {openModal && selectedSimulation && (
+        <ModalDetails
+          selectedSimulation={selectedSimulation}
+          setOpenModal={setOpenModal}
+        />
+      )}
     </div>
   );
 }

@@ -18,10 +18,19 @@ export const fetchSimulation = async (
     }
 
     const generateRandomSimulationId = (): number => {
-        const min = 100000000000; // Menor número de 12 dígitos
-        const max = 999999999999; // Maior número de 12 dígitos
-        return Math.floor(Math.random() * (max - min + 1)) + min;
+        const now = new Date();
+
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, "0"); // mês começa do 0
+        const day = String(now.getDate()).padStart(2, "0");
+        const hours = String(now.getHours()).padStart(2, "0");
+        const minutes = String(now.getMinutes()).padStart(2, "0");
+        const seconds = String(now.getSeconds()).padStart(2, "0");
+
+        const timestamp = `${year}${month}${day}${hours}${minutes}${seconds}`;
+        return Number(timestamp); // Converte para número
     };
+
 
     const idSimulationTel = generateRandomSimulationId();
     console.log(idSimulationTel, "id gerado");
@@ -42,19 +51,19 @@ export const fetchSimulation = async (
         driverLicenseNumber,
         driverLicenseDate,
         gender,
-        description,
         nif,
         bi,
         passport,
         entityType,
         maritalStatus,
         email,
-        mobile
+        mobile,
+        currentValue
     } = formData;
 
     // Monta o payload com os dados do formulário
     const payload = {
-        idSimulationTel: 956212547672,
+        idSimulationTel: idSimulationTel,
         producer: 2,
         registerDateSimulationTel: new Date().toISOString(),
         product: "EXTERNAL_AUTO",
@@ -72,18 +81,11 @@ export const fetchSimulation = async (
                     cylinderCap: cylinderCap ? parseInt(cylinderCap) : undefined,
                     weight: weight ? parseInt(weight) : undefined,
                     chassis: chassis,
+                    currentValue: currentValue,
                     Ilha: Ilha,
                     TipoDeUtilizacao: TipoDeUtilizacao
                 },
-                risks: [
-                    {
-                        name: "RISK_RC",
-                        order: 1,
-                        code: "RC",
-                        active: true,
-                        capitalOption: "G"
-                    }
-                ],
+
                 children: [
                     {
                         type: "AUTO_C",
@@ -95,12 +97,6 @@ export const fetchSimulation = async (
                             gender: gender
                         }
                     },
-                    {
-                        type: "AUTO_R",
-                        properties: {
-                            description: description
-                        }
-                    }
                 ]
             }
         ],

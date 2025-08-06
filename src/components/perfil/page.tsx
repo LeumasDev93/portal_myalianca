@@ -81,21 +81,44 @@ export function PerfilPage() {
     fileInputRef.current?.click();
   };
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      setIsUploading(true);
-      const imageUrl = URL.createObjectURL(file);
+    if (!file) return;
 
-      setTimeout(() => {
-        setProfileImage(imageUrl);
-        setIsUploading(false);
-        toast({
-          title: "Foto atualizada",
-          description: "Sua foto de perfil foi atualizada com sucesso.",
-          variant: "success",
-        });
-      }, 1000);
+    setIsUploading(true);
+    setProfileImage(URL.createObjectURL(file));
+
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const response = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!response.ok) throw new Error("Erro no upload");
+
+      const result = await response.json();
+
+      toast({
+        title: "Foto atualizada",
+        description: "Sua foto de perfil foi atualizada com sucesso.",
+        variant: "success",
+      });
+
+      setIsUploading(false);
+      return result;
+    } catch (error) {
+      console.error(error);
+      setIsUploading(false);
+      setProfileImage("");
+
+      toast({
+        title: "Erro no upload",
+        description: "Não foi possível atualizar sua foto.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -207,8 +230,12 @@ export function PerfilPage() {
                 aria-label="Clique para alterar sua foto de perfil"
               >
                 <Avatar className="h-24 w-24">
+                  {/* Forçar rerender do AvatarImage passando key para a URL */}
                   <AvatarImage
-                    src={profileImage || "/placeholder.svg"}
+                    key={profileImage}
+                    src={`${
+                      process.env.NEXT_PUBLIC_API_BASE_URL_IMAGE
+                    }/${"fde944e1-8bb3-446b-83f6-10634bebbf68"}`}
                     alt={profile?.user?.nome}
                   />
                   <AvatarFallback>
@@ -245,7 +272,26 @@ export function PerfilPage() {
                 <span className="sr-only">Alterar foto</span>
               </Button>
             </div>
-            <h3 className="text-xl font-semibold">{profile.user?.nome}</h3>
+
+            <input
+              type="file"
+              ref={fileInputRef}
+              className="hidden"
+              accept="image/*"
+              onChange={handleImageChange}
+            />
+
+            <Button
+              size="icon"
+              variant="outline"
+              className="absolute bottom-0 right-0 rounded-full h-8 w-8 bg-white"
+              onClick={handleAvatarClick}
+            >
+              <Camera className="h-4 w-4" />
+              <span className="sr-only">Alterar foto</span>
+            </Button>
+
+            <h3 className="text-xl font-semibold mt-4">{profile.user?.nome}</h3>
             {profile.user?.email && (
               <div className="flex items-center gap-1 text-muted-foreground mt-1">
                 <Mail className="h-4 w-4" />

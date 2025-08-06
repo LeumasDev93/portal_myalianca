@@ -1,6 +1,6 @@
 import { SimulationResponse } from "@/types/typesData";
-import React from "react";
-import { X } from "lucide-react";
+import React, { useState } from "react";
+import { Check, Copy, X } from "lucide-react";
 import {
   FaCalendarAlt,
   FaCalendarCheck,
@@ -21,14 +21,37 @@ interface Props {
 export function SimulationResults({ data, onClose, isOpen, reset }: Props) {
   if (!isOpen || !data) return null;
 
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  const [copied, setCopied] = useState(false);
+  const handleCopy = () => {
+    navigator.clipboard.writeText(data.reference);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000); // Mensagem desaparece após 2s
+  };
+
   return (
     <div className="fixed inset-0 z-50 flex justify-center items-center bg-black/50">
       <div className="bg-white rounded-lg shadow-xl max-w-7xl w-full max-h-[90vh] overflow-y-auto">
-        {/* Modal Header */}
         <div className="sticky top-0 bg-gray-100 p-6 border-b flex justify-between items-center">
-          <h2 className="text-2xl font-bold text-gray-800">
-            Simulação Feita Com Sucesso
+          <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
+            Simulação Feita Com Sucesso /
+            <button
+              onClick={handleCopy}
+              className="flex items-center gap-1 text-gray-600 hover:underline active:opacity-70"
+              title="Clique para copiar"
+            >
+              #{data.reference}
+              {copied ? (
+                <Check size={16} className="text-green-600" />
+              ) : (
+                <Copy size={16} />
+              )}
+            </button>
+            {copied && (
+              <span className="text-sm text-green-600 ml-2">Copiado!</span>
+            )}
           </h2>
+
           <button
             onClick={onClose}
             className="text-gray-500 hover:text-gray-700 transition-colors"
