@@ -1,53 +1,62 @@
-import type { NextApiRequest, NextApiResponse } from "next";
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { NextRequest } from "next/server";
 import formidable from "formidable";
 import fs from "fs";
+import { IncomingForm } from "formidable";
 
-export const config = {
-  api: {
-    bodyParser: false, // DESABILITA o body parser padrão para lidar com form-data
-  },
-};
+// Requer habilitar a leitura de arquivos no Edge Runtime (desativar)
+export const runtime = "nodejs"; // <- IMPORTANTE PARA USAR FS no App Router
 
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  if (req.method !== "POST") {
-    return res.status(405).json({ message: "Method Not Allowed" });
-  }
+export async function POST(req: NextRequest) {
+  const form = new IncomingForm();
 
-  const form = new formidable.IncomingForm();
+  // Transformar `form.parse` em Promise
+  const parseForm = () =>
+    new Promise<{ fields: formidable.Fields; files: formidable.Files }>((resolve, reject) => {
+      form.parse(req as any, (err, fields, files) => {
+        if (err) reject(err);
+        else resolve({ fields, files });
+      });
+    });
 
-  form.parse(req, async (err, fields, files) => {
-    if (err) {
-      console.error("Erro formidable:", err);
-      return res.status(500).json({ message: "Erro ao processar arquivo" });
-    }
-
+  try {
+    const { files } = await parseForm();
     const fileInput = files.file;
     const file = Array.isArray(fileInput) ? fileInput[0] : fileInput;
 
-    if (!file) return res.status(400).json({ message: "Arquivo não enviado" });
-
-    try {
-      const fileBuffer = fs.readFileSync(file.filepath);
-
-      const fetchResponse = await fetch("https://api.aliancaseguros.cv/files/1.0.0/upload", {
-        method: "POST",
-        headers: {
-          "x-api-key": process.env.NEXT_PUBLIC_API_KEY || "",
-        },
-        body: fileBuffer,
+    if (!file) {
+      return new Response(JSON.stringify({ message: "Arquivo não enviado" }), {
+        status: 400,
       });
-
-      if (!fetchResponse.ok) {
-        const text = await fetchResponse.text();
-        return res.status(fetchResponse.status).json({ message: "Erro na API externa", details: text });
-      }
-
-      const json = await fetchResponse.json();
-
-      return res.status(200).json(json);
-    } catch (error) {
-      console.error("Erro upload API externa:", error);
-      return res.status(500).json({ message: "Erro no upload para API externa" });
     }
-  });
+
+    const fileBuffer = fs.readFileSync(file.filepath);
+
+    const uploadRes = await fetch("https://api.aliancaseguros.cv/files/1.0.0/upload", {
+      method: "POST",
+      headers: {
+        "x-api-key": process.env.NEXT_PUBLIC_API_KEY || "",
+      },
+      body: fileBuffer,
+    });
+
+    if (!uploadRes.ok) {
+      const text = await uploadRes.text();
+      return new Response(JSON.stringify({ message: "Erro na API externa", details: text }), {
+        status: uploadRes.status,
+      });
+    }
+
+    const json = await uploadRes.json();
+
+    return new Response(JSON.stringify(json), {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    });
+  } catch (error) {
+    console.error("Erro upload:", error);
+    return new Response(JSON.stringify({ message: "Erro no upload" }), {
+      status: 500,
+    });
+  }
 }
