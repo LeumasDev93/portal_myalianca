@@ -1,5 +1,4 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-
 import { getSession, signIn } from "next-auth/react";
 
 
@@ -19,51 +18,26 @@ export const fetchSimulation = async (
 
     const generateRandomSimulationId = (): number => {
         const now = new Date();
-
         const year = now.getFullYear();
-        const month = String(now.getMonth() + 1).padStart(2, "0"); // mês começa do 0
+        const month = String(now.getMonth() + 1).padStart(2, "0");
         const day = String(now.getDate()).padStart(2, "0");
         const hours = String(now.getHours()).padStart(2, "0");
         const minutes = String(now.getMinutes()).padStart(2, "0");
         const seconds = String(now.getSeconds()).padStart(2, "0");
-
         const timestamp = `${year}${month}${day}${hours}${minutes}${seconds}`;
-        return Number(timestamp); // Converte para número
+        return Number(timestamp);
     };
 
-
     const idSimulationTel = generateRandomSimulationId();
-    console.log(idSimulationTel, "id gerado");
-    // Extrai os dados do formulário
+
     const {
-        licensePlate,
-        licenseDate,
-        brand,
-        model,
-        seats,
-        cylinderCap,
-        weight,
-        chassis,
-        Ilha,
-        TipoDeUtilizacao,
-        name,
-        birthDate,
-        driverLicenseNumber,
-        driverLicenseDate,
-        gender,
-        nif,
-        bi,
-        passport,
-        entityType,
-        maritalStatus,
-        email,
-        mobile,
-        currentValue
+        licensePlate, licenseDate, brand, model, seats, cylinderCap, weight, chassis, Ilha, TipoDeUtilizacao,
+        name, birthDate, driverLicenseNumber, driverLicenseDate, gender, nif, bi, passport,
+        entityType, maritalStatus, email, mobile, currentValue
     } = formData;
 
-    // Monta o payload com os dados do formulário
     const payload = {
-        idSimulationTel: idSimulationTel,
+        idSimulationTel,
         producer: 2,
         registerDateSimulationTel: new Date().toISOString(),
         product: "EXTERNAL_AUTO",
@@ -73,48 +47,48 @@ export const fetchSimulation = async (
         simulationObjects: [
             {
                 properties: {
-                    licensePlate: licensePlate,
-                    licenseDate: licenseDate,
-                    brand: brand,
-                    model: model,
+                    licensePlate,
+                    licenseDate,
+                    brand,
+                    model,
                     seats: seats ? parseInt(seats) : undefined,
                     cylinderCap: cylinderCap ? parseInt(cylinderCap) : undefined,
                     weight: weight ? parseInt(weight) : undefined,
-                    chassis: chassis,
-                    currentValue: currentValue,
-                    Ilha: Ilha,
-                    TipoDeUtilizacao: TipoDeUtilizacao
+                    chassis,
+                    currentValue,
+                    Ilha,
+                    TipoDeUtilizacao
                 },
-
                 children: [
                     {
                         type: "AUTO_C",
                         properties: {
-                            name: name,
-                            birthDate: birthDate,
-                            driverLicenseNumber: driverLicenseNumber,
-                            driverLicenseDate: driverLicenseDate,
-                            gender: gender
+                            name,
+                            birthDate,
+                            driverLicenseNumber,
+                            driverLicenseDate,
+                            gender
                         }
                     },
                 ]
             }
         ],
         client: {
-            nif: nif,
-            name: name,
-            bi: bi,
-            birthDate: birthDate,
-            entityType: entityType,
-            maritalStatus: maritalStatus,
-            passport: passport,
-            gender: gender,
+            nif,
+            name,
+            bi,
+            birthDate,
+            entityType,
+            maritalStatus,
+            passport,
+            gender,
             emails: email ? [email] : [],
             mobiles: mobile ? [mobile] : []
         }
     };
 
     try {
+        // Simulação local
         const response = await fetch("/api/simulation", {
             method: "POST",
             headers: {
@@ -133,10 +107,30 @@ export const fetchSimulation = async (
             throw new Error(`Erro ${response.status}: ${JSON.stringify(errorData)}`);
         }
 
-        const data = await response.json();
-        console.log("Simulação criada:", data.installmentValues);
-        setSimulationResult(data.installmentValues);
-        return data;
+        const simulationResult = await response.json();
+        setSimulationResult(simulationResult.installmentValues);
+
+        try {
+            const externalRes = await fetch("/api/sendToAlianca", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(simulationResult),
+            });
+
+            if (!externalRes.ok) {
+                const externalError = await externalRes.json().catch(() => ({}));
+                console.error("Erro ao enviar para a API da Aliança (via backend):", externalError);
+            } else {
+                const externalData = await externalRes.json();
+                console.log("Resposta da Aliança (via backend):", externalData);
+            }
+        } catch (err) {
+            console.error("Erro ao chamar /api/sendToAlianca:", err);
+        }
+
+        return simulationResult;
     } catch (error) {
         console.error("Falha na simulação:", {
             error: error instanceof Error ? error.message : error,

@@ -51,14 +51,16 @@ export function getDynamicIcon(iconName?: string | null): JSX.Element | null {
 
 interface SimulationFormProps {
   productId: string;
-  onClose: () => void;
+  onClose?: () => void;
   reset: () => void;
+  initialData?: any; // Dados iniciais da simulação para preencher o formulário
 }
 
 export default function SimulationForm({
   productId,
   onClose,
   reset,
+  initialData,
 }: SimulationFormProps) {
   const { product, loading, error } = useProductDetails(productId);
   const [formValues, setFormValues] = useState<Record<string, any>>({});
@@ -123,17 +125,136 @@ export default function SimulationForm({
   useEffect(() => {
     if (product) {
       const initialValues: Record<string, any> = {};
-      product.tabs.forEach((tab: any) => {
-        tab.form.fields.forEach((field: any) => {
-          initialValues[field.name] = "";
+
+      // Se temos dados iniciais, mapear os valores
+      if (initialData) {
+        console.log("Preenchendo formulário com dados iniciais:", initialData);
+        console.log("Produto carregado:", product);
+
+        // Mapear dados da simulação para campos do formulário
+        product.tabs.forEach((tab: any) => {
+          console.log("Processando tab:", tab.title);
+          tab.form.fields.forEach((field: any) => {
+            console.log("Processando campo:", field.name);
+            // Mapear campos específicos baseado no nome
+            let value = "";
+
+            // Mapeamento de campos da simulação para campos do formulário
+            switch (field.name) {
+              case "clientName":
+                value = initialData.clientReference || "";
+                console.log("Mapeando clientName:", value);
+                break;
+              case "vehicleBrand":
+                // Extrair marca do objeto segurado se disponível
+                if (initialData.simulationObjects?.[0]?.propertyGroup?.values) {
+                  const brandValue =
+                    initialData.simulationObjects[0].propertyGroup.values.find(
+                      (prop: any) => prop.name === "brand"
+                    );
+                  value = brandValue?.value || "";
+                  console.log("Mapeando vehicleBrand:", value);
+                }
+                break;
+              case "vehicleModel":
+                // Extrair modelo do objeto segurado se disponível
+                if (initialData.simulationObjects?.[0]?.propertyGroup?.values) {
+                  const modelValue =
+                    initialData.simulationObjects[0].propertyGroup.values.find(
+                      (prop: any) => prop.name === "model"
+                    );
+                  value = modelValue?.value || "";
+                  console.log("Mapeando vehicleModel:", value);
+                }
+                break;
+              case "licensePlate":
+                // Extrair placa do objeto segurado se disponível
+                if (initialData.simulationObjects?.[0]?.propertyGroup?.values) {
+                  const plateValue =
+                    initialData.simulationObjects[0].propertyGroup.values.find(
+                      (prop: any) => prop.name === "licensePlate"
+                    );
+                  value = plateValue?.value || "";
+                  console.log("Mapeando licensePlate:", value);
+                }
+                break;
+              case "vehicleValue":
+                // Extrair valor do veículo se disponível
+                if (initialData.simulationObjects?.[0]?.propertyGroup?.values) {
+                  const valueProp =
+                    initialData.simulationObjects[0].propertyGroup.values.find(
+                      (prop: any) => prop.name === "currentValue"
+                    );
+                  value = valueProp?.value || "";
+                  console.log("Mapeando vehicleValue:", value);
+                }
+                break;
+              case "weight":
+                // Extrair peso do veículo se disponível
+                if (initialData.simulationObjects?.[0]?.propertyGroup?.values) {
+                  const weightProp =
+                    initialData.simulationObjects[0].propertyGroup.values.find(
+                      (prop: any) => prop.name === "weight"
+                    );
+                  value = weightProp?.value || "";
+                  console.log("Mapeando weight:", value);
+                }
+                break;
+              case "seats":
+                // Extrair número de lugares se disponível
+                if (initialData.simulationObjects?.[0]?.propertyGroup?.values) {
+                  const seatsProp =
+                    initialData.simulationObjects[0].propertyGroup.values.find(
+                      (prop: any) => prop.name === "seats"
+                    );
+                  value = seatsProp?.value || "";
+                  console.log("Mapeando seats:", value);
+                }
+                break;
+              case "licenseDate":
+                // Extrair data da carta se disponível
+                if (initialData.simulationObjects?.[0]?.propertyGroup?.values) {
+                  const licenseDateProp =
+                    initialData.simulationObjects[0].propertyGroup.values.find(
+                      (prop: any) => prop.name === "licenseDate"
+                    );
+                  value = licenseDateProp?.value || "";
+                  console.log("Mapeando licenseDate:", value);
+                }
+                break;
+              default:
+                // Para outros campos, tentar encontrar por nome
+                if (initialData.simulationObjects?.[0]?.propertyGroup?.values) {
+                  const matchingProp =
+                    initialData.simulationObjects[0].propertyGroup.values.find(
+                      (prop: any) => prop.name === field.name
+                    );
+                  value = matchingProp?.value || "";
+                  console.log(`Mapeando ${field.name}:`, value);
+                }
+                break;
+            }
+
+            initialValues[field.name] = value;
+          });
         });
-      });
+
+        console.log("Valores iniciais mapeados:", initialValues);
+      } else {
+        // Se não há dados iniciais, inicializar com valores vazios
+        product.tabs.forEach((tab: any) => {
+          tab.form.fields.forEach((field: any) => {
+            initialValues[field.name] = "";
+          });
+        });
+      }
+
       setFormValues(initialValues);
       if (product.tabs.length > 0) {
         setActiveTab(product.tabs[0].title);
       }
     }
-  }, [product]);
+  }, [product, initialData]);
 
   // Atualiza valores do formulário e limpa erro no campo
   const handleFieldChange = (name: string, value: string) => {
@@ -217,7 +338,7 @@ export default function SimulationForm({
       setActiveTab(previousTab.title);
       setErrors({});
     } else {
-      onClose();
+      onClose?.();
     }
   };
 
@@ -263,7 +384,8 @@ export default function SimulationForm({
   };
 
   if (loading) return <LoadingScreen />;
-  if (error) return <ErrorState error={error} onClose={onClose} />;
+  if (error)
+    return <ErrorState error={error} onClose={onClose || (() => {})} />;
   if (!product) return <EmptyState />;
 
   const currentIndex = product.tabs.findIndex(
@@ -364,18 +486,25 @@ export default function SimulationForm({
                 <div className={getSafeGridClass(tab.form.webGridSize)}>
                   {tab.form.fields
                     .sort((a: any, b: any) => a.position - b.position)
-                    .map((field: any) => (
-                      <FormField
-                        key={field.name}
-                        field={field}
-                        value={formValues[field.name]}
-                        error={errors[field.name]}
-                        onChange={(value: string) =>
-                          handleFieldChange(field.name, value)
-                        }
-                        options={[]}
-                      />
-                    ))}
+                    .map((field: any) => {
+                      const fieldValue = formValues[field.name];
+                      console.log(
+                        `Renderizando campo ${field.name} com valor:`,
+                        fieldValue
+                      );
+                      return (
+                        <FormField
+                          key={field.name}
+                          field={field}
+                          value={fieldValue}
+                          error={errors[field.name]}
+                          onChange={(value: string) =>
+                            handleFieldChange(field.name, value)
+                          }
+                          options={[]}
+                        />
+                      );
+                    })}
                 </div>
               </div>
             </div>
@@ -395,16 +524,11 @@ export default function SimulationForm({
         </TabsContent>
       ))}
 
-      {/* Mostrar resultado da simulação, se houver */}
       {isModalOpen && (
         <SimulationResults
           reset={reset}
           data={simulationResult}
           isOpen={isModalOpen}
-          onClose={() => {
-            setIsModalOpen(false);
-            onClose();
-          }}
         />
       )}
     </Tabs>

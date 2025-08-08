@@ -1,257 +1,426 @@
-import { Simulation } from "@/types/typesData";
-import { TbTopologyStar3 } from "react-icons/tb";
-type propsModal = {
-  selectedSimulation: Simulation;
-  setOpenModal: (open: boolean) => void;
-};
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import React, { useState, useEffect } from "react";
+import { Check, Copy, X } from "lucide-react";
+import {
+  FaCalendarAlt,
+  FaCalendarCheck,
+  FaCalendarDay,
+  FaCalendarWeek,
+  FaFileInvoiceDollar,
+  FaMoneyBillWave,
+  FaPercentage,
+  FaCar,
+  FaShieldAlt,
+} from "react-icons/fa";
+import { SimulationResponse } from "@/types/typesData";
 
-export function ModalDetails({ selectedSimulation, setOpenModal }: propsModal) {
+// Tipos atualizados para refletir a estrutura real dos dados
+
+interface Props {
+  data: {
+    info: {
+      count: number;
+      page: number;
+      status: number;
+      errors: null;
+    };
+    results: SimulationResponse;
+  };
+  onClose: () => void;
+  isOpen: boolean;
+  reset: () => void;
+}
+
+export function ModalDetails({ data, onClose, isOpen, reset }: Props) {
+  const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    if (!isOpen) {
+      setCopied(false);
+    }
+  }, [isOpen]);
+
+  if (!isOpen || !data?.results) {
+    console.log(
+      "Modal não será renderizado - isOpen:",
+      isOpen,
+      "data?.results:",
+      !!data?.results
+    );
+    return null;
+  }
+
+  const currency = data.results?.currency || "CVE";
+
+  const handleCopy = () => {
+    if (navigator.clipboard && data.results.reference) {
+      navigator.clipboard.writeText(data.results.reference);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
+
+  const getPeriodIcon = (name: string) => {
+    switch (name) {
+      case "A":
+        return <FaCalendarAlt className="inline mr-2" />;
+      case "S":
+        return <FaCalendarCheck className="inline mr-2" />;
+      case "T":
+        return <FaCalendarWeek className="inline mr-2" />;
+      case "M":
+        return <FaCalendarDay className="inline mr-2" />;
+      default:
+        return <FaCalendarAlt className="inline mr-2" />;
+    }
+  };
+
+  const getPeriodLabel = (name: string) => {
+    switch (name) {
+      case "A":
+        return "Anual";
+      case "S":
+        return "Semestral";
+      case "T":
+        return "Trimestral";
+      case "M":
+        return "Mensal";
+      default:
+        return "Período Desconhecido";
+    }
+  };
+
+  const formatCurrency = (value: number | undefined | null) => {
+    if (value === undefined || value === null) {
+      return "N/A";
+    }
+
+    return value.toLocaleString("pt-CV", {
+      style: "currency",
+      currency: currency,
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
+  };
+
+  const formatDateString = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString("pt-CV");
+  };
+
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white p-6 rounded-lg max-w-4xl w-full shadow-xl relative">
-        <button
-          onClick={() => setOpenModal(false)}
-          className="absolute top-4 right-4 text-gray-500 hover:text-gray-700 transition-colors"
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            className="h-6 w-6"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M6 18L18 6M6 6l12 12"
-            />
-          </svg>
-        </button>
-
-        <div className="flex items-center mb-6">
-          <div className="bg-blue-100 p-3 rounded-full mr-4">
-            {/* <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-8 w-8 text-blue-600"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
+    <div className="fixed inset-0 z-50 flex justify-center items-center bg-black/50 p-4">
+      <div className="bg-white rounded-lg shadow-xl max-w-7xl w-full max-h-[90vh] overflow-y-auto flex flex-col">
+        {/* Header */}
+        <div className="sticky top-0 bg-gray-100 p-6 border-b flex justify-between items-center">
+          <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
+            Detalhes da Simulação /
+            <button
+              onClick={handleCopy}
+              className="flex items-center gap-1 text-gray-600 hover:underline active:opacity-70 ml-2"
+              title="Clique para copiar"
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
-              />
-            </svg> */}
+              #{data.results.reference}
+              {copied ? (
+                <Check size={16} className="text-green-600" />
+              ) : (
+                <Copy size={16} />
+              )}
+            </button>
+            {copied && (
+              <span className="text-sm text-green-600 ml-2">Copiado!</span>
+            )}
+          </h2>
 
-            <TbTopologyStar3 className="h-8 w-8 text-[#002256]" />
-          </div>
-          <div>
-            <h2 className="text-2xl font-bold text-gray-800">
-              Simulação #{selectedSimulation.simulationNumber}
-            </h2>
-            <p className="text-gray-600">{selectedSimulation.productName}</p>
+          <button
+            onClick={onClose}
+            aria-label="Fechar modal"
+            className="text-gray-500 hover:text-gray-700 transition-colors"
+          >
+            <X size={24} />
+          </button>
+        </div>
+
+        {/* Informações Gerais */}
+        <div className="p-6 border-b">
+          <h3 className="text-lg font-semibold text-gray-800 mb-4">
+            Informações Gerais
+          </h3>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <p className="text-sm text-gray-500">Data de Renovação</p>
+              <p className="font-medium">
+                {formatDateString(data.results.renewalDate)}
+              </p>
+            </div>
+            <div>
+              <p className="text-sm text-gray-500">Prêmio Total</p>
+              <p className="font-medium">
+                {data.results.totalPremium.toLocaleString(undefined, {
+                  style: "currency",
+                  currency: "ECV",
+                })}
+              </p>
+            </div>
+            <div>
+              <p className="text-sm text-gray-500">Prêmio</p>
+              <p className="font-medium">
+                {data.results.premium.toLocaleString(undefined, {
+                  style: "currency",
+                  currency: "ECV",
+                })}
+              </p>
+            </div>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="space-y-4">
-            <div className="bg-gray-50 p-4 rounded-lg">
-              <h3 className="font-semibold text-gray-700 mb-2 flex items-center">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="h-5 w-5 mr-2 text-gray-500"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-                  />
-                </svg>
-                Informações do Cliente
-              </h3>
-              <div className="space-y-2">
-                <p>
-                  <span className="font-medium text-gray-600">Nome:</span>{" "}
-                  {selectedSimulation.clientName}
-                </p>
-                <p>
-                  <span className="font-medium text-gray-600">
-                    Data de Nascimento:
-                  </span>{" "}
-                  {selectedSimulation.birthdate || "Não informado"}
-                </p>
-                <p>
-                  <span className="font-medium text-gray-600">Produtor:</span>{" "}
-                  {selectedSimulation.producerName || "Não informado"}
-                </p>
-              </div>
-            </div>
+        {/* Opções de Pagamento */}
+        <div className="p-6 border-b">
+          <h3 className="text-xl font-semibold text-gray-800 mb-4">
+            Opções de Pagamento
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+            {data.results?.installmentValues?.map((installment: any) => (
+              <div
+                key={installment.name}
+                className="border rounded-lg overflow-hidden hover:shadow-md transition-shadow flex flex-col"
+              >
+                <div className="bg-blue-50 p-4 border-b">
+                  <h4 className="font-bold flex items-center text-lg text-[#002855] text-center">
+                    {getPeriodIcon(installment.name)}
+                    {getPeriodLabel(installment.name)}
+                  </h4>
+                </div>
 
-            <div className="bg-gray-50 p-4 rounded-lg">
-              <h3 className="font-semibold text-gray-700 mb-2 flex items-center">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="h-5 w-5 mr-2 text-gray-500"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"
-                  />
-                </svg>
-                Contatos
-              </h3>
-              <div className="space-y-2">
-                <p>
-                  <span className="font-medium text-gray-600">Telefone:</span>{" "}
-                  {selectedSimulation.primaryMobileContact}
-                </p>
-                <p>
-                  <span className="font-medium text-gray-600">Email:</span>{" "}
-                  {selectedSimulation.primaryEmailContact || "Não informado"}
-                </p>
-                <p>
-                  <span className="font-medium text-gray-600">
-                    Outros contatos:
-                  </span>{" "}
-                  {selectedSimulation.contacts.join(", ")}
-                </p>
+                <div className="p-4 flex-grow">
+                  <p className="text-2xl font-bold text-[#002855] mb-4 text-center">
+                    <FaMoneyBillWave className="inline mr-2 text-[#002855]" />
+                    {installment.value.toLocaleString(undefined, {
+                      style: "currency",
+                      currency: "ECV",
+                    })}
+                  </p>
+
+                  <ul className="space-y-3 mb-4">
+                    <li className="flex justify-between items-center">
+                      <span className="text-sm text-gray-600 flex items-center">
+                        <FaFileInvoiceDollar className="mr-2 text-[#002855]" />
+                        Valor Anual:
+                      </span>
+                      <span className="text-sm font-medium">
+                        {installment.annualValue.toLocaleString(undefined, {
+                          style: "currency",
+                          currency: "ECV",
+                        })}
+                      </span>
+                    </li>
+
+                    {Object.entries(installment.taxes)
+                      .filter(([, value]) => (value as number) > 0)
+                      .map(([taxName, taxValue]) => (
+                        <li
+                          key={taxName}
+                          className="flex justify-between items-center"
+                        >
+                          <span className="text-sm text-gray-600 flex items-center">
+                            <FaPercentage className="mr-2 text-[#002855]" />
+                            {taxName.split(" - ")[1] || taxName}:
+                          </span>
+                          <span className="text-sm font-medium">
+                            {(taxValue as number).toLocaleString(undefined, {
+                              style: "currency",
+                              currency: "ECV",
+                            })}
+                          </span>
+                        </li>
+                      ))}
+                  </ul>
+                </div>
+
+                <div className="p-4 border-t">
+                  <button className="w-full bg-[#002855] text-white py-2 rounded-md hover:bg-[#002256]/70 transition-colors flex items-center justify-center">
+                    <FaFileInvoiceDollar className="mr-2" />
+                    Contratar
+                  </button>
+                </div>
               </div>
-            </div>
+            ))}
           </div>
+        </div>
+        {/* 
+        <div className="p-6">
+          <h3 className="text-xl font-semibold text-gray-800 mb-4">
+            Objetos Segurados
+          </h3>
 
-          <div className="space-y-4">
-            <div className="bg-gray-50 p-4 rounded-lg">
-              <h3 className="font-semibold text-gray-700 mb-2 flex items-center">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="h-5 w-5 mr-2 text-gray-500"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
-                  />
-                </svg>
-                Detalhes do Contrato
-              </h3>
-              <div className="space-y-2">
-                <p>
-                  <span className="font-medium text-gray-600">Status:</span>
-                  <span
-                    className={`ml-2 px-2 py-1 text-xs rounded-full ${
-                      selectedSimulation.contractStatus === "I"
-                        ? "bg-yellow-100 text-yellow-800"
-                        : "bg-green-100 text-green-800"
-                    }`}
-                  >
-                    {selectedSimulation.contractStatus === "I"
-                      ? "Inativo"
-                      : "Ativo"}
+          {data.results.simulationObjects?.map((obj, index) => (
+            <div
+              key={index}
+              className="border border-gray-200 rounded-lg mb-6 p-6 bg-gray-50"
+            >
+              <div className="mb-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center text-[#002855] font-bold text-lg">
+                    <FaCar className="mr-2" />
+                    {obj.description || "Objeto sem descrição"}
+                  </div>
+                  <span className="text-sm bg-blue-100 text-blue-800 px-2 py-1 rounded">
+                    {obj.code || "Sem código"}
                   </span>
-                </p>
-                <p>
-                  <span className="font-medium text-gray-600">Matrícula:</span>{" "}
-                  {selectedSimulation.registration}
-                </p>
-                <p>
-                  <span className="font-medium text-gray-600">ATM:</span>{" "}
-                  {selectedSimulation.atm || "Não informado"}
-                </p>
-              </div>
-            </div>
+                </div>
 
-            <div className="bg-gray-50 p-4 rounded-lg">
-              <h3 className="font-semibold text-gray-700 mb-2 flex items-center">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="h-5 w-5 mr-2 text-gray-500"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                  />
-                </svg>
-                Valores
-              </h3>
-              <div className="space-y-2">
-                <p>
-                  <span className="font-medium text-gray-600">Prêmio:</span>{" "}
-                  {selectedSimulation.premium.toLocaleString(undefined, {
-                    style: "currency",
-                    currency: "ECV",
-                  })}
-                </p>
-                <p>
-                  <span className="font-medium text-gray-600">
-                    Prêmio Total:
-                  </span>
-                  {selectedSimulation.totalPremium.toLocaleString(undefined, {
-                    style: "currency",
-                    currency: "ECV",
-                  })}
-                </p>
-              </div>
-            </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-3">
+                  <div>
+                    <p className="text-sm text-gray-500">Capital Segurado</p>
+                    <p className="font-medium">{formatCurrency(obj.capital)}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-500">Prêmio</p>
+                    <p className="font-medium">{formatCurrency(obj.premium)}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-500">Franquia</p>
+                    <p className="font-medium">
+                      {obj.franchise ? `${obj.franchise}%` : "N/A"}
+                    </p>
+                  </div>
+                </div>
 
-            <div className="bg-gray-50 p-4 rounded-lg">
-              <h3 className="font-semibold text-gray-700 mb-2 flex items-center">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="h-5 w-5 mr-2 text-gray-500"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                  />
-                </svg>
-                Datas
-              </h3>
-              <div className="space-y-2">
-                <p>
-                  <span className="font-medium text-gray-600">Início:</span>{" "}
-                  {selectedSimulation.startDate
-                    ? new Date(selectedSimulation.startDate).toLocaleDateString(
-                        "pt-PT"
-                      )
-                    : "Não definido"}
-                </p>
-                <p>
-                  <span className="font-medium text-gray-600">Fim:</span>{" "}
-                  {selectedSimulation.endDate
-                    ? new Date(selectedSimulation.endDate).toLocaleDateString(
-                        "pt-PT"
-                      )
-                    : "Não definido"}
-                </p>
+                {obj.propertyGroup?.name === "PROD_AUTO" && (
+                  <div className="mt-4 p-4 bg-white rounded-lg">
+                    <h4 className="font-semibold text-[#002855] mb-2">
+                      Detalhes do Veículo
+                    </h4>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                      {obj.propertyGroup.values.map((prop, idx) => (
+                        <div key={idx}>
+                          <p className="text-sm text-gray-500 capitalize">
+                            {prop.name.replace(/([A-Z])/g, " $1").trim()}
+                          </p>
+                          <p className="font-medium">{prop.value}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {obj.propertyGroup?.name === "PERSON" && (
+                  <div className="mt-4 p-4 bg-white rounded-lg">
+                    <h4 className="font-semibold text-[#002855] mb-2">
+                      Detalhes da Pessoa
+                    </h4>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                      {obj.propertyGroup.values.map((prop, idx) => (
+                        <div key={idx}>
+                          <p className="text-sm text-gray-500 capitalize">
+                            {prop.name.replace(/([A-Z])/g, " $1").trim()}
+                          </p>
+                          <p className="font-medium">{prop.value}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
+
+              {obj.risks.length > 0 && (
+                <div className="mt-4">
+                  <h4 className="font-semibold text-[#002855] flex items-center mb-2">
+                    <FaShieldAlt className="mr-2" /> Coberturas
+                  </h4>
+
+                  <ul className="space-y-2">
+                    {obj.risks.map((risk, idx) => (
+                      <li
+                        key={idx}
+                        className="border border-gray-200 rounded-md p-4 bg-white"
+                      >
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <p className="font-medium text-gray-700">
+                              {risk.name}
+                            </p>
+                            <p className="text-sm text-gray-500 mt-1">
+                              Código: {risk.code} | Ordem: {risk.order}
+                            </p>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-gray-500">
+                              <span className="font-medium">Capital:</span>{" "}
+                              {formatCurrency(risk.capital)}
+                            </p>
+                            <p className="text-gray-500">
+                              <span className="font-medium">Prêmio:</span>{" "}
+                              {formatCurrency(risk.premium)}
+                            </p>
+                          </div>
+                        </div>
+                        {risk.deductibleValue > 0 && (
+                          <p className="text-sm text-gray-500 mt-2">
+                            <span className="font-medium">Franquia:</span>{" "}
+                            {formatCurrency(risk.deductibleValue)}
+                          </p>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {obj.children && obj.children.length > 0 && (
+                <div className="mt-4">
+                  <h4 className="font-semibold text-[#002855] mb-2">
+                    Objetos Dependentes
+                  </h4>
+                  {obj.children.map((child, childIdx) => (
+                    <div
+                      key={childIdx}
+                      className="border border-gray-200 rounded-md p-4 bg-white mt-2"
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center text-[#002855] font-medium">
+                          <FaCar className="mr-2" />
+                          {child.description || "Objeto dependente"}
+                        </div>
+                        <span className="text-sm bg-green-100 text-green-800 px-2 py-1 rounded">
+                          Dependente
+                        </span>
+                      </div>
+                      {child.propertyGroup && (
+                        <div className="mt-2">
+                          <div className="grid grid-cols-2 gap-4">
+                            {child.propertyGroup.values.map(
+                              (prop: any, propIdx: number) => (
+                                <div key={propIdx}>
+                                  <p className="text-sm text-gray-500 capitalize">
+                                    {prop.name
+                                      .replace(/([A-Z])/g, " $1")
+                                      .trim()}
+                                  </p>
+                                  <p className="font-medium">{prop.value}</p>
+                                </div>
+                              )
+                            )}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
-          </div>
+          ))}
+        </div> */}
+
+        <div className="sticky bottom-0 bg-white p-4 border-t flex justify-end gap-4">
+          <button
+            onClick={onClose}
+            className="px-4 py-2 bg-[#002855] text-white rounded-lg hover:bg-[#002256]/70 transition-colors"
+          >
+            Fechar
+          </button>
         </div>
       </div>
     </div>

@@ -13,7 +13,7 @@ import {
 
 interface Props {
   data: SimulationResponse;
-  onClose: () => void;
+  onClose?: () => void;
   isOpen: boolean;
   reset: () => void;
 }

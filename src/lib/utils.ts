@@ -156,11 +156,12 @@ export const getStatusReciverTexts = (status: number) => {
       return status;
   }
 }
-
-export const formatDate = (dateString: string | null) => {
+export const formatDate = (dateString: string | null): string => {
   if (!dateString) return "";
-  const date = new Date(dateString);
-  return date.toLocaleDateString("pt-PT");
+
+  const [year, month, day] = dateString.substring(0, 10).split("-");
+
+  return `${day}/${month}/${year}`;
 };
 
 export const formatCurrency = (value: number) => {

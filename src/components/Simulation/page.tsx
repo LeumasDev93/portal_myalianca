@@ -161,7 +161,7 @@ export default function SimulationScreen() {
                 className=" flex items-center justify-center bg-gray-200 hover:bg-gray-300 text-[#002B5B] font-bold text-sm md:text-lg md:w-64 p-2 md:px-6 md:py-4 rounded-b-none rounded-t-xl 
        data-[state=active]:bg-[#002B5B] data-[state=active]:text-white "
               >
-                Produtos
+                Simulador
               </TabsTrigger>
               <TabsTrigger
                 value="mySimulations"

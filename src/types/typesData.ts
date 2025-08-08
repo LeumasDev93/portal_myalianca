@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 // types/insurance.ts
 
@@ -256,11 +257,30 @@ interface SimulationObject {
   type: string | null;
   discount: number;
   franchise: number | null;
-  propertyGroup: PropertyGroup | null;
-  properties: any;
-  risks: Risk[];
-  children: SimulationObject[] | null;
-  dependents: any;
+  propertyGroup: {
+    name: string;
+    values: {
+      name: string;
+      type: string;
+      value: string;
+      rank: number;
+      translationCode: string;
+    }[];
+  } | null;
+  risks: {
+    name: string;
+    order: number;
+    code: string;
+    active: boolean;
+    capital: number;
+    capitalOption: string | null;
+    premium: number;
+    taxes: Record<string, number>;
+    bonusMalus: number | null;
+    deductibleValue: number;
+  }[];
+  children: any[];
+  dependents: any | null;
 }
 
 export interface SimulationResponse {
