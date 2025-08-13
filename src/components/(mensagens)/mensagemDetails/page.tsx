@@ -130,37 +130,37 @@ export default function MensagemDetailPage({
     attachments: AttachmentFile[]
   ) => {
     setIsLoading(true);
-    try {
-      const fileListIds = attachments.map((a) => a.id);
-      const res = await fetch(`/api/menssage/${id}/reply`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          conteudo: content,
-          user_id: userId,
-          file_list_ids: fileListIds,
-        }),
-      });
-      if (!res.ok) throw new Error("Erro ao enviar resposta");
+    // try {
+    //   const fileListIds = attachments.map((a) => a.id);
+    //   const res = await fetch(`/api/menssage/${id}/reply`, {
+    //     method: "POST",
+    //     headers: { "Content-Type": "application/json" },
+    //     body: JSON.stringify({
+    //       conteudo: content,
+    //       user_id: userId,
+    //       file_list_ids: fileListIds,
+    //     }),
+    //   });
+    //   if (!res.ok) throw new Error("Erro ao enviar resposta");
 
-      toast({
-        title: "Resposta enviada",
-        description: "Sua resposta foi enviada com sucesso.",
-      });
+    //   toast({
+    //     title: "Resposta enviada",
+    //     description: "Sua resposta foi enviada com sucesso.",
+    //   });
 
-      // Recarregar conversa com mapeamento
-      await fetchConversation();
-      setIsReplying(false);
-    } catch (error) {
-      console.error(error);
-      toast({
-        title: "Erro",
-        description: "Não foi possível enviar a resposta.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-    }
+    //   // Recarregar conversa com mapeamento
+    //   await fetchConversation();
+    //   setIsReplying(false);
+    // } catch (error) {
+    //   console.error(error);
+    //   toast({
+    //     title: "Erro",
+    //     description: "Não foi possível enviar a resposta.",
+    //     variant: "destructive",
+    //   });
+    // } finally {
+    //   setIsLoading(false);
+    // }
   };
 
   const handleDelete = () => {
