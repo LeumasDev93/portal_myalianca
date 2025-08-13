@@ -24,7 +24,6 @@ export function TopMenu({
   const { profile } = useUserProfile();
 
   const unreadCount = useUnreadCount();
-  const base_url = process.env.NEXT_PUBLIC_API_BASE_URL_IMAGE;
   const [showSearch, setShowSearch] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const getSaudacao = () => {
@@ -169,7 +168,9 @@ export function TopMenu({
           >
             <Avatar className="w-full h-full flex items-center justify-center">
               <AvatarImage
-                src={`${base_url}/${profile?.user?.imagem_id}`}
+                src={`${
+                  process.env.NEXT_PUBLIC_API_BASE_URL_IMAGE
+                }/${"fde944e1-8bb3-446b-83f6-10634bebbf68"}`}
                 className="rounded-full"
               />
               <AvatarFallback className="text-white hover:text-[#002256]">

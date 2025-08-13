@@ -13,7 +13,7 @@ import {
   FaCar,
   FaShieldAlt,
 } from "react-icons/fa";
-import { SimulationResponse } from "@/types/typesData";
+import { SimulationDetails } from "./MySimulationsTab";
 
 // Tipos atualizados para refletir a estrutura real dos dados
 
@@ -25,7 +25,7 @@ interface Props {
       status: number;
       errors: null;
     };
-    results: SimulationResponse;
+    results: SimulationDetails;
   };
   onClose: () => void;
   isOpen: boolean;
@@ -41,15 +41,7 @@ export function ModalDetails({ data, onClose, isOpen, reset }: Props) {
     }
   }, [isOpen]);
 
-  if (!isOpen || !data?.results) {
-    console.log(
-      "Modal não será renderizado - isOpen:",
-      isOpen,
-      "data?.results:",
-      !!data?.results
-    );
-    return null;
-  }
+  if (!isOpen || !data?.results) return null;
 
   const currency = data.results?.currency || "CVE";
 
@@ -121,7 +113,7 @@ export function ModalDetails({ data, onClose, isOpen, reset }: Props) {
               className="flex items-center gap-1 text-gray-600 hover:underline active:opacity-70 ml-2"
               title="Clique para copiar"
             >
-              #{data.results.reference}
+              #{data.results?.reference}
               {copied ? (
                 <Check size={16} className="text-green-600" />
               ) : (
@@ -144,10 +136,6 @@ export function ModalDetails({ data, onClose, isOpen, reset }: Props) {
 
         {/* Informações Gerais */}
         <div className="p-6 border-b">
-          <h3 className="text-lg font-semibold text-gray-800 mb-4">
-            Informações Gerais
-          </h3>
-
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <p className="text-sm text-gray-500">Data de Renovação</p>
@@ -158,26 +146,19 @@ export function ModalDetails({ data, onClose, isOpen, reset }: Props) {
             <div>
               <p className="text-sm text-gray-500">Prêmio Total</p>
               <p className="font-medium">
-                {data.results.totalPremium.toLocaleString(undefined, {
-                  style: "currency",
-                  currency: "ECV",
-                })}
+                {formatCurrency(data.results.totalPremium)}
               </p>
             </div>
             <div>
-              <p className="text-sm text-gray-500">Prêmio</p>
+              <p className="text-sm text-gray-500">Referência do Cliente</p>
               <p className="font-medium">
-                {data.results.premium.toLocaleString(undefined, {
-                  style: "currency",
-                  currency: "ECV",
-                })}
+                {data.results.clientReference || "N/A"}
               </p>
             </div>
           </div>
         </div>
 
-        {/* Opções de Pagamento */}
-        <div className="p-6 border-b">
+        <div className="p-8">
           <h3 className="text-xl font-semibold text-gray-800 mb-4">
             Opções de Pagamento
           </h3>
@@ -197,10 +178,7 @@ export function ModalDetails({ data, onClose, isOpen, reset }: Props) {
                 <div className="p-4 flex-grow">
                   <p className="text-2xl font-bold text-[#002855] mb-4 text-center">
                     <FaMoneyBillWave className="inline mr-2 text-[#002855]" />
-                    {installment.value.toLocaleString(undefined, {
-                      style: "currency",
-                      currency: "ECV",
-                    })}
+                    {formatCurrency(installment.value)}
                   </p>
 
                   <ul className="space-y-3 mb-4">
@@ -210,15 +188,12 @@ export function ModalDetails({ data, onClose, isOpen, reset }: Props) {
                         Valor Anual:
                       </span>
                       <span className="text-sm font-medium">
-                        {installment.annualValue.toLocaleString(undefined, {
-                          style: "currency",
-                          currency: "ECV",
-                        })}
+                        {formatCurrency(installment.annualValue)}
                       </span>
                     </li>
 
                     {Object.entries(installment.taxes)
-                      .filter(([, value]) => (value as number) > 0)
+                      .filter(([, value]) => isNumber(value) && value > 0)
                       .map(([taxName, taxValue]) => (
                         <li
                           key={taxName}
@@ -229,10 +204,7 @@ export function ModalDetails({ data, onClose, isOpen, reset }: Props) {
                             {taxName.split(" - ")[1] || taxName}:
                           </span>
                           <span className="text-sm font-medium">
-                            {(taxValue as number).toLocaleString(undefined, {
-                              style: "currency",
-                              currency: "ECV",
-                            })}
+                            {formatCurrency(isNumber(taxValue) ? taxValue : 0)}
                           </span>
                         </li>
                       ))}
@@ -249,8 +221,8 @@ export function ModalDetails({ data, onClose, isOpen, reset }: Props) {
             ))}
           </div>
         </div>
-        {/* 
-        <div className="p-6">
+
+        {/* <div className="px-8 pb-8">
           <h3 className="text-xl font-semibold text-gray-800 mb-4">
             Objetos Segurados
           </h3>
@@ -292,24 +264,6 @@ export function ModalDetails({ data, onClose, isOpen, reset }: Props) {
                   <div className="mt-4 p-4 bg-white rounded-lg">
                     <h4 className="font-semibold text-[#002855] mb-2">
                       Detalhes do Veículo
-                    </h4>
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                      {obj.propertyGroup.values.map((prop, idx) => (
-                        <div key={idx}>
-                          <p className="text-sm text-gray-500 capitalize">
-                            {prop.name.replace(/([A-Z])/g, " $1").trim()}
-                          </p>
-                          <p className="font-medium">{prop.value}</p>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {obj.propertyGroup?.name === "PERSON" && (
-                  <div className="mt-4 p-4 bg-white rounded-lg">
-                    <h4 className="font-semibold text-[#002855] mb-2">
-                      Detalhes da Pessoa
                     </h4>
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                       {obj.propertyGroup.values.map((prop, idx) => (
@@ -368,48 +322,6 @@ export function ModalDetails({ data, onClose, isOpen, reset }: Props) {
                   </ul>
                 </div>
               )}
-
-              {obj.children && obj.children.length > 0 && (
-                <div className="mt-4">
-                  <h4 className="font-semibold text-[#002855] mb-2">
-                    Objetos Dependentes
-                  </h4>
-                  {obj.children.map((child, childIdx) => (
-                    <div
-                      key={childIdx}
-                      className="border border-gray-200 rounded-md p-4 bg-white mt-2"
-                    >
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center text-[#002855] font-medium">
-                          <FaCar className="mr-2" />
-                          {child.description || "Objeto dependente"}
-                        </div>
-                        <span className="text-sm bg-green-100 text-green-800 px-2 py-1 rounded">
-                          Dependente
-                        </span>
-                      </div>
-                      {child.propertyGroup && (
-                        <div className="mt-2">
-                          <div className="grid grid-cols-2 gap-4">
-                            {child.propertyGroup.values.map(
-                              (prop: any, propIdx: number) => (
-                                <div key={propIdx}>
-                                  <p className="text-sm text-gray-500 capitalize">
-                                    {prop.name
-                                      .replace(/([A-Z])/g, " $1")
-                                      .trim()}
-                                  </p>
-                                  <p className="font-medium">{prop.value}</p>
-                                </div>
-                              )
-                            )}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              )}
             </div>
           ))}
         </div> */}
@@ -425,4 +337,8 @@ export function ModalDetails({ data, onClose, isOpen, reset }: Props) {
       </div>
     </div>
   );
+}
+
+function isNumber(value: unknown): value is number {
+  return typeof value === "number";
 }

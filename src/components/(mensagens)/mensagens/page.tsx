@@ -1,10 +1,11 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { PageTitle } from "@/components/ui/page-title";
 import { Card, CardContent } from "@/components/ui/card";
-import { Avatar } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -34,12 +35,17 @@ import { LoadingScreen } from "@/components/ui/loading-screen";
 
 import { useUnreadCount } from "@/hooks/useUnreadCount";
 import { useUserProfile } from "@/hooks/useUserProfile ";
+import { sendMessage } from "@/service/sendMessage";
 
 type MensagemPageProps = {
   onSelectDetail: (id: string) => void;
+  onUnreadCountChange?: (count: number) => void;
 };
 
-export default function MensagensPage({ onSelectDetail }: MensagemPageProps) {
+export default function MensagensPage({
+  onSelectDetail,
+  onUnreadCountChange,
+}: MensagemPageProps) {
   const { profile } = useUserProfile();
 
   // Usa o hook com o userId do perfil
@@ -65,6 +71,11 @@ export default function MensagensPage({ onSelectDetail }: MensagemPageProps) {
   });
   const [sending, setSending] = useState(false);
 
+  useEffect(() => {
+    if (onUnreadCountChange) {
+      onUnreadCountChange(unreadCount);
+    }
+  }, [unreadCount, onUnreadCountChange]);
   // Função para abrir confirmação de exclusão
   const openDeleteDialog = (id: string, e: React.MouseEvent) => {
     e.preventDefault();
@@ -101,13 +112,22 @@ export default function MensagensPage({ onSelectDetail }: MensagemPageProps) {
     setNewMessage((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSendMessage = (e: React.FormEvent) => {
+  const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!newMessage.to || !newMessage.subject || !newMessage.message) {
+    if (!newMessage.subject.trim() || !newMessage.message.trim()) {
       toast({
         title: "Campos obrigatórios",
-        description: "Por favor, preencha todos os campos obrigatórios.",
+        description: "Por favor, preencha os campos obrigatórios.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!profile?.user.id) {
+      toast({
+        title: "Usuário não identificado",
+        description: "Não foi possível identificar o usuário para envio.",
         variant: "destructive",
       });
       return;
@@ -115,16 +135,35 @@ export default function MensagensPage({ onSelectDetail }: MensagemPageProps) {
 
     setSending(true);
 
-    setTimeout(() => {
-      const newId = `${Date.now()}`;
+    try {
+      const response = await fetch("/api/send-message", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          assunto: newMessage.subject,
+          conteudo: newMessage.message,
+          user_id: profile.user.id,
+          file_list_ids: [],
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Erro desconhecido");
+      }
+
+      const data = await response.json();
+
       setMessages((prev) => [
         {
-          id: newId,
-          assunto: newMessage.subject,
-          estado: "ENVIADA",
-          data_criacao: new Date().toISOString(),
-          data_ultima_mensagem: new Date().toISOString(),
-          nome_cliente: newMessage.to,
+          id: data.results.id,
+          assunto: data.results.assunto,
+          estado: data.results.estado,
+          data_criacao: data.results.data_criacao,
+          data_ultima_mensagem: data.results.data_ultima_mensagem,
+          nome_cliente: data.results.nome_cliente,
           read: true,
           starred: false,
         },
@@ -136,10 +175,17 @@ export default function MensagensPage({ onSelectDetail }: MensagemPageProps) {
         description: "Sua mensagem foi enviada com sucesso.",
       });
 
-      setNewMessage({ to: "", subject: "", message: "" });
+      setNewMessage({ to: profile.user.id, subject: "", message: "" });
       setComposeDialogOpen(false);
+    } catch (error: any) {
+      toast({
+        title: "Erro ao enviar",
+        description: error.message || "Erro desconhecido.",
+        variant: "destructive",
+      });
+    } finally {
       setSending(false);
-    }, 1000);
+    }
   };
 
   // Se estiver carregando ou erro, renderiza adequadamente
@@ -199,14 +245,21 @@ export default function MensagensPage({ onSelectDetail }: MensagemPageProps) {
                     !message.read ? "bg-blue-200" : "bg-blue-100"
                   } flex-shrink-0`}
                 >
-                  <span className="text-lg font-semibold">
-                    {message.nome_cliente?.charAt(0) ?? ""}
-                  </span>
+                  <AvatarImage
+                    src={`${
+                      process.env.NEXT_PUBLIC_API_BASE_URL_IMAGE
+                    }/${"fde944e1-8bb3-446b-83f6-10634bebbf68"}`}
+                    className="rounded-full"
+                  />
+                  <AvatarFallback className="text-white hover:text-[#002256]">
+                    {profile?.user?.nome?.charAt(0)}
+                  </AvatarFallback>
                 </Avatar>
               </div>
 
               <Link
-                href={`/mensagens/${message.id}`}
+                href={``}
+                onClick={() => onSelectDetail(message.id)}
                 className="flex-1 min-w-0"
               >
                 <div className="flex justify-between items-start">
@@ -374,24 +427,11 @@ export default function MensagensPage({ onSelectDetail }: MensagemPageProps) {
               Preencha os campos abaixo para enviar uma nova mensagem.
             </DialogDescription>
           </DialogHeader>
-          <form onSubmit={handleSendMessage}>
-            <div className="grid gap-4 py-4">
-              <div className="grid gap-2">
-                <Label className="text-[#002856]" htmlFor="to">
-                  Para:
-                </Label>
-                <Input
-                  id="to"
-                  name="to"
-                  placeholder="email@destinatario.com"
-                  value={newMessage.to}
-                  onChange={handleComposeInputChange}
-                  disabled={sending}
-                />
-              </div>
+          <form onSubmit={handleSendMessage} noValidate>
+            <div className="grid gap-6 py-4">
               <div className="grid gap-2">
                 <Label className="text-[#002856]" htmlFor="subject">
-                  Assunto:
+                  Assunto <span className="text-red-600">*</span>
                 </Label>
                 <Input
                   id="subject"
@@ -400,11 +440,19 @@ export default function MensagensPage({ onSelectDetail }: MensagemPageProps) {
                   value={newMessage.subject}
                   onChange={handleComposeInputChange}
                   disabled={sending}
+                  autoFocus
+                  aria-required="true"
+                  aria-invalid={!newMessage.subject ? "true" : "false"}
+                  className={!newMessage.subject ? "border-red-500" : ""}
                 />
+                {!newMessage.subject && (
+                  <p className="text-red-600 text-sm">Assunto é obrigatório.</p>
+                )}
               </div>
+
               <div className="grid gap-2">
                 <Label className="text-[#002856]" htmlFor="message">
-                  Mensagem:
+                  Mensagem <span className="text-red-600">*</span>
                 </Label>
                 <Textarea
                   id="message"
@@ -414,23 +462,39 @@ export default function MensagensPage({ onSelectDetail }: MensagemPageProps) {
                   value={newMessage.message}
                   onChange={handleComposeInputChange}
                   disabled={sending}
+                  aria-required="true"
+                  aria-invalid={!newMessage.message ? "true" : "false"}
+                  className={!newMessage.message ? "border-red-500" : ""}
                 />
+                {!newMessage.message && (
+                  <p className="text-red-600 text-sm">
+                    Mensagem é obrigatória.
+                  </p>
+                )}
               </div>
             </div>
-            <DialogFooter>
+
+            <DialogFooter className="flex justify-end gap-4">
               <Button
-                className="text-[#002856] border border-[#002856] hover:bg-gray-200"
                 type="button"
                 variant="outline"
                 onClick={closeComposeDialog}
                 disabled={sending}
+                className="text-[#002856] border border-[#002856] hover:bg-gray-200"
               >
                 Cancelar
               </Button>
+
               <Button
                 type="submit"
-                disabled={sending}
-                className="bg-[#002856] text-white border-[#002856] hover:bg-[#002856]/50"
+                disabled={
+                  sending ||
+                  !newMessage.subject.trim() ||
+                  !newMessage.message.trim()
+                }
+                className={`bg-[#002856] text-white border-[#002856] hover:bg-[#002856]/80 ${
+                  sending ? "cursor-not-allowed opacity-70" : "cursor-pointer"
+                } flex items-center justify-center`}
               >
                 {sending ? (
                   "Enviando..."
