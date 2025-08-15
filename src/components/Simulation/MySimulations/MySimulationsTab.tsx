@@ -297,21 +297,21 @@ export default function MySimulationsTab() {
 
   return (
     <div className="">
-      <div className="flex sm:flex-row flex-col gap-4 mb-6 p-4 bg-white sticky top-0 z-10 shadow-sm">
-        <div className="relative sm:w-1/2">
-          <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+      <div className="flex flex-col md:flex-row gap-2 md:gap-4 mb-4 md:mb-6 p-2 md:p-4 bg-white sticky top-0 z-10 shadow-sm">
+        <div className="relative w-full md:w-1/2">
+          <FaSearch className="absolute left-2 md:left-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-sm md:text-base" />
           <input
             type="text"
-            placeholder="Buscar por nº simulação ou objeto seguro"
-            className="pl-10 bg-white w-full rounded-md border border-gray-300 py-2 px-4 focus:outline-none focus:ring-1 focus:ring-gray-200 focus:border-gray-200"
+            placeholder="Buscar simulação..."
+            className="pl-8 md:pl-10 bg-white w-full rounded-md border border-gray-300 py-2 md:py-2 px-2 md:px-4 text-xs md:text-base focus:outline-none focus:ring-1 focus:ring-gray-200 focus:border-gray-200"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
 
         <Select value={productFilter} onValueChange={setProductFilter}>
-          <SelectTrigger className="bg-white sm:w-1/3 rounded-md border border-gray-300 py-2 px-4 focus:outline-none focus:ring-1 focus:ring-gray-200 focus:border-gray-200">
-            <SelectValue placeholder="Filtrar por produto" />
+          <SelectTrigger className="bg-white w-full md:w-1/3 rounded-md border border-gray-300 py-2 md:py-2 px-2 md:px-4 text-xs md:text-base focus:outline-none focus:ring-1 focus:ring-gray-200 focus:border-gray-200">
+            <SelectValue placeholder="Produto" />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">--Selecionar um produto--</SelectItem>
@@ -324,57 +324,62 @@ export default function MySimulationsTab() {
         </Select>
 
         <Button
-          className="flex items-center justify-center bg-white rounded-md border border-gray-300 hover:bg-gray-200 p-2 text-gray-700"
+          className="flex items-center justify-center bg-white rounded-md border border-gray-300 hover:bg-gray-200 py-2 md:py-2 px-3 md:px-4 w-full md:w-auto text-gray-700 text-xs md:text-sm"
           onClick={() => {
             setSearchTerm("");
             setProductFilter("all");
             setStatusFilter("all");
           }}
         >
-          <IoMdClose className="size-5" />
+          <IoMdClose className="size-3 md:size-5 mr-1 md:mr-0" />
+          <span className="md:hidden">Limpar</span>
         </Button>
       </div>
 
-      <div className="space-y-4 pb-4 px-4">
+      <div className="space-y-3 md:space-y-4 pb-4 px-3 md:px-4">
         {paginatedSimulations.length > 0 ? (
           paginatedSimulations.map((simulation) => (
             <Card key={simulation.simulationNumber} className="overflow-hidden">
-              <CardHeader>
-                <div className="flex sm:flex-row flex-col items-center justify-between">
-                  <div className="flex flex-col">
-                    <CardTitle className="text-company-blue-600 text-[#002256]">
+              <CardHeader className="p-3 md:p-6">
+                <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-3 md:gap-4">
+                  <div className="flex flex-col w-full md:w-auto">
+                    <CardTitle className="text-company-blue-600 text-[#002256] text-sm md:text-base">
                       {simulation.productName}
                     </CardTitle>
-                    <p className="text-sm text-gray-500">
+                    <p className="text-xs md:text-sm text-gray-500">
                       Número Simulação: #{simulation.simulationNumber}
                     </p>
-                    <span className="text-sm text-gray-400">
+                    <span className="text-xs md:text-sm text-gray-400">
                       Objeto seguro: {simulation.registration}
                     </span>
                   </div>
-                  <div>
-                    <p className="text-sm text-gray-500">Data Simulação</p>
-                    <p className="font-medium text-[#002256]">
+                  <div className="flex flex-col items-start md:items-center">
+                    <p className="text-xs md:text-sm text-gray-500">
+                      Data Simulação
+                    </p>
+                    <p className="font-medium text-[#002256] text-xs md:text-sm">
                       {formatDate(simulation.startDate)}
                     </p>
                   </div>
-                  <div>
-                    <p className="text-sm text-gray-500">Premio Total</p>
-                    <p className="font-medium text-[#002256]">
+                  <div className="flex flex-col items-start md:items-center">
+                    <p className="text-xs md:text-sm text-gray-500">
+                      Premio Total
+                    </p>
+                    <p className="font-medium text-[#002256] text-xs md:text-sm">
                       {simulation.totalPremium.toLocaleString(undefined, {
                         style: "currency",
                         currency: "ECV",
                       })}
                     </p>
                   </div>
-                  <div className="flex space-x-4">
+                  <div className="flex flex-col md:flex-row gap-2 md:gap-4 w-full md:w-auto">
                     <Button
                       onClick={() =>
                         handleViewDetails(
                           simulation.simulationNumber.toString()
                         )
                       }
-                      className="flex items-center bg-[#002256] hover:bg-[#002256]/70 gap-2"
+                      className="flex items-center bg-[#002256] hover:bg-[#002256]/70 gap-2 text-xs md:text-sm py-2 px-3 md:px-4"
                       disabled={
                         loadingDetailsId ===
                         simulation.simulationNumber.toString()
@@ -426,8 +431,8 @@ export default function MySimulationsTab() {
           ))
         ) : (
           <div className="flex flex-col items-center justify-center gap-4 py-8">
-            <FaSearch className="text-4xl text-gray-400" />
-            <p className="text-gray-500 text-center">
+            <FaSearch className="text-3xl md:text-4xl text-gray-400" />
+            <p className="text-gray-500 text-center text-sm md:text-base">
               Nenhuma simulação encontrada com os filtros aplicados.
             </p>
             <Button
@@ -445,9 +450,9 @@ export default function MySimulationsTab() {
       </div>
 
       {totalPages > 1 && (
-        <div className="flex justify-center items-center gap-2 mt-4 pb-6">
+        <div className="flex justify-center items-center gap-1 md:gap-2 mt-4 pb-6 px-3 md:px-4">
           <Button
-            className={`px-4 py-2 rounded-lg border ${
+            className={`px-2 md:px-4 py-1 md:py-2 rounded-lg border text-xs md:text-sm ${
               currentPage === 1
                 ? "bg-[#E5E7EB] text-[#002256] opacity-50 cursor-not-allowed"
                 : "bg-[#002256] text-white hover:bg-[#002256]/70"
@@ -462,7 +467,7 @@ export default function MySimulationsTab() {
             <Button
               key={i + 1}
               onClick={() => setCurrentPage(i + 1)}
-              className={`px-4 py-2 rounded-lg border ${
+              className={`px-2 md:px-4 py-1 md:py-2 rounded-lg border text-xs md:text-sm ${
                 currentPage === i + 1
                   ? "bg-[#002256] text-white"
                   : "bg-[#E5E7EB] text-[#002256] hover:bg-[#D1D5DB]"
@@ -473,7 +478,7 @@ export default function MySimulationsTab() {
           ))}
 
           <Button
-            className={`px-4 py-2 rounded-lg border ${
+            className={`px-2 md:px-4 py-1 md:py-2 rounded-lg border text-xs md:text-sm ${
               currentPage === totalPages
                 ? "bg-[#E5E7EB] text-[#002256] opacity-50 cursor-not-allowed"
                 : "bg-[#002256] text-white hover:bg-[#002256]/70"

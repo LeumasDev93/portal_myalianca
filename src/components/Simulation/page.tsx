@@ -64,11 +64,11 @@ export default function SimulationScreen() {
   };
 
   return (
-    <div className="w-full">
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="">
+    <div className="w-full min-h-screen">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         {/* Banner */}
         {!selectedProduct && (
-          <div className="relative bg-[#C41E3A] overflow-hidden  md:h-[300px] flex items-center">
+          <div className="relative bg-[#C41E3A] overflow-hidden h-[220px] sm:h-[270px] md:h-[300px] flex items-center">
             {bannerImages.map((image, index) => (
               <div
                 key={index}
@@ -78,11 +78,11 @@ export default function SimulationScreen() {
                     : "opacity-0 z-0 pointer-events-none"
                 }`}
               >
-                <div className="container w-[100%] xl:w-full h-full flex flex-col items-center justify-center mt-12 md:mt-0 font-thin text-white z-10 relative px-4">
-                  <h1 className="text-3xl md:text-5xl font-bold mb-2 text-center md:text-left">
+                <div className="container w-[100%] xl:w-full h-full flex flex-col items-center justify-center mt-2 sm:mt-4 md:mt-0 font-thin text-white z-5 relative px-4 pb-20 sm:pb-24 md:pb-0">
+                  <h1 className="text-base sm:text-lg md:text-2xl lg:text-4xl xl:text-5xl font-bold mb-1 sm:mb-2 text-center md:text-left">
                     {image.title}
                   </h1>
-                  <h2 className="text-xl md:text-3xl text-center md:text-left">
+                  <h2 className="text-xs sm:text-sm md:text-lg lg:text-xl xl:text-3xl text-center md:text-left">
                     {image.subtitle}
                   </h2>
                 </div>
@@ -101,11 +101,11 @@ export default function SimulationScreen() {
             <button
               onClick={prevSlide}
               aria-label="Previous slide"
-              className="absolute left-3 top-1/2 -translate-y-1/2 bg-white/30 hover:bg-white/50 p-2 rounded-full z-20"
+              className="absolute left-2 sm:left-3 top-1/2 -translate-y-1/2 bg-white/30 hover:bg-white/50 p-1 sm:p-2 rounded-full z-20"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
-                className="h-6 w-6 text-white"
+                className="h-4 w-4 sm:h-6 sm:w-6 text-white"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -121,11 +121,11 @@ export default function SimulationScreen() {
             <button
               onClick={nextSlide}
               aria-label="Next slide"
-              className="absolute right-3 top-1/2 -translate-y-1/2 bg-white/30 hover:bg-white/50 p-2 rounded-full z-20"
+              className="absolute right-2 sm:right-3 top-1/2 -translate-y-1/2 bg-white/30 hover:bg-white/50 p-1 sm:p-2 rounded-full z-20"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
-                className="h-6 w-6 text-white"
+                className="h-4 w-4 sm:h-6 sm:w-6 text-white"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -140,13 +140,12 @@ export default function SimulationScreen() {
             </button>
 
             {/* Indicators */}
-            <div className="absolute bottom-0 left-0 right-0 h-1 md:h-2 bg-[#002B5B] z-20"></div>
-            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex space-x-2 z-20 md:hidden">
+            <div className="absolute bottom-10 sm:bottom-6 left-1/2 -translate-x-1/2 flex space-x-1 sm:space-x-2 z-10">
               {bannerImages.map((_, i) => (
                 <button
                   key={i}
                   onClick={() => setCurrentSlide(i)}
-                  className={`w-3 h-3 rounded-full ${
+                  className={`w-2 h-2 sm:w-3 sm:h-3 rounded-full ${
                     i === currentSlide ? "bg-white" : "bg-white/50"
                   }`}
                   aria-label={`Go to slide ${i + 1}`}
@@ -154,28 +153,31 @@ export default function SimulationScreen() {
               ))}
             </div>
 
-            {/* Aqui o TabsList fica no rodapé do banner, à esquerda */}
-            <TabsList className="absolute bottom-2 -left-2 flex z-10 bg-transparent space-x-2">
+            {/* Tabs responsivos - visíveis em todas as telas */}
+            <TabsList className="absolute bottom-0 sm:bottom-2 left-2 right-2 lg:left-2 lg:right-auto flex z-10 bg-transparent space-x-1 lg:space-x-2">
               <TabsTrigger
                 value="types"
-                className=" flex items-center justify-center bg-gray-200 hover:bg-gray-300 text-[#002B5B] font-bold text-sm md:text-lg md:w-64 p-2 md:px-6 md:py-4 rounded-b-none rounded-t-xl 
-       data-[state=active]:bg-[#002B5B] data-[state=active]:text-white "
+                className="flex items-center justify-center bg-gray-200 hover:bg-gray-300 text-[#002B5B] font-bold text-xs lg:text-lg w-1/2 lg:w-64 p-2 lg:px-6 lg:py-4 rounded-b-none rounded-t-xl 
+       data-[state=active]:bg-[#002B5B] data-[state=active]:text-white"
               >
                 Simulador
               </TabsTrigger>
               <TabsTrigger
                 value="mySimulations"
-                className=" flex items-center justify-center bg-gray-200 hover:bg-gray-300 text-[#002B5B] font-bold text-sm md:text-lg md:w-64 p-2 md:px-6 md:py-4 rounded-t-xl  rounded-b-none
-       data-[state=active]:bg-[#002B5B] data-[state=active]:text-white "
+                className="flex items-center justify-center bg-gray-200 hover:bg-gray-300 text-[#002B5B] font-bold text-xs lg:text-lg w-1/2 lg:w-64 p-2 lg:px-6 lg:py-4 rounded-t-xl rounded-b-none
+       data-[state=active]:bg-[#002B5B] data-[state=active]:text-white"
               >
                 Minhas Simulações
               </TabsTrigger>
             </TabsList>
+
+            {/* Barra azul por cima de tudo */}
+            <div className="absolute bottom-0 left-0 right-0 h-1 md:h-2 bg-[#002B5B] z-20"></div>
           </div>
         )}
         <TabsContent
           value="types"
-          className="bg-white flex flex-col  rounded-b-lg shadow-xl px-6 xl:p-8 py-10"
+          className="bg-white flex flex-col rounded-b-lg shadow-xl px-3 sm:px-4 md:px-6 xl:p-8 py-6 sm:py-8 md:py-10"
         >
           {selectedProduct ? (
             <SimulationForm
@@ -185,7 +187,7 @@ export default function SimulationScreen() {
             />
           ) : (
             <>
-              <p className="text-[#002256] mb-6 text-left">
+              <p className="text-[#002256] mb-4 sm:mb-6 text-left text-sm sm:text-base">
                 Escolha um Produto e faça uma simulação.
               </p>
 
@@ -206,7 +208,7 @@ export default function SimulationScreen() {
               )}
 
               {products && products.length > 0 && (
-                <div className="flex gap-4 items-center justify-center">
+                <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 items-center justify-center">
                   {products.map((product) => (
                     <ProductsTab
                       key={product.productId}
@@ -224,7 +226,7 @@ export default function SimulationScreen() {
 
         <TabsContent
           value="mySimulations"
-          className="bg-white rounded-lg shadow-xl p-6 xl:p-8"
+          className="bg-white rounded-lg shadow-xl p-3 sm:p-4 md:p-6 xl:p-8"
         >
           <MySimulationsTab />
         </TabsContent>
