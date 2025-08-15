@@ -72,6 +72,9 @@ export async function GET(request: Request) {
 
     // 5. Retornar dados formatados
     const data = await response.json();
+    
+    // Calcular número de mensagens não lidas
+    const unreadCount = data.results?.filter((msg: any) => !msg.read)?.length || 0;
 
     return NextResponse.json({
       info: {
@@ -81,6 +84,7 @@ export async function GET(request: Request) {
         errors: null,
       },
       results: data.results || [],
+      unreadCount: unreadCount,
     });
 
   } catch (error: any) {
@@ -94,6 +98,62 @@ export async function GET(request: Request) {
           errors: [error?.message || 'Erro interno no servidor'],
         },
         results: [],
+      },
+      { status: 500 }
+    );
+  }
+}
+
+export async function POST(request: Request) {
+  try {
+    const { messageId, userId, action } = await request.json();
+
+    if (!messageId || !userId || !action) {
+      return NextResponse.json(
+        {
+          error: "Parâmetros obrigatórios faltando: messageId, userId, action",
+        },
+        { status: 400 }
+      );
+    }
+
+    // Configurar chamada para API externa para marcar como lida/não lida
+    const apiUrl = `${process.env.NEXT_PUBLIC_API_BASE_URL_DEFAULT}/messages/1.0.0/${action}`;
+
+    const response = await fetch(apiUrl, {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${process.env.API_SECRET_TOKEN}`,
+        "ApiKey": process.env.NEXT_PUBLIC_API_KEY!,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        message_id: messageId,
+        user_id: userId,
+      }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => null);
+      return NextResponse.json(
+        {
+          error: errorData?.message || `Erro na API: ${response.statusText}`,
+        },
+        { status: response.status }
+      );
+    }
+
+    const data = await response.json();
+
+    return NextResponse.json({
+      success: true,
+      data: data,
+    });
+
+  } catch (error: any) {
+    return NextResponse.json(
+      {
+        error: error?.message || "Erro interno no servidor",
       },
       { status: 500 }
     );

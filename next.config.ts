@@ -7,12 +7,17 @@ const nextConfig: NextConfig = {
     typedRoutes: false
   },
   images: {
-    domains: ["st2.depositphotos.com", "via.placeholder.com", "gestao.aliancaseguros.cv", "www.bradescoseguros.com.br"],
+    domains: ["st2.depositphotos.com", "via.placeholder.com", "gestao.aliancaseguros.cv", "www.bradescoseguros.com.br", "api.aliancaseguros.cv"],
     remotePatterns: [
       {
         protocol: "https",
         hostname: "gestao.aliancaseguros.cv",
         pathname: "/uploads/**",
+      },
+      {
+        protocol: "https",
+        hostname: "api.aliancaseguros.cv",
+        pathname: "/files/**",
       },
     ],
     unoptimized: true

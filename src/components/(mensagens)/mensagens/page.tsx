@@ -35,6 +35,7 @@ import { LoadingScreen } from "@/components/ui/loading-screen";
 
 import { useUnreadCount } from "@/hooks/useUnreadCount";
 import { useUserProfile } from "@/hooks/useUserProfile ";
+import { useUnreadMessages } from "@/contexts/unread-messages-context";
 import { sendMessage } from "@/service/sendMessage";
 
 type MensagemPageProps = {
@@ -47,8 +48,14 @@ export default function MensagensPage({
   onUnreadCountChange,
 }: MensagemPageProps) {
   const { profile } = useUserProfile();
+  const {
+    unreadCount: globalUnreadCount,
+    refreshUnreadCount,
+    markMessageAsRead,
+    markMessageAsUnread,
+    isMessageRead,
+  } = useUnreadMessages();
 
-  // Usa o hook com o userId do perfil
   const {
     unreadCount,
     messages,
@@ -73,9 +80,9 @@ export default function MensagensPage({
 
   useEffect(() => {
     if (onUnreadCountChange) {
-      onUnreadCountChange(unreadCount);
+      onUnreadCountChange(globalUnreadCount);
     }
-  }, [unreadCount, onUnreadCountChange]);
+  }, [globalUnreadCount, onUnreadCountChange]);
   // Função para abrir confirmação de exclusão
   const openDeleteDialog = (id: string, e: React.MouseEvent) => {
     e.preventDefault();
@@ -87,7 +94,16 @@ export default function MensagensPage({
   // Confirma exclusão da mensagem localmente
   const confirmDeleteMessage = () => {
     if (messageToDelete) {
+      const messageToDeleteObj = messages.find(
+        (msg) => msg.id === messageToDelete
+      );
       setMessages((prev) => prev.filter((msg) => msg.id !== messageToDelete));
+
+      // Se a mensagem excluída não estava lida, decrementar o contador
+      if (messageToDeleteObj && !isMessageRead(messageToDelete)) {
+        markMessageAsRead(messageToDelete); // Marcar como lida para remover do contador
+      }
+
       toast({
         title: "Mensagem excluída",
         description: "A mensagem foi excluída com sucesso.",
@@ -170,6 +186,8 @@ export default function MensagensPage({
         ...prev,
       ]);
 
+      // Não incrementar o contador pois a mensagem enviada já está marcada como lida
+
       toast({
         title: "Mensagem enviada",
         description: "Sua mensagem foi enviada com sucesso.",
@@ -191,7 +209,7 @@ export default function MensagensPage({
   // Se estiver carregando ou erro, renderiza adequadamente
   if (loading)
     return (
-      <div className="w-full h-full p-6 bg-company-gray-200 flex items-center justify-center">
+      <div className="w-full h-full p-6 flex items-center justify-center">
         <LoadingScreen />
       </div>
     );
@@ -211,9 +229,10 @@ export default function MensagensPage({
             title="Mensagens"
             description="Gerencie suas mensagens e comunicações"
           />
-          {unreadCount > 0 && (
+          {globalUnreadCount > 0 && (
             <Badge className="bg-[#002856] text-white">
-              {unreadCount} não {unreadCount === 1 ? "lida" : "lidas"}
+              {globalUnreadCount} não{" "}
+              {globalUnreadCount === 1 ? "lida" : "lidas"}
             </Badge>
           )}
         </div>
@@ -232,7 +251,9 @@ export default function MensagensPage({
           <Card
             key={message.id}
             className={`cursor-pointer transition-colors hover:bg-gray-50 w-full ${
-              !message.read ? "border-l-4 border-l-[#002856] bg-blue-50" : ""
+              !isMessageRead(message.id)
+                ? "border-l-4 border-l-[#002856] bg-blue-50"
+                : ""
             }`}
           >
             <CardContent className="p-4 flex items-center gap-4">
@@ -242,13 +263,11 @@ export default function MensagensPage({
                 )}
                 <Avatar
                   className={`h-10 w-10 flex items-center justify-center text-[#002856] ${
-                    !message.read ? "bg-blue-200" : "bg-blue-100"
+                    !isMessageRead(message.id) ? "bg-blue-200" : "bg-blue-100"
                   } flex-shrink-0`}
                 >
                   <AvatarImage
-                    src={`${
-                      process.env.NEXT_PUBLIC_API_BASE_URL_IMAGE
-                    }/${"fde944e1-8bb3-446b-83f6-10634bebbf68"}`}
+                    src={`${process.env.NEXT_PUBLIC_API_BASE_URL_IMAGE}/${profile?.user?.imagem_id}`}
                     className="rounded-full"
                   />
                   <AvatarFallback className="text-white hover:text-[#002256]">
@@ -259,14 +278,21 @@ export default function MensagensPage({
 
               <Link
                 href={``}
-                onClick={() => onSelectDetail(message.id)}
+                onClick={async () => {
+                  // Marcar como lida se não estiver lida
+                  if (!isMessageRead(message.id)) {
+                    markMessageAsRead(message.id);
+                    await markAsRead(message.id);
+                  }
+                  onSelectDetail(message.id);
+                }}
                 className="flex-1 min-w-0"
               >
                 <div className="flex justify-between items-start">
                   <div className="flex items-center gap-2">
                     <h3
                       className={`text-base ${
-                        !message.read
+                        !isMessageRead(message.id)
                           ? "font-bold text-company-blue-800"
                           : "font-medium text-gray-800"
                       }`}
@@ -274,8 +300,8 @@ export default function MensagensPage({
                       {message.assunto}
                     </h3>
 
-                    {!message.read && (
-                      <Badge className="bg-company-blue-600 text-white">
+                    {!isMessageRead(message.id) && (
+                      <Badge className="bg-company-blue-600 text-[#002856]">
                         Nova
                       </Badge>
                     )}
@@ -342,21 +368,25 @@ export default function MensagensPage({
                   variant="ghost"
                   size="icon"
                   className="h-8 w-8"
-                  onClick={(e) => {
+                  onClick={async (e) => {
                     e.preventDefault();
                     e.stopPropagation();
 
-                    if (message.read) {
-                      markAsUnread(message.id);
+                    if (isMessageRead(message.id)) {
+                      markMessageAsUnread(message.id);
+                      await markAsUnread(message.id);
                     } else {
-                      markAsRead(message.id);
+                      markMessageAsRead(message.id);
+                      await markAsRead(message.id);
                     }
                   }}
                   title={
-                    message.read ? "Marcar como não lida" : "Marcar como lida"
+                    isMessageRead(message.id)
+                      ? "Marcar como não lida"
+                      : "Marcar como lida"
                   }
                 >
-                  {message.read ? (
+                  {isMessageRead(message.id) ? (
                     <Mail className="h-4 w-4 text-gray-400" />
                   ) : (
                     <MailOpen className="h-4 w-4 text-company-blue-600" />
@@ -364,7 +394,15 @@ export default function MensagensPage({
                 </Button>
 
                 <Button
-                  onClick={() => onSelectDetail(message.id)}
+                  onClick={async () => {
+                    // Marcar como lida se não estiver lida
+                    if (!isMessageRead(message.id)) {
+                      markMessageAsRead(message.id);
+                      await markAsRead(message.id);
+                      refreshUnreadCount();
+                    }
+                    onSelectDetail(message.id);
+                  }}
                   variant="ghost"
                   size="icon"
                   className="h-8 w-8"

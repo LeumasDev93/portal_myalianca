@@ -33,7 +33,7 @@ import { useUserProfile } from "@/hooks/useUserProfile ";
 interface Apolice {
   id: string;
   policyNumber: string;
-  insuranceType: string;
+  insuranceType?: string; // Opcional para compatibilidade
   productName: string;
   startDate: string;
   endDate: string;
@@ -64,6 +64,7 @@ export default function NewOcorrênciasPage({ onBack }: NewSinistroPageProps) {
     apolice: "",
     tipoSinistro: "",
     nomeApolice: "",
+    tipoApolice: "",
     data: "",
     hora: "",
     local: "",
@@ -76,6 +77,8 @@ export default function NewOcorrênciasPage({ onBack }: NewSinistroPageProps) {
   // Upload de fotos
   const [fotos, setFotos] = useState<File[]>([]);
   const [previews, setPreviews] = useState<string[]>([]);
+  const [uploadedFileIds, setUploadedFileIds] = useState<string[]>([]);
+  const [uploadingFiles, setUploadingFiles] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     if (!token || !profile?.user?.nif) return;
@@ -130,8 +133,30 @@ export default function NewOcorrênciasPage({ onBack }: NewSinistroPageProps) {
 
       if (name === "apolice") {
         newData.tipoSinistro = "";
+        newData.tipoApolice = "";
         setSinistrosDisponiveis([]);
         fetchSinistros(value);
+
+        // Buscar dados da apólice selecionada
+        const apoliceSelecionada = apolices.find(
+          (apolice) => String(apolice.contractNumber) === value
+        );
+
+        if (apoliceSelecionada) {
+          newData.nomeApolice = apoliceSelecionada.productName;
+          newData.tipoApolice = apoliceSelecionada.insuranceType || "AUTO";
+        }
+      }
+
+      if (name === "tipoSinistro") {
+        // Buscar dados do sinistro selecionado
+        const sinistroSelecionado = sinistrosDisponiveis.find(
+          (sinistro) => String(sinistro.claimNumber) === value
+        );
+
+        if (sinistroSelecionado) {
+          newData.tipoSinistro = sinistroSelecionado.product || value;
+        }
       }
 
       return newData;
@@ -179,12 +204,21 @@ export default function NewOcorrênciasPage({ onBack }: NewSinistroPageProps) {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    console.log("📁 handleFileChange iniciado -", new Date().toISOString());
+
     if (e.target.files?.length) {
       const newFiles = Array.from(e.target.files);
+      console.log(
+        "📂 Arquivos selecionados:",
+        newFiles.map((f) => ({ name: f.name, size: f.size, type: f.type }))
+      );
+
       const totalFiles = [...fotos, ...newFiles];
+      console.log("📊 Total de arquivos após adição:", totalFiles.length);
 
       if (totalFiles.length > 5) {
+        console.log("❌ Limite de 5 arquivos excedido");
         toast({
           title: "Limite de fotos excedido",
           description: "Você pode enviar no máximo 5 fotos.",
@@ -193,63 +227,221 @@ export default function NewOcorrênciasPage({ onBack }: NewSinistroPageProps) {
         return;
       }
 
+      // Verificar tamanho dos arquivos (2MB cada)
+      const maxSize = 2 * 1024 * 1024; // 2MB
+      const oversizedFiles = newFiles.filter((file) => file.size > maxSize);
+
+      if (oversizedFiles.length > 0) {
+        console.log(
+          "❌ Arquivos muito grandes:",
+          oversizedFiles.map((f) => ({ name: f.name, size: f.size }))
+        );
+        toast({
+          title: "Arquivo muito grande",
+          description: `Os arquivos ${oversizedFiles
+            .map((f) => f.name)
+            .join(", ")} excedem o limite de 2MB.`,
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Verificar tipo de arquivo
+      const allowedTypes = [
+        "image/",
+        "application/pdf",
+        "application/msword",
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        "application/vnd.ms-excel",
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        "text/plain",
+      ];
+
+      const invalidFiles = newFiles.filter(
+        (file) =>
+          !allowedTypes.some(
+            (type) => file.type.startsWith(type) || file.type === type
+          )
+      );
+
+      if (invalidFiles.length > 0) {
+        console.log(
+          "❌ Tipos de arquivo inválidos:",
+          invalidFiles.map((f) => ({ name: f.name, type: f.type }))
+        );
+        toast({
+          title: "Tipo de arquivo não suportado",
+          description: `Os arquivos ${invalidFiles
+            .map((f) => f.name)
+            .join(", ")} não são suportados.`,
+          variant: "destructive",
+        });
+        return;
+      }
+
+      console.log("✅ Validações passadas, adicionando arquivos ao state");
       setFotos(totalFiles);
       setPreviews([
         ...previews,
         ...newFiles.map((file) => URL.createObjectURL(file)),
       ]);
+
+      console.log("📸 Previews criados:", newFiles.length, "arquivos");
+      console.log(
+        "📋 Estado atual - fotos:",
+        totalFiles.length,
+        "previews:",
+        previews.length + newFiles.length
+      );
+
+      // Upload imediato de cada arquivo
+      for (const file of newFiles) {
+        await uploadFileImmediately(file);
+      }
+    } else {
+      console.log("⚠️ Nenhum arquivo selecionado");
+    }
+  };
+
+  // Função para upload imediato de arquivo
+  const uploadFileImmediately = async (file: File) => {
+    const fileId = `${file.name}-${Date.now()}`;
+
+    console.log(`🔄 Iniciando upload imediato: ${file.name}`);
+    setUploadingFiles((prev) => new Set(prev).add(fileId));
+
+    try {
+      const uploadedId = await uploadDocument(file);
+      setUploadedFileIds((prev) => [...prev, uploadedId]);
+      console.log(
+        `✅ Upload imediato concluído: ${file.name} -> ID: ${uploadedId}`
+      );
+
+      toast({
+        title: "Upload concluído",
+        description: `${file.name} foi enviado com sucesso.`,
+        variant: "success",
+      });
+    } catch (error) {
+      console.error(`❌ Erro no upload imediato: ${file.name}`, error);
+      toast({
+        title: "Erro no upload",
+        description: `Falha ao enviar ${file.name}.`,
+        variant: "destructive",
+      });
+    } finally {
+      setUploadingFiles((prev) => {
+        const newSet = new Set(prev);
+        newSet.delete(fileId);
+        return newSet;
+      });
     }
   };
 
   const handleRemoveFile = (index: number) => {
+    console.log("🗑️ Removendo arquivo no índice:", index);
+    console.log("📁 Arquivo removido:", fotos[index]?.name);
+
     const newFotos = [...fotos];
     const newPreviews = [...previews];
+    const newUploadedIds = [...uploadedFileIds];
 
     URL.revokeObjectURL(newPreviews[index]);
     newFotos.splice(index, 1);
     newPreviews.splice(index, 1);
+    newUploadedIds.splice(index, 1);
 
     setFotos(newFotos);
     setPreviews(newPreviews);
+    setUploadedFileIds(newUploadedIds);
+
+    console.log("✅ Arquivo removido. Total restante:", newFotos.length);
+    console.log("📋 IDs restantes:", newUploadedIds);
   };
 
-  // Função para upload de documento único
-  const uploadDocument = async (
-    file: File,
-    userId: string
-  ): Promise<string> => {
-    try {
-      // Converter para base64
-      const base64Data = await new Promise<string>((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve((reader.result as string).split(",")[1]);
-        reader.onerror = (error) => reject(error);
-        reader.readAsDataURL(file);
-      });
+  // Função para upload de documento único usando o mesmo sistema das mensagens
+  const uploadDocument = async (file: File): Promise<string> => {
+    console.log(
+      "🔄 Iniciando upload do arquivo:",
+      file.name,
+      "-",
+      new Date().toISOString()
+    );
 
-      // Fazer upload via nossa API
+    const formData = new FormData();
+    formData.append("file", file);
+    console.log(
+      "📦 FormData criado com arquivo:",
+      file.name,
+      "(",
+      file.size,
+      "bytes)"
+    );
+
+    // Timeout de 30 segundos para uploads
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 30000);
+
+    try {
+      console.log("📤 Enviando requisição para /api/upload...");
+      console.log("📡 URL:", "/api/upload");
+      console.log("📡 Método: POST");
+      console.log("📡 Arquivo:", file.name);
+
       const response = await fetch("/api/upload", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          content: base64Data,
-          filename: file.name,
-          mimetype: file.type,
-          userid: userId,
-        }),
+        body: formData,
+        signal: controller.signal,
       });
 
+      clearTimeout(timeoutId);
+      console.log(
+        "📥 Resposta recebida da API de upload:",
+        response.status,
+        response.statusText
+      );
+      console.log(
+        "📥 Headers da resposta:",
+        Object.fromEntries(response.headers.entries())
+      );
+
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Falha no upload do documento");
+        const errorText = await response.text();
+        console.error("❌ Erro na API de upload:", response.status, errorText);
+        throw new Error(`Erro no upload do arquivo: ${response.status}`);
       }
 
       const data = await response.json();
-      return data.id; // Retorna o ID do documento
+      console.log("✅ Resposta da API de upload:", data);
+      console.log("✅ Tipo de resposta:", typeof data);
+      console.log("✅ Chaves da resposta:", Object.keys(data));
+
+      // Verificar se o ID foi retornado
+      if (!data.id) {
+        console.error("❌ API não retornou ID do arquivo:", data);
+        console.error(
+          "❌ Estrutura da resposta:",
+          JSON.stringify(data, null, 2)
+        );
+        throw new Error(
+          `API não retornou ID do arquivo. Resposta: ${JSON.stringify(data)}`
+        );
+      }
+
+      console.log("✅ ID do arquivo retornado:", data.id);
+      console.log("✅ Upload concluído com sucesso para:", file.name);
+      return data.id; // Retorna o ID do arquivo no servidor
     } catch (error) {
-      console.error("Erro no upload do documento:", error);
+      clearTimeout(timeoutId);
+      console.error("❌ Erro durante upload:", error);
+
+      if (error instanceof Error && error.name === "AbortError") {
+        const fileSizeMB = (file.size / (1024 * 1024)).toFixed(1);
+        console.error("❌ Timeout no upload:", fileSizeMB, "MB");
+        throw new Error(
+          `Timeout no upload (${fileSizeMB}MB) - verifique sua conexão ou tente novamente.`
+        );
+      }
       throw error;
     }
   };
@@ -259,8 +451,9 @@ export default function NewOcorrênciasPage({ onBack }: NewSinistroPageProps) {
 
     const {
       apolice,
-      tipoSinistro,
       nomeApolice,
+      tipoApolice,
+      tipoSinistro,
       data,
       hora,
       local,
@@ -271,7 +464,7 @@ export default function NewOcorrênciasPage({ onBack }: NewSinistroPageProps) {
     } = formData;
 
     // Verificação de campos obrigatórios
-    if (!apolice || !tipoSinistro || !data || !local || !descricao) {
+    if (!apolice || !data || !local || !descricao) {
       toast({
         title: "Campos obrigatórios",
         description: "Preencha todos os campos marcados com *",
@@ -284,25 +477,17 @@ export default function NewOcorrênciasPage({ onBack }: NewSinistroPageProps) {
     setUploadProgress(0);
 
     try {
-      let documentosIds: string[] = [];
-
-      // 1. Upload dos documentos (se houver)
-      if (fotos.length > 0) {
-        toast({
-          title: "Enviando documentos...",
-          description: "Aguarde enquanto seus arquivos são enviados.",
-        });
-
-        documentosIds = await Promise.all(
-          fotos.map((file) => uploadDocument(file, profile?.user?.id || ""))
-        );
-      }
+      // Usar os IDs já carregados
+      const documentosIds = uploadedFileIds;
+      console.log("📋 IDs de arquivos já carregados:", documentosIds);
 
       // 2. Envio dos dados do sinistro
+      console.log("📝 Preparando payload para envio do sinistro");
       const payload = {
         id_apolice: apolice,
         nome_apolice: nomeApolice,
-        tipo_apolice: tipoSinistro,
+        tipo_apolice: tipoApolice || "AUTO", // Usa o valor da API ou "AUTO" como fallback
+        tipo_sinistro: tipoSinistro || "", // Usa o valor do sinistro selecionado
         descricao,
         id_anexos: documentosIds,
         data_ocorrencia: data,
@@ -314,6 +499,16 @@ export default function NewOcorrênciasPage({ onBack }: NewSinistroPageProps) {
         user_id: profile?.user?.id,
       };
 
+      console.log("📦 Payload preparado:", {
+        id_apolice: payload.id_apolice,
+        nome_apolice: payload.nome_apolice,
+        tipo_apolice: payload.tipo_apolice,
+        tipo_sinistro: payload.tipo_sinistro,
+        id_anexos: payload.id_anexos,
+        user_id: payload.user_id,
+      });
+
+      console.log("🌐 Enviando requisição para /api/sinistro...");
       const response = await fetch("/api/sinistro", {
         method: "POST",
         headers: {
@@ -323,12 +518,20 @@ export default function NewOcorrênciasPage({ onBack }: NewSinistroPageProps) {
         body: JSON.stringify(payload),
       });
 
+      console.log(
+        "📥 Resposta recebida:",
+        response.status,
+        response.statusText
+      );
       const responseData = await response.json();
+      console.log("📄 Dados da resposta:", responseData);
 
       if (!response.ok) {
+        console.error("❌ Erro na resposta:", responseData);
         throw new Error(responseData.error || "Erro ao enviar sinistro");
       }
 
+      console.log("✅ Sinistro registrado com sucesso!");
       toast({
         title: "Sucesso!",
         description: "Sinistro registrado com sucesso.",
@@ -336,10 +539,12 @@ export default function NewOcorrênciasPage({ onBack }: NewSinistroPageProps) {
       });
 
       // Limpar formulário após sucesso
+      console.log("🧹 Limpando formulário...");
       setFormData({
         apolice: "",
         nomeApolice: "",
         tipoSinistro: "",
+        tipoApolice: "",
         data: "",
         hora: "",
         local: "",
@@ -350,6 +555,9 @@ export default function NewOcorrênciasPage({ onBack }: NewSinistroPageProps) {
       });
       setFotos([]);
       setPreviews([]);
+      setUploadedFileIds([]);
+      setUploadingFiles(new Set());
+      console.log("✅ Formulário limpo");
     } catch (error: any) {
       console.error("Erro no processo:", error);
       toast({
@@ -410,18 +618,9 @@ export default function NewOcorrênciasPage({ onBack }: NewSinistroPageProps) {
                   </Label>
                   <Select
                     value={formData.apolice}
-                    onValueChange={(value) => {
-                      handleSelectChange("apolice", value);
-                      // Ao selecionar a apólice, atualiza tanto id_apolice quanto nome_apolice
-                      const apoliceSelecionada = apolices.find(
-                        (apolice) => String(apolice.contractNumber) === value
-                      );
-                      setFormData((prev) => ({
-                        ...prev,
-                        apolice: value,
-                        nomeApolice: apoliceSelecionada?.productName || "",
-                      }));
-                    }}
+                    onValueChange={(value) =>
+                      handleSelectChange("apolice", value)
+                    }
                     required
                     disabled={isLoading}
                   >
@@ -450,17 +649,23 @@ export default function NewOcorrênciasPage({ onBack }: NewSinistroPageProps) {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="tipoSinistro">
-                    Tipo de Sinistro{" "}
-                    <span className="text-company-red-500">*</span>
-                  </Label>
+                  <Label htmlFor="tipoApolice">Tipo de Apólice</Label>
+                  <Input
+                    id="tipoApolice"
+                    value={formData.tipoApolice || "Não definido"}
+                    disabled
+                    className="bg-gray-50"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="tipoSinistro">Tipo de Sinistro</Label>
                   <Select
                     value={formData.tipoSinistro}
                     onValueChange={(value) =>
                       handleSelectChange("tipoSinistro", value)
                     }
                     disabled={!formData.apolice || loadingSinistros}
-                    required
                   >
                     <SelectTrigger>
                       <SelectValue
@@ -618,21 +823,22 @@ export default function NewOcorrênciasPage({ onBack }: NewSinistroPageProps) {
               <h3 className="text-lg font-semibold">Fotos e Documentos</h3>
 
               <div className="space-y-2">
-                <Label>Fotos do Sinistro (máximo 5 fotos)</Label>
+                <Label>
+                  Fotos do Sinistro (selecione uma por vez, máximo 5 fotos)
+                </Label>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
                   <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 flex flex-col items-center justify-center text-center">
                     <Camera className="h-8 w-8 text-gray-400 mb-2" />
                     <p className="text-sm text-muted-foreground mb-2">
-                      Arraste e solte fotos aqui ou clique para selecionar
+                      Arraste e solte uma foto aqui ou clique para selecionar
                     </p>
                     <p className="text-xs text-muted-foreground mb-4">
-                      Formatos aceitos: JPG, PNG, HEIC - Tamanho máximo: 10MB
+                      Formatos aceitos: JPG, PNG, HEIC - Tamanho máximo: 2MB
                     </p>
                     <Input
                       id="fotos"
                       type="file"
                       accept="image/*"
-                      multiple
                       className="hidden"
                       onChange={handleFileChange}
                     />
@@ -643,7 +849,7 @@ export default function NewOcorrênciasPage({ onBack }: NewSinistroPageProps) {
                       className="gap-2"
                     >
                       <Upload className="h-4 w-4" />
-                      Selecionar Fotos
+                      Selecionar Foto
                     </Button>
                   </div>
 
@@ -654,29 +860,53 @@ export default function NewOcorrênciasPage({ onBack }: NewSinistroPageProps) {
                           Fotos selecionadas ({previews.length}/5)
                         </p>
                         <div className="grid grid-cols-2 gap-2">
-                          {previews.map((preview, index) => (
-                            <div
-                              key={index}
-                              className="relative rounded-md overflow-hidden border"
-                            >
-                              <Image
-                                src={preview}
-                                alt={`Foto do sinistro ${index + 1}`}
-                                className="w-full h-24 object-cover"
-                                width={100}
-                                height={100}
-                              />
-                              <Button
-                                type="button"
-                                variant="destructive"
-                                size="icon"
-                                className="absolute top-1 right-1 h-6 w-6"
-                                onClick={() => handleRemoveFile(index)}
+                          {previews.map((preview, index) => {
+                            const file = fotos[index];
+                            const fileId = file
+                              ? `${file.name}-${Date.now()}`
+                              : "";
+                            const isUploading = uploadingFiles.has(fileId);
+                            const isUploaded = uploadedFileIds[index];
+
+                            return (
+                              <div
+                                key={index}
+                                className="relative rounded-md overflow-hidden border"
                               >
-                                <X className="h-3 w-3" />
-                              </Button>
-                            </div>
-                          ))}
+                                <Image
+                                  src={preview}
+                                  alt={`Foto do sinistro ${index + 1}`}
+                                  className="w-full h-24 object-cover"
+                                  width={100}
+                                  height={100}
+                                />
+
+                                {/* Indicador de status */}
+                                <div className="absolute top-1 left-1">
+                                  {isUploading && (
+                                    <div className="bg-yellow-500 text-white text-xs px-1 py-0.5 rounded">
+                                      📤
+                                    </div>
+                                  )}
+                                  {isUploaded && (
+                                    <div className="bg-green-500 text-white text-xs px-1 py-0.5 rounded">
+                                      ✅
+                                    </div>
+                                  )}
+                                </div>
+
+                                <Button
+                                  type="button"
+                                  variant="destructive"
+                                  size="icon"
+                                  className="absolute top-1 right-1 h-6 w-6"
+                                  onClick={() => handleRemoveFile(index)}
+                                >
+                                  <X className="h-3 w-3" />
+                                </Button>
+                              </div>
+                            );
+                          })}
                         </div>
                       </div>
                     ) : (

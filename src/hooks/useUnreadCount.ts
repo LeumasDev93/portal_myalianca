@@ -54,13 +54,17 @@ export function useUnreadCount(userId?: string) {
         setMessages(formattedMessages);
 
         // Use o valor da API diretamente, se disponível
+        let finalUnreadCount = 0;
         if (typeof data.unreadCount === "number") {
-          setUnreadCount(data.unreadCount);
+          finalUnreadCount = data.unreadCount;
         } else {
           // fallback para contar localmente
-          setUnreadCount(formattedMessages.filter((msg) => !msg.read).length);
+          finalUnreadCount = formattedMessages.filter((msg) => !msg.read).length;
         }
+        
+        setUnreadCount(finalUnreadCount);
       } catch (err) {
+        console.error("Error fetching messages:", err);
         setError(err instanceof Error ? err.message : "Erro desconhecido");
         setMessages([]);
         setUnreadCount(0);
@@ -72,24 +76,82 @@ export function useUnreadCount(userId?: string) {
     fetchMessages();
   }, [userId]);
 
-  const markAsRead = (id: string) => {
-    setMessages((prev) => {
-      const updated = prev.map((msg) =>
-        msg.id === id ? { ...msg, read: true } : msg
-      );
-      setUnreadCount(updated.filter((m) => !m.read).length);
-      return updated;
-    });
+  const markAsRead = async (id: string) => {
+    if (!userId) return;
+
+    try {
+      // Chamar API para marcar como lida
+      const response = await fetch("/api/menssage", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          messageId: id,
+          userId: userId,
+          action: "mark-as-read",
+        }),
+      });
+
+      if (response.ok) {
+        setMessages((prev) => {
+          const updated = prev.map((msg) =>
+            msg.id === id ? { ...msg, read: true } : msg
+          );
+          setUnreadCount(updated.filter((m) => !m.read).length);
+          return updated;
+        });
+      }
+    } catch (error) {
+      console.error("Erro ao marcar mensagem como lida:", error);
+      // Fallback: atualizar localmente mesmo se a API falhar
+      setMessages((prev) => {
+        const updated = prev.map((msg) =>
+          msg.id === id ? { ...msg, read: true } : msg
+        );
+        setUnreadCount(updated.filter((m) => !m.read).length);
+        return updated;
+      });
+    }
   };
 
-  const markAsUnread = (id: string) => {
-    setMessages((prev) => {
-      const updated = prev.map((msg) =>
-        msg.id === id ? { ...msg, read: false } : msg
-      );
-      setUnreadCount(updated.filter((m) => !m.read).length);
-      return updated;
-    });
+  const markAsUnread = async (id: string) => {
+    if (!userId) return;
+
+    try {
+      // Chamar API para marcar como não lida
+      const response = await fetch("/api/menssage", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          messageId: id,
+          userId: userId,
+          action: "mark-as-unread",
+        }),
+      });
+
+      if (response.ok) {
+        setMessages((prev) => {
+          const updated = prev.map((msg) =>
+            msg.id === id ? { ...msg, read: false } : msg
+          );
+          setUnreadCount(updated.filter((m) => !m.read).length);
+          return updated;
+        });
+      }
+    } catch (error) {
+      console.error("Erro ao marcar mensagem como não lida:", error);
+      // Fallback: atualizar localmente mesmo se a API falhar
+      setMessages((prev) => {
+        const updated = prev.map((msg) =>
+          msg.id === id ? { ...msg, read: false } : msg
+        );
+        setUnreadCount(updated.filter((m) => !m.read).length);
+        return updated;
+      });
+    }
   };
 
   const toggleStar = (id: string) => {

@@ -1,5 +1,5 @@
-import { useUnreadCount } from "@/hooks/useUnreadCount";
 import { useUserProfile } from "@/hooks/useUserProfile ";
+import { useUnreadMessages } from "@/contexts/unread-messages-context";
 import { Avatar, AvatarFallback, AvatarImage } from "@radix-ui/react-avatar";
 import { useEffect, useRef, useState } from "react";
 import { FaSearch } from "react-icons/fa";
@@ -22,9 +22,9 @@ export function TopMenu({
   onSearchChange,
 }: TopMenuProps) {
   const { profile } = useUserProfile();
-
-  const unreadCount = useUnreadCount();
+  const { unreadCount } = useUnreadMessages();
   const [showSearch, setShowSearch] = useState(false);
+
   const searchInputRef = useRef<HTMLInputElement>(null);
   const getSaudacao = () => {
     const hora = new Date().getHours();
@@ -143,9 +143,9 @@ export function TopMenu({
             aria-label="Mensagens"
           >
             <MdEmail className="text-[#002256] size-5 xl:size-6" />
-            {unreadCount.messages.length > 0 && (
-              <span className="absolute -top-1 -right-1 bg-[#B7021C] text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                {unreadCount.messages.length}
+            {unreadCount > 0 && (
+              <span className="absolute -top-1 -right-1 bg-[#B7021C] text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-medium">
+                {unreadCount > 99 ? "99+" : unreadCount}
               </span>
             )}
           </button>
@@ -168,9 +168,7 @@ export function TopMenu({
           >
             <Avatar className="w-full h-full flex items-center justify-center">
               <AvatarImage
-                src={`${
-                  process.env.NEXT_PUBLIC_API_BASE_URL_IMAGE
-                }/${"fde944e1-8bb3-446b-83f6-10634bebbf68"}`}
+                src={`${process.env.NEXT_PUBLIC_API_BASE_URL_IMAGE}/${profile?.user?.imagem_id}`}
                 className="rounded-full"
               />
               <AvatarFallback className="text-white hover:text-[#002256]">

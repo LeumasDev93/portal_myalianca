@@ -3,7 +3,9 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/contexts/auth-context";
+import { UnreadMessagesProvider } from "@/contexts/unread-messages-context";
 import { Suspense } from "react";
+import { Toaster } from "sonner";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -22,8 +24,11 @@ export default function RootLayout({
     <html lang="pt-BR">
       <body className={inter.className}>
         <Suspense>
-          <AuthProvider>{children}</AuthProvider>
+          <AuthProvider>
+            <UnreadMessagesProvider>{children}</UnreadMessagesProvider>
+          </AuthProvider>
         </Suspense>
+        <Toaster />
       </body>
     </html>
   );

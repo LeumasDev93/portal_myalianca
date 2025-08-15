@@ -412,13 +412,13 @@ export default function MySimulationsTab() {
                         </>
                       )}
                     </Button>
-                    <Button
+                    {/* <Button
                       onClick={() => handleEdit(simulation)}
                       className="flex items-center bg-[#002256] hover:bg-[#002256]/70 gap-2"
                     >
                       <FaRegEdit />
                       Editar
-                    </Button>
+                    </Button> */}
                   </div>
                 </div>
               </CardHeader>

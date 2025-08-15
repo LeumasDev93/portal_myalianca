@@ -36,23 +36,41 @@ export default function OcorrenciaDetailsPage({
       setOcorrencia(data);
 
       const ocorrencia = data[0];
-      console.log(ocorrencia, "anexos");
-      // Se houver anexos, buscar detalhes completos dos anexos
-      if (
-        Array.isArray(ocorrencia.id_anexos) &&
-        ocorrencia.id_anexos.length > 0
-      ) {
-        const queryParams = ocorrencia.id_anexos
-          .map((id: string) => `id=${id}`)
-          .join("&");
-        const anexosResponse = await fetch(`/api/download?${queryParams}`);
-        if (!anexosResponse.ok) throw new Error("Erro ao buscar anexos");
+      // Se houver anexos, processar diretamente usando a URL da API externa
+      let anexosIds: string[] = [];
 
-        const anexosData = await anexosResponse.json();
-        console.log(anexosData.length, "anexos");
-        setAnexos(anexosData);
-      } else {
-        console.log("Sem anexos ou formato inválido:", ocorrencia.id_anexos);
+      // Verificar se id_anexos é string (JSON) ou array
+      if (typeof ocorrencia.id_anexos === "string" && ocorrencia.id_anexos) {
+        try {
+          anexosIds = JSON.parse(ocorrencia.id_anexos);
+        } catch (e) {
+          console.log("❌ Erro ao fazer parse de id_anexos:", e);
+          anexosIds = [];
+        }
+      } else if (Array.isArray(ocorrencia.id_anexos)) {
+        anexosIds = ocorrencia.id_anexos;
+      }
+
+      if (anexosIds.length > 0) {
+        // Processar anexos diretamente usando a URL da API externa
+        const processedAnexos = anexosIds.map((id: string) => {
+          const apiBaseUrl =
+            process.env.NEXT_PUBLIC_API_BASE_URL_DEFAULT ||
+            "https://api.aliancaseguros.cv";
+          const imageUrl = `${apiBaseUrl}/files/1.0.0/download/${id}`;
+
+          return {
+            id: id,
+            filename: `Anexo ${id}`,
+            content: "", // Será preenchido pelo componente Gallery
+            mimetype: "image/jpeg", // Assumindo que são imagens
+            userid: "",
+            datecreate: new Date().toISOString(),
+            url: imageUrl, // URL direta para download
+          };
+        });
+
+        setAnexos(processedAnexos);
       }
     } catch (err: any) {
       setError(err.message || "Erro desconhecido");

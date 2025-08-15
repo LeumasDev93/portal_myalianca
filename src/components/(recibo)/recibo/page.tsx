@@ -26,22 +26,27 @@ import {
   formatDate,
   getStatusReciverColors,
   getStatusReciverTexts,
-  getTypesReciver,
+  STATUS_OPTIONS_RECIBOS,
 } from "@/lib/utils";
 import { useEffect, useState } from "react";
 import {
   FaDownload,
-  FaSpinner,
   FaUser,
   FaSearch,
   FaFilter,
   FaEye,
+  FaCheck,
+  FaExclamationTriangle,
 } from "react-icons/fa";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { useRecibos } from "@/hooks/useRecibos ";
 import { Grid, List } from "lucide-react";
 import { ReciboPDFModal } from "../ModalRecibo";
 import ReactDOM from "react-dom/client";
 import { MdPayment } from "react-icons/md";
+import { toast } from "sonner";
+
+type ViewMode = "grid" | "list";
 
 type ReciboPageProps = {
   onSelectDetail?: (id: string) => void;
@@ -50,10 +55,15 @@ type ReciboPageProps = {
 type ReciboLoadingState = {
   [number: string]: boolean;
 };
-type ViewMode = "grid" | "list";
+
+type DownloadStatus = {
+  [number: string]: "idle" | "downloading" | "success" | "error";
+};
+
 export default function ReciboPage({}: ReciboPageProps) {
   const [loadingStates, setLoadingStates] = useState<ReciboLoadingState>({});
   const [loadingView, setLoadingView] = useState<ReciboLoadingState>({});
+  const [downloadStatus, setDownloadStatus] = useState<DownloadStatus>({});
   const [viewMode, setViewMode] = useState<ViewMode>("list");
   const { token } = useSessionCheckToken();
 
@@ -71,6 +81,68 @@ export default function ReciboPage({}: ReciboPageProps) {
 
   const handleDownload = async (invoiceNumber: string) => {
     setLoadingStates((prev) => ({ ...prev, [invoiceNumber]: true }));
+    setDownloadStatus((prev) => ({ ...prev, [invoiceNumber]: "downloading" }));
+
+    try {
+      const response = await fetch(
+        `/api/anywhere/api/v1/private/mobile/invoice/${invoiceNumber}/print/receipt`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            Accept: "application/pdf",
+          },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`Erro ${response.status}: ${response.statusText}`);
+      }
+
+      const arrayBuffer = await response.arrayBuffer();
+
+      // Verificar se o conteúdo é realmente um PDF
+      const uint8Array = new Uint8Array(arrayBuffer);
+      const pdfHeader = new TextDecoder("utf-8").decode(uint8Array.slice(0, 5));
+
+      if (!pdfHeader.startsWith("%PDF")) {
+        throw new Error("O arquivo baixado não é um PDF válido");
+      }
+
+      const blob = new Blob([arrayBuffer], { type: "application/pdf" });
+      const url = URL.createObjectURL(blob);
+
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `recibo-${invoiceNumber}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+
+      URL.revokeObjectURL(url);
+
+      setDownloadStatus((prev) => ({ ...prev, [invoiceNumber]: "success" }));
+      toast.success(`Recibo ${invoiceNumber} baixado com sucesso!`);
+
+      // Reset status after 3 seconds
+      setTimeout(() => {
+        setDownloadStatus((prev) => ({ ...prev, [invoiceNumber]: "idle" }));
+      }, 3000);
+    } catch (error: any) {
+      console.error("Erro ao baixar PDF:", error);
+      setDownloadStatus((prev) => ({ ...prev, [invoiceNumber]: "error" }));
+      toast.error(`Erro ao baixar recibo ${invoiceNumber}: ${error.message}`);
+
+      // Reset status after 5 seconds
+      setTimeout(() => {
+        setDownloadStatus((prev) => ({ ...prev, [invoiceNumber]: "idle" }));
+      }, 5000);
+    } finally {
+      setLoadingStates((prev) => ({ ...prev, [invoiceNumber]: false }));
+    }
+  };
+
+  const visualizarPDF = async (invoiceNumber: string) => {
+    setLoadingView((prev) => ({ ...prev, [invoiceNumber]: true }));
 
     try {
       const response = await fetch(
@@ -91,230 +163,244 @@ export default function ReciboPage({}: ReciboPageProps) {
       const blob = new Blob([arrayBuffer], { type: "application/pdf" });
       const url = URL.createObjectURL(blob);
 
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `recibo-${invoiceNumber}.pdf`;
-      a.click();
+      // Criar modal para visualizar PDF
+      const modalContainer = document.createElement("div");
+      modalContainer.id = "pdf-modal-container";
+      document.body.appendChild(modalContainer);
 
-      URL.revokeObjectURL(url);
+      const root = ReactDOM.createRoot(modalContainer);
+      root.render(
+        <ReciboPDFModal
+          pdfUrl={url}
+          onClose={() => {
+            root.unmount();
+            document.body.removeChild(modalContainer);
+            URL.revokeObjectURL(url);
+          }}
+        />
+      );
     } catch (error: any) {
-      console.error("Erro ao baixar PDF:", error);
+      console.error("Erro ao visualizar PDF:", error);
+      toast.error(
+        `Erro ao visualizar recibo ${invoiceNumber}: ${error.message}`
+      );
     } finally {
-      setLoadingStates((prev) => ({ ...prev, [invoiceNumber]: false }));
-    }
-  };
-
-  const visualizarPDF = async (invoiceNumber: string) => {
-    setLoadingView((prev) => ({ ...prev, [invoiceNumber]: true }));
-    const response = await fetch(
-      `/api/anywhere/api/v1/private/mobile/invoice/${invoiceNumber}/print/receipt`,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          Accept: "application/pdf",
-        },
-      }
-    );
-
-    if (!response.ok) {
       setLoadingView((prev) => ({ ...prev, [invoiceNumber]: false }));
-      return;
+    }
+  };
+
+  const getDownloadButtonContent = (invoiceNumber: string) => {
+    const status = downloadStatus[invoiceNumber];
+    const isLoading = loadingStates[invoiceNumber];
+
+    if (isLoading) {
+      return (
+        <>
+          <LoadingSpinner size="sm" />
+          <span>Baixando...</span>
+        </>
+      );
     }
 
-    const arrayBuffer = await response.arrayBuffer();
-    const blob = new Blob([arrayBuffer], { type: "application/pdf" });
-    const url = URL.createObjectURL(blob);
-
-    // Cria um container temporário
-    const container = document.createElement("div");
-    document.body.appendChild(container);
-
-    const root = ReactDOM.createRoot(container);
-
-    const closeModal = () => {
-      root.unmount(); // desmonta o componente
-      document.body.removeChild(container); // remove o DOM
-      URL.revokeObjectURL(url); // limpa a URL blob
-    };
-
-    // Renderiza o modal
-    root.render(<ReciboPDFModal pdfUrl={url} onClose={closeModal} />);
-    setLoadingView((prev) => ({ ...prev, [invoiceNumber]: false }));
+    switch (status) {
+      case "success":
+        return (
+          <>
+            <FaCheck className="text-green-500" />
+            <span>Baixado!</span>
+          </>
+        );
+      case "error":
+        return (
+          <>
+            <FaExclamationTriangle className="text-red-500" />
+            <span>Erro</span>
+          </>
+        );
+      default:
+        return (
+          <>
+            <FaDownload />
+            <span>Download</span>
+          </>
+        );
+    }
   };
 
-  const handlePayment = () => {
-    // Implementação para renovar apólice
+  const getDownloadButtonVariant = (invoiceNumber: string) => {
+    const status = downloadStatus[invoiceNumber];
+
+    switch (status) {
+      case "success":
+        return "outline";
+      case "error":
+        return "destructive";
+      default:
+        return "default";
+    }
   };
+
+  if (isLoadingRecibos) {
+    return <LoadingScreen />;
+  }
+
+  if (errorRecibo) {
+    return (
+      <div className="flex-1 space-y-6 p-6 md:p-8">
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <FaExclamationTriangle className="mx-auto h-12 w-12 text-red-500 mb-4" />
+            <h3 className="text-lg font-medium text-gray-900 mb-2">
+              Erro ao carregar recibos
+            </h3>
+            <p className="text-gray-500 mb-4">{errorRecibo}</p>
+            <Button onClick={() => window.location.reload()}>
+              Tentar novamente
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex-1 space-y-6 p-6 md:p-8">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-[#002256]">
           Meus Recibos
         </h1>
-        <div className="flex gap-2">
+        <div className="flex items-center gap-2">
           <Button
-            className={`${
-              viewMode === "list"
-                ? "bg-[#002256] hover:bg-[#002256]/70"
-                : "bg-white border border-input text-[#002256] hover:bg-[#002256]/70"
-            }`}
-            size="icon"
-            onClick={() => setViewMode("list")}
-          >
-            <List className="h-4 w-4" />
-          </Button>
-          <Button
-            className={`${
-              viewMode === "grid"
-                ? "bg-[#002256] hover:bg-[#002256]/70"
-                : "bg-white border border-input text-[#002256] hover:bg-[#002256]/70"
-            }`}
-            size="icon"
+            variant={viewMode === "grid" ? "default" : "outline"}
+            size="sm"
             onClick={() => setViewMode("grid")}
           >
             <Grid className="h-4 w-4" />
           </Button>
+          <Button
+            variant={viewMode === "list" ? "default" : "outline"}
+            size="sm"
+            onClick={() => setViewMode("list")}
+          >
+            <List className="h-4 w-4" />
+          </Button>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full sm:w-1/2 mb-6">
-        {/* Campo de pesquisa */}
-        <div className="relative bg-white rounded-lg">
-          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <FaSearch className="text-gray-400" />
-          </div>
+      {/* Filtros */}
+      <div className="flex flex-col sm:flex-row gap-4">
+        <div className="relative flex-1">
+          <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
           <input
             type="text"
-            placeholder="Pesquisar por nome, número ou referência..."
-            className="pl-10 pr-4 py-2 border rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="Pesquisar recibos..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#002256] focus:border-transparent"
           />
         </div>
-
-        {/* Filtro por status */}
-        <Select
-          value={statusFilter}
-          onValueChange={(value) => setStatusFilter(value)}
-        >
-          <SelectTrigger className="w-full border rounded-lg focus:ring-2 focus:ring-blue-500">
-            <SelectValue placeholder="Selecionar um estado" />
+        <Select value={statusFilter} onValueChange={setStatusFilter}>
+          <SelectTrigger className="w-full sm:w-48">
+            <SelectValue placeholder="Filtrar por status" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all" className="text-gray-400">
-              -- Selecionar um estado --
-            </SelectItem>
-            <SelectItem value="1">Em Cobrança</SelectItem>
-            <SelectItem value="2">Em Cobrança</SelectItem>
-            <SelectItem value="5">Cobrado</SelectItem>
-            <SelectItem value="8">Regularizado</SelectItem>
-            <SelectItem value="9">Anulado</SelectItem>
+            {STATUS_OPTIONS_RECIBOS.map((option) => (
+              <SelectItem key={option.value} value={option.value}>
+                {option.label}
+              </SelectItem>
+            ))}
           </SelectContent>
         </Select>
+        <Button
+          variant="outline"
+          onClick={resetFilters}
+          className="flex items-center gap-2"
+        >
+          <FaFilter />
+          Limpar
+        </Button>
       </div>
 
-      {isLoadingRecibos ? (
-        <div className="flex items-center justify-center h-screen">
-          <LoadingScreen />
-        </div>
-      ) : errorRecibo ? (
-        <p className="text-red-500">{errorRecibo}</p>
-      ) : filteredRecibos.length < 1 && !isLoadingRecibos ? (
-        <div className="flex flex-col items-center justify-center gap-2 py-8">
-          <div className="relative">
-            <FaSearch className="text-4xl text-gray-400 animate-pulse" />
-            <FaFilter
-              className="absolute -top-2 -right-2 text-xl text-[#2d4e7f] animate-spin-slow"
-              style={{ animationDuration: "3s" }}
-            />
-          </div>
-          <p className="text-gray-500 text-center">
-            Nenhum recibo encontrado para esta pesquisa!
-            <br />
-            Tente ajustar os filtros ou buscar por outros termos.
+      {filteredRecibos.length === 0 ? (
+        <div className="text-center py-12">
+          <FaUser className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+          <h3 className="text-lg font-medium text-gray-900 mb-2">
+            Nenhum recibo encontrado
+          </h3>
+          <p className="text-gray-500">
+            {searchTerm || statusFilter
+              ? "Tente ajustar os filtros de pesquisa"
+              : "Você ainda não possui recibos"}
           </p>
         </div>
       ) : viewMode === "grid" ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 3xl:grid-cols-5 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {filteredRecibos.map((recibo) => (
-            <Card key={recibo.number}>
+            <Card
+              key={recibo.number}
+              className="hover:shadow-lg transition-shadow"
+            >
               <CardHeader className="border-b">
                 <CardTitle className="flex items-center justify-between">
-                  <div className="flex text-sm xl:text-lg font-bold text-[#002256]">
-                    Número:
-                    <CopiableNumber number={recibo.number} />
+                  <div className="flex items-center gap-2">
+                    <MdPayment className="text-[#002256]" />
+                    <span>#{recibo.number}</span>
                   </div>
-                  <div className="flex flex-col gap-2">
-                    <Button
-                      onClick={() => visualizarPDF(recibo.number)}
-                      disabled={loadingView[recibo.number]}
-                      className="flex items-center gap-2 bg-[#002256] hover:bg-[#002256]/70"
-                      size="sm"
-                    >
-                      {loadingView[recibo.number] ? (
-                        <FaSpinner className="animate-spin" />
-                      ) : (
-                        <>
-                          <FaEye />
-                        </>
-                      )}
-                    </Button>
-                    {recibo.status === 9 ||
-                      recibo.status === 1 ||
-                      (recibo.status === 2 ? (
-                        <Button
-                          onClick={() => handlePayment()}
-                          disabled={loadingStates[recibo.number]}
-                          className="flex items-center bg-[#002856] hover:bg-[#002856]/50 gap-2"
-                        >
-                          {loadingStates[recibo.number] ? (
-                            <FaSpinner className="animate-spin" />
-                          ) : (
-                            <MdPayment />
-                          )}
-                        </Button>
-                      ) : (
-                        <Button
-                          onClick={() => handleDownload(recibo.number)}
-                          disabled={loadingStates[recibo.number]}
-                          className="flex items-center bg-[#002856] hover:bg-[#002856]/50 gap-2"
-                        >
-                          {loadingStates[recibo.number] ? (
-                            <FaSpinner className="animate-spin" />
-                          ) : (
-                            <FaDownload />
-                          )}
-                        </Button>
-                      ))}
-                  </div>
+                  <span
+                    className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusReciverColors(
+                      recibo.status
+                    )}`}
+                  >
+                    {getStatusReciverTexts(recibo.status)}
+                  </span>
                 </CardTitle>
-                <CardDescription>
-                  <div>Referencia: {recibo.mbref}</div>
-                  <div className="flex flex-col gap-2">
-                    <span>Valor: {formatCurrency(recibo.value)}</span>
-                  </div>
+                <CardDescription className="flex items-center gap-2">
+                  <FaUser className="text-gray-400" />
+                  {recibo.clientName}
                 </CardDescription>
               </CardHeader>
-              <CardContent>
-                <div className="flex justify-between">
-                  <div className="flex flex-col gap-2">
-                    <span>Estado:</span>
-                    <span
-                      className={`text-xs xl:text-[14px] border ${getStatusReciverColors(
-                        recibo.status
-                      )} bg-[#cdcecf] text-[#002256] px-2 py-1 rounded-sm`}
-                    >
-                      {getStatusReciverTexts(recibo.status)}
+              <CardContent className="pt-4">
+                <div className="space-y-2">
+                  <div className="flex justify-between">
+                    <span className="text-sm text-gray-500">Valor:</span>
+                    <span className="font-semibold text-[#002256]">
+                      {formatCurrency(recibo.value)}
                     </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-sm text-gray-500">Referência:</span>
+                    <span className="text-sm">{recibo.mbref}</span>
                   </div>
                 </div>
               </CardContent>
-              <CardFooter className="flex justify-between">
-                <div className="flex flex-col">
-                  Data Faturacao:
-                  <span className="text-xs xl:text-[14px] text-[#002256] ">
-                    {formatDate(recibo.from)} - {formatDate(recibo.to)}
-                  </span>
+              <CardFooter className="flex flex-col gap-2">
+                <div className="text-xs text-gray-500 text-center w-full">
+                  {formatDate(recibo.from)} - {formatDate(recibo.to)}
+                </div>
+                <div className="flex gap-2 w-full">
+                  <Button
+                    onClick={() => visualizarPDF(recibo.number)}
+                    disabled={loadingView[recibo.number]}
+                    variant="outline"
+                    size="sm"
+                    className="flex-1"
+                  >
+                    {loadingView[recibo.number] ? (
+                      <LoadingSpinner size="sm" />
+                    ) : (
+                      <FaEye />
+                    )}
+                    <span className="ml-1">Ver</span>
+                  </Button>
+                  <Button
+                    onClick={() => handleDownload(recibo.number)}
+                    disabled={loadingStates[recibo.number]}
+                    variant={getDownloadButtonVariant(recibo.number)}
+                    size="sm"
+                    className="flex-1"
+                  >
+                    {getDownloadButtonContent(recibo.number)}
+                  </Button>
                 </div>
               </CardFooter>
             </Card>
@@ -325,7 +411,7 @@ export default function ReciboPage({}: ReciboPageProps) {
           {filteredRecibos.map((recibo) => (
             <div
               key={recibo.number}
-              className="p-4 border rounded-lg bg-white transition-colors"
+              className="p-4 border rounded-lg bg-white hover:shadow-md transition-shadow"
             >
               <div className="flex justify-between items-start">
                 <div className="space-y-2">
@@ -333,15 +419,24 @@ export default function ReciboPage({}: ReciboPageProps) {
                     <span className="font-semibold">Número:</span>
                     <CopiableNumber number={recibo.number} />
                   </div>
-
+                  <div className="flex items-center gap-2">
+                    <span className="font-semibold">Cliente:</span>
+                    <span>{recibo.clientName}</span>
+                  </div>
                   <div className="flex items-center gap-2">
                     <span className="font-semibold">Valor:</span>
-                    <span>{formatCurrency(recibo.value)}</span>
+                    <span className="text-[#002256] font-semibold">
+                      {formatCurrency(recibo.value)}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="font-semibold">Referência:</span>
+                    <span>{recibo.mbref}</span>
                   </div>
                 </div>
                 <div className="mt-3 grid grid-cols-2 md:grid-cols-4 gap-2 text-sm">
                   <div>
-                    <span className="text-gray-500"> Data Faturacao:</span>
+                    <span className="text-gray-500">Data Faturação:</span>
                     <p>
                       {formatDate(recibo.from)} - {formatDate(recibo.to)}
                     </p>
@@ -349,7 +444,7 @@ export default function ReciboPage({}: ReciboPageProps) {
                 </div>
                 <div className="flex flex-col items-end gap-2">
                   <span
-                    className={`text-xs px-2 py-1 rounded-sm ${getStatusReciverColors(
+                    className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusReciverColors(
                       recibo.status
                     )}`}
                   >
@@ -359,54 +454,24 @@ export default function ReciboPage({}: ReciboPageProps) {
                     <Button
                       onClick={() => visualizarPDF(recibo.number)}
                       disabled={loadingView[recibo.number]}
-                      className="flex items-center gap-2 bg-[#002256] hover:bg-[#002256]/70"
+                      variant="outline"
                       size="sm"
                     >
                       {loadingView[recibo.number] ? (
-                        <FaSpinner className="animate-spin" />
+                        <LoadingSpinner size="sm" />
                       ) : (
-                        <>
-                          <FaEye />
-                          <span className="hidden sm:block">Ver detalhes</span>
-                        </>
+                        <FaEye />
                       )}
+                      <span className="ml-1">Ver</span>
                     </Button>
-
-                    {recibo.status === 9 ||
-                    recibo.status === 1 ||
-                    recibo.status === 2 ? (
-                      <Button
-                        onClick={() => handlePayment()}
-                        disabled={loadingStates[recibo.number]}
-                        className="flex items-center gap-2 bg-[#002256] hover:bg-[#002256]/70"
-                        size="sm"
-                      >
-                        {loadingStates[recibo.number] ? (
-                          <FaSpinner className="animate-spin" />
-                        ) : (
-                          <>
-                            <MdPayment />
-                            <span>Pagar Agora</span>
-                          </>
-                        )}
-                      </Button>
-                    ) : (
-                      <Button
-                        onClick={() => handleDownload(recibo.number)}
-                        disabled={loadingStates[recibo.number]}
-                        className="flex items-center gap-2 bg-[#002256] hover:bg-[#002256]/70"
-                        size="sm"
-                      >
-                        {loadingStates[recibo.number] ? (
-                          <FaSpinner className="animate-spin" />
-                        ) : (
-                          <>
-                            <FaDownload />
-                            <span>Baixar</span>
-                          </>
-                        )}
-                      </Button>
-                    )}
+                    <Button
+                      onClick={() => handleDownload(recibo.number)}
+                      disabled={loadingStates[recibo.number]}
+                      variant={getDownloadButtonVariant(recibo.number)}
+                      size="sm"
+                    >
+                      {getDownloadButtonContent(recibo.number)}
+                    </Button>
                   </div>
                 </div>
               </div>

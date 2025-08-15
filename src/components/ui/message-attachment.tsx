@@ -41,13 +41,26 @@ export function MessageAttachment({
 }: MessageAttachmentProps) {
   // Função para lidar com o download
   const handleDownload = () => {
-    // Em um cenário real, esta URL apontaria para um endpoint que serve o arquivo
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = name;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
+    console.log("Download URL:", url);
+
+    // Tentar abrir diretamente
+    try {
+      const link = document.createElement("a");
+      link.href = url;
+      link.target = "_blank";
+      link.rel = "noopener noreferrer";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (error) {
+      console.error("Erro no download:", error);
+      // Fallback: copiar URL para clipboard
+      navigator.clipboard.writeText(url).then(() => {
+        alert(
+          "URL copiada para clipboard. Cole no navegador para fazer download."
+        );
+      });
+    }
   };
 
   // Se for uma imagem, mostramos uma prévia

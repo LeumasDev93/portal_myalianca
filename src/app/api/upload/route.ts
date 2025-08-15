@@ -1,62 +1,117 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextRequest } from "next/server";
-import formidable from "formidable";
-import fs from "fs";
-import { IncomingForm } from "formidable";
 
-// Requer habilitar a leitura de arquivos no Edge Runtime (desativar)
-export const runtime = "nodejs"; // <- IMPORTANTE PARA USAR FS no App Router
+export const runtime = "nodejs";
 
 export async function POST(req: NextRequest) {
-  const form = new IncomingForm();
-
-  // Transformar `form.parse` em Promise
-  const parseForm = () =>
-    new Promise<{ fields: formidable.Fields; files: formidable.Files }>((resolve, reject) => {
-      form.parse(req as any, (err, fields, files) => {
-        if (err) reject(err);
-        else resolve({ fields, files });
-      });
-    });
-
+  console.log("🚀 Upload iniciado - " + new Date().toISOString());
+  
   try {
-    const { files } = await parseForm();
-    const fileInput = files.file;
-    const file = Array.isArray(fileInput) ? fileInput[0] : fileInput;
-
+    // Converter NextRequest para formato compatível com formidable
+    const formData = await req.formData();
+    const file = formData.get('file') as File;
+    
     if (!file) {
-      return new Response(JSON.stringify({ message: "Arquivo não enviado" }), {
-        status: 400,
-      });
+      return new Response(JSON.stringify({ error: "Arquivo não encontrado" }), { status: 400 });
     }
 
-    const fileBuffer = fs.readFileSync(file.filepath);
+    console.log(`📁 Arquivo: ${file.name} (${file.size} bytes)`);
 
-    const uploadRes = await fetch("https://api.aliancaseguros.cv/files/1.0.0/upload", {
-      method: "POST",
-      headers: {
-        "x-api-key": process.env.NEXT_PUBLIC_API_KEY || "",
-      },
-      body: fileBuffer,
+    // Converter File para Buffer
+    const bytes = await file.arrayBuffer();
+    const buffer = Buffer.from(bytes);
+    
+    console.log("📦 Arquivo processado:", {
+      fileName: file.name,
+      fileSize: buffer.length,
+      mimeType: file.type
     });
 
-    if (!uploadRes.ok) {
-      const text = await uploadRes.text();
-      return new Response(JSON.stringify({ message: "Erro na API externa", details: text }), {
-        status: uploadRes.status,
-      });
+    // Configurações da API
+    const apiKey = process.env.NEXT_PUBLIC_API_KEY;
+    const apiToken = process.env.API_SECRET_TOKEN;
+    const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL_DEFAULT || "https://api.aliancaseguros.cv";
+    const apiUrl = `${apiBaseUrl}/files/1.0.0/upload`;
+
+    if (!apiKey || !apiToken) {
+      return new Response(JSON.stringify({ error: "Configuração da API incompleta" }), { status: 500 });
     }
 
-    const json = await uploadRes.json();
+    console.log("🌐 Enviando para API...");
+    console.log("🔑 API Key:", apiKey ? "Configurada" : "Não configurada");
+    console.log("🔐 API Token:", apiToken ? "Configurado" : "Não configurado");
+    console.log("📡 URL:", apiUrl);
+    console.log("📡 API Base URL:", apiBaseUrl);
 
-    return new Response(JSON.stringify(json), {
-      status: 200,
-      headers: { "Content-Type": "application/json" },
-    });
+    // Preparar FormData para API externa
+    const externalFormData = new FormData();
+    const blob = new Blob([buffer], { type: file.type || "application/octet-stream" });
+    externalFormData.append("file", blob, file.name);
+
+    // Upload com timeout de 30 segundos
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 30000);
+
+    try {
+      console.log("📤 Iniciando fetch...");
+      const response = await fetch(apiUrl, {
+        method: "POST",
+        signal: controller.signal,
+        headers: {
+          "Authorization": `Bearer ${apiToken}`,
+          "ApiKey": apiKey,
+          "Accept": "application/json",
+        },
+        body: externalFormData,
+      });
+
+      clearTimeout(timeout);
+      console.log("📥 Resposta recebida:", response.status, response.statusText);
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error(`❌ Erro API: ${response.status} - ${errorText}`);
+        return new Response(JSON.stringify({ error: "Erro na API externa", details: errorText }), { status: response.status });
+      }
+
+      const result = await response.json();
+      console.log("✅ Upload concluído:", JSON.stringify(result, null, 2));
+
+      // Extrair ID
+      const fileId = result.results?.id || result.id;
+      
+      if (!fileId) {
+        return new Response(JSON.stringify({ error: "ID do arquivo não encontrado na resposta" }), { status: 500 });
+      }
+
+      return new Response(JSON.stringify({ 
+        id: fileId,
+        success: true,
+        filename: file.name,
+        size: file.size
+      }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" }
+      });
+
+    } catch (fetchError) {
+      clearTimeout(timeout);
+      console.error("❌ Erro no fetch:", fetchError);
+      
+      if (fetchError instanceof Error && fetchError.name === "AbortError") {
+        return new Response(JSON.stringify({ error: "Timeout - tente novamente" }), { status: 408 });
+      }
+      
+      return new Response(JSON.stringify({ 
+        error: "Erro na requisição", 
+        details: fetchError instanceof Error ? fetchError.message : "Erro desconhecido"
+      }), { status: 500 });
+    }
+
   } catch (error) {
-    console.error("Erro upload:", error);
-    return new Response(JSON.stringify({ message: "Erro no upload" }), {
-      status: 500,
-    });
+    console.error("💥 Erro no upload:", error);
+    return new Response(JSON.stringify({ 
+      error: "Erro interno no upload",
+      message: error instanceof Error ? error.message : "Erro desconhecido"
+    }), { status: 500 });
   }
 }

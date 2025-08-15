@@ -1,8 +1,11 @@
 "use client";
 
-import type React from "react";
-
-import { useState, useRef } from "react";
+import React, {
+  useState,
+  useRef,
+  forwardRef,
+  useImperativeHandle,
+} from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -14,7 +17,6 @@ import {
   FileTextIcon,
 } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
-import { Progress } from "./progress";
 
 interface MessageReplyFormProps {
   onReply: (content: string, attachments: AttachmentFile[]) => void;
@@ -56,13 +58,27 @@ const getFileIcon = (type: string) => {
   }
 };
 
-export function MessageReplyForm({
-  onReply,
-  isLoading = false,
-}: MessageReplyFormProps) {
+export type MessageReplyFormRef = {
+  submit: () => void;
+};
+
+export const MessageReplyForm = forwardRef<
+  MessageReplyFormRef,
+  MessageReplyFormProps
+>(function MessageReplyForm(
+  { onReply, isLoading = false }: MessageReplyFormProps,
+  ref
+) {
   const [replyContent, setReplyContent] = useState("");
   const [attachments, setAttachments] = useState<Attachment[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const formRef = useRef<HTMLFormElement>(null);
+
+  useImperativeHandle(ref, () => ({
+    submit: () => {
+      formRef.current?.requestSubmit();
+    },
+  }));
 
   const handleAttach = () => {
     if (fileInputRef.current) {
@@ -75,13 +91,49 @@ export function MessageReplyForm({
     if (!files || files.length === 0) return;
 
     const newAttachments: Attachment[] = [];
+    const maxFiles = 5; // Máximo 5 arquivos
+
+    // Verificar número de arquivos
+    if (files.length > maxFiles) {
+      toast({
+        title: "Muitos arquivos",
+        description: `Máximo ${maxFiles} arquivos permitidos.`,
+        variant: "destructive",
+      });
+      return;
+    }
 
     Array.from(files).forEach((file) => {
-      // Verificar tamanho (limite de 10MB por arquivo)
-      if (file.size > 10 * 1024 * 1024) {
+      // Verificar tamanho (otimizado para melhor performance)
+      const maxSize = 5 * 1024 * 1024; // 5MB (reduzido para uploads mais rápidos)
+      if (file.size > maxSize) {
         toast({
           title: "Arquivo muito grande",
-          description: `O arquivo ${file.name} excede o limite de 10MB.`,
+          description: `O arquivo ${file.name} excede o limite de 5MB. Use arquivos menores para upload mais rápido.`,
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Verificar tipo de arquivo
+      const allowedTypes = [
+        "image/",
+        "application/pdf",
+        "application/msword",
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        "application/vnd.ms-excel",
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        "text/plain",
+      ];
+
+      const isAllowedType = allowedTypes.some(
+        (type) => file.type.startsWith(type) || file.type === type
+      );
+
+      if (!isAllowedType) {
+        toast({
+          title: "Tipo de arquivo não suportado",
+          description: `${file.name} não é um tipo de arquivo suportado.`,
           variant: "destructive",
         });
         return;
@@ -101,7 +153,7 @@ export function MessageReplyForm({
     if (newAttachments.length > 0) {
       setAttachments((prev) => [...prev, ...newAttachments]);
 
-      // Simular upload dos arquivos
+      // Upload paralelo dos arquivos
       simulateUpload(newAttachments);
     }
 
@@ -111,29 +163,147 @@ export function MessageReplyForm({
     }
   };
 
-  const simulateUpload = (newAttachments: Attachment[]) => {
-    // Simulação de upload com progresso
-    newAttachments.forEach((attachment) => {
-      const intervalId = setInterval(() => {
-        setAttachments((prevAttachments) => {
-          const updatedAttachments = prevAttachments.map((att) => {
-            if (att.id === attachment.id) {
-              const newProgress = Math.min(att.progress + 10, 100);
+  const uploadFile = async (attachment: Attachment): Promise<string> => {
+    console.log(
+      "🔄 Iniciando upload do arquivo:",
+      attachment.name,
+      "-",
+      new Date().toISOString()
+    );
 
-              // Se chegou a 100%, limpar o intervalo
-              if (newProgress === 100) {
-                clearInterval(intervalId);
+    const formData = new FormData();
+    formData.append("file", attachment.file);
+
+    // Timeout de 30 segundos para uploads
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 30000);
+
+    try {
+      console.log("📤 Enviando requisição para /api/upload...");
+      const response = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+        signal: controller.signal,
+      });
+
+      clearTimeout(timeoutId);
+      console.log(
+        "📥 Resposta recebida:",
+        response.status,
+        response.statusText
+      );
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error("Erro na API de upload:", response.status, errorText);
+        throw new Error(`Erro no upload do arquivo: ${response.status}`);
+      }
+
+      const data = await response.json();
+      console.log("Resposta da API de upload:", data);
+
+      // Verificar se o ID foi retornado
+      if (!data.id) {
+        console.error("API não retornou ID do arquivo:", data);
+        throw new Error(
+          `API não retornou ID do arquivo. Resposta: ${JSON.stringify(data)}`
+        );
+      }
+
+      console.log("ID do arquivo retornado:", data.id);
+      return data.id; // Retorna o ID do arquivo no servidor
+    } catch (error) {
+      clearTimeout(timeoutId);
+      if (error instanceof Error && error.name === "AbortError") {
+        const fileSizeMB = (attachment.file.size / (1024 * 1024)).toFixed(1);
+        throw new Error(
+          `Timeout no upload (${fileSizeMB}MB) - verifique sua conexão ou tente novamente.`
+        );
+      }
+      throw error;
+    }
+  };
+
+  const simulateUpload = async (newAttachments: Attachment[]) => {
+    console.log("Iniciando upload de", newAttachments.length, "arquivos");
+
+    // Upload paralelo dos arquivos para maior velocidade
+    const uploadPromises = newAttachments.map(async (attachment) => {
+      try {
+        console.log("Processando arquivo:", attachment.name);
+
+        // Iniciar progresso simulado
+        setAttachments((prevAttachments) =>
+          prevAttachments.map((att) =>
+            att.id === attachment.id ? { ...att, progress: 10 } : att
+          )
+        );
+
+        // Simular progresso durante upload
+        const progressInterval = setInterval(() => {
+          setAttachments((prevAttachments) =>
+            prevAttachments.map((att) => {
+              if (att.id === attachment.id && att.progress < 80) {
+                return { ...att, progress: Math.min(att.progress + 5, 80) };
               }
+              return att;
+            })
+          );
+        }, 200); // Atualizar a cada 200ms para progresso mais suave
 
-              return { ...att, progress: newProgress };
-            }
-            return att;
-          });
+        // Fazer upload real
+        console.log("🔄 Iniciando upload real para:", attachment.name);
+        const fileId = await uploadFile(attachment);
 
-          return updatedAttachments;
+        // Limpar intervalo de progresso
+        clearInterval(progressInterval);
+
+        console.log(
+          "✅ Upload concluído para",
+          attachment.name,
+          "com ID:",
+          fileId
+        );
+
+        // Atualizar o ID do arquivo e progresso para 100%
+        setAttachments((prevAttachments) =>
+          prevAttachments.map((att) =>
+            att.id === attachment.id
+              ? { ...att, progress: 100, id: fileId }
+              : att
+          )
+        );
+
+        toast({
+          title: "Upload concluído",
+          description: `${attachment.name} foi carregado com sucesso.`,
         });
-      }, 300); // Aumentar a cada 300ms para simular upload
+
+        return { success: true, attachment, fileId };
+      } catch (error) {
+        console.error("Erro no upload de", attachment.name, ":", error);
+
+        // Marcar como erro
+        setAttachments((prevAttachments) =>
+          prevAttachments.map((att) =>
+            att.id === attachment.id ? { ...att, progress: -1 } : att
+          )
+        );
+
+        toast({
+          title: "Erro no upload",
+          description: `Não foi possível carregar ${attachment.name}: ${
+            error instanceof Error ? error.message : "Erro desconhecido"
+          }`,
+          variant: "destructive",
+        });
+
+        return { success: false, attachment, error };
+      }
     });
+
+    // Aguardar todos os uploads terminarem
+    await Promise.all(uploadPromises);
   };
 
   const handleRemoveAttachment = (id: string) => {
@@ -157,9 +327,11 @@ export function MessageReplyForm({
       return;
     }
 
-    // Verificar se todos os anexos terminaram o upload
-    const allUploaded = attachments.every((att) => att.progress === 100);
-    if (!allUploaded) {
+    // Verificar se todos os anexos terminaram o upload ou falharam
+    const allProcessed = attachments.every(
+      (att) => att.progress === 100 || att.progress === -1
+    );
+    if (!allProcessed) {
       toast({
         title: "Aguarde o upload",
         description: "Alguns anexos ainda estão sendo carregados.",
@@ -168,8 +340,29 @@ export function MessageReplyForm({
       return;
     }
 
+    // Filtrar apenas anexos que foram carregados com sucesso
+    const successfulAttachments = attachments.filter(
+      (att) => att.progress === 100 && att.id && att.id !== att.name // Verificar se o ID foi atualizado
+    );
+    console.log("Anexos carregados com sucesso:", successfulAttachments);
+
+    // Verificar se há anexos com IDs inválidos
+    const invalidAttachments = attachments.filter(
+      (att) => att.progress === 100 && (!att.id || att.id === att.name)
+    );
+    if (invalidAttachments.length > 0) {
+      console.error("Anexos com IDs inválidos:", invalidAttachments);
+      toast({
+        title: "Erro nos anexos",
+        description:
+          "Alguns anexos não foram carregados corretamente. Tente novamente.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     // Convertendo para o formato esperado pela função onReply
-    const finalAttachments = attachments.map(
+    const finalAttachments = successfulAttachments.map(
       ({ id, name, size, type, file }) => ({
         id,
         name,
@@ -177,6 +370,12 @@ export function MessageReplyForm({
         type,
         file,
       })
+    );
+
+    console.log("Enviando resposta com anexos:", finalAttachments);
+    console.log(
+      "IDs dos arquivos:",
+      finalAttachments.map((a) => a.id)
     );
 
     // Chamar a função de callback com o conteúdo da resposta e anexos
@@ -189,6 +388,7 @@ export function MessageReplyForm({
 
   return (
     <form
+      ref={formRef}
       onSubmit={handleSubmit}
       className="flex flex-col space-y-4 bg-white p-4 border rounded-lg"
     >
@@ -229,7 +429,26 @@ export function MessageReplyForm({
                       {formatFileSize(attachment.size)}
                     </div>
                   </div>
-                  <Progress value={attachment.progress} className="h-1 mt-1" />
+                  {attachment.progress === -1 ? (
+                    <div className="text-red-500 text-xs mt-1">
+                      Erro no upload - tente novamente
+                    </div>
+                  ) : (
+                    <div className="relative">
+                      <div className="w-full bg-gray-200 rounded-full h-2 mt-1 overflow-hidden">
+                        <div
+                          className="bg-[#002856] h-2 rounded-full transition-all duration-300 ease-out"
+                          style={{
+                            width: `${attachment.progress}%`,
+                            transition: "width 0.3s ease-out",
+                          }}
+                        />
+                      </div>
+                      <div className="text-xs text-gray-500 mt-1 text-center">
+                        {attachment.progress}%
+                      </div>
+                    </div>
+                  )}
                 </div>
                 <Button
                   type="button"
@@ -259,7 +478,7 @@ export function MessageReplyForm({
         <Button
           type="submit"
           disabled={isLoading}
-          className="flex items-center gap-2 bg-company-blue-600 hover:bg-company-blue-700"
+          className="flex items-center gap-2 bg-[#002856] hover:bg-[#002856]/80"
         >
           {isLoading ? (
             "Enviando..."
@@ -273,4 +492,4 @@ export function MessageReplyForm({
       </div>
     </form>
   );
-}
+});

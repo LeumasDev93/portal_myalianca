@@ -52,7 +52,7 @@ export function OcorrenciaDetails({ ocorrencia, anexos }: Props) {
               </div>
             </div>
             <div className="text-sm text-gray-500 flex items-center gap-1">
-              <CalendarDays className="h-4 w-4" />
+              <CalendarDays className="h-4 w-4 text-[#002256]" />
               <span>Registrado em {formatDate(ocorrencia.data_registo)}</span>
             </div>
           </div>
@@ -66,14 +66,14 @@ export function OcorrenciaDetails({ ocorrencia, anexos }: Props) {
             {/* Coluna esquerda */}
             <div className="space-y-5">
               <DetailItem
-                icon={<FileText className="h-5 w-5 text-gray-400" />}
+                icon={<FileText className="h-5 w-5 text-[#002256]" />}
                 title="Descrição"
                 value={ocorrencia.descricao}
                 placeholder="Nenhuma descrição fornecida"
               />
 
               <DetailItem
-                icon={<Users className="h-5 w-5 text-gray-400" />}
+                icon={<Users className="h-5 w-5 text-[#002256]" />}
                 title="Envolvidos"
                 value={ocorrencia.envolvidos}
                 placeholder="Não informado"
@@ -83,14 +83,14 @@ export function OcorrenciaDetails({ ocorrencia, anexos }: Props) {
             {/* Coluna direita */}
             <div className="space-y-5">
               <DetailItem
-                icon={<MapPin className="h-5 w-5 text-gray-400" />}
+                icon={<MapPin className="h-5 w-5 text-[#002256]" />}
                 title="Local da Ocorrência"
                 value={ocorrencia.local_ocorrencia}
                 placeholder="Local não especificado"
               />
 
               <DetailItem
-                icon={<CalendarDays className="h-5 w-5 text-gray-400" />}
+                icon={<CalendarDays className="h-5 w-5 text-[#002256]" />}
                 title="Data do Ocorrido"
                 value={
                   ocorrencia.data_ocorrencia
@@ -99,7 +99,7 @@ export function OcorrenciaDetails({ ocorrencia, anexos }: Props) {
                 }
               />
               <DetailItem
-                icon={<Clock className="h-5 w-5 text-gray-400" />}
+                icon={<Clock className="h-5 w-5 text-[#002256]" />}
                 title="Hora do Ocorrido"
                 value={
                   ocorrencia.hora_ocorrencia
@@ -109,7 +109,7 @@ export function OcorrenciaDetails({ ocorrencia, anexos }: Props) {
               />
               {ocorrencia.boletim_ocorrencia && (
                 <DetailItem
-                  icon={<FileText className="h-5 w-5 text-gray-400" />}
+                  icon={<FileText className="h-5 w-5 text-[#002256]" />}
                   title="Número do BO"
                   value={ocorrencia.boletim_ocorrencia}
                 />
@@ -119,19 +119,19 @@ export function OcorrenciaDetails({ ocorrencia, anexos }: Props) {
         </div>
       </div>
 
-      {/* Seção de anexos */}
       {anexos.length > 0 && (
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-semibold flex items-center gap-2">
-              <FileText className="h-5 w-5 text-gray-500" />
+            <h2 className="text-xl font-semibold flex items-center gap-2 text-[#002256]">
+              <FileText className="h-5 w-5 " />
               Documentos Anexados
             </h2>
-            <span className="text-sm text-gray-500 bg-gray-50 px-3 py-1 rounded-full">
-              {anexos.length} {anexos.length === 1 ? "documento" : "documentos"}
+            <span className="text-sm text-white bg-[#002256] bg-opacity-70 px-3 py-1 rounded-full">
+              {anexos.length} {anexos.length === 1 ? "imagem" : "imagens"}
             </span>
           </div>
-          <Gallery anexos={anexos} />
+
+          <Gallery anexos={anexos} title={ocorrencia.nome_apolice} />
         </div>
       )}
     </div>
@@ -151,9 +151,9 @@ const DetailItem = ({
   placeholder?: string;
 }) => (
   <div className="flex gap-3">
-    <div className="mt-0.5">{icon}</div>
+    <div className="mt-0.5 text-[#002256]">{icon}</div>
     <div>
-      <h3 className="text-sm font-medium text-gray-500 mb-1">{title}</h3>
+      <h3 className="text-sm font-medium text-[#002256] mb-1">{title}</h3>
       <p className="text-sm text-gray-800">
         {value ? (
           typeof value === "string" ? (

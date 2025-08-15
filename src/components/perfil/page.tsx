@@ -233,9 +233,7 @@ export function PerfilPage() {
                   {/* Forçar rerender do AvatarImage passando key para a URL */}
                   <AvatarImage
                     key={profileImage}
-                    src={`${
-                      process.env.NEXT_PUBLIC_API_BASE_URL_IMAGE
-                    }/${"fde944e1-8bb3-446b-83f6-10634bebbf68"}`}
+                    src={`${process.env.NEXT_PUBLIC_API_BASE_URL_IMAGE}/${profile.user?.imagem_id}`}
                     alt={profile?.user?.nome}
                   />
                   <AvatarFallback>

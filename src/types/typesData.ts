@@ -130,6 +130,7 @@ export interface Anexo {
   mimetype: string; // ex: "image/jpeg", "image/png", etc.
   userid: string;
   datecreate: string; // ISO string da data de criação
+  url?: string; // URL direta para download da imagem
 }
 
 export interface Ocorrencia {
