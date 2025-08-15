@@ -74,6 +74,9 @@ export default function NewOcorrênciasPage({ onBack }: NewSinistroPageProps) {
     numeroBO: "",
   });
 
+  // Estado para controlar o sinistro selecionado
+  const [selectedSinistroId, setSelectedSinistroId] = useState<string>("");
+
   // Upload de fotos
   const [fotos, setFotos] = useState<File[]>([]);
   const [previews, setPreviews] = useState<string[]>([]);
@@ -128,13 +131,21 @@ export default function NewOcorrênciasPage({ onBack }: NewSinistroPageProps) {
   }, [token, profile?.user?.nif]);
 
   const handleSelectChange = (name: string, value: string) => {
+    console.log("🔄 handleSelectChange chamado:", { name, value });
+
     setFormData((prev) => {
       const newData = { ...prev, [name]: value };
 
       if (name === "apolice") {
+        console.log("📋 Selecionando apólice:", value);
+
+        // Limpar completamente os dados relacionados a sinistros
         newData.tipoSinistro = "";
         newData.tipoApolice = "";
+        setSelectedSinistroId("");
         setSinistrosDisponiveis([]);
+
+        // Buscar novos sinistros para a apólice selecionada
         fetchSinistros(value);
 
         // Buscar dados da apólice selecionada
@@ -145,20 +156,52 @@ export default function NewOcorrênciasPage({ onBack }: NewSinistroPageProps) {
         if (apoliceSelecionada) {
           newData.nomeApolice = apoliceSelecionada.productName;
           newData.tipoApolice = apoliceSelecionada.insuranceType || "AUTO";
+          console.log(
+            "✅ Apólice selecionada:",
+            apoliceSelecionada.productName
+          );
         }
       }
 
       if (name === "tipoSinistro") {
-        // Buscar dados do sinistro selecionado
+        console.log("🔍 Selecionando tipo de sinistro:", value);
+        console.log("🔍 Sinistros disponíveis:", sinistrosDisponiveis.length);
+        console.log("🔍 Valor atual do campo:", newData.tipoSinistro);
+
+        // Atualizar o ID do sinistro selecionado
+        setSelectedSinistroId(value);
+
+        // Buscar dados do sinistro selecionado pelo claimNumber
         const sinistroSelecionado = sinistrosDisponiveis.find(
           (sinistro) => String(sinistro.claimNumber) === value
         );
 
         if (sinistroSelecionado) {
-          newData.tipoSinistro = sinistroSelecionado.product || value;
+          // Definir apenas o produto do sinistro selecionado (não concatenar)
+          const tipoSinistroText =
+            sinistroSelecionado.product ||
+            `Sinistro ${sinistroSelecionado.claimNumber}`;
+
+          // Garantir que apenas um valor seja definido
+          newData.tipoSinistro = tipoSinistroText;
+
+          console.log("✅ Tipo de sinistro definido:", tipoSinistroText);
+          console.log("✅ Sinistro selecionado:", {
+            claimNumber: sinistroSelecionado.claimNumber,
+            product: sinistroSelecionado.product,
+          });
+        } else {
+          // Se não encontrar, limpar o campo
+          newData.tipoSinistro = "";
+          console.log("❌ Sinistro não encontrado para claimNumber:", value);
+          console.log(
+            "❌ Sinistros disponíveis:",
+            sinistrosDisponiveis.map((s) => s.claimNumber)
+          );
         }
       }
 
+      console.log("📋 Novo estado formData:", newData);
       return newData;
     });
   };
@@ -169,6 +212,8 @@ export default function NewOcorrênciasPage({ onBack }: NewSinistroPageProps) {
     const apoliceIdNumber = apoliceId;
     setLoadingSinistros(true);
     try {
+      console.log("🔍 Buscando sinistros para apólice:", apoliceIdNumber);
+
       const response = await fetch(
         `/api/anywhere/api/v1/private/mobile/contract/${apoliceIdNumber}/claims`,
         {
@@ -183,9 +228,27 @@ export default function NewOcorrênciasPage({ onBack }: NewSinistroPageProps) {
       if (!response.ok) throw new Error(`Erro ${response.status}`);
 
       const data = await response.json();
-      setSinistrosDisponiveis(Array.isArray(data) ? data : [data]);
+      const sinistros = Array.isArray(data) ? data : [data];
+
+      // Remover sinistros duplicados baseados no claimNumber
+      const sinistrosUnicos = sinistros.filter(
+        (sinistro, index, self) =>
+          index ===
+          self.findIndex((s) => s.claimNumber === sinistro.claimNumber)
+      );
+
+      console.log("✅ Sinistros carregados:", sinistrosUnicos);
+      console.log("✅ Quantidade de sinistros únicos:", sinistrosUnicos.length);
+      console.log(
+        "✅ Estrutura dos sinistros:",
+        sinistrosUnicos.map((s) => ({
+          claimNumber: s.claimNumber,
+          product: s.product,
+        }))
+      );
+      setSinistrosDisponiveis(sinistrosUnicos);
     } catch (error) {
-      console.error("Erro ao buscar sinistros:", error);
+      console.error("❌ Erro ao buscar sinistros:", error);
       toast({
         title: "Erro",
         description: "Não foi possível carregar os sinistros",
@@ -557,6 +620,7 @@ export default function NewOcorrênciasPage({ onBack }: NewSinistroPageProps) {
       setPreviews([]);
       setUploadedFileIds([]);
       setUploadingFiles(new Set());
+      setSelectedSinistroId("");
       console.log("✅ Formulário limpo");
     } catch (error: any) {
       console.error("Erro no processo:", error);
@@ -588,8 +652,8 @@ export default function NewOcorrênciasPage({ onBack }: NewSinistroPageProps) {
 
       <Card>
         <CardHeader className="bg-gray-50">
-          <CardTitle className="flex items-center gap-2">
-            <AlertTriangle className="h-5 w-5 text-company-red-500" />
+          <CardTitle className="flex items-center gap-2 text-[#002256]">
+            <AlertTriangle className="h-5 w-5 text-red-500" />
             Formulário de Abertura de Sinistro
           </CardTitle>
           <CardDescription>
@@ -608,7 +672,9 @@ export default function NewOcorrênciasPage({ onBack }: NewSinistroPageProps) {
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Seção Informações Básicas */}
             <div className="space-y-4">
-              <h3 className="text-lg font-semibold">Informações Básicas</h3>
+              <h3 className="text-lg text-[#002256] font-semibold">
+                Informações Básicas
+              </h3>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
@@ -661,13 +727,22 @@ export default function NewOcorrênciasPage({ onBack }: NewSinistroPageProps) {
                 <div className="space-y-2">
                   <Label htmlFor="tipoSinistro">Tipo de Sinistro</Label>
                   <Select
-                    value={formData.tipoSinistro}
-                    onValueChange={(value) =>
-                      handleSelectChange("tipoSinistro", value)
-                    }
+                    value={selectedSinistroId}
+                    onValueChange={(value) => {
+                      console.log("🔍 Tipo de sinistro selecionado:", value);
+                      console.log(
+                        "🔍 Estado atual formData.tipoSinistro:",
+                        formData.tipoSinistro
+                      );
+                      console.log(
+                        "🔍 Estado atual selectedSinistroId:",
+                        selectedSinistroId
+                      );
+                      handleSelectChange("tipoSinistro", value);
+                    }}
                     disabled={!formData.apolice || loadingSinistros}
                   >
-                    <SelectTrigger>
+                    <SelectTrigger className="w-full">
                       <SelectValue
                         placeholder={
                           loadingSinistros
@@ -682,12 +757,13 @@ export default function NewOcorrênciasPage({ onBack }: NewSinistroPageProps) {
                     </SelectTrigger>
                     <SelectContent>
                       {sinistrosDisponiveis.length > 0 ? (
-                        sinistrosDisponiveis.map((sinistro) => (
+                        sinistrosDisponiveis.map((sinistro, index) => (
                           <SelectItem
-                            key={sinistro.claimNumber}
+                            key={`sinistro-${sinistro.claimNumber}-${index}`}
                             value={String(sinistro.claimNumber)}
                           >
-                            {sinistro.product}
+                            {sinistro.product ||
+                              `Sinistro ${sinistro.claimNumber}`}
                           </SelectItem>
                         ))
                       ) : (
@@ -749,7 +825,9 @@ export default function NewOcorrênciasPage({ onBack }: NewSinistroPageProps) {
 
             {/* Seção Detalhes do Sinistro */}
             <div className="space-y-4">
-              <h3 className="text-lg font-semibold">Detalhes do Sinistro</h3>
+              <h3 className="text-lg font-semibold text-[#002256]">
+                Detalhes do Sinistro
+              </h3>
 
               <div className="space-y-2">
                 <Label htmlFor="descricao">
@@ -820,7 +898,9 @@ export default function NewOcorrênciasPage({ onBack }: NewSinistroPageProps) {
 
             {/* Seção Fotos e Documentos */}
             <div className="space-y-4">
-              <h3 className="text-lg font-semibold">Fotos e Documentos</h3>
+              <h3 className="text-lg font-semibold text-[#002256]">
+                Fotos e Documentos
+              </h3>
 
               <div className="space-y-2">
                 <Label>
@@ -932,9 +1012,9 @@ export default function NewOcorrênciasPage({ onBack }: NewSinistroPageProps) {
             </div>
 
             {/* Rodapé do Formulário */}
-            <CardFooter className="flex flex-col sm:flex-row justify-between gap-4">
+            <CardFooter className="flex flex-col sm:flex-row justify-end gap-4">
               <Button
-                className="bg-[#b5b7bb] hover:bg-[#b5b7bb]/80"
+                className="bg-[#868b95] hover:bg-[#b5b7bb]/80"
                 onClick={onBack}
               >
                 Cancelar
