@@ -365,7 +365,7 @@ const HistoryTable = ({
                   >
                     <div className="flex justify-center items-center">
                       <svg
-                        className="animate-spin -ml-1 mr-2 md:mr-3 h-4 w-4 md:h-5 md:w-5 text-[#002855]"
+                        className="animate-spin -ml-1 mr-2 md:mr-3 h-4 w-4 md:h-5 md:w-5 text-[#002256]"
                         xmlns="http://www.w3.org/2000/svg"
                         fill="none"
                         viewBox="0 0 24 24"
@@ -384,7 +384,7 @@ const HistoryTable = ({
                           d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                         ></path>
                       </svg>
-                      <span className="text-[#002855] text-sm md:text-base">
+                      <span className="text-[#002256] text-sm md:text-base">
                         A carregar dados...
                       </span>
                     </div>
