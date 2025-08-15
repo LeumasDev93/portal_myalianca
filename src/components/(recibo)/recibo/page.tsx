@@ -141,7 +141,10 @@ export default function ReciboPage({}: ReciboPageProps) {
     }
   };
 
-  const visualizarPDF = async (invoiceNumber: string) => {
+  const visualizarPDF = async (
+    invoiceNumber: string,
+    reciboStatus?: number
+  ) => {
     setLoadingView((prev) => ({ ...prev, [invoiceNumber]: true }));
 
     try {
@@ -169,14 +172,32 @@ export default function ReciboPage({}: ReciboPageProps) {
       document.body.appendChild(modalContainer);
 
       const root = ReactDOM.createRoot(modalContainer);
+
+      const closeModal = () => {
+        root.unmount();
+        document.body.removeChild(modalContainer);
+        URL.revokeObjectURL(url);
+      };
+
+      const handlePaymentInModal = () => {
+        // Implementação para pagamento
+        console.log("Pagar recibo:", invoiceNumber);
+        closeModal();
+      };
+
+      const handleDownloadInModal = () => {
+        handleDownload(invoiceNumber);
+        closeModal();
+      };
+
       root.render(
         <ReciboPDFModal
           pdfUrl={url}
-          onClose={() => {
-            root.unmount();
-            document.body.removeChild(modalContainer);
-            URL.revokeObjectURL(url);
-          }}
+          onClose={closeModal}
+          reciboStatus={reciboStatus}
+          reciboNumber={invoiceNumber}
+          onPayment={handlePaymentInModal}
+          onDownload={handleDownloadInModal}
         />
       );
     } catch (error: any) {
@@ -264,43 +285,51 @@ export default function ReciboPage({}: ReciboPageProps) {
   }
 
   return (
-    <div className="flex-1 space-y-6 p-6 md:p-8">
+    <div className="flex-1 space-y-4 md:space-y-6 p-3 md:p-6 lg:p-8">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-[#002256]">
+        <h1 className="text-lg md:text-2xl lg:text-3xl font-bold tracking-tight text-[#002256]">
           Meus Recibos
         </h1>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1 md:gap-2">
           <Button
-            variant={viewMode === "grid" ? "default" : "outline"}
             size="sm"
             onClick={() => setViewMode("grid")}
+            className={`p-2 md:p-2 ${
+              viewMode === "grid"
+                ? "bg-[#002256] text-white border-[#002256] hover:bg-[#002256]/90"
+                : "text-[#002256] bg-gray-200 hover:bg-[#002256] hover:text-white"
+            }`}
           >
-            <Grid className="h-4 w-4" />
+            <Grid className="h-3 w-3 md:h-4 md:w-4" />
           </Button>
           <Button
-            variant={viewMode === "list" ? "default" : "outline"}
             size="sm"
             onClick={() => setViewMode("list")}
+            className={`p-2 md:p-2 ${
+              viewMode === "list"
+                ? "bg-[#002256] text-white border-[#002256] hover:bg-[#002256]/90"
+                : "text-[#002256] bg-gray-200 hover:bg-[#002256] hover:text-white"
+            }`}
           >
-            <List className="h-4 w-4" />
+            <List className="h-3 w-3 md:h-4 md:w-4" />
           </Button>
         </div>
       </div>
 
       {/* Filtros */}
-      <div className="flex flex-col sm:flex-row gap-4">
+      <div className="flex flex-col md:flex-row gap-3 md:gap-4">
         <div className="relative flex-1">
-          <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+          <FaSearch className="absolute left-2 md:left-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-sm md:text-base" />
           <input
             type="text"
             placeholder="Pesquisar recibos..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#002256] focus:border-transparent"
+            className="w-full pl-8 md:pl-10 pr-3 md:pr-4 py-2 md:py-2 text-sm md:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#002256] focus:border-transparent"
           />
         </div>
         <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-full sm:w-48">
+          <SelectTrigger className="w-full md:w-48 text-sm md:text-base">
             <SelectValue placeholder="Filtrar por status" />
           </SelectTrigger>
           <SelectContent>
@@ -314,36 +343,37 @@ export default function ReciboPage({}: ReciboPageProps) {
         <Button
           variant="outline"
           onClick={resetFilters}
-          className="flex items-center gap-2"
+          className="flex items-center gap-2 text-sm md:text-base py-2 md:py-2"
         >
-          <FaFilter />
-          Limpar
+          <FaFilter className="size-3 md:size-4" />
+          <span className="md:hidden">Limpar</span>
+          <span className="hidden md:inline">Limpar Filtros</span>
         </Button>
       </div>
 
       {filteredRecibos.length === 0 ? (
-        <div className="text-center py-12">
-          <FaUser className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-          <h3 className="text-lg font-medium text-gray-900 mb-2">
+        <div className="text-center py-8 md:py-12">
+          <FaUser className="mx-auto h-8 w-8 md:h-12 md:w-12 text-gray-400 mb-3 md:mb-4" />
+          <h3 className="text-base md:text-lg font-medium text-gray-900 mb-2">
             Nenhum recibo encontrado
           </h3>
-          <p className="text-gray-500">
+          <p className="text-sm md:text-base text-gray-500">
             {searchTerm || statusFilter
               ? "Tente ajustar os filtros de pesquisa"
               : "Você ainda não possui recibos"}
           </p>
         </div>
       ) : viewMode === "grid" ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 md:gap-4">
           {filteredRecibos.map((recibo) => (
             <Card
               key={recibo.number}
               className="hover:shadow-lg transition-shadow"
             >
-              <CardHeader className="border-b">
-                <CardTitle className="flex items-center justify-between">
+              <CardHeader className="border-b p-3 md:p-6">
+                <CardTitle className="flex items-center justify-between text-sm md:text-base">
                   <div className="flex items-center gap-2">
-                    <MdPayment className="text-[#002256]" />
+                    <MdPayment className="text-[#002256] size-4 md:size-5" />
                     <span>#{recibo.number}</span>
                   </div>
                   <span
@@ -354,41 +384,45 @@ export default function ReciboPage({}: ReciboPageProps) {
                     {getStatusReciverTexts(recibo.status)}
                   </span>
                 </CardTitle>
-                <CardDescription className="flex items-center gap-2">
-                  <FaUser className="text-gray-400" />
+                <CardDescription className="flex items-center gap-2 text-xs md:text-sm">
+                  <FaUser className="text-gray-400 size-3 md:size-4" />
                   {recibo.clientName}
                 </CardDescription>
               </CardHeader>
-              <CardContent className="pt-4">
+              <CardContent className="pt-3 md:pt-4 p-3 md:p-6">
                 <div className="space-y-2">
                   <div className="flex justify-between">
-                    <span className="text-sm text-gray-500">Valor:</span>
-                    <span className="font-semibold text-[#002256]">
+                    <span className="text-xs md:text-sm text-gray-500">
+                      Valor:
+                    </span>
+                    <span className="font-semibold text-[#002256] text-xs md:text-sm">
                       {formatCurrency(recibo.value)}
                     </span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-sm text-gray-500">Referência:</span>
-                    <span className="text-sm">{recibo.mbref}</span>
+                    <span className="text-xs md:text-sm text-gray-500">
+                      Referência:
+                    </span>
+                    <span className="text-xs md:text-sm">{recibo.mbref}</span>
                   </div>
                 </div>
               </CardContent>
-              <CardFooter className="flex flex-col gap-2">
+              <CardFooter className="flex flex-col gap-2 p-3 md:p-6">
                 <div className="text-xs text-gray-500 text-center w-full">
                   {formatDate(recibo.from)} - {formatDate(recibo.to)}
                 </div>
                 <div className="flex gap-2 w-full">
                   <Button
-                    onClick={() => visualizarPDF(recibo.number)}
+                    onClick={() => visualizarPDF(recibo.number, recibo.status)}
                     disabled={loadingView[recibo.number]}
                     variant="outline"
                     size="sm"
-                    className="flex-1"
+                    className="flex-1 text-xs md:text-sm py-2"
                   >
                     {loadingView[recibo.number] ? (
                       <LoadingSpinner size="sm" />
                     ) : (
-                      <FaEye />
+                      <FaEye className="size-3 md:size-4" />
                     )}
                     <span className="ml-1">Ver</span>
                   </Button>
@@ -397,7 +431,7 @@ export default function ReciboPage({}: ReciboPageProps) {
                     disabled={loadingStates[recibo.number]}
                     variant={getDownloadButtonVariant(recibo.number)}
                     size="sm"
-                    className="flex-1"
+                    className="flex-1 text-xs md:text-sm py-2"
                   >
                     {getDownloadButtonContent(recibo.number)}
                   </Button>
@@ -407,34 +441,44 @@ export default function ReciboPage({}: ReciboPageProps) {
           ))}
         </div>
       ) : (
-        <div className="space-y-4">
+        <div className="space-y-3 md:space-y-4">
           {filteredRecibos.map((recibo) => (
             <div
               key={recibo.number}
-              className="p-4 border rounded-lg bg-white hover:shadow-md transition-shadow"
+              className="p-3 md:p-4 border rounded-lg bg-white hover:shadow-md transition-shadow"
             >
-              <div className="flex justify-between items-start">
+              <div className="flex flex-col md:flex-row md:justify-between md:items-start gap-3 md:gap-0">
                 <div className="space-y-2">
                   <div className="flex items-center gap-2">
-                    <span className="font-semibold">Número:</span>
+                    <span className="font-semibold text-xs md:text-sm">
+                      Número:
+                    </span>
                     <CopiableNumber number={recibo.number} />
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="font-semibold">Cliente:</span>
-                    <span>{recibo.clientName}</span>
+                    <span className="font-semibold text-xs md:text-sm">
+                      Cliente:
+                    </span>
+                    <span className="text-xs md:text-sm">
+                      {recibo.clientName}
+                    </span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="font-semibold">Valor:</span>
-                    <span className="text-[#002256] font-semibold">
+                    <span className="font-semibold text-xs md:text-sm">
+                      Valor:
+                    </span>
+                    <span className="text-[#002256] font-semibold text-xs md:text-sm">
                       {formatCurrency(recibo.value)}
                     </span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="font-semibold">Referência:</span>
-                    <span>{recibo.mbref}</span>
+                    <span className="font-semibold text-xs md:text-sm">
+                      Referência:
+                    </span>
+                    <span className="text-xs md:text-sm">{recibo.mbref}</span>
                   </div>
                 </div>
-                <div className="mt-3 grid grid-cols-2 md:grid-cols-4 gap-2 text-sm">
+                <div className="mt-2 md:mt-3 grid grid-cols-1 md:grid-cols-4 gap-2 text-xs md:text-sm">
                   <div>
                     <span className="text-gray-500">Data Faturação:</span>
                     <p>
@@ -442,25 +486,28 @@ export default function ReciboPage({}: ReciboPageProps) {
                     </p>
                   </div>
                 </div>
-                <div className="flex flex-col items-end gap-2">
+                <div className="flex flex-col items-start md:items-end gap-2">
                   <span
-                    className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusReciverColors(
+                    className={`px-2 md:px-3 py-1 rounded-full text-xs font-medium ${getStatusReciverColors(
                       recibo.status
                     )}`}
                   >
                     {getStatusReciverTexts(recibo.status)}
                   </span>
-                  <div className="flex gap-2">
+                  <div className="flex gap-2 w-full md:w-auto">
                     <Button
-                      onClick={() => visualizarPDF(recibo.number)}
+                      onClick={() =>
+                        visualizarPDF(recibo.number, recibo.status)
+                      }
                       disabled={loadingView[recibo.number]}
                       variant="outline"
                       size="sm"
+                      className="flex-1 md:flex-none text-xs md:text-sm py-2"
                     >
                       {loadingView[recibo.number] ? (
                         <LoadingSpinner size="sm" />
                       ) : (
-                        <FaEye />
+                        <FaEye className="size-3 md:size-4" />
                       )}
                       <span className="ml-1">Ver</span>
                     </Button>
@@ -469,6 +516,7 @@ export default function ReciboPage({}: ReciboPageProps) {
                       disabled={loadingStates[recibo.number]}
                       variant={getDownloadButtonVariant(recibo.number)}
                       size="sm"
+                      className="flex-1 md:flex-none text-xs md:text-sm py-2"
                     >
                       {getDownloadButtonContent(recibo.number)}
                     </Button>

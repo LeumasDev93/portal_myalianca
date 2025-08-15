@@ -74,7 +74,11 @@ const HistoryTable = ({
 
   const [loadingView, setLoadingView] = useState<ReciboLoadingState>({});
 
-  const visualizarPDF = async (invoiceNumber: string, token: string) => {
+  const visualizarPDF = async (
+    invoiceNumber: string,
+    token: string,
+    reciboStatus?: number
+  ) => {
     setLoadingView((prev) => ({ ...prev, [invoiceNumber]: true }));
     const response = await fetch(
       `/api/anywhere/api/v1/private/mobile/invoice/${invoiceNumber}/print/receipt`,
@@ -107,8 +111,28 @@ const HistoryTable = ({
       URL.revokeObjectURL(url); // limpa a URL blob
     };
 
+    const handlePaymentInModal = () => {
+      // Implementação para pagamento
+      console.log("Pagar recibo:", invoiceNumber);
+      closeModal();
+    };
+
+    const handleDownloadInModal = () => {
+      handleDownload(invoiceNumber);
+      closeModal();
+    };
+
     // Renderiza o modal
-    root.render(<ReciboPDFModal pdfUrl={url} onClose={closeModal} />);
+    root.render(
+      <ReciboPDFModal
+        pdfUrl={url}
+        onClose={closeModal}
+        reciboStatus={reciboStatus}
+        reciboNumber={invoiceNumber}
+        onPayment={handlePaymentInModal}
+        onDownload={handleDownloadInModal}
+      />
+    );
     setLoadingView((prev) => ({ ...prev, [invoiceNumber]: false }));
   };
 
@@ -181,10 +205,36 @@ const HistoryTable = ({
 
   const handleOptionsClick = (event: React.MouseEvent, item: any) => {
     const rect = event.currentTarget.getBoundingClientRect();
-    setPopupPosition({
-      top: rect.bottom + window.scrollY,
-      left: rect.left + window.scrollX,
-    });
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
+    const popupWidth = 224; // w-56 = 14rem = 224px
+    const popupHeight = 200; // estimativa da altura do popup
+
+    // Calcular posição inicial - posicionar próximo ao botão
+    let left = rect.left;
+    let top = rect.bottom + 5; // 5px de espaçamento
+
+    // Ajustar se o popup sair da tela pela direita
+    if (left + popupWidth > viewportWidth) {
+      left = rect.right - popupWidth;
+    }
+
+    // Ajustar se o popup sair da tela pela esquerda
+    if (left < 0) {
+      left = 10;
+    }
+
+    // Ajustar se o popup sair da tela por baixo
+    if (top + popupHeight > viewportHeight) {
+      top = rect.top - popupHeight - 5; // 5px de espaçamento acima
+    }
+
+    // Ajustar se o popup sair da tela por cima
+    if (top < 0) {
+      top = 10;
+    }
+
+    setPopupPosition({ top, left });
     setSelectedItem(item);
     setShowPopup(true);
   };
@@ -246,7 +296,7 @@ const HistoryTable = ({
 
   return (
     <div className="w-full">
-      <div className="flex sm:gap-2">
+      <div className="flex gap-1 md:gap-2 overflow-x-auto">
         {Object.keys(tableConfigs).map((tab) => {
           const tabIcon = tableConfigs[tab as keyof typeof tableConfigs].icon;
 
@@ -254,40 +304,49 @@ const HistoryTable = ({
             <button
               key={tab}
               onClick={() => handleTabChange(tab as keyof typeof tableConfigs)}
-              className={`flex items-center gap-2 px-[10px] sm:px-4 xl:px-6 py-2 xl:py-3 font-bold cursor-pointer ${
+              className={`flex items-center gap-1 md:gap-2 px-2 md:px-4 xl:px-6 py-2 xl:py-3 font-bold cursor-pointer whitespace-nowrap ${
                 activeTab === tab
-                  ? "bg-[#002855] text-white rounded-t-lg text-[10px] sm:text-xs xl:text-sm"
-                  : "text-[#002855] hover:text-[#231c48] text-sm"
+                  ? "bg-[#002256] text-white rounded-t-lg text-xs md:text-sm xl:text-base"
+                  : "text-[#002256] hover:text-[#002256]/70 text-xs md:text-sm"
               }`}
             >
               {tabIcon && (
-                <span className="text-[10px]sm:text-base xl:text-lg">
+                <span className="text-xs md:text-base xl:text-lg">
                   {tabIcon}
                 </span>
               )}
-              {tab}
+              <span className="hidden sm:inline">{tab}</span>
+              <span className="sm:hidden">
+                {tab === "Apólices"
+                  ? "Apól."
+                  : tab === "Sinistros"
+                  ? "Sinist."
+                  : tab === "Recibos"
+                  ? "Recib."
+                  : tab}
+              </span>
             </button>
           );
         })}
       </div>
 
-      <div className="bg-white rounded-b-lg rounded-tl-lg shadow-md p-3 xl:p-6 w-full overflow-x-auto">
+      <div className="bg-white rounded-b-lg rounded-tl-lg shadow-md p-2 md:p-3 xl:p-6 w-full overflow-x-auto">
         <div
           className="overflow-y-auto"
           style={{
-            minHeight: "400px",
-            maxHeight: "650px",
+            minHeight: "300px",
+            maxHeight: "500px",
             overflowY: "auto",
           }}
         >
-          <table className="divide-y divide-gray-200 w-full">
+          <table className="divide-y divide-gray-200 w-full min-w-[600px]">
             <thead className="sticky top-0 bg-white z-10">
               <tr className="border-b-2 border-[#B7021C]">
                 {config.headers.map((header) => (
                   <th
                     key={header.key}
-                    className={`px-3 py-3 text-center text-[10px] xl:text-xs font-semibold whitespace-nowrap ${
-                      header.key === "options" ? "w-10" : ""
+                    className={`px-2 md:px-3 py-2 md:py-3 text-center text-xs md:text-sm font-semibold whitespace-nowrap ${
+                      header.key === "options" ? "w-8 md:w-10" : ""
                     } ${
                       header.label ? "text-black uppercase tracking-wider" : ""
                     }`}
@@ -302,11 +361,11 @@ const HistoryTable = ({
                 <tr>
                   <td
                     colSpan={config.headers.length}
-                    className="text-center py-8"
+                    className="text-center py-6 md:py-8"
                   >
                     <div className="flex justify-center items-center">
                       <svg
-                        className="animate-spin -ml-1 mr-3 h-5 w-5 text-[#002855]"
+                        className="animate-spin -ml-1 mr-2 md:mr-3 h-4 w-4 md:h-5 md:w-5 text-[#002855]"
                         xmlns="http://www.w3.org/2000/svg"
                         fill="none"
                         viewBox="0 0 24 24"
@@ -325,7 +384,7 @@ const HistoryTable = ({
                           d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                         ></path>
                       </svg>
-                      <span className="text-[#002855]">
+                      <span className="text-[#002855] text-sm md:text-base">
                         A carregar dados...
                       </span>
                     </div>
@@ -335,17 +394,19 @@ const HistoryTable = ({
                 <tr>
                   <td
                     colSpan={config.headers.length}
-                    className="text-center py-8 text-gray-500"
+                    className="text-center py-6 md:py-8 text-gray-500"
                   >
                     <div className="flex justify-center items-center space-x-2">
                       <div className="relative">
-                        <FaSearch className="text-4xl text-gray-400 animate-pulse" />
+                        <FaSearch className="text-2xl md:text-4xl text-gray-400 animate-pulse" />
                         <FaFilter
-                          className="absolute -top-2 -right-2 text-xl text-[#2d4e7f] animate-spin-slow"
+                          className="absolute -top-1 -right-1 md:-top-2 md:-right-2 text-lg md:text-xl text-[#2d4e7f] animate-spin-slow"
                           style={{ animationDuration: "3s" }}
                         />
                       </div>
-                      <span>Nenhum dado encontrado.</span>
+                      <span className="text-sm md:text-base">
+                        Nenhum dado encontrado.
+                      </span>
                     </div>
                   </td>
                 </tr>
@@ -358,13 +419,13 @@ const HistoryTable = ({
                         return (
                           <td
                             key={colIndex}
-                            className="px-3 py-4 text-center relative"
+                            className="px-2 md:px-3 py-3 md:py-4 text-center relative z-10"
                           >
                             <button
                               onClick={(e) => handleOptionsClick(e, item)}
-                              className="text-[#002855] hover:text-[#001a3d] focus:outline-none"
+                              className="text-[#002855] hover:text-[#001a3d] focus:outline-none p-1 relative z-10"
                             >
-                              <HiDotsVertical className="text-sm xl:text-xl" />
+                              <HiDotsVertical className="text-base md:text-lg xl:text-xl" />
                             </button>
                           </td>
                         );
@@ -378,8 +439,11 @@ const HistoryTable = ({
 
                       if (header.key === "ramo") {
                         return (
-                          <td key={colIndex} className="px-3 py-4 text-center">
-                            <span className="bg-[#002855] rounded-full w-6 h-6 xl:w-8 xl:h-8 flex items-center justify-center mx-auto">
+                          <td
+                            key={colIndex}
+                            className="px-2 md:px-3 py-3 md:py-4 text-center"
+                          >
+                            <span className="bg-[#002256] rounded-full w-5 h-5 md:w-6 md:h-6 xl:w-8 xl:h-8 flex items-center justify-center mx-auto">
                               {ramoIcons[value as keyof typeof ramoIcons] ||
                                 ramoIcons.Outros}
                             </span>
@@ -388,8 +452,11 @@ const HistoryTable = ({
                       }
                       if (header.key === "clientName") {
                         return (
-                          <td key={colIndex} className="px-3 py-4 text-center">
-                            <span>
+                          <td
+                            key={colIndex}
+                            className="px-2 md:px-3 py-3 md:py-4 text-center"
+                          >
+                            <span className="text-xs md:text-sm">
                               {getFirstAndLastName(item.rawData.clientName)}
                             </span>
                           </td>
@@ -398,9 +465,12 @@ const HistoryTable = ({
 
                       if (header.key === "status") {
                         return (
-                          <td key={colIndex} className="px-3 py-4 text-center">
+                          <td
+                            key={colIndex}
+                            className="px-2 md:px-3 py-3 md:py-4 text-center"
+                          >
                             <span
-                              className={`inline-block text-[10px] xl:text-xs font-semibold py-1 xl:py-2 px-3 rounded-md xl:rounded-lg text-center whitespace-nowrap w-[6rem] xl:w-[8rem] ${item.statusClass}`}
+                              className={`inline-block text-xs md:text-sm font-semibold py-1 md:py-2 px-2 md:px-3 rounded-md text-center whitespace-nowrap  ${item.statusClass}`}
                             >
                               {item.status}
                             </span>
@@ -415,7 +485,7 @@ const HistoryTable = ({
                         return (
                           <td
                             key={colIndex}
-                            className="px-3 xl:py-4 text-[10px] xl:text-sm text-center"
+                            className="px-2 md:px-3 py-3 md:py-4 text-xs md:text-sm text-center"
                           >
                             <span>#{value}</span>
                           </td>
@@ -424,10 +494,13 @@ const HistoryTable = ({
 
                       if (header.key === "action") {
                         return (
-                          <td key={colIndex} className="px-3 py-4 text-center">
+                          <td
+                            key={colIndex}
+                            className="px-2 md:px-3 py-3 md:py-4 text-center"
+                          >
                             {value && (
                               <button
-                                className={`px-4 py-1 xl:py-2 rounded-md xl:rounded-lg text-[10px] xl:text-xs bg-[#002855] text-white hover:bg-[#001a3d]`}
+                                className={`px-2 md:px-4 py-1 md:py-2 rounded-md text-xs md:text-sm bg-[#002256] text-white hover:bg-[#002256]/90`}
                               >
                                 {value}
                               </button>
@@ -439,7 +512,7 @@ const HistoryTable = ({
                       return (
                         <td
                           key={colIndex}
-                          className="px-3 xl:py-4 text-[10px] xl:text-sm text-center"
+                          className="px-2 md:px-3 py-3 md:py-4 text-xs md:text-sm text-center"
                         >
                           {value}
                         </td>
@@ -453,22 +526,22 @@ const HistoryTable = ({
         </div>
 
         {totalItems > itemsPerPage && (
-          <div className="flex justify-between items-center mt-4 px-4 py-2">
-            <div className="text-xs xl:text-sm text-gray-600">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-3 mt-4 px-2 md:px-4 py-2">
+            <div className="text-xs md:text-sm text-gray-600 text-center md:text-left">
               Mostrando {indexOfFirstItem + 1} a{" "}
               {Math.min(indexOfLastItem, totalItems)} de {totalItems} itens
             </div>
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center space-x-1 md:space-x-2">
               <button
                 onClick={() => handlePageChange(currentPage - 1)}
                 disabled={currentPage === 1}
-                className={`p-1 rounded-sm xl:p-2 xl:rounded-md text-xs xl:text-sm ${
+                className={`p-1 md:p-2 rounded-md text-xs md:text-sm ${
                   currentPage === 1
                     ? "bg-gray-200 text-gray-500 cursor-not-allowed"
-                    : "bg-[#002855] text-white hover:bg-[#001a3d]"
+                    : "bg-[#002256] text-white hover:bg-[#002256]/90"
                 }`}
               >
-                <FaChevronLeft />
+                <FaChevronLeft className="h-3 w-3 md:h-4 md:w-4" />
               </button>
 
               {Array.from({ length: totalPages }, (_, i) => i + 1).map(
@@ -476,9 +549,9 @@ const HistoryTable = ({
                   <button
                     key={page}
                     onClick={() => handlePageChange(page)}
-                    className={`w-5 h-5 xl:w-8 xl:h-8 rounded-sm xl:rounded-md text-xs xl:text-sm ${
+                    className={`w-6 h-6 md:w-8 md:h-8 rounded-md text-xs md:text-sm ${
                       page === currentPage
-                        ? "bg-[#002855] text-white"
+                        ? "bg-[#002256] text-white"
                         : "bg-gray-200 text-gray-700 hover:bg-gray-300"
                     }`}
                   >
@@ -490,13 +563,13 @@ const HistoryTable = ({
               <button
                 onClick={() => handlePageChange(currentPage + 1)}
                 disabled={currentPage === totalPages}
-                className={`p-1 rounded-sm xl:p-2 xl:rounded-md text-xs xl:text-sm  ${
+                className={`p-1 md:p-2 rounded-md text-xs md:text-sm ${
                   currentPage === totalPages
                     ? "bg-gray-200 text-gray-500 cursor-not-allowed"
-                    : "bg-[#002855] text-white hover:bg-[#001a3d]"
+                    : "bg-[#002256] text-white hover:bg-[#002256]/90"
                 }`}
               >
-                <FaChevronRight />
+                <FaChevronRight className="h-3 w-3 md:h-4 md:w-4" />
               </button>
             </div>
           </div>
@@ -505,16 +578,13 @@ const HistoryTable = ({
 
       {showPopup && selectedItem && (
         <div
-          className="absolute z-50 bg-white shadow-lg rounded-md py-2 w-48 border border-gray-300"
+          className="fixed z-[9999] bg-white shadow-lg rounded-md py-1 w-56 md:w-48 min-w-[200px] max-w-[280px] border border-gray-300"
           style={{
             top: `${popupPosition.top}px`,
             left: `${popupPosition.left}px`,
           }}
           onClick={(e) => e.stopPropagation()}
         >
-          {/* Opção comum a todas as abas */}
-
-          {/* Opções específicas para Apólices */}
           {activeTab === "Apólices" && (
             <>
               <button
@@ -528,10 +598,10 @@ const HistoryTable = ({
                     onSelectDetailApolice(contractId, contractId);
                   } catch (error) {}
                 }}
-                className="w-full cursor-pointer text-left px-4 py-2 text-sm text-gray-700 hover:text-gray-800 flex items-center"
+                className="w-full cursor-pointer text-left px-3 py-3 text-xs sm:text-sm md:text-base text-gray-700 hover:text-gray-800 hover:bg-gray-100 flex items-center gap-2 rounded-md mx-1"
               >
-                <FaEye className="mr-2" />
-                Ver detalhes
+                <FaEye className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
+                <span className="flex-1">Ver detalhes</span>
               </button>
 
               <button
@@ -539,10 +609,10 @@ const HistoryTable = ({
                   handleRenewPolicy(selectedItem.rawData.contractNumber);
                   setShowPopup(false);
                 }}
-                className="w-full cursor-pointer text-left px-4 py-2 text-sm text-gray-700 hover:text-gray-800 flex items-center"
+                className="w-full cursor-pointer text-left px-3 py-3 text-xs sm:text-sm md:text-base text-gray-700 hover:text-gray-800 hover:bg-gray-100 flex items-center gap-3 rounded-md mx-1"
               >
-                <FaSync className="mr-2" />
-                Renovar
+                <FaSync className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
+                <span className="flex-1">Renovar</span>
               </button>
             </>
           )}
@@ -560,63 +630,68 @@ const HistoryTable = ({
                   onSelectDetailSinistro(contractId);
                 } catch (error) {}
               }}
-              className="w-full cursor-pointer text-left px-4 py-2 text-sm text-gray-700 hover:text-gray-800 flex items-center"
+              className="w-full cursor-pointer text-left px-3 py-3 text-xs sm:text-sm md:text-base text-gray-700 hover:text-gray-800 hover:bg-gray-100 flex items-center gap-3 rounded-md mx-1"
             >
-              <FaEye className="mr-2" />
-              Ver detalhes
+              <FaEye className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
+              <span className="flex-1">Ver detalhes</span>
             </button>
           )}
 
           {activeTab === "Recibos" && (
             <>
-              {selectedItem?.rawData?.status &&
-                (selectedItem.rawData.status === 1 ||
-                  selectedItem.rawData.status === 2) && (
-                  <button
-                    onClick={() => {
-                      handlePayment(selectedItem.rawData.contractNumber);
-                      setShowPopup(false);
-                    }}
-                    className="w-full cursor-pointer text-left px-4 py-2 text-sm text-gray-700 hover:text-gray-800 flex items-center"
-                  >
-                    <MdOutlinePayment className="mr-2" />
-                    Pagar Agora
-                  </button>
-                )}
+              {(!selectedItem?.rawData?.status ||
+                (selectedItem.rawData.status !== 1 &&
+                  selectedItem.rawData.status !== 2 &&
+                  selectedItem.rawData.status !== 5)) && (
+                <button
+                  onClick={() => {
+                    handlePayment(selectedItem.rawData.number);
+                    setShowPopup(false);
+                  }}
+                  className="w-full cursor-pointer text-left px-3 py-3 text-xs sm:text-sm md:text-base text-gray-700 hover:text-gray-800 hover:bg-gray-100 flex items-center gap-3 rounded-md mx-1"
+                >
+                  <MdOutlinePayment className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
+                  <span className="flex-1">Pagar Agora</span>
+                </button>
+              )}
 
               <button
                 onClick={() => {
-                  visualizarPDF(selectedItem.rawData.contractNumber, token!);
+                  visualizarPDF(
+                    selectedItem.rawData.number,
+                    token!,
+                    selectedItem.rawData.status
+                  );
                   setShowPopup(false);
                 }}
-                className="w-full cursor-pointer text-left px-4 py-2 text-sm text-gray-700 hover:text-gray-800 flex items-center"
+                className="w-full cursor-pointer text-left px-3 py-3 text-xs sm:text-sm md:text-base text-gray-700 hover:text-gray-800 hover:bg-gray-100 flex items-center gap-3 rounded-md mx-1"
               >
-                <FaEye className="mr-2" />
-                <span>Ver detalhes</span>
+                <FaEye className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
+                <span className="flex-1">Ver detalhes</span>
               </button>
-              {(!selectedItem?.rawData?.status ||
-                (selectedItem.rawData.status !== 1 &&
-                  selectedItem.rawData.status !== 2)) && (
-                <button
-                  onClick={() => {
-                    handleDownload(
-                      selectedItem.rawData.number || selectedItem.rawData.number
-                    );
-                    setShowPopup(false);
-                  }}
-                  className="w-full cursor-pointer text-left px-4 py-2 text-sm text-gray-700 hover:text-gray-800 flex items-center"
-                >
-                  <FaFileDownload className="mr-2" />
-                  Baixar Recibo
-                </button>
-              )}
+              {selectedItem?.rawData?.status &&
+                (selectedItem.rawData.status === 1 ||
+                  selectedItem.rawData.status === 2 ||
+                  selectedItem.rawData.status === 5) && (
+                  <button
+                    onClick={() => {
+                      handleDownload(selectedItem.rawData.number);
+                      setShowPopup(false);
+                    }}
+                    className="w-full cursor-pointer text-left px-3 py-3 text-xs sm:text-sm md:text-base text-gray-700 hover:text-gray-800 hover:bg-gray-100 flex items-center gap-3 rounded-md mx-1"
+                  >
+                    <FaFileDownload className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
+                    <span className="flex-1">Baixar Recibo</span>
+                  </button>
+                )}
             </>
           )}
         </div>
       )}
 
-      {/* Overlay para fechar o popup ao clicar fora */}
-      {showPopup && <div className="fixed inset-0 z-40" onClick={closePopup} />}
+      {showPopup && (
+        <div className="fixed inset-0 z-[9998]" onClick={closePopup} />
+      )}
     </div>
   );
 };

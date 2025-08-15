@@ -261,8 +261,8 @@ export default function OcorrenciasPage({
               <Button
                 className={`${
                   viewMode === "list"
-                    ? "bg-[#002256] hover:bg-[#002256]/70"
-                    : "bg-white border border-input text-[#002256] hover:bg-[#002256]/70"
+                    ? "bg-[#002256] text-white border-[#002256] hover:bg-[#002256]/90"
+                    : "bg-white border border-[#002256] text-[#002256] hover:bg-[#002256] hover:text-white"
                 }`}
                 size="icon"
                 onClick={() => setViewMode("list")}
@@ -272,8 +272,8 @@ export default function OcorrenciasPage({
               <Button
                 className={`${
                   viewMode === "grid"
-                    ? "bg-[#002256] hover:bg-[#002256]/70"
-                    : "bg-white border border-input text-[#002256] hover:bg-[#002256]/70"
+                    ? "bg-[#002256] text-white border-[#002256] hover:bg-[#002256]/90"
+                    : "bg-white border border-[#002256] text-[#002256] hover:bg-[#002256] hover:text-white"
                 }`}
                 size="icon"
                 onClick={() => setViewMode("grid")}

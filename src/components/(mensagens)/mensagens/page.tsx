@@ -451,7 +451,7 @@ export default function MensagensPage({
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-8 w-8"
+                        className="h-8 w-8 p-1"
                         onClick={(e) => {
                           e.preventDefault();
                           e.stopPropagation();
@@ -460,7 +460,11 @@ export default function MensagensPage({
                         <MoreVertical className="h-4 w-4" />
                       </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-48">
+                    <DropdownMenuContent
+                      align="end"
+                      className="w-56 md:w-48 min-w-[200px] max-w-[280px] p-1"
+                      sideOffset={8}
+                    >
                       <DropdownMenuItem
                         onClick={async () => {
                           if (!isMessageRead(message.id)) {
@@ -470,9 +474,10 @@ export default function MensagensPage({
                           }
                           onSelectDetail(message.id);
                         }}
+                        className="flex items-center gap-3 p-3 text-sm md:text-base cursor-pointer hover:bg-gray-100 rounded-md"
                       >
-                        <Eye className="h-4 w-4 mr-2" />
-                        Ver mensagem
+                        <Eye className="h-4 w-4 flex-shrink-0" />
+                        <span className="flex-1">Ver mensagem</span>
                       </DropdownMenuItem>
 
                       <DropdownMenuItem
@@ -495,15 +500,18 @@ export default function MensagensPage({
                               : "A mensagem foi adicionada aos favoritos.",
                           });
                         }}
+                        className="flex items-center gap-3 p-3 text-sm md:text-base cursor-pointer hover:bg-gray-100 rounded-md"
                       >
                         <Star
-                          className={`h-4 w-4 mr-2 ${
+                          className={`h-4 w-4 flex-shrink-0 ${
                             message.starred
                               ? "text-yellow-500 fill-yellow-500"
                               : "text-gray-400"
                           }`}
                         />
-                        {message.starred ? "Remover destaque" : "Destacar"}
+                        <span className="flex-1">
+                          {message.starred ? "Remover destaque" : "Destacar"}
+                        </span>
                       </DropdownMenuItem>
 
                       <DropdownMenuItem
@@ -519,23 +527,26 @@ export default function MensagensPage({
                             await markAsRead(message.id);
                           }
                         }}
+                        className="flex items-center gap-3 p-3 text-sm md:text-base cursor-pointer hover:bg-gray-100 rounded-md"
                       >
                         {isMessageRead(message.id) ? (
-                          <Mail className="h-4 w-4 mr-2 text-gray-400" />
+                          <Mail className="h-4 w-4 flex-shrink-0 text-gray-400" />
                         ) : (
-                          <MailOpen className="h-4 w-4 mr-2 text-company-blue-600" />
+                          <MailOpen className="h-4 w-4 flex-shrink-0 text-company-blue-600" />
                         )}
-                        {isMessageRead(message.id)
-                          ? "Marcar como não lida"
-                          : "Marcar como lida"}
+                        <span className="flex-1">
+                          {isMessageRead(message.id)
+                            ? "Marcar como não lida"
+                            : "Marcar como lida"}
+                        </span>
                       </DropdownMenuItem>
 
                       <DropdownMenuItem
                         onClick={(e) => openDeleteDialog(message.id, e)}
-                        className="text-red-600"
+                        className="flex items-center gap-3 p-3 text-sm md:text-base cursor-pointer hover:bg-red-50 rounded-md text-red-600"
                       >
-                        <Trash2 className="h-4 w-4 mr-2" />
-                        Excluir
+                        <Trash2 className="h-4 w-4 flex-shrink-0" />
+                        <span className="flex-1">Excluir</span>
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
