@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+
 // app/api/send-message/route.ts
 import { NextRequest, NextResponse } from "next/server";
 
@@ -65,10 +65,10 @@ export async function POST(req: NextRequest) {
 
         const data = await externalRes.json();
         return NextResponse.json(data);
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error("Erro interno:", error);
         return NextResponse.json(
-            { error: error.message || "Erro interno no servidor." },
+            { error: error instanceof Error ? error.message : "Erro interno no servidor." },
             { status: 500 }
         );
     }

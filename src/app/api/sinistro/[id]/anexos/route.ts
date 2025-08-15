@@ -12,10 +12,10 @@ interface AnexoData {
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const sinistroId = params.id;
+    const { id: sinistroId } = await params;
     const apiKey = process.env.NEXT_PUBLIC_API_KEY;
     const apiToken = process.env.API_SECRET_TOKEN;
     const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL_DEFAULT || "https://api.aliancaseguros.cv";

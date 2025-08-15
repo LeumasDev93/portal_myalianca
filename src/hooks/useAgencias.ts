@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useState } from 'react';
 
 interface Agencia {
@@ -8,6 +7,15 @@ interface Agencia {
   latitude: number;
   longitude: number;
   criado_por: string | null;
+}
+
+interface AgenciaAPI {
+  id: string;
+  nome: string;
+  localizacao: string;
+  latitude: string | number;
+  longitude: string | number;
+  criado_por?: string | null;
 }
 
 export function useAgencias() {
@@ -28,7 +36,7 @@ export function useAgencias() {
           throw new Error('Formato de resposta inválido da API');
         }
 
-        const agenciasFormatadas = data.results.map((agencia: any): Agencia => ({
+        const agenciasFormatadas = data.results.map((agencia: AgenciaAPI): Agencia => ({
           id: agencia.id,
           nome: agencia.nome,
           localizacao: agencia.localizacao,

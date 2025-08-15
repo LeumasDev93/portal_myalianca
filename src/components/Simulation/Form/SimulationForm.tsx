@@ -305,7 +305,7 @@ export default function SimulationForm({
         setSimulationError(null);
 
         const data = await fetchSimulation(
-          formValues,
+          formValues as any,
           setIsLoading,
           setSimulationResult
         );

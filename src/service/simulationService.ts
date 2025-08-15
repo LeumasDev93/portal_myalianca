@@ -1,11 +1,39 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { getSession, signIn } from "next-auth/react";
 
+interface SimulationFormData {
+    licensePlate: string;
+    licenseDate: string;
+    brand: string;
+    model: string;
+    seats?: string;
+    cylinderCap?: string;
+    weight?: string;
+    chassis: string;
+    Ilha: string;
+    TipoDeUtilizacao: string;
+    name: string;
+    birthDate: string;
+    driverLicenseNumber: string;
+    driverLicenseDate: string;
+    gender: string;
+    nif: string;
+    bi: string;
+    passport: string;
+    entityType: string;
+    maritalStatus: string;
+    email: string;
+    mobile: string;
+    currentValue: string;
+}
+
+interface SimulationResult {
+    installmentValues: unknown;
+}
 
 export const fetchSimulation = async (
-    formData: any,
+    formData: SimulationFormData,
     setIsLoading: (loading: boolean) => void,
-    setSimulationResult: (result: any) => void
+    setSimulationResult: (result: SimulationResult) => void
 ) => {
     setIsLoading(true);
     const session = await getSession();

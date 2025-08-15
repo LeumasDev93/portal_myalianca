@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 // hooks/useUnreadCount.ts
 
 import { useEffect, useState } from "react";
@@ -14,6 +13,20 @@ type Message = {
   nome_cliente?: string;
   read: boolean;
   starred: boolean;
+  replyCount?: number;
+};
+
+type MessageAPI = {
+  id: string;
+  sender?: string;
+  assunto?: string;
+  preview?: string;
+  date?: string;
+  data_criacao?: string;
+  data_ultima_mensagem?: string;
+  nome_cliente?: string;
+  read?: boolean;
+  starred?: boolean;
   replyCount?: number;
 };
 
@@ -44,7 +57,7 @@ export function useUnreadCount(userId?: string) {
         const data = await res.json();
 
         const formattedMessages: Message[] = Array.isArray(data?.results)
-          ? data.results.map((msg: any) => ({
+          ? data.results.map((msg: MessageAPI) => ({
             ...msg,
             read: msg.read ?? false,
             starred: msg.starred ?? false,

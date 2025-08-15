@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+
 // src/app/api/menssage/threads/route.ts
 import { NextRequest, NextResponse } from "next/server";
 
