@@ -10,6 +10,7 @@ import { IconType } from "react-icons";
 import { MdEmail } from "react-icons/md";
 import { IoNotifications } from "react-icons/io5";
 import { useUserProfile } from "@/hooks/useUserProfile ";
+import { useUnreadMessages } from "@/contexts/unread-messages-context";
 
 interface MenuItem {
   title: string;
@@ -27,6 +28,8 @@ interface MobileMenuProps {
 export const MobileMenu = ({ menuItems, onMenuClick }: MobileMenuProps) => {
   const [menuOpen, setMenuOpen] = useState(false);
   const { profile } = useUserProfile();
+  const { unreadCount } = useUnreadMessages();
+
   const renderIcon = (icon: string | IconType | React.ReactNode) => {
     if (typeof icon === "string") {
       // Se for string, assume que é um caminho de imagem
@@ -66,9 +69,11 @@ export const MobileMenu = ({ menuItems, onMenuClick }: MobileMenuProps) => {
               onClick={() => onMenuClick("mensagens")}
             >
               <MdEmail className="text-[#002256] size-5 md:size-6" />
-              <span className="absolute -top-2 -right-2 bg-[#B7021C] text-white text-[10px] rounded-full h-4 w-4 flex items-center justify-center">
-                3
-              </span>
+              {unreadCount > 0 && (
+                <span className="absolute p-2 -top-2 -right-2 bg-[#B7021C] text-white text-[10px] rounded-full h-4 w-4 flex items-center justify-center">
+                  {unreadCount > 10 ? "10+" : unreadCount}
+                </span>
+              )}
             </button>
             <button
               className="relative cursor-pointer"
@@ -93,7 +98,7 @@ export const MobileMenu = ({ menuItems, onMenuClick }: MobileMenuProps) => {
         <>
           <div
             onClick={() => setMenuOpen(false)}
-            className="fixed inset-0 bg-opacity-50 z-40"
+            className="fixed inset-0 bg-black/50 z-40"
           />
           <aside className="fixed top-0 left-0 w-64 h-full bg-white z-50 shadow-xl p-6 transition-transform transform translate-x-0">
             <button

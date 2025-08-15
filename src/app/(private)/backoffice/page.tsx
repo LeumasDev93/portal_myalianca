@@ -41,6 +41,7 @@ import { useAutoLogout } from "@/hooks/useLogout";
 import OcorrênciasPage from "../../../components/(sinistros)/ocorrencias/page";
 import NewOcorrênciasPage from "@/components/(sinistros)/ocorrencias/newOcorrencia/page";
 import OcorrenciaDetailsPage from "@/components/(sinistros)/ocorrencias/detailsOcorrencia/page";
+import { BottomNavigation } from "@/components/Layout/BottomNavigation";
 
 const Page = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -207,17 +208,23 @@ const Page = () => {
         } flex-grow`}
       >
         {isMobile && (
-          <MobileMenu
-            onMenuClick={handleMenuClick}
-            menuItems={MainMenus.map((menu) => ({
-              ...menu,
-              onClick: () => {
-                if (menu.onClick) {
-                  menu.onClick();
-                }
-              },
-            }))}
-          />
+          <>
+            <MobileMenu
+              onMenuClick={handleMenuClick}
+              menuItems={MainMenus.map((menu) => ({
+                ...menu,
+                onClick: () => {
+                  if (menu.onClick) {
+                    menu.onClick();
+                  }
+                },
+              }))}
+            />
+            <BottomNavigation
+              activePage={currentPage}
+              onNavigate={handleMenuClick}
+            />
+          </>
         )}
 
         {!isMobile && (
@@ -233,10 +240,10 @@ const Page = () => {
           className={`flex-1 flex flex-col ${
             currentPage === "Simulation"
               ? isMobile
-                ? "-mt-4" // Simulation no mobile
+                ? "-mt-4 pb-20" // Simulation no mobile com padding bottom
                 : "ml-12 md:ml-12 xl:ml-60 -mt-4 xl:-mt-2 " // Simulation no desktop
               : isMobile
-              ? "" // outras páginas no mobile
+              ? "pb-20" // outras páginas no mobile com padding bottom
               : "ml-16 xl:ml-64" // outras páginas no desktop
           }`}
         >

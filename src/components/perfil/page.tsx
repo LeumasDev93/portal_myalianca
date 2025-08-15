@@ -56,6 +56,8 @@ export function PerfilPage() {
   const [profileImage, setProfileImage] =
     useState<string>("/diverse-group.png");
   const [isUploading, setIsUploading] = useState(false);
+  const [selectedImageFile, setSelectedImageFile] = useState<File | null>(null);
+  const [hasUnsavedImage, setHasUnsavedImage] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   const { logout } = useAuth();
@@ -81,25 +83,97 @@ export function PerfilPage() {
     fileInputRef.current?.click();
   };
 
-  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    setIsUploading(true);
+    // Validações do arquivo
+    const maxSize = 2 * 1024 * 1024; // 2MB
+    if (file.size > maxSize) {
+      toast({
+        title: "Arquivo muito grande",
+        description: "A imagem deve ter no máximo 2MB.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Verificar tipo de arquivo
+    const allowedTypes = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
+    if (!allowedTypes.includes(file.type)) {
+      toast({
+        title: "Tipo de arquivo não suportado",
+        description: "Use apenas imagens JPG, PNG ou WebP.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Salvar o arquivo selecionado e mostrar preview
+    setSelectedImageFile(file);
     setProfileImage(URL.createObjectURL(file));
+    setHasUnsavedImage(true);
+
+    toast({
+      title: "Imagem selecionada",
+      description: "Clique em 'Salvar' para confirmar a alteração.",
+      variant: "default",
+    });
+  };
+
+  // Função para salvar a imagem selecionada
+  const handleSaveImage = async () => {
+    if (!selectedImageFile) {
+      toast({
+        title: "Nenhuma imagem selecionada",
+        description: "Selecione uma imagem primeiro.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsUploading(true);
 
     try {
+      console.log(
+        "🔄 Iniciando upload da imagem de perfil:",
+        selectedImageFile.name
+      );
+
       const formData = new FormData();
-      formData.append("file", file);
+      formData.append("file", selectedImageFile);
+
+      // Timeout de 30 segundos para uploads
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 30000);
 
       const response = await fetch("/api/upload", {
         method: "POST",
         body: formData,
+        signal: controller.signal,
       });
 
-      if (!response.ok) throw new Error("Erro no upload");
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error("❌ Erro na API de upload:", response.status, errorText);
+        throw new Error(`Erro no upload: ${response.status}`);
+      }
 
       const result = await response.json();
+      console.log("✅ Upload concluído:", result);
+
+      if (!result.id) {
+        throw new Error("API não retornou ID da imagem");
+      }
+
+      // Atualizar o perfil do usuário com o novo ID da imagem
+      await updateProfileImage(result.id);
+
+      // Limpar estados
+      setSelectedImageFile(null);
+      setHasUnsavedImage(false);
 
       toast({
         title: "Foto atualizada",
@@ -107,18 +181,82 @@ export function PerfilPage() {
         variant: "success",
       });
 
-      setIsUploading(false);
-      return result;
+      // Recarregar a página para buscar as alterações da API
+      window.location.reload();
     } catch (error) {
-      console.error(error);
-      setIsUploading(false);
-      setProfileImage("");
+      console.error("❌ Erro durante upload:", error);
 
-      toast({
-        title: "Erro no upload",
-        description: "Não foi possível atualizar sua foto.",
-        variant: "destructive",
-      });
+      if (error instanceof Error && error.name === "AbortError") {
+        toast({
+          title: "Timeout no upload",
+          description: "O upload demorou muito. Tente novamente.",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Erro no upload",
+          description: "Não foi possível atualizar sua foto. Tente novamente.",
+          variant: "destructive",
+        });
+      }
+
+      // Reverter para a imagem anterior
+      setProfileImage(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL_IMAGE}/${profile?.user?.imagem_id}`
+      );
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  // Função para cancelar a seleção de imagem
+  const handleCancelImage = () => {
+    setSelectedImageFile(null);
+    setHasUnsavedImage(false);
+    setProfileImage(
+      `${process.env.NEXT_PUBLIC_API_BASE_URL_IMAGE}/${profile?.user?.imagem_id}`
+    );
+
+    toast({
+      title: "Alteração cancelada",
+      description: "A imagem não foi alterada.",
+      variant: "default",
+    });
+  };
+
+  // Função para atualizar o ID da imagem no perfil do usuário
+  const updateProfileImage = async (imageId: string) => {
+    if (!profile?.user?.id) {
+      throw new Error("ID do usuário não encontrado");
+    }
+
+    try {
+      console.log("🔄 Atualizando perfil com nova imagem:", imageId);
+
+      // Atualizar o estado local do perfil
+      if (profile) {
+        const updatedProfile = {
+          ...profile,
+          user: {
+            ...profile.user,
+            imagem_id: imageId,
+          },
+        };
+
+        // Atualizar localStorage
+        localStorage.setItem("user", JSON.stringify(updatedProfile));
+
+        // Atualizar estado do componente
+        updateProfile(updatedProfile);
+
+        console.log(
+          "✅ Perfil atualizado localmente com nova imagem:",
+          imageId
+        );
+      }
+    } catch (error) {
+      console.error("❌ Erro ao atualizar perfil:", error);
+      throw error;
     }
   };
 
@@ -230,10 +368,13 @@ export function PerfilPage() {
                 aria-label="Clique para alterar sua foto de perfil"
               >
                 <Avatar className="h-24 w-24">
-                  {/* Forçar rerender do AvatarImage passando key para a URL */}
                   <AvatarImage
                     key={profileImage}
-                    src={`${process.env.NEXT_PUBLIC_API_BASE_URL_IMAGE}/${profile.user?.imagem_id}`}
+                    src={
+                      profileImage.startsWith("blob:")
+                        ? profileImage
+                        : `${process.env.NEXT_PUBLIC_API_BASE_URL_IMAGE}/${profile.user?.imagem_id}`
+                    }
                     alt={profile?.user?.nome}
                   />
                   <AvatarFallback>
@@ -241,6 +382,7 @@ export function PerfilPage() {
                   </AvatarFallback>
                 </Avatar>
 
+                {/* Overlay de hover */}
                 <div className="absolute inset-0 bg-black bg-opacity-50 rounded-full opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
                   <Camera className="h-8 w-8 text-white" />
                 </div>
@@ -252,42 +394,60 @@ export function PerfilPage() {
                 )}
               </div>
 
+              {/* Input de arquivo */}
               <input
                 type="file"
                 ref={fileInputRef}
                 className="hidden"
-                accept="image/*"
+                accept="image/jpeg,image/jpg,image/png,image/webp"
                 onChange={handleImageChange}
               />
 
+              {/* Botão de câmera */}
               <Button
                 size="icon"
                 variant="outline"
-                className="absolute bottom-0 right-0 rounded-full h-8 w-8 bg-white"
+                className="absolute bottom-0 right-0 rounded-full h-8 w-8 bg-white hover:bg-gray-50"
                 onClick={handleAvatarClick}
+                disabled={isUploading}
               >
                 <Camera className="h-4 w-4" />
                 <span className="sr-only">Alterar foto</span>
               </Button>
             </div>
 
-            <input
-              type="file"
-              ref={fileInputRef}
-              className="hidden"
-              accept="image/*"
-              onChange={handleImageChange}
-            />
+            {/* Informações sobre upload */}
+            <div className="text-xs text-muted-foreground mb-4">
+              <p>Clique na foto para alterar</p>
+            </div>
 
-            <Button
-              size="icon"
-              variant="outline"
-              className="absolute bottom-0 right-0 rounded-full h-8 w-8 bg-white"
-              onClick={handleAvatarClick}
-            >
-              <Camera className="h-4 w-4" />
-              <span className="sr-only">Alterar foto</span>
-            </Button>
+            {/* Botões de ação para imagem */}
+            {hasUnsavedImage && (
+              <div className="flex gap-2 mb-4">
+                <Button
+                  onClick={handleSaveImage}
+                  disabled={isUploading}
+                  className="bg-[#002256] hover:bg-[#002256d1] text-white"
+                  size="sm"
+                >
+                  {isUploading ? (
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+                  ) : (
+                    <Check className="w-4 h-4 mr-2" />
+                  )}
+                  Salvar
+                </Button>
+                <Button
+                  onClick={handleCancelImage}
+                  disabled={isUploading}
+                  variant="outline"
+                  size="sm"
+                >
+                  <AlertCircle className="w-4 h-4 mr-2" />
+                  Cancelar
+                </Button>
+              </div>
+            )}
 
             <h3 className="text-xl font-semibold mt-4">{profile.user?.nome}</h3>
             {profile.user?.email && (
