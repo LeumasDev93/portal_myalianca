@@ -90,14 +90,14 @@ export async function GET(request: Request) {
       },
       results: data.results,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     return NextResponse.json(
       {
         info: {
           count: 0,
           page: 1,
           status: 500,
-          errors: [error?.message || 'Erro interno inesperado.'],
+          errors: [error instanceof Error ? error.message : 'Erro interno inesperado.'],
         },
         results: [],
       },

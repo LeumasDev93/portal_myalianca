@@ -74,7 +74,7 @@ export async function GET(request: Request) {
     const data = await response.json();
     
     // Calcular número de mensagens não lidas
-    const unreadCount = data.results?.filter((msg: any) => !msg.read)?.length || 0;
+    const unreadCount = data.results?.filter((msg: { read?: boolean }) => !msg.read)?.length || 0;
 
     return NextResponse.json({
       info: {
@@ -87,7 +87,7 @@ export async function GET(request: Request) {
       unreadCount: unreadCount,
     });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     // 6. Tratar erros inesperados
     return NextResponse.json(
       {
@@ -95,7 +95,7 @@ export async function GET(request: Request) {
           count: 0,
           page: 1,
           status: 500,
-          errors: [error?.message || 'Erro interno no servidor'],
+          errors: [error instanceof Error ? error.message : 'Erro interno no servidor'],
         },
         results: [],
       },
@@ -150,10 +150,10 @@ export async function POST(request: Request) {
       data: data,
     });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     return NextResponse.json(
       {
-        error: error?.message || "Erro interno no servidor",
+        error: error instanceof Error ? error.message : "Erro interno no servidor",
       },
       { status: 500 }
     );

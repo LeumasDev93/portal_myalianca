@@ -2,6 +2,14 @@ import { NextRequest } from "next/server";
 
 export const runtime = "nodejs";
 
+interface AnexoData {
+  id: string;
+  filename?: string;
+  name?: string;
+  user_id?: string;
+  date_create?: string;
+}
+
 export async function GET(
   req: NextRequest,
   { params }: { params: { id: string } }
@@ -42,7 +50,7 @@ export async function GET(
 
     // 2. Processar cada anexo para incluir o conteúdo da imagem
     const processedAnexos = await Promise.all(
-      anexosData.map(async (anexo: any) => {
+      anexosData.map(async (anexo: AnexoData) => {
         try {
           const imageUrl = `${apiBaseUrl}/files/1.0.0/download/${anexo.id}`;
           console.log("🖼️ Buscando imagem:", imageUrl);
