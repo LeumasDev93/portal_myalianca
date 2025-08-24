@@ -31,6 +31,7 @@ const AVAILABLE_MENUS = [
     titulo: "Gerencie seus Seguros",
     descricao: "Faz Gerenciamentos de seus Seguros de forma fácil e rápida",
     icone: LuSquareKanban,
+    iconName: "LuSquareKanban",
     link: "gerenciamentoSOAT",
     descricaoBotao: "Acessar",
     onlyForCompany: true,
@@ -41,6 +42,7 @@ const AVAILABLE_MENUS = [
     descricao:
       "Acesse todo o histórico de transações, atividades e movimentações da sua conta de forma organizada e detalhada.",
     icone: IoGrid,
+    iconName: "IoGrid",
     link: "Historico",
     descricaoBotao: "Consultar Histórico",
   },
@@ -50,6 +52,7 @@ const AVAILABLE_MENUS = [
     descricao:
       "Visualize e gerencie todas as suas apólices de seguro, acompanhe coberturas, prazos e renovações.",
     icone: IoShieldCheckmarkSharp,
+    iconName: "IoShieldCheckmarkSharp",
     link: "apolice",
     descricaoBotao: "Gerenciar Apólices",
   },
@@ -59,6 +62,7 @@ const AVAILABLE_MENUS = [
     descricao:
       "Monitore o status dos seus sinistros, acompanhe processos de indenização e histórico de ocorrências.",
     icone: FaTriangleExclamation,
+    iconName: "FaTriangleExclamation",
     link: "sinistro",
     descricaoBotao: "Acompanhar Sinistros",
   },
@@ -68,6 +72,7 @@ const AVAILABLE_MENUS = [
     descricao:
       "Consulte recibos de pagamento, histórico de transações financeiras e documentos fiscais.",
     icone: IoReceiptSharp,
+    iconName: "IoReceiptSharp",
     link: "recibo",
     descricaoBotao: "Ver Recibos",
   },
@@ -77,6 +82,7 @@ const AVAILABLE_MENUS = [
     descricao:
       "Registre novas ocorrências, acompanhe o progresso de processos e comunique-se com a seguradora.",
     icone: AiFillFileExclamation,
+    iconName: "AiFillFileExclamation",
     link: "ocorrencias",
     descricaoBotao: "Registrar Ocorrência",
   },
@@ -86,6 +92,7 @@ const AVAILABLE_MENUS = [
     descricao:
       "Simule diferentes tipos de seguros, compare preços e coberturas, e contrate novos produtos.",
     icone: TbTopologyStar3,
+    iconName: "TbTopologyStar3",
     link: "Simulation",
     descricaoBotao: "Simular Agora",
   },
@@ -95,6 +102,7 @@ const AVAILABLE_MENUS = [
     descricao:
       "Localize agências da Aliança Seguros próximas à sua região, com informações de contato e horários.",
     icone: IoMdPin,
+    iconName: "IoMdPin",
     link: "Agencias",
     descricaoBotao: "Encontrar Agências",
   },
@@ -166,7 +174,7 @@ export function QuickAccessModal({
           nome: menu.nome,
           titulo: menu.titulo,
           descricao: menu.descricao,
-          icone: menu.icone.name,
+          icone: menu.iconName,
           link: `${menu.link}`,
           descricaoBotao: menu.descricaoBotao,
           user_id: profile?.user?.id,
