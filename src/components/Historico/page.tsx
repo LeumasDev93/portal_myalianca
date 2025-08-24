@@ -9,6 +9,7 @@ import QuickAccessCard from "@/components/Layout/QuickAccessCard";
 import HistoryTable from "@/components/Historico/table/HistoryTable";
 import AtivitysLastCard from "@/components/Layout/AtivitysLastCard";
 import { useQuickAccess } from "@/hooks/useQuickAccess";
+import { useUserProfile } from "@/hooks/useUserProfile ";
 
 import IconCar from "@/assets/Icones/AliancaAuto_Icone.svg";
 import IconHosp from "@/assets/Icones/AliancaIncendio_Icone.svg";
@@ -47,6 +48,7 @@ export default function Historico({
     isLoading: isLoadingQuickAccess,
     refetch,
   } = useQuickAccess();
+  const { profile } = useUserProfile();
 
   useEffect(() => {
     const updateLayout = () => {
@@ -80,6 +82,32 @@ export default function Historico({
       console.log(`Item: ${item.nome}, Ícone: ${item.icone}`);
     });
 
+    // Lista de todos os menus disponíveis (baseado no QuickAccessModal)
+    const allAvailableMenus = [
+      "Histórico",
+      "Apólice",
+      "Sinistros",
+      "Recibos & Pagamentos",
+      "Ocorrências",
+      "Simular & Contratar",
+      "Agências",
+    ];
+
+    // Adiciona "Gestão de SOAT" apenas se o usuário for Company
+    if (profile?.user?.tipo_utilizador === "Company") {
+      allAvailableMenus.push("Gestão de SOAT");
+    }
+
+    // Verifica se todos os menus disponíveis estão adicionados
+    const addedMenuNames = quickAccessItems.map((item) => item.nome);
+    const allMenusAdded = allAvailableMenus.every((menuName) =>
+      addedMenuNames.includes(menuName)
+    );
+
+    console.log("🔍 DEBUG - Menus disponíveis:", allAvailableMenus);
+    console.log("🔍 DEBUG - Menus adicionados:", addedMenuNames);
+    console.log("🔍 DEBUG - Todos os menus adicionados:", allMenusAdded);
+
     // Adiciona cards de acesso rápido da API
     const quickAccessCards = quickAccessItems.map((item) => ({
       type: "quickAccess" as const,
@@ -91,17 +119,20 @@ export default function Historico({
       pages.push(quickAccessCards.slice(i, i + cardsPerPage));
     }
 
-    // Adiciona o card "add" na última página se houver espaço
-    if (pages.length > 0) {
-      const lastPage = pages[pages.length - 1];
-      if (lastPage.length < cardsPerPage) {
-        lastPage.push("addCard");
+    // Só adiciona o card "add" se nem todos os menus estiverem adicionados
+    if (!allMenusAdded) {
+      // Adiciona o card "add" na última página se houver espaço
+      if (pages.length > 0) {
+        const lastPage = pages[pages.length - 1];
+        if (lastPage.length < cardsPerPage) {
+          lastPage.push("addCard");
+        } else {
+          pages.push(["addCard"]);
+        }
       } else {
+        // Se não há cards da API, cria uma página apenas com o card "add"
         pages.push(["addCard"]);
       }
-    } else {
-      // Se não há cards da API, cria uma página apenas com o card "add"
-      pages.push(["addCard"]);
     }
 
     return pages;
@@ -128,6 +159,7 @@ export default function Historico({
       return (
         <QuickAccessCard
           key={item.data.id}
+          id={item.data.id}
           nome={item.data.nome}
           titulo={item.data.titulo}
           icone={item.data.icone}
@@ -137,13 +169,19 @@ export default function Historico({
               onNavigate(item.data.link);
             }
           }}
+          onDelete={refetch}
         />
       );
     }
 
     if (item === "addCard") {
       return (
-        <QuickAccessCard key={"addCard"} isAddCard onItemAdded={refetch} />
+        <QuickAccessCard
+          key={"addCard"}
+          isAddCard
+          onItemAdded={refetch}
+          existingItems={quickAccessItems}
+        />
       );
     }
 

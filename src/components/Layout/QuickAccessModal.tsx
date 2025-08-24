@@ -104,26 +104,31 @@ interface QuickAccessModalProps {
   isOpen: boolean;
   onClose: () => void;
   onItemAdded?: () => void; // Callback para atualizar a lista após adicionar item
+  existingItems?: Array<{ nome: string }>; // Lista de itens já existentes no acesso rápido
 }
 
 export function QuickAccessModal({
   isOpen,
   onClose,
   onItemAdded,
+  existingItems = [],
 }: QuickAccessModalProps) {
   const [selectedMenu, setSelectedMenu] = useState<string>("");
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const { profile } = useUserProfile();
 
-  // Filtra os menus baseado no tipo de cliente
+  // Filtra os menus baseado no tipo de cliente e verifica se já existem
   const availableMenus = AVAILABLE_MENUS.filter((menu) => {
     // Se o menu tem onlyForCompany, só mostra para Company
     if (menu.onlyForCompany) {
       return profile?.user?.tipo_utilizador === "Company";
     }
     return true; // Mostra todos os outros menus
-  });
+  }).map((menu) => ({
+    ...menu,
+    isDisabled: existingItems.some((item) => item.nome === menu.nome),
+  }));
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -234,19 +239,36 @@ export function QuickAccessModal({
                   {availableMenus.map((menu) => (
                     <div
                       key={menu.titulo}
-                      onClick={() => setSelectedMenu(menu.nome)}
-                      className={`flex flex-col items-center p-4 rounded-lg border-2 cursor-pointer transition-all duration-200 ${
-                        selectedMenu === menu.nome
-                          ? "border-[#002855] bg-blue-50"
-                          : "border-gray-200 hover:border-[#002855] hover:bg-gray-50"
+                      onClick={() =>
+                        !menu.isDisabled && setSelectedMenu(menu.nome)
+                      }
+                      className={`flex flex-col items-center p-4 rounded-lg border-2 transition-all duration-200 ${
+                        menu.isDisabled
+                          ? "border-gray-300 bg-gray-100 cursor-not-allowed opacity-50"
+                          : selectedMenu === menu.nome
+                          ? "border-[#002855] bg-blue-50 cursor-pointer"
+                          : "border-gray-200 hover:border-[#002855] hover:bg-gray-50 cursor-pointer"
                       }`}
                     >
-                      <div className="text-4xl text-[#002855] mb-3">
+                      <div
+                        className={`text-4xl mb-3 ${
+                          menu.isDisabled ? "text-gray-400" : "text-[#002855]"
+                        }`}
+                      >
                         {React.createElement(menu.icone)}
                       </div>
-                      <span className="text-sm font-medium text-center text-[#002855]">
+                      <span
+                        className={`text-sm font-medium text-center ${
+                          menu.isDisabled ? "text-gray-400" : "text-[#002855]"
+                        }`}
+                      >
                         {menu.nome}
                       </span>
+                      {menu.isDisabled && (
+                        <span className="text-xs text-gray-500 mt-1">
+                          Já adicionado
+                        </span>
+                      )}
                     </div>
                   ))}
                 </div>
