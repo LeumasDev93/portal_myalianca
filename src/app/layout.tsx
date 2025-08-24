@@ -3,7 +3,9 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/contexts/auth-context";
+import { NotificationsProvider } from "@/contexts/notifications-context";
 import { UnreadMessagesProvider } from "@/contexts/unread-messages-context";
+import { ConnectionProvider } from "@/contexts/connection-context";
 import { Suspense } from "react";
 import { Toaster } from "sonner";
 
@@ -24,9 +26,13 @@ export default function RootLayout({
     <html lang="pt-BR">
       <body className={inter.className}>
         <Suspense>
-          <AuthProvider>
-            <UnreadMessagesProvider>{children}</UnreadMessagesProvider>
-          </AuthProvider>
+          <ConnectionProvider>
+            <AuthProvider>
+              <NotificationsProvider>
+                <UnreadMessagesProvider>{children}</UnreadMessagesProvider>
+              </NotificationsProvider>
+            </AuthProvider>
+          </ConnectionProvider>
         </Suspense>
         <Toaster />
       </body>

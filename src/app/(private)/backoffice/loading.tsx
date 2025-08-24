@@ -1,9 +1,7 @@
-import { LoadingScreen } from "@/components/ui/loading-screen";
+import { LoadingContainer } from "@/components/ui/loading-container";
 
 export default function DashboardLoading() {
   return (
-    <div className="flex items-center justify-center h-screen">
-      <LoadingScreen />
-    </div>
+    <LoadingContainer fullHeight={true} message="CARREGANDO..." />
   );
 }

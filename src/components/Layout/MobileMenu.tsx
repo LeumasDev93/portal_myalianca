@@ -10,6 +10,7 @@ import { IconType } from "react-icons";
 import { MdEmail } from "react-icons/md";
 import { IoNotifications } from "react-icons/io5";
 import { useUserProfile } from "@/hooks/useUserProfile ";
+import { useNotificationsContext } from "@/contexts/notifications-context";
 import { useUnreadMessages } from "@/contexts/unread-messages-context";
 
 interface MenuItem {
@@ -28,7 +29,8 @@ interface MobileMenuProps {
 export const MobileMenu = ({ menuItems, onMenuClick }: MobileMenuProps) => {
   const [menuOpen, setMenuOpen] = useState(false);
   const { profile } = useUserProfile();
-  const { unreadCount } = useUnreadMessages();
+  const { unreadCount: notificationsCount } = useNotificationsContext();
+  const { unreadCount: messagesCount } = useUnreadMessages();
 
   const renderIcon = (icon: string | IconType | React.ReactNode) => {
     if (typeof icon === "string") {
@@ -69,9 +71,9 @@ export const MobileMenu = ({ menuItems, onMenuClick }: MobileMenuProps) => {
               onClick={() => onMenuClick("mensagens")}
             >
               <MdEmail className="text-[#002256] size-5 md:size-6" />
-              {unreadCount > 0 && (
+              {messagesCount > 0 && (
                 <span className="absolute p-2 -top-2 -right-2 bg-[#B7021C] text-white text-[10px] rounded-full h-4 w-4 flex items-center justify-center">
-                  {unreadCount > 10 ? "10+" : unreadCount}
+                  {messagesCount > 10 ? "10+" : messagesCount}
                 </span>
               )}
             </button>
@@ -80,9 +82,11 @@ export const MobileMenu = ({ menuItems, onMenuClick }: MobileMenuProps) => {
               onClick={() => onMenuClick("Notificacoes")}
             >
               <IoNotifications className="text-[#002256] size-5 md:size-6" />
-              <span className="absolute -top-2 -right-2 bg-[#B7021C] text-white text-[10px] rounded-full h-4 w-4 flex items-center justify-center">
-                5
-              </span>
+              {notificationsCount > 0 && (
+                <span className="absolute -top-2 -right-2 bg-[#B7021C] text-white text-[10px] rounded-full h-4 w-4 flex items-center justify-center">
+                  {notificationsCount > 10 ? "10+" : notificationsCount}
+                </span>
+              )}
             </button>
           </div>
           <button

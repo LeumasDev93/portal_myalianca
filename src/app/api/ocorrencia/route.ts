@@ -39,7 +39,7 @@ export async function GET(request: Request) {
       );
     }
 
-    const apiUrl = `${NEXT_PUBLIC_API_BASE_URL}/sinistros?user_id=${userId}`;
+    const apiUrl = `${NEXT_PUBLIC_API_BASE_URL}/ocorrencias?user_id=${userId}`;
     const externalResponse = await fetch(apiUrl, {
       headers: {
         Authorization: `Bearer ${API_SECRET_TOKEN}`,

@@ -1,4 +1,5 @@
 import { useUserProfile } from "@/hooks/useUserProfile ";
+import { useNotificationsContext } from "@/contexts/notifications-context";
 import { useUnreadMessages } from "@/contexts/unread-messages-context";
 import { Avatar, AvatarFallback, AvatarImage } from "@radix-ui/react-avatar";
 import { useEffect, useRef, useState } from "react";
@@ -22,7 +23,8 @@ export function TopMenu({
   onSearchChange,
 }: TopMenuProps) {
   const { profile } = useUserProfile();
-  const { unreadCount } = useUnreadMessages();
+  const { unreadCount: notificationsCount } = useNotificationsContext();
+  const { unreadCount: messagesCount } = useUnreadMessages();
   const [showSearch, setShowSearch] = useState(false);
 
   const searchInputRef = useRef<HTMLInputElement>(null);
@@ -68,6 +70,7 @@ export function TopMenu({
       recibo: "Recibos",
       Agencias: "Agências",
       Ajuda: "Ajuda",
+      newOcorrencia: "Nova Ocorrência",
     };
     return pageTitles[currentPage] || currentPage;
   };
@@ -143,9 +146,9 @@ export function TopMenu({
             aria-label="Mensagens"
           >
             <MdEmail className="text-[#002256] size-5 xl:size-6" />
-            {unreadCount > 0 && (
+            {messagesCount > 0 && (
               <span className="absolute -top-1 -right-1 bg-[#B7021C] text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-medium">
-                {unreadCount > 99 ? "99+" : unreadCount}
+                {messagesCount > 99 ? "99+" : messagesCount}
               </span>
             )}
           </button>
@@ -156,9 +159,11 @@ export function TopMenu({
             aria-label="Notificações"
           >
             <IoNotifications className="text-[#002256] size-5 xl:size-6" />
-            <span className="absolute -top-1 -right-1 bg-[#B7021C] text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-              5
-            </span>
+            {notificationsCount > 0 && (
+              <span className="absolute -top-1 -right-1 bg-[#B7021C] text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-medium">
+                {notificationsCount > 99 ? "99+" : notificationsCount}
+              </span>
+            )}
           </button>
 
           <button
@@ -168,7 +173,9 @@ export function TopMenu({
           >
             <Avatar className="w-full h-full flex items-center justify-center">
               <AvatarImage
-                src={`${process.env.NEXT_PUBLIC_API_BASE_URL_IMAGE}/${profile?.user?.imagem_id}`}
+                src={`/api/proxy-image?url=${encodeURIComponent(
+                  `${process.env.NEXT_PUBLIC_API_BASE_URL_IMAGE}/${profile?.user?.imagem_id}`
+                )}`}
                 className="rounded-full"
               />
               <AvatarFallback className="text-white hover:text-[#002256]">

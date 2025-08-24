@@ -2,7 +2,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { useEffect, useState } from "react";
 import EmptyState from "../Form/EmptyState";
-import { LoadingScreen } from "../../ui/loading-screen";
+import { LoadingContainer } from "../../ui/loading-container";
 import { Card, CardHeader, CardTitle } from "../../ui/card";
 import { formatDate } from "@/lib/utils";
 import { FaRegEdit, FaRegEye, FaSearch } from "react-icons/fa";
@@ -207,7 +207,7 @@ export default function MySimulationsTab() {
   if (loading) {
     return (
       <div className="h-[calc(100vh-200px)] flex items-center justify-center">
-        <LoadingScreen />
+        <LoadingContainer message="CARREGANDO MINHAS SIMULAÇÕES..." />
       </div>
     );
   }

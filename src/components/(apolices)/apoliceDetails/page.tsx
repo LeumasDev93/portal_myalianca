@@ -42,7 +42,7 @@ import {
   SinistroData,
 } from "@/types/typesData";
 import { FaTriangleExclamation } from "react-icons/fa6";
-import { LoadingScreen } from "@/components/ui/loading-screen";
+import { LoadingContainer } from "@/components/ui/loading-container";
 
 type ApoliceDetailPageProps = {
   id: string;
@@ -214,7 +214,10 @@ export default function ApoliceDetailPage({
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-screen">
-        <LoadingScreen />
+        <LoadingContainer
+          fullHeight={true}
+          message="CARREGANDO DETALHES DO APÓLICE..."
+        />
       </div>
     );
   }
@@ -230,7 +233,10 @@ export default function ApoliceDetailPage({
   if (!apoliceDetails || apoliceDetails.length === 0) {
     return (
       <div className="flex items-center justify-center h-screen">
-        <LoadingScreen />
+        <LoadingContainer
+          fullHeight={true}
+          message="CARREGANDO DETALHES DO APÓLICE..."
+        />
       </div>
     );
   }

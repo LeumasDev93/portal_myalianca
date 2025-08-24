@@ -22,11 +22,14 @@ import { IoMdPin } from "react-icons/io";
 import SimulationScreen from "../../../components/Simulation/page";
 import { AiFillFileExclamation } from "react-icons/ai";
 import { useAuth } from "@/contexts/auth-context";
+import { useUserProfile } from "@/hooks/useUserProfile ";
 import { Footer } from "@/components/Layout/Footer";
 import Historico from "../../../components/Historico/page";
 import { getSession, signIn } from "next-auth/react";
 import { PerfilPage } from "../../../components/perfil/page";
-import { LoadingScreen } from "@/components/ui/loading-screen";
+import { LoadingContainer } from "@/components/ui/loading-container";
+import { ConnectionErrorScreen } from "@/components/ui/connection-error-screen";
+import { ConnectionRestoredNotification } from "@/components/ui/connection-restored-notification";
 import { TopMenu } from "@/components/Layout/TopMenu";
 import AgenciasPage from "../../../components/agencias/page";
 import ApolicePage from "../../../components/(apolices)/apolices/page";
@@ -42,8 +45,11 @@ import OcorrênciasPage from "../../../components/(sinistros)/ocorrencias/page";
 import NewOcorrênciasPage from "@/components/(sinistros)/ocorrencias/newOcorrencia/page";
 import OcorrenciaDetailsPage from "@/components/(sinistros)/ocorrencias/detailsOcorrencia/page";
 import { BottomNavigation } from "@/components/Layout/BottomNavigation";
+import NotificationsPage from "@/components/Notifications/page";
+import { LuSquareKanban } from "react-icons/lu";
 
 const Page = () => {
+  const { profile } = useUserProfile();
   const [isLoading, setIsLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState("Historico");
   const [isMobile, setIsMobile] = useState(false);
@@ -69,7 +75,6 @@ const Page = () => {
   >(null);
 
   const { logout, user } = useAuth();
-
   const { countdown } = useAutoLogout(logout);
 
   useEffect(() => {
@@ -82,64 +87,82 @@ const Page = () => {
     return () => clearTimeout(timer);
   }, []);
 
-  const MainMenus: MenuItem[] = [
-    {
-      title: "Histórico",
-      path: "Historico",
-      icon: IoGrid,
-      hoverIcon: <IoGrid />,
-      onClick: () => handleMenuClick("Historico"),
-    },
-    {
-      title: "Apólice",
-      path: "apolice",
-      icon: IoShieldCheckmarkSharp,
-      hoverIcon: <IoShieldCheckmarkSharp />,
-      onClick: () => handleMenuClick("apolice"),
-    },
-    {
-      title: "Sinistros",
-      path: "sinistro",
-      icon: FaTriangleExclamation,
-      hoverIcon: <FaTriangleExclamation />,
-      onClick: () => handleMenuClick("sinistro"),
-    },
-    {
-      title: "Recibos & Pagamentos",
-      path: "recibo",
-      icon: IoReceiptSharp,
-      hoverIcon: <IoReceiptSharp />,
-      onClick: () => handleMenuClick("recibo"),
-    },
-    {
-      title: "Ocorrências",
-      path: "ocorrencias",
-      icon: AiFillFileExclamation,
-      hoverIcon: <AiFillFileExclamation />,
-      onClick: () => handleMenuClick("ocorrencias"),
-    },
-    {
-      title: "Simular & Contratar",
-      path: "Simulation",
-      icon: TbTopologyStar3,
-      hoverIcon: <TbTopologyStar3 />,
-      onClick: () => handleMenuClick("Simulation"),
-    },
-    {
-      title: "Agências",
-      path: "Agencias",
-      icon: IoMdPin,
-      hoverIcon: <IoMdPin />,
-      onClick: () => handleMenuClick("Agencias"),
-    },
-    {
-      title: "Sair",
-      path: "",
-      icon: IoIosLogOut,
-      hoverIcon: <IoLogOut />,
-      onClick: () => logout(),
-    },
-  ];
+  // Filtra os menus baseado no tipo de cliente
+  const getFilteredMenus = () => {
+    const baseMenus: MenuItem[] = [
+      {
+        title: "Histórico",
+        path: "Historico",
+        icon: IoGrid,
+        hoverIcon: <IoGrid />,
+        onClick: () => handleMenuClick("Historico"),
+      },
+      {
+        title: "Apólice",
+        path: "apolice",
+        icon: IoShieldCheckmarkSharp,
+        hoverIcon: <IoShieldCheckmarkSharp />,
+        onClick: () => handleMenuClick("apolice"),
+      },
+      {
+        title: "Sinistros",
+        path: "sinistro",
+        icon: FaTriangleExclamation,
+        hoverIcon: <FaTriangleExclamation />,
+        onClick: () => handleMenuClick("sinistro"),
+      },
+      {
+        title: "Recibos & Pagamentos",
+        path: "recibo",
+        icon: IoReceiptSharp,
+        hoverIcon: <IoReceiptSharp />,
+        onClick: () => handleMenuClick("recibo"),
+      },
+      {
+        title: "Ocorrências",
+        path: "ocorrencias",
+        icon: AiFillFileExclamation,
+        hoverIcon: <AiFillFileExclamation />,
+        onClick: () => handleMenuClick("ocorrencias"),
+      },
+      {
+        title: "Simular & Contratar",
+        path: "Simulation",
+        icon: TbTopologyStar3,
+        hoverIcon: <TbTopologyStar3 />,
+        onClick: () => handleMenuClick("Simulation"),
+      },
+      {
+        title: "Agências",
+        path: "Agencias",
+        icon: IoMdPin,
+        hoverIcon: <IoMdPin />,
+        onClick: () => handleMenuClick("Agencias"),
+      },
+      {
+        title: "Sair",
+        path: "",
+        icon: IoIosLogOut,
+        hoverIcon: <IoLogOut />,
+        onClick: () => logout(),
+      },
+    ];
+
+    // Adiciona o menu SOAT apenas se o usuário for Company
+    if (profile?.user?.tipo_utilizador === "Company") {
+      baseMenus.splice(1, 0, {
+        title: "Gestão de SOAT",
+        path: "gerenciamentoSOAT",
+        icon: LuSquareKanban,
+        hoverIcon: <LuSquareKanban />,
+        onClick: () => handleMenuClick("gerenciamentoSOAT"),
+      });
+    }
+
+    return baseMenus;
+  };
+
+  const MainMenus = getFilteredMenus();
 
   useEffect(() => {
     setIsClient(true);
@@ -194,6 +217,8 @@ const Page = () => {
 
   return (
     <main className="flex flex-col min-h-screen bg-[#f3f3f5]">
+      <ConnectionErrorScreen />
+      <ConnectionRestoredNotification />
       <TopMenu
         currentPage={currentPage}
         searchQuery={searchQuery}
@@ -250,7 +275,10 @@ const Page = () => {
           <div className="flex-grow p-4">
             {isLoading ? (
               <div className="flex justify-center items-center h-full">
-                <LoadingScreen />
+                <LoadingContainer
+                  fullHeight={true}
+                  message="CARREGANDO DASHBOARD..."
+                />
               </div>
             ) : (
               <>
@@ -285,6 +313,7 @@ const Page = () => {
                     onSelectDetailSinistro={handleSelectSinistroDetail}
                     onOpenSimulator={() => setCurrentPage("Simulation")}
                     onNewSinistro={() => setCurrentPage("ocorrencias")}
+                    onNavigate={handleMenuClick}
                   />
                 )}
                 {currentPage === "apolice" && (
@@ -327,7 +356,8 @@ const Page = () => {
                     onBack={() => setCurrentPage("sinistro")}
                   />
                 )}
-                {currentPage === "Simulation" && <SimulationScreen />}{" "}
+                {currentPage === "Simulation" && <SimulationScreen />}
+                {currentPage === "Notificacoes" && <NotificationsPage />}
                 {currentPage === "recibo" && (
                   <ReciboPage onSelectDetail={handleSelectMensagemDetail} />
                 )}

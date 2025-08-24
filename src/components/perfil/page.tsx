@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import {
   Card,
   CardContent,
@@ -30,7 +30,7 @@ import {
 import { useToast } from "@/components/ui/use-toast";
 import { useUserProfile } from "@/hooks/useUserProfile ";
 import { useAuth } from "@/contexts/auth-context";
-import { LoadingScreen } from "@/components/ui/loading-screen";
+import { LoadingContainer } from "@/components/ui/loading-container";
 
 export interface UserProfile {
   id: string;
@@ -68,6 +68,26 @@ export function PerfilPage() {
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+  // Debug: Log do perfil e URL da imagem
+  useEffect(() => {
+    if (profile) {
+      console.log("🔍 DEBUG - Perfil carregado:", profile);
+      console.log("🔍 DEBUG - imagem_id:", profile.user?.imagem_id);
+      console.log(
+        "🔍 DEBUG - NEXT_PUBLIC_API_BASE_URL_IMAGE:",
+        process.env.NEXT_PUBLIC_API_BASE_URL_IMAGE
+      );
+
+      if (profile.user?.imagem_id) {
+        const imageUrl = `/api/proxy-image?url=${encodeURIComponent(
+          `${process.env.NEXT_PUBLIC_API_BASE_URL_IMAGE}/${profile.user.imagem_id}`
+        )}`;
+        console.log("🔍 DEBUG - URL da imagem construída:", imageUrl);
+        setProfileImage(imageUrl);
+      }
+    }
+  }, [profile]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -140,6 +160,7 @@ export function PerfilPage() {
         selectedImageFile.name
       );
 
+      // Primeiro, fazer upload do arquivo
       const formData = new FormData();
       formData.append("file", selectedImageFile);
 
@@ -147,7 +168,7 @@ export function PerfilPage() {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 30000);
 
-      const response = await fetch("/api/upload", {
+      const uploadResponse = await fetch("/api/upload", {
         method: "POST",
         body: formData,
         signal: controller.signal,
@@ -155,21 +176,54 @@ export function PerfilPage() {
 
       clearTimeout(timeoutId);
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error("❌ Erro na API de upload:", response.status, errorText);
-        throw new Error(`Erro no upload: ${response.status}`);
+      if (!uploadResponse.ok) {
+        const errorText = await uploadResponse.text();
+        console.error(
+          "❌ Erro na API de upload:",
+          uploadResponse.status,
+          errorText
+        );
+        throw new Error(`Erro no upload: ${uploadResponse.status}`);
       }
 
-      const result = await response.json();
-      console.log("✅ Upload concluído:", result);
+      const uploadResult = await uploadResponse.json();
+      console.log("✅ Upload concluído:", uploadResult);
 
-      if (!result.id) {
+      if (!uploadResult.id) {
         throw new Error("API não retornou ID da imagem");
       }
 
-      // Atualizar o perfil do usuário com o novo ID da imagem
-      await updateProfileImage(result.id);
+      // Agora, atualizar o perfil do usuário com o novo ID da imagem
+      console.log("🔄 Atualizando perfil com nova imagem:", uploadResult.id);
+
+      const profileResponse = await fetch("/api/profile/update", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          user_id: profile?.user?.id,
+          image_id: uploadResult.id,
+        }),
+      });
+
+      if (!profileResponse.ok) {
+        const errorText = await profileResponse.text();
+        console.error(
+          "❌ Erro na API de atualização do perfil:",
+          profileResponse.status,
+          errorText
+        );
+        throw new Error(
+          `Erro na atualização do perfil: ${profileResponse.status}`
+        );
+      }
+
+      const profileResult = await profileResponse.json();
+      console.log("✅ Perfil atualizado com sucesso:", profileResult);
+
+      // Atualizar o estado local do perfil
+      await updateProfileImage(uploadResult.id);
 
       // Limpar estados
       setSelectedImageFile(null);
@@ -202,7 +256,9 @@ export function PerfilPage() {
 
       // Reverter para a imagem anterior
       setProfileImage(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL_IMAGE}/${profile?.user?.imagem_id}`
+        `/api/proxy-image?url=${encodeURIComponent(
+          `${process.env.NEXT_PUBLIC_API_BASE_URL_IMAGE}/${profile?.user?.imagem_id}`
+        )}`
       );
     } finally {
       setIsUploading(false);
@@ -214,7 +270,9 @@ export function PerfilPage() {
     setSelectedImageFile(null);
     setHasUnsavedImage(false);
     setProfileImage(
-      `${process.env.NEXT_PUBLIC_API_BASE_URL_IMAGE}/${profile?.user?.imagem_id}`
+      `/api/proxy-image?url=${encodeURIComponent(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL_IMAGE}/${profile?.user?.imagem_id}`
+      )}`
     );
 
     toast({
@@ -332,9 +390,7 @@ export function PerfilPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-screen">
-        <LoadingScreen />
-      </div>
+      <LoadingContainer fullHeight={true} message="CARREGANDO PERFIL..." />
     );
   }
 
@@ -345,6 +401,13 @@ export function PerfilPage() {
       </div>
     );
   }
+
+  // Construir URL da imagem usando a API de proxy
+  const imageUrl = profile.user?.imagem_id
+    ? `/api/proxy-image?url=${encodeURIComponent(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL_IMAGE}/${profile.user.imagem_id}`
+      )}`
+    : "/diverse-group.png";
 
   return (
     <div className="flex-1 space-y-6 p-6 md:p-8">
@@ -371,11 +434,16 @@ export function PerfilPage() {
                   <AvatarImage
                     key={profileImage}
                     src={
-                      profileImage.startsWith("blob:")
-                        ? profileImage
-                        : `${process.env.NEXT_PUBLIC_API_BASE_URL_IMAGE}/${profile.user?.imagem_id}`
+                      profileImage.startsWith("blob:") ? profileImage : imageUrl
                     }
                     alt={profile?.user?.nome}
+                    onError={(e) => {
+                      const target = e.target as HTMLImageElement;
+                      target.src = "/diverse-group.png";
+                    }}
+                    onLoad={() => {
+                      console.log("✅ Imagem carregada com sucesso:", imageUrl);
+                    }}
                   />
                   <AvatarFallback>
                     {profile?.user?.nome.charAt(0)}

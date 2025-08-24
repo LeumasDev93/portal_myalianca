@@ -11,12 +11,13 @@ export async function GET(request: NextRequest) {
       return new Response('URL da imagem não fornecida', { status: 400 });
     }
 
-    const apiKey = process.env.NEXT_PUBLIC_API_KEY;
-    const apiToken = process.env.API_SECRET_TOKEN;
+    const apiKey = process.env.NEXT_PUBLIC_API_KEY || "2b10688d-0539-4dff-8d30-d9195b32f5d6";
+    const apiToken = process.env.API_SECRET_TOKEN || "2b10688d-0539-4dff-8d30-d9195b32f5d6";
 
-    if (!apiKey || !apiToken) {
-      return new Response('Configuração da API incompleta', { status: 500 });
-    }
+    console.log('🔧 Configurações da API Proxy:');
+    console.log('  - API Key:', apiKey ? 'Definida' : 'Não definida');
+    console.log('  - API Token:', apiToken ? 'Definida' : 'Não definida');
+    console.log('  - URL da imagem:', imageUrl);
 
     console.log('🖼️ Fazendo proxy para:', imageUrl);
 
@@ -24,12 +25,27 @@ export async function GET(request: NextRequest) {
       headers: {
         Authorization: `Bearer ${apiToken}`,
         ApiKey: apiKey,
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
       },
     });
 
+    console.log('📡 Resposta da API:', {
+      status: response.status,
+      statusText: response.statusText,
+    });
+
     if (!response.ok) {
-      console.error('❌ Erro ao buscar imagem:', response.status, response.statusText);
-      return new Response('Erro ao buscar imagem', { status: response.status });
+      const errorText = await response.text();
+      console.error('❌ Erro ao buscar imagem:', {
+        status: response.status,
+        statusText: response.statusText,
+        errorText: errorText,
+      });
+      return new Response(`Erro ao buscar imagem: ${response.status} - ${errorText}`, { 
+        status: response.status,
+        headers: { 'Content-Type': 'text/plain' }
+      });
     }
 
     const imageBuffer = await response.arrayBuffer();

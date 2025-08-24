@@ -36,8 +36,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { LoadingScreen } from "@/components/ui/loading-screen";
 import { useUserProfile } from "@/hooks/useUserProfile ";
+import { LoadingContainer } from "@/components/ui/loading-container";
 
 type ViewMode = "grid" | "list";
 
@@ -192,7 +192,10 @@ export default function OcorrenciasPage({
   if (isLoading) {
     return (
       <div className="flex flex-col items-center justify-center space-y-4 text-center py-12 ">
-        <LoadingScreen />
+        <LoadingContainer
+          fullHeight={true}
+          message="CARREGANDO OCORRÊNCIAS..."
+        />
       </div>
     );
   }
@@ -366,7 +369,10 @@ export default function OcorrenciasPage({
       {/* Lista vazia */}
       {isLoading ? (
         <div className="flex flex-col items-center justify-center space-y-4 text-center py-12">
-          <LoadingScreen />
+          <LoadingContainer
+            fullHeight={true}
+            message="CARREGANDO OCORRÊNCIAS..."
+          />
         </div>
       ) : filteredOcorrencias.length === 0 ? (
         <div className="flex flex-col items-center justify-center space-y-4 text-center py-12">

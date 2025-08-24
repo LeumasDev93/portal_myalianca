@@ -12,7 +12,7 @@ import {
   CardFooter,
 } from "@/components/ui/card";
 import CopiableNumber from "@/components/ui/copiableNumber";
-import { LoadingScreen } from "@/components/ui/loading-screen";
+import { LoadingContainer } from "@/components/ui/loading-container";
 import {
   Select,
   SelectTrigger,
@@ -262,7 +262,9 @@ export default function ReciboPage({}: ReciboPageProps) {
   };
 
   if (isLoadingRecibos) {
-    return <LoadingScreen />;
+    return (
+      <LoadingContainer fullHeight={true} message="CARREGANDO RECIBOS..." />
+    );
   }
 
   if (errorRecibo) {

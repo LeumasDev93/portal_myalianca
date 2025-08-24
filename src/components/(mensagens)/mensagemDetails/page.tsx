@@ -19,7 +19,7 @@ import { toast } from "@/components/ui/use-toast";
 import { useRouter } from "next/navigation";
 import { useUserProfile } from "@/hooks/useUserProfile ";
 import { useUnreadMessages } from "@/contexts/unread-messages-context";
-import { LoadingScreen } from "@/components/ui/loading-screen";
+import { LoadingContainer } from "@/components/ui/loading-container";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 
 interface Attachment {
@@ -157,7 +157,7 @@ export default function MensagemDetailPage({
         </div>
 
         <div className="w-full h-full p-6 flex items-center justify-center">
-          <LoadingScreen />
+          <LoadingContainer message="CARREGANDO DETALHES DA MENSAGEM..." />
         </div>
       </div>
     );
@@ -331,7 +331,9 @@ export default function MensagemDetailPage({
                 >
                   {message.isFromMe && profile?.user?.imagem_id ? (
                     <AvatarImage
-                      src={`${process.env.NEXT_PUBLIC_API_BASE_URL_IMAGE}/${profile.user.imagem_id}`}
+                      src={`/api/proxy-image?url=${encodeURIComponent(
+                        `${process.env.NEXT_PUBLIC_API_BASE_URL_IMAGE}/${profile.user.imagem_id}`
+                      )}`}
                       alt={profile?.user?.nome || "Você"}
                       className="rounded-full"
                     />

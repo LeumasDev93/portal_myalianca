@@ -16,7 +16,7 @@ export function LoadingScreen({ message = "POR FAVOR AGUARDE..." }) {
   // }, []);
 
   return (
-    <div className="flex flex-col items-center justify-center">
+    <div className="fixed inset-0 flex flex-col items-center justify-center bg-white z-50">
       <div className="relative w-16 h-16 sm:w-20 sm:h-20 xl:w-32 xl:h-32 mb-6">
         <div className="absolute inset-0 flex items-center justify-center">
           <Image
@@ -29,7 +29,7 @@ export function LoadingScreen({ message = "POR FAVOR AGUARDE..." }) {
           />
         </div>
       </div>
-      <p className="text-sm sm:text-lg xl:text-xl font-medium text-gray-700">
+      <p className="text-sm sm:text-lg xl:text-xl font-medium text-gray-700 text-center px-4">
         {message}
       </p>
       <div className="mt-4 flex space-x-2">

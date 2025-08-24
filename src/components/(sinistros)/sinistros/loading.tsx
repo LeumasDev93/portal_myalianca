@@ -1,5 +1,5 @@
-import { LoadingScreen } from "@/components/ui/loading-screen";
+import { LoadingContainer } from "@/components/ui/loading-container";
 
 export default function SinistrosLoading() {
-  return <LoadingScreen />;
+  return <LoadingContainer message="CARREGANDO SINISTROS..." />;
 }

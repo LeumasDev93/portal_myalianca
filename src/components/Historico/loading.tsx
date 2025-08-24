@@ -1,5 +1,5 @@
-import { LoadingScreen } from "@/components/ui/loading-screen";
+import { LoadingContainer } from "@/components/ui/loading-container";
 
-export default function SinistrosLoading() {
-  return <LoadingScreen />;
+export default function HistoricoLoading() {
+  return <LoadingContainer message="CARREGANDO HISTÓRICO..." />;
 }

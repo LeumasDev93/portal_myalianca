@@ -18,6 +18,7 @@ interface UserProfile {
     cliente_nome: string;
     criado_em: string;
     imagem_id: string;
+    tipo_utilizador: string;
   };
   session_id: string | null;
 }

@@ -27,7 +27,7 @@ import {
   STATUS_OPTIONS,
 } from "@/lib/utils";
 import { IoShieldCheckmarkSharp } from "react-icons/io5";
-import { LoadingScreen } from "@/components/ui/loading-screen";
+import { LoadingContainer } from "@/components/ui/loading-container";
 import { useApolices } from "@/hooks/useApolices";
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
@@ -50,11 +50,7 @@ export default function ApolicePage({ onSelectDetail }: ApolicePageProps) {
   const [statusFilter, setStatusFilter] = useState("all");
 
   if (isLoadingApolices) {
-    return (
-      <div className="flex items-center justify-center h-screen">
-        <LoadingScreen />
-      </div>
-    );
+    return <LoadingContainer fullHeight={true} message="CARREGANDO APÓLICES..." />;
   }
 
   if (errorApolices) {
@@ -77,11 +73,7 @@ export default function ApolicePage({ onSelectDetail }: ApolicePageProps) {
   }
 
   if (!apolices || apolices.length === 0) {
-    return (
-      <div className="flex items-center justify-center h-screen">
-        <LoadingScreen />
-      </div>
-    );
+    return <LoadingContainer fullHeight={true} message="CARREGANDO APÓLICES..." />;
   }
 
   const filteredApolices = apolices.filter((apolice) => {

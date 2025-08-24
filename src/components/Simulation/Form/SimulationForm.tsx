@@ -6,7 +6,7 @@ import FormField from "./FormField";
 import FormActions from "./FormActions";
 import EmptyState from "./EmptyState";
 import ErrorState from "./ErrorState";
-import { LoadingScreen } from "../../ui/loading-screen";
+import { LoadingContainer } from "../../ui/loading-container";
 import { useProductDetails } from "@/hooks/useProdutsDetails";
 import { Tabs, TabsContent, TabsList } from "@radix-ui/react-tabs";
 import { FaUser, FaUserTie, FaCar, FaCalculator } from "react-icons/fa";
@@ -383,7 +383,7 @@ export default function SimulationForm({
     console.log("Formulário enviado com valores:", formValues);
   };
 
-  if (loading) return <LoadingScreen />;
+  if (loading) return <LoadingContainer message="CARREGANDO FORMULÁRIO..." />;
   if (error)
     return <ErrorState error={error} onClose={onClose || (() => {})} />;
   if (!product) return <EmptyState />;

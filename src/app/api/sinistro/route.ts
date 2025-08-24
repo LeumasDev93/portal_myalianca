@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 
 export async function POST(request: Request) {
   try {
-    const apiUrl = `${process.env.NEXT_PUBLIC_API_BASE_URL}/sinistros`;
+    const apiUrl = `${process.env.NEXT_PUBLIC_API_BASE_URL}/ocorrencias`;
     const apiToken = process.env.API_SECRET_TOKEN;
 
     const body = await request.json();
@@ -41,7 +41,7 @@ export async function POST(request: Request) {
         local_ocorrencia: body.local_ocorrencia,
         user_id: body.user_id
       })
-    });
+    }); 
 
     if (!response.ok) {
       throw new Error(`Erro ao registrar sinistro: ${response.status}`);

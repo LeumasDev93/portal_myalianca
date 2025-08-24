@@ -32,7 +32,7 @@ import {
 } from "react-icons/fa6";
 import { Separator } from "@radix-ui/react-separator";
 import { MdCarCrash } from "react-icons/md";
-import { LoadingScreen } from "@/components/ui/loading-screen";
+import { LoadingContainer } from "@/components/ui/loading-container";
 
 interface SinistroDataDetails {
   claimNumber: number;
@@ -175,13 +175,14 @@ export default function SinistroDetailPage({
         </div>
       </div>
       {isLoading ? (
-        <div className="flex items-center justify-center h-screen">
-          <LoadingScreen />
-        </div>
+        <LoadingContainer
+          fullHeight={true}
+          message="CARREGANDO DETALHES DO SINISTRO..."
+        />
       ) : error ? (
         <p className="text-red-500">{error}</p>
       ) : sinistroDetails.length === 0 ? (
-        <LoadingScreen />
+        <LoadingContainer message="CARREGANDO DETALHES..." />
       ) : (
         <>
           {sinistroDetails.map((sinistro, idx) => (

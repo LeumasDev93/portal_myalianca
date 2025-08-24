@@ -32,7 +32,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { LoadingScreen } from "@/components/ui/loading-screen";
+import { LoadingContainer } from "@/components/ui/loading-container";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -218,7 +218,7 @@ export default function MensagensPage({
   if (loading)
     return (
       <div className="w-full h-full p-4 md:p-6 flex items-center justify-center">
-        <LoadingScreen />
+        <LoadingContainer message="CARREGANDO MENSAGENS..." />
       </div>
     );
 
@@ -285,7 +285,9 @@ export default function MensagensPage({
                     }`}
                   >
                     <AvatarImage
-                      src={`${process.env.NEXT_PUBLIC_API_BASE_URL_IMAGE}/${profile?.user?.imagem_id}`}
+                      src={`/api/proxy-image?url=${encodeURIComponent(
+                        `${process.env.NEXT_PUBLIC_API_BASE_URL_IMAGE}/${profile?.user?.imagem_id}`
+                      )}`}
                       className="rounded-full"
                     />
                     <AvatarFallback className="text-white hover:text-[#002256] text-xs sm:text-sm">

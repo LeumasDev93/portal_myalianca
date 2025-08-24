@@ -7,7 +7,7 @@ import MySimulationsTab from "./MySimulations/MySimulationsTab";
 import { Product } from "@/types/typesData";
 import Image from "next/image";
 
-import { LoadingScreen } from "../ui/loading-screen";
+import { LoadingContainer } from "../ui/loading-container";
 import EmptyState from "./Form/EmptyState";
 import { FaExclamationTriangle } from "react-icons/fa";
 
@@ -191,7 +191,7 @@ export default function SimulationScreen() {
                 Escolha um Produto e faça uma simulação.
               </p>
 
-              {loading && <LoadingScreen />}
+              {loading && <LoadingContainer message="CARREGANDO SIMULAÇÕES..." />}
               {error && (
                 <div className="flex items-center gap-2 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg mb-4">
                   <FaExclamationTriangle className="h-5 w-5 text-red-600" />

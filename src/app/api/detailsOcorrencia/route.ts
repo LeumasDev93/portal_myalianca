@@ -19,7 +19,7 @@ export async function GET(request: Request) {
       throw new Error('Variáveis de ambiente não configuradas');
     }
 
-    const apiUrl = `${NEXT_PUBLIC_API_BASE_URL}/sinistros?id=${id}`;
+    const apiUrl = `${NEXT_PUBLIC_API_BASE_URL}/ocorrencias?id=${id}`;
     console.log('[API Request]', apiUrl);
 
     const response = await fetch(apiUrl, {

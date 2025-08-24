@@ -1,5 +1,5 @@
 import { Product } from "@/types/typesData";
-import { LoadingScreen } from "../ui/loading-screen";
+import { LoadingContainer } from "../ui/loading-container";
 import Card from "./Card";
 import EmptyState from "./Form/EmptyState";
 
@@ -14,7 +14,7 @@ export default function ProductsTab({
   products: Product[];
   onSelect: (product: Product) => void;
 }) {
-  if (loading) return <LoadingScreen />;
+  if (loading) return <LoadingContainer message="CARREGANDO PRODUTOS..." />;
   if (error) return <p className="text-red-500">{error}</p>;
   if (products.length === 0) return <EmptyState />;
 

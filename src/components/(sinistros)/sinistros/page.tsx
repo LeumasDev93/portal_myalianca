@@ -20,7 +20,7 @@ import {
   getSinistroStatusText,
   STATUS_OPTIONS_RECIBOS,
 } from "@/lib/utils";
-import { LoadingScreen } from "@/components/ui/loading-screen";
+import { LoadingContainer } from "@/components/ui/loading-container";
 import { FaTriangleExclamation } from "react-icons/fa6";
 import { IoShieldCheckmarkSharp } from "react-icons/io5";
 import { useSinistros } from "@/hooks/useSinistros";
@@ -51,7 +51,7 @@ export default function SinistrosPage({
   if (isLoadingSinistros) {
     return (
       <div className="flex items-center justify-center h-screen">
-        <LoadingScreen />
+        <LoadingContainer message="CARREGANDO SINISTROS..." />
       </div>
     );
   }

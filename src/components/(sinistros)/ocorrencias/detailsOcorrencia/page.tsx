@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import { OcorrenciaDetails } from "../OcorrenciaDetails";
 import { Ocorrencia, Anexo } from "@/types/typesData";
-import { LoadingScreen } from "@/components/ui/loading-screen";
+import { LoadingContainer } from "@/components/ui/loading-container";
 
 type OcorrenciaDetailsProps = {
   onBack: () => void;
@@ -91,7 +91,10 @@ export default function OcorrenciaDetailsPage({
   if (isLoading) {
     return (
       <div className="flex flex-col items-center justify-center space-y-4 text-center py-12 ">
-        <LoadingScreen />
+        <LoadingContainer
+          fullHeight={true}
+          message="CARREGANDO DETALHES OCORRÊNCIAS..."
+        />
       </div>
     );
   }

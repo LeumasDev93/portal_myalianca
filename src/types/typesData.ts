@@ -187,6 +187,7 @@ export interface Product {
   webIcon: string;
   mainProduct: boolean;
   icon: string;
+  mobileIcon: string;
   parentProductId: string | null;
   active: boolean;
   tabs: FormTab[];
