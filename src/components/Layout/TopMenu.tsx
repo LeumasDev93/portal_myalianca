@@ -71,6 +71,7 @@ export function TopMenu({
       Agencias: "Agências",
       Ajuda: "Ajuda",
       newOcorrencia: "Nova Ocorrência",
+      gerenciamentoSOAT: "Gestão de SOAT",
     };
     return pageTitles[currentPage] || currentPage;
   };
