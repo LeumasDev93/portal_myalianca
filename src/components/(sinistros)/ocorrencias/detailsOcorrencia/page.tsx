@@ -33,22 +33,29 @@ export default function OcorrenciaDetailsPage({
         throw new Error("Erro ao buscar detalhes da ocorrência");
 
       const data = await response.json();
+      console.log("Dados da API recebidos:", data);
       setOcorrencia(data);
 
       const ocorrencia = data[0];
+      console.log("Ocorrência processada:", ocorrencia);
       // Se houver anexos, processar diretamente usando a URL da API externa
       let anexosIds: string[] = [];
 
       // Verificar se id_anexos é string (JSON) ou array
+      console.log("Tipo de id_anexos:", typeof ocorrencia.id_anexos);
+      console.log("Valor de id_anexos:", ocorrencia.id_anexos);
+
       if (typeof ocorrencia.id_anexos === "string" && ocorrencia.id_anexos) {
         try {
           anexosIds = JSON.parse(ocorrencia.id_anexos);
+          console.log("Anexos IDs parseados:", anexosIds);
         } catch (e) {
           console.log("❌ Erro ao fazer parse de id_anexos:", e);
           anexosIds = [];
         }
       } else if (Array.isArray(ocorrencia.id_anexos)) {
         anexosIds = ocorrencia.id_anexos;
+        console.log("Anexos IDs (array):", anexosIds);
       }
 
       if (anexosIds.length > 0) {

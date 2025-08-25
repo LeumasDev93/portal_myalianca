@@ -39,11 +39,21 @@ export async function GET(request: Request) {
 
     const parsed = JSON.parse(responseText);
 
-    if (!parsed || !Array.isArray(parsed.results)) {
-      throw new Error('Formato de resposta inesperado: campo "results" não encontrado ou inválido.');
+    if (!parsed || !parsed.results) {
+      throw new Error('Formato de resposta inesperado: campo "results" não encontrado.');
     }
 
-    return NextResponse.json(parsed.results, { status: 200 });
+    // Se results é um objeto (dados de uma única ocorrência), retorna como array
+    if (typeof parsed.results === 'object' && !Array.isArray(parsed.results)) {
+      return NextResponse.json([parsed.results], { status: 200 });
+    }
+
+    // Se results já é um array, retorna diretamente
+    if (Array.isArray(parsed.results)) {
+      return NextResponse.json(parsed.results, { status: 200 });
+    }
+
+    throw new Error('Formato de resposta inesperado: campo "results" não é um objeto ou array válido.');
 
   } catch (error) {
     console.error('[Erro interno]', error);

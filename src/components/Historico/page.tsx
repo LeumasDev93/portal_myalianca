@@ -77,11 +77,6 @@ export default function Historico({
     type PageItem = CardData | "addCard" | { type: "quickAccess"; data: any };
     const pages: PageItem[][] = [];
 
-    // Log dos ícones para debug
-    quickAccessItems.forEach((item) => {
-      console.log(`Item: ${item.nome}, Ícone: ${item.icone}`);
-    });
-
     // Lista de todos os menus disponíveis (baseado no QuickAccessModal)
     const allAvailableMenus = [
       "Histórico",
@@ -104,15 +99,13 @@ export default function Historico({
       addedMenuNames.includes(menuName)
     );
 
-    console.log("🔍 DEBUG - Menus disponíveis:", allAvailableMenus);
-    console.log("🔍 DEBUG - Menus adicionados:", addedMenuNames);
-    console.log("🔍 DEBUG - Todos os menus adicionados:", allMenusAdded);
-
-    // Adiciona cards de acesso rápido da API
-    const quickAccessCards = quickAccessItems.map((item) => ({
-      type: "quickAccess" as const,
-      data: item,
-    }));
+    // Adiciona cards de acesso rápido da API e ordena pelo order_number
+    const quickAccessCards = quickAccessItems
+      .map((item) => ({
+        type: "quickAccess" as const,
+        data: item,
+      }))
+      .sort((a, b) => (a.data.order_number || 0) - (b.data.order_number || 0));
 
     // Páginas de cards de acesso rápido da API
     for (let i = 0; i < quickAccessCards.length; i += cardsPerPage) {
@@ -163,7 +156,13 @@ export default function Historico({
           nome={item.data.nome}
           titulo={item.data.titulo}
           icone={item.data.icone}
-          descricaoBotao={item.data.descricaoBotao}
+          bg_color={item.data.bg_color}
+          text_color={item.data.text_color}
+          border_color={item.data.border_color}
+          bg_botton_color={item.data.bg_botton_color}
+          icon_color={item.data.icon_color}
+          order_number={item.data.order_number}
+          descricao_botao={item.data.descricao_botao}
           onClick={() => {
             if (item.data.link && onNavigate) {
               onNavigate(item.data.link);
@@ -190,7 +189,7 @@ export default function Historico({
         key={index}
         nome={item.title}
         titulo={item.status}
-        descricaoBotao={item.quantity?.toString() || ""}
+        descricao_botao={item.quantity?.toString() || ""}
       />
     );
   };

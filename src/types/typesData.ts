@@ -113,7 +113,7 @@ export interface Ocorrencia {
   id_apolice: string;
   nome_apolice: string;
   tipo_apolice: string;
-  id_anexo: string | null;
+  id_anexos: string | null;
   user_id: string;
   data_registo: string;
   data_ocorrencia: string | null;
@@ -131,23 +131,6 @@ export interface Anexo {
   userid: string;
   datecreate: string; // ISO string da data de criação
   url?: string; // URL direta para download da imagem
-}
-
-export interface Ocorrencia {
-  id: string;
-  descricao: string;
-  envolvidos: string | null;
-  status: string;
-  id_apolice: string;
-  nome_apolice: string;
-  tipo_apolice: string;
-  id_anexo: string | null;
-  user_id: string;
-  data_registo: string;
-  data_ocorrencia: string | null;
-  hora_ocorrencia: string | null;
-  local_ocorrencia: string | null;
-  boletim_ocorrencia: string | null;
 }
 
 export interface FormFieldData {

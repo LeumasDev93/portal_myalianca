@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import React, { useState } from "react";
 import { Plus, X } from "lucide-react";
 import {
@@ -18,8 +19,14 @@ interface QuickAccessCardProps {
   nome?: string;
   titulo?: string;
   icone?: string;
-  descricaoBotao?: string;
+  border_color?: string;
+  icon_color?: string;
+  bg_color?: string;
+  text_color?: string;
+  descricao_botao?: string;
+  bg_botton_color?: string;
   isAddCard?: boolean;
+  order_number?: number;
   onClick?: () => void;
   onItemAdded?: () => void; // Callback para atualizar a lista após adicionar item
   existingItems?: Array<{ nome: string }>; // Lista de itens já existentes no acesso rápido
@@ -31,7 +38,13 @@ const QuickAccessCard: React.FC<QuickAccessCardProps> = ({
   nome = "",
   titulo = "",
   icone = "",
-  descricaoBotao = "",
+  descricao_botao = "",
+  border_color = "",
+  icon_color = "",
+  bg_color = "",
+  text_color = "",
+  bg_botton_color = "",
+  order_number = 0,
   isAddCard = false,
   onClick,
   onItemAdded,
@@ -132,14 +145,21 @@ const QuickAccessCard: React.FC<QuickAccessCardProps> = ({
     <>
       <div
         onClick={handleCardClick}
-        className="flex flex-col bg-white border border-gray-200 rounded-xl w-32 h-32 xl:h-40 sm:w-[200px] xl:w-[270px] shadow-md cursor-pointer transition hover:shadow-xl p-3 xl:p-4 relative"
+        className={`cursor-pointer flex flex-col border rounded-xl w-32 h-32 xl:h-40 sm:w-[200px] xl:w-[270px] shadow-md transition hover:shadow-xl p-3 xl:p-4 relative ${
+          bg_color?.startsWith("bg-") ? bg_color : ""
+        } ${border_color?.startsWith("border-") ? border_color : ""}`}
+        style={{
+          backgroundColor: bg_color?.startsWith("bg-") ? undefined : bg_color,
+          borderColor: border_color?.startsWith("border-")
+            ? undefined
+            : border_color,
+        }}
       >
-        {/* Botão de deletar - só aparece se não for o card de adicionar */}
         {!isAddCard && id && onDelete && (
           <button
             onClick={handleDelete}
             disabled={isDeleting}
-            className="absolute top-1 right-1 z-10 p-1 shadow-2xl rounded-full hover:bg-gray-200 text-red-500 transition-colors disabled:opacity-50"
+            className="absolute top-1 right-1 z-10 p-1 shadow-2xl cursor-pointer rounded-full hover:bg-gray-200 text-red-500 transition-colors disabled:opacity-50"
             title="Remover acesso rápido"
           >
             <X className="w-4 h-4" />
@@ -156,10 +176,28 @@ const QuickAccessCard: React.FC<QuickAccessCardProps> = ({
           <>
             {/* Título e ícone na mesma linha */}
             <div className="flex justify-between items-center mb-2">
-              <h3 className="text-[10px] sm:text-xs xl:text-lg text-[#002855] font-semibold flex-1 mr-2">
+              <h3
+                className={`text-[10px] sm:text-xs xl:text-lg font-semibold flex-1 mr-2 ${
+                  text_color?.startsWith("text-") ? text_color : ""
+                }`}
+                style={{
+                  color: text_color?.startsWith("text-")
+                    ? undefined
+                    : text_color,
+                }}
+              >
                 {nome}
               </h3>
-              <div className="text-[#002855] text-xl flex-shrink-0 mr-4">
+              <div
+                className={`text-xl flex-shrink-0 mr-4 ${
+                  icon_color?.startsWith("text-") ? icon_color : ""
+                }`}
+                style={{
+                  color: icon_color?.startsWith("text-")
+                    ? undefined
+                    : icon_color,
+                }}
+              >
                 {getIconComponent(icone)}
               </div>
             </div>
@@ -168,10 +206,22 @@ const QuickAccessCard: React.FC<QuickAccessCardProps> = ({
               {titulo}
             </p>
 
-            <div className="w-full">
-              <div className="bg-[#002855] text-white py-1.5 px-3 rounded-lg text-center w-full">
+            <div className="w-full cursor-pointer" onClick={handleCardClick}>
+              <div
+                className={`py-1.5 px-3 rounded-lg text-center w-full ${
+                  bg_botton_color?.startsWith("bg-") ? bg_botton_color : ""
+                }`}
+                style={{
+                  backgroundColor: bg_botton_color?.startsWith("bg-")
+                    ? undefined
+                    : bg_botton_color,
+                  color: bg_botton_color?.startsWith("bg-")
+                    ? "white"
+                    : undefined,
+                }}
+              >
                 <span className="text-[8px] sm:text-[10px] xl:text-sm font-semibold">
-                  {descricaoBotao || "Acessar"}
+                  {descricao_botao}
                 </span>
               </div>
             </div>

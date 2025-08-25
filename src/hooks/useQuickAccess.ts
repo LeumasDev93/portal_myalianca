@@ -11,6 +11,12 @@ interface QuickAccessItem {
   link: string;
   descricaoBotao: string;
   user_id: string;
+  border_color?: string;
+  icon_color?: string;
+  bg_color?: string;
+  text_color?: string;
+  bg_botton_color?: string;
+  order_number?: number;
   created_at?: string;
   updated_at?: string;
 }

@@ -33,7 +33,13 @@ const AVAILABLE_MENUS = [
     icone: LuSquareKanban,
     iconName: "LuSquareKanban",
     link: "gerenciamentoSOAT",
-    descricaoBotao: "Acessar",
+    descricao_botao: "Acessar",
+    border_color: "border-blue-200",
+    icon_color: "text-blue-800",
+    bg_color: "bg-blue-50 hover:bg-blue-100",
+    text_color: "text-blue-900",
+    bg_botton_color: "bg-blue-900 hover:bg-blue-900/70",
+    order_number: 1,
     onlyForCompany: true,
   },
   {
@@ -44,7 +50,13 @@ const AVAILABLE_MENUS = [
     icone: IoGrid,
     iconName: "IoGrid",
     link: "Historico",
-    descricaoBotao: "Consultar Histórico",
+    descricao_botao: "Consultar Histórico",
+    border_color: "border-gray-700",
+    icon_color: "text-gray-700",
+    bg_color: "bg-gray-50 hover:bg-gray-100",
+    text_color: "text-gray-700",
+    bg_botton_color: "bg-gray-700 hover:bg-gray-800/70",
+    order_number: 5,
   },
   {
     nome: "Apólice",
@@ -54,7 +66,13 @@ const AVAILABLE_MENUS = [
     icone: IoShieldCheckmarkSharp,
     iconName: "IoShieldCheckmarkSharp",
     link: "apolice",
-    descricaoBotao: "Gerenciar Apólices",
+    descricao_botao: "Gerenciar Apólices",
+    border_color: "border-gray-700",
+    icon_color: "text-gray-700",
+    bg_color: "bg-gray-50 hover:bg-gray-100",
+    text_color: "text-gray-700",
+    bg_botton_color: "bg-gray-700 hover:bg-gray-800/70",
+    order_number: 6,
   },
   {
     nome: "Sinistros",
@@ -64,7 +82,13 @@ const AVAILABLE_MENUS = [
     icone: FaTriangleExclamation,
     iconName: "FaTriangleExclamation",
     link: "sinistro",
-    descricaoBotao: "Acompanhar Sinistros",
+    descricao_botao: "Acompanhar Sinistros",
+    border_color: "border-gray-700",
+    icon_color: "text-gray-700",
+    bg_color: "bg-gray-50 hover:bg-gray-100",
+    text_color: "text-gray-700",
+    bg_botton_color: "bg-gray-700 hover:bg-gray-800/70",
+    order_number: 7,
   },
   {
     nome: "Recibos & Pagamentos",
@@ -74,7 +98,13 @@ const AVAILABLE_MENUS = [
     icone: IoReceiptSharp,
     iconName: "IoReceiptSharp",
     link: "recibo",
-    descricaoBotao: "Ver Recibos",
+    descricao_botao: "Ver Recibos",
+    border_color: "border-gray-700",
+    icon_color: "text-gray-700",
+    bg_color: "bg-gray-50 hover:bg-gray-100",
+    text_color: "text-gray-700",
+    bg_botton_color: "bg-gray-700 hover:bg-gray-800/70",
+    order_number: 8,
   },
   {
     nome: "Ocorrências",
@@ -84,7 +114,13 @@ const AVAILABLE_MENUS = [
     icone: AiFillFileExclamation,
     iconName: "AiFillFileExclamation",
     link: "ocorrencias",
-    descricaoBotao: "Registrar Ocorrência",
+    descricao_botao: "Registrar Ocorrência",
+    border_color: "border-red-800",
+    icon_color: "text-red-800",
+    bg_color: "bg-red-50 hover:bg-red-100",
+    text_color: "text-red-700",
+    bg_botton_color: "bg-red-700 hover:bg-red-800/70",
+    order_number: 2,
   },
   {
     nome: "Simular & Contratar",
@@ -94,7 +130,13 @@ const AVAILABLE_MENUS = [
     icone: TbTopologyStar3,
     iconName: "TbTopologyStar3",
     link: "Simulation",
-    descricaoBotao: "Simular Agora",
+    descricao_botao: "Simular Agora",
+    border_color: "border-[#002855]",
+    icon_color: "text-[#002855]",
+    bg_color: "bg-blue-100 hover:bg-blue-50",
+    text_color: "text-[#002855]",
+    bg_botton_color: "bg-[#002855] hover:bg-[#002855]/70",
+    order_number: 3,
   },
   {
     nome: "Agências",
@@ -104,7 +146,13 @@ const AVAILABLE_MENUS = [
     icone: IoMdPin,
     iconName: "IoMdPin",
     link: "Agencias",
-    descricaoBotao: "Encontrar Agências",
+    descricao_botao: "Encontrar Agências",
+    border_color: "border-gray-700",
+    icon_color: "text-gray-700",
+    bg_color: "bg-gray-50 hover:bg-gray-100",
+    text_color: "text-gray-700",
+    bg_botton_color: "bg-gray-700 hover:bg-gray-800/70",
+    order_number: 9,
   },
 ];
 
@@ -154,6 +202,8 @@ export function QuickAccessModal({
     const menu = availableMenus.find((m) => m.nome === selectedMenu);
     if (!menu) return;
 
+    console.log("Menu selecionado:", menu);
+
     setIsLoading(true);
 
     try {
@@ -164,29 +214,66 @@ export function QuickAccessModal({
         throw new Error("Configuração da API incompleta");
       }
 
+      // Garantir que todos os campos tenham valores válidos
+      const requestData = {
+        nome: String(menu.nome || ""),
+        titulo: String(menu.titulo || ""),
+        icone: String(menu.iconName || ""),
+        link: String(menu.link || ""),
+        descricao_botao: String(menu.descricao_botao || ""),
+        user_id: String(profile?.user?.id || ""),
+        border_color: String(menu.border_color || "#002855"),
+        icon_color: String(menu.icon_color || "#002855"),
+        bg_color: String(menu.bg_color || "#002855"),
+        text_color: String(menu.text_color || "#002855"),
+        bg_botton_color: String(menu.bg_botton_color || "#002855"),
+        order_number: Number(menu.order_number || 1),
+      };
+
+      // Verificar se todos os campos estão presentes
+      const requiredFields = [
+        "nome",
+        "titulo",
+        "icone",
+        "link",
+        "descricao_botao",
+        "user_id",
+        "border_color",
+        "icon_color",
+        "bg_color",
+        "text_color",
+        "bg_botton_color",
+        "order_number",
+      ];
+
+      const missingFields = requiredFields.filter(
+        (field) => !requestData[field as keyof typeof requestData]
+      );
+      if (missingFields.length > 0) {
+        console.error("Campos faltando:", missingFields);
+      }
+
+      console.log("Dados sendo enviados:", requestData);
+
       const response = await fetch(`${apiBaseUrl}/quick-access/1.0.0`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           ApiKey: apiKey,
         },
-        body: JSON.stringify({
-          nome: menu.nome,
-          titulo: menu.titulo,
-          descricao: menu.descricao,
-          icone: menu.iconName,
-          link: `${menu.link}`,
-          descricaoBotao: menu.descricaoBotao,
-          user_id: profile?.user?.id,
-        }),
+        body: JSON.stringify(requestData),
       });
 
       if (!response.ok) {
         const errorData = await response.json();
+        console.error("Erro na resposta:", errorData);
         throw new Error(
           errorData.message || "Erro ao adicionar ao acesso rápido"
         );
       }
+
+      const responseData = await response.json();
+      console.log("Resposta da API:", responseData);
 
       toast({
         title: "Sucesso!",
