@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import { Anexo } from "@/types/typesData";
 import { X, ChevronLeft, ChevronRight } from "lucide-react";
@@ -12,31 +12,54 @@ const CustomImage = ({
   alt,
   ...props
 }: React.ComponentProps<typeof Image>) => {
-  const [imageSrc, setImageSrc] = useState(src);
   const [hasError, setHasError] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Reset error state when src changes
-  if (src !== imageSrc && !hasError) {
-    setImageSrc(src);
-  }
+  // Reset estados quando src mudar
+  useEffect(() => {
+    setHasError(false);
+    setIsLoading(true);
+  }, [src]);
 
   const handleError = () => {
-    if (!hasError && src && typeof src === "string" && src.startsWith("http")) {
-      // Se é uma URL externa e falhou, tenta adicionar headers via proxy
-      const proxyUrl = `/api/proxy-image?url=${encodeURIComponent(src)}`;
-      setImageSrc(proxyUrl);
-      setHasError(true);
-    }
+    console.log("❌ Erro ao carregar imagem:", src);
+    setHasError(true);
+    setIsLoading(false);
   };
 
+  const handleLoad = () => {
+    console.log("✅ Imagem carregada com sucesso:", src);
+    setIsLoading(false);
+    setHasError(false);
+  };
+
+  if (hasError) {
+    return (
+      <div className="w-full h-full flex items-center justify-center bg-gray-100 text-gray-500">
+        <div className="text-center">
+          <div className="text-2xl mb-2">📷</div>
+          <div className="text-sm">Erro ao carregar imagem</div>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <Image
-      {...props}
-      src={imageSrc}
-      alt={alt}
-      onError={handleError}
-      unoptimized={true}
-    />
+    <>
+      {isLoading && (
+        <div className="absolute inset-0 flex items-center justify-center bg-gray-100">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+        </div>
+      )}
+      <Image
+        {...props}
+        src={src}
+        alt={alt}
+        onError={handleError}
+        onLoad={handleLoad}
+        unoptimized={true}
+      />
+    </>
   );
 };
 
@@ -50,6 +73,16 @@ export function Gallery({
   const [isGalleryOpen, setIsGalleryOpen] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(0);
 
+  // Debug: Log dos anexos recebidos
+  console.log("Gallery - Anexos recebidos:", anexos);
+  console.log("Gallery - Número de anexos:", anexos.length);
+
+  // Reset estados quando anexos mudarem
+  useEffect(() => {
+    setSelectedIndex(0);
+    setIsGalleryOpen(false);
+  }, [anexos]);
+
   const handleNext = () => {
     setSelectedIndex((prev) => (prev < anexos.length - 1 ? prev + 1 : prev));
   };
@@ -58,20 +91,37 @@ export function Gallery({
     setSelectedIndex((prev) => (prev > 0 ? prev - 1 : prev));
   };
 
-  const closeGallery = () => setIsGalleryOpen(false);
-  const openGallery = () => setIsGalleryOpen(true);
+  const closeGallery = () => {
+    console.log("Fechando galeria");
+    setIsGalleryOpen(false);
+  };
+
+  const openGallery = () => {
+    console.log("Abrindo galeria com", anexos.length, "anexos");
+    setIsGalleryOpen(true);
+  };
 
   const selectImage = (index: number) => {
     setSelectedIndex(index);
   };
 
   const getImageSrc = (anexo: Anexo) => {
-    // Se tem URL direta, usa ela; senão usa base64
+    console.log("🖼️ Processando anexo:", anexo);
+
+    // Se tem URL direta, usa o proxy para evitar problemas de CORS
     if (anexo.url) {
-      return anexo.url;
+      console.log("🔗 Usando URL via proxy:", anexo.url);
+      return `/api/proxy-image?url=${encodeURIComponent(anexo.url)}`;
     }
+
     // Gera o Data URL (base64) para o src da imagem
-    return `data:${anexo.mimetype};base64,${anexo.content}`;
+    if (anexo.content) {
+      console.log("📄 Usando conteúdo base64");
+      return `data:${anexo.mimetype};base64,${anexo.content}`;
+    }
+
+    console.log("❌ Nenhuma fonte de imagem encontrada para:", anexo);
+    return "";
   };
 
   if (anexos.length === 0) {
@@ -115,9 +165,11 @@ export function Gallery({
 
       {/* Modal da Galeria */}
       {isGalleryOpen && (
-        <div className="fixed inset-0 z-50 bg-black bg-opacity-90 flex flex-col">
+        <div className="fixed inset-0 z-[9999] bg-black bg-opacity-95 flex flex-col">
+          {/* Overlay para fechar ao clicar fora */}
+          <div className="absolute inset-0" onClick={closeGallery} />
           {/* Header */}
-          <div className="flex items-center justify-between p-4 bg-black bg-opacity-50">
+          <div className="relative flex items-center justify-between p-4 bg-black bg-opacity-50 z-10">
             <h3 className="text-white text-lg font-semibold">
               Galeria de Imagens ({selectedIndex + 1}/{anexos.length})
             </h3>
@@ -149,7 +201,7 @@ export function Gallery({
           </div>
 
           {/* Imagem Principal */}
-          <div className="flex-1 flex items-center justify-center p-4">
+          <div className="relative flex-1 flex items-center justify-center p-4 z-10">
             <div className="relative w-full max-w-4xl h-full">
               <CustomImage
                 src={getImageSrc(anexos[selectedIndex])}
@@ -183,7 +235,7 @@ export function Gallery({
           </div>
 
           {/* Scroll lateral de miniaturas */}
-          <div className="p-4 bg-black bg-opacity-50">
+          <div className="relative p-4 bg-black bg-opacity-50 z-10">
             <div className="flex justify-center">
               <div className="flex gap-2 overflow-x-auto pb-2 max-w-full">
                 {anexos.map((anexo, index) => (

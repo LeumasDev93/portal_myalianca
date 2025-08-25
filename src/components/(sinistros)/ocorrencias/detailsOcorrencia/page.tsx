@@ -59,6 +59,8 @@ export default function OcorrenciaDetailsPage({
       }
 
       if (anexosIds.length > 0) {
+        console.log("Processando anexos IDs:", anexosIds);
+
         // Processar anexos diretamente usando a URL da API externa
         const processedAnexos = anexosIds.map((id: string) => {
           const apiBaseUrl =
@@ -66,7 +68,7 @@ export default function OcorrenciaDetailsPage({
             "https://api.aliancaseguros.cv";
           const imageUrl = `${apiBaseUrl}/files/1.0.0/download/${id}`;
 
-          return {
+          const anexo = {
             id: id,
             filename: `Anexo ${id}`,
             content: "", // Será preenchido pelo componente Gallery
@@ -75,9 +77,16 @@ export default function OcorrenciaDetailsPage({
             datecreate: new Date().toISOString(),
             url: imageUrl, // URL direta para download
           };
+
+          console.log("Anexo processado:", anexo);
+          return anexo;
         });
 
+        console.log("Todos os anexos processados:", processedAnexos);
         setAnexos(processedAnexos);
+      } else {
+        console.log("Nenhum anexo encontrado");
+        setAnexos([]);
       }
     } catch (err: any) {
       setError(err.message || "Erro desconhecido");

@@ -12,6 +12,7 @@ interface Props {
 }
 
 export function OcorrenciaDetails({ ocorrencia, anexos }: Props) {
+
   // Funções de formatação
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("pt-BR", {
