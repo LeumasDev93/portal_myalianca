@@ -57,7 +57,7 @@ export default function Historico({
       setIsMobile(mobile);
 
       if (mobile) {
-        setCardsPerPage(2); // Mobile mostra 2 cards por página
+        setCardsPerPage(1); // Mobile mostra 2 cards por página
       } else if (width < 1024) {
         setCardsPerPage(3); // Tablet mostra 3 cards por página
       } else if (width < 1920) {

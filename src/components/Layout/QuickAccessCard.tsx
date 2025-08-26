@@ -145,7 +145,7 @@ const QuickAccessCard: React.FC<QuickAccessCardProps> = ({
     <>
       <div
         onClick={handleCardClick}
-        className={`cursor-pointer flex flex-col border rounded-xl w-32 h-32 xl:h-40 sm:w-[200px] xl:w-[270px] shadow-md transition hover:shadow-xl p-3 xl:p-4 relative ${
+        className={`cursor-pointer flex flex-col border rounded-xl w-60 h-32 xl:h-40 sm:w-[200px] xl:w-[270px] shadow-md transition hover:shadow-xl p-3 xl:p-4 relative ${
           bg_color?.startsWith("bg-") ? bg_color : ""
         } ${border_color?.startsWith("border-") ? border_color : ""}`}
         style={{
@@ -167,8 +167,8 @@ const QuickAccessCard: React.FC<QuickAccessCardProps> = ({
         )}
         {isAddCard ? (
           <div className="flex flex-col items-center justify-center h-full w-full text-center space-y-2">
-            <Plus className="text-gray-400 size-3 sm:size-4 xl:size-8" />
-            <p className="text-[10px] sm:text-xs xl:text-sm text-gray-400 leading-tight">
+            <Plus className="text-gray-400 size-6 sm:size-8 xl:size-10" />
+            <p className="text-[14px] sm:text-sm xl:text-[18px] text-gray-400 leading-tight">
               Adicionar acesso rápido
             </p>
           </div>
@@ -177,7 +177,7 @@ const QuickAccessCard: React.FC<QuickAccessCardProps> = ({
             {/* Título e ícone na mesma linha */}
             <div className="flex justify-between items-center mb-2">
               <h3
-                className={`text-[10px] sm:text-xs xl:text-lg font-semibold flex-1 mr-2 ${
+                className={`text-[14px] sm:text-xs xl:text-lg font-semibold flex-1 mr-2 ${
                   text_color?.startsWith("text-") ? text_color : ""
                 }`}
                 style={{
@@ -220,7 +220,7 @@ const QuickAccessCard: React.FC<QuickAccessCardProps> = ({
                     : undefined,
                 }}
               >
-                <span className="text-[8px] sm:text-[10px] xl:text-sm font-semibold">
+                <span className="text-[12px] sm:text-[10px] xl:text-sm font-semibold">
                   {descricao_botao}
                 </span>
               </div>

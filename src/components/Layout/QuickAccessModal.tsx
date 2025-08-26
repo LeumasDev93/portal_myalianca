@@ -305,15 +305,17 @@ export function QuickAccessModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[600px] h-[80vh] flex flex-col text-[#002855]">
-        <DialogHeader>
-          <DialogTitle className="flex items-center justify-between">
-            <span>Adicionar ao Acesso Rápido</span>
+      <DialogContent className="w-[95vw] max-w-[700px] h-[90vh] max-h-[700px] sm:h-[500px] xl:h-[700px] flex flex-col text-[#002855] mx-auto p-4 sm:p-6">
+        <DialogHeader className="flex-shrink-0">
+          <DialogTitle className="flex items-center justify-between text-lg sm:text-xl">
+            <span className="text-base sm:text-lg">
+              Adicionar ao Acesso Rápido
+            </span>
             <Button
               variant="ghost"
               size="sm"
               onClick={onClose}
-              className="h-8 w-8 p-0"
+              className="h-8 w-8 p-0 hover:bg-gray-100"
             >
               <X className="h-4 w-4" />
             </Button>
@@ -322,45 +324,45 @@ export function QuickAccessModal({
 
         <form
           onSubmit={handleSubmit}
-          className="flex flex-col flex-1 text-[#002855]"
+          className="flex flex-col flex-1 text-[#002855] min-h-0"
         >
-          <div className="flex-1 overflow-y-auto space-y-6 pr-2">
-            <div className="space-y-4">
-              <div className="px-6">
-                <Label className="text-sm font-medium mb-4 block">
+          <div className="flex-1 overflow-y-auto space-y-4 sm:space-y-6 pr-1 sm:pr-2">
+            <div className="space-y-3 sm:space-y-4">
+              <div className="px-3 sm:px-6">
+                <Label className="text-sm font-medium mb-3 sm:mb-4 block">
                   Selecione o Menu
                 </Label>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4">
                   {availableMenus.map((menu) => (
                     <div
                       key={menu.titulo}
                       onClick={() =>
                         !menu.isDisabled && setSelectedMenu(menu.nome)
                       }
-                      className={`flex flex-col items-center p-4 rounded-lg border-2 transition-all duration-200 ${
+                      className={`flex flex-col items-center p-3 sm:p-4 rounded-lg border-2 transition-all duration-200 min-h-[100px] sm:min-h-[120px] ${
                         menu.isDisabled
                           ? "border-gray-300 bg-gray-100 cursor-not-allowed opacity-50"
                           : selectedMenu === menu.nome
-                          ? "border-[#002855] bg-blue-50 cursor-pointer"
-                          : "border-gray-200 hover:border-[#002855] hover:bg-gray-50 cursor-pointer"
+                          ? "border-[#002855] bg-blue-50 cursor-pointer shadow-md"
+                          : "border-gray-200 hover:border-[#002855] hover:bg-gray-50 cursor-pointer hover:shadow-sm"
                       }`}
                     >
                       <div
-                        className={`text-4xl mb-3 ${
+                        className={`text-2xl sm:text-3xl md:text-4xl mb-2 sm:mb-3 flex-shrink-0 ${
                           menu.isDisabled ? "text-gray-400" : "text-[#002855]"
                         }`}
                       >
                         {React.createElement(menu.icone)}
                       </div>
                       <span
-                        className={`text-sm font-medium text-center ${
+                        className={`text-xs sm:text-sm font-medium text-center leading-tight ${
                           menu.isDisabled ? "text-gray-400" : "text-[#002855]"
                         }`}
                       >
                         {menu.nome}
                       </span>
                       {menu.isDisabled && (
-                        <span className="text-xs text-gray-500 mt-1">
+                        <span className="text-xs text-gray-500 mt-1 text-center">
                           Já adicionado
                         </span>
                       )}
@@ -371,27 +373,34 @@ export function QuickAccessModal({
             </div>
           </div>
 
-          <div className="flex justify-end gap-3 pt-4 border-t mt-6">
+          <div className="flex flex-col sm:flex-row justify-end gap-2 sm:gap-3 pt-3 sm:pt-4 border-t mt-4 sm:mt-6 flex-shrink-0">
             <Button
               type="button"
               variant="outline"
               onClick={onClose}
               disabled={isLoading}
+              className="w-full sm:w-auto order-2 sm:order-1"
             >
               Cancelar
             </Button>
             <Button
               type="submit"
               disabled={!selectedMenu || isLoading}
-              className="bg-[#002256] hover:bg-[#002256d1] text-white"
+              className="bg-[#002256] hover:bg-[#002256d1] text-white w-full sm:w-auto order-1 sm:order-2"
             >
               {isLoading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Adicionando...
+                  <span className="hidden sm:inline">Adicionando...</span>
+                  <span className="sm:hidden">Adicionando</span>
                 </>
               ) : (
-                "Adicionar ao Acesso Rápido"
+                <>
+                  <span className="hidden sm:inline">
+                    Adicionar ao Acesso Rápido
+                  </span>
+                  <span className="sm:hidden">Adicionar</span>
+                </>
               )}
             </Button>
           </div>
