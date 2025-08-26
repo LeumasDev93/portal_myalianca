@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
@@ -22,7 +23,14 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { ArrowLeft, Upload, X, Camera, AlertTriangle } from "lucide-react";
+import {
+  ArrowLeft,
+  Upload,
+  X,
+  Camera,
+  AlertTriangle,
+  CheckCircle,
+} from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { Separator } from "@/components/ui/separator";
 import Image from "next/image";
@@ -56,7 +64,7 @@ export default function NewOcorrênciasPage({ onBack }: NewSinistroPageProps) {
   const [apolices, setApolices] = useState<Apolice[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [loadingSinistros, setLoadingSinistros] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [sinistrosDisponiveis, setSinistrosDisponiveis] = useState<any[]>([]);
   const [uploadProgress, setUploadProgress] = useState<number>(0);
@@ -84,6 +92,8 @@ export default function NewOcorrênciasPage({ onBack }: NewSinistroPageProps) {
   const [previews, setPreviews] = useState<string[]>([]);
   const [uploadedFileIds, setUploadedFileIds] = useState<string[]>([]);
   const [uploadingFiles, setUploadingFiles] = useState<Set<string>>(new Set());
+
+  const [message, setMessage] = useState<string>("");
 
   useEffect(() => {
     if (!token || !profile?.user?.nif) return;
@@ -122,6 +132,9 @@ export default function NewOcorrênciasPage({ onBack }: NewSinistroPageProps) {
           setError(
             error instanceof Error ? error.message : "Erro desconhecido"
           );
+          setTimeout(() => {
+            setError("");
+          }, 3000);
         }
       } finally {
         setIsLoading(false);
@@ -133,14 +146,10 @@ export default function NewOcorrênciasPage({ onBack }: NewSinistroPageProps) {
   }, [token, profile?.user?.nif]);
 
   const handleSelectChange = (name: string, value: string) => {
-    console.log("🔄 handleSelectChange chamado:", { name, value });
-
     setFormData((prev) => {
       const newData = { ...prev, [name]: value };
 
       if (name === "apolice") {
-        console.log("📋 Selecionando apólice:", value);
-
         // Limpar completamente os dados relacionados a sinistros
         newData.tipoSinistro = "";
         newData.tipoApolice = "";
@@ -158,18 +167,10 @@ export default function NewOcorrênciasPage({ onBack }: NewSinistroPageProps) {
         if (apoliceSelecionada) {
           newData.nomeApolice = apoliceSelecionada.productName;
           newData.tipoApolice = apoliceSelecionada.insuranceType || "AUTO";
-          console.log(
-            "✅ Apólice selecionada:",
-            apoliceSelecionada.productName
-          );
         }
       }
 
       if (name === "tipoSinistro") {
-        console.log("🔍 Selecionando tipo de sinistro:", value);
-        console.log("🔍 Sinistros disponíveis:", sinistrosDisponiveis.length);
-        console.log("🔍 Valor atual do campo:", newData.tipoSinistro);
-
         // Atualizar o ID do sinistro selecionado
         setSelectedSinistroId(value);
 
@@ -186,24 +187,17 @@ export default function NewOcorrênciasPage({ onBack }: NewSinistroPageProps) {
 
           // Garantir que apenas um valor seja definido
           newData.tipoSinistro = tipoSinistroText;
-
-          console.log("✅ Tipo de sinistro definido:", tipoSinistroText);
-          console.log("✅ Sinistro selecionado:", {
-            claimNumber: sinistroSelecionado.claimNumber,
-            product: sinistroSelecionado.product,
-          });
         } else {
           // Se não encontrar, limpar o campo
           newData.tipoSinistro = "";
-          console.log("❌ Sinistro não encontrado para claimNumber:", value);
-          console.log(
-            "❌ Sinistros disponíveis:",
-            sinistrosDisponiveis.map((s) => s.claimNumber)
-          );
+
+          setError("❌ Sinistros disponíveis");
+          setTimeout(() => {
+            setError("");
+          }, 3000);
         }
       }
 
-      console.log("📋 Novo estado formData:", newData);
       return newData;
     });
   };
@@ -239,23 +233,12 @@ export default function NewOcorrênciasPage({ onBack }: NewSinistroPageProps) {
           self.findIndex((s) => s.claimNumber === sinistro.claimNumber)
       );
 
-      console.log("✅ Sinistros carregados:", sinistrosUnicos);
-      console.log("✅ Quantidade de sinistros únicos:", sinistrosUnicos.length);
-      console.log(
-        "✅ Estrutura dos sinistros:",
-        sinistrosUnicos.map((s) => ({
-          claimNumber: s.claimNumber,
-          product: s.product,
-        }))
-      );
       setSinistrosDisponiveis(sinistrosUnicos);
     } catch (error) {
-      console.error("❌ Erro ao buscar sinistros:", error);
-      toast({
-        title: "Erro",
-        description: "Não foi possível carregar os sinistros",
-        variant: "destructive",
-      });
+      setError("❌ Erro ao buscar sinistros");
+      setTimeout(() => {
+        setError("");
+      }, 3000);
     } finally {
       setLoadingSinistros(false);
     }
@@ -274,21 +257,14 @@ export default function NewOcorrênciasPage({ onBack }: NewSinistroPageProps) {
 
     if (e.target.files?.length) {
       const newFiles = Array.from(e.target.files);
-      console.log(
-        "📂 Arquivos selecionados:",
-        newFiles.map((f) => ({ name: f.name, size: f.size, type: f.type }))
-      );
 
       const totalFiles = [...fotos, ...newFiles];
-      console.log("📊 Total de arquivos após adição:", totalFiles.length);
 
       if (totalFiles.length > 5) {
-        console.log("❌ Limite de 5 arquivos excedido");
-        toast({
-          title: "Limite de fotos excedido",
-          description: "Você pode enviar no máximo 5 fotos.",
-          variant: "destructive",
-        });
+        setError("❌ Limite de 5 arquivos excedido");
+        setTimeout(() => {
+          setError("");
+        }, 3000);
         return;
       }
 
@@ -297,17 +273,14 @@ export default function NewOcorrênciasPage({ onBack }: NewSinistroPageProps) {
       const oversizedFiles = newFiles.filter((file) => file.size > maxSize);
 
       if (oversizedFiles.length > 0) {
-        console.log(
-          "❌ Arquivos muito grandes:",
-          oversizedFiles.map((f) => ({ name: f.name, size: f.size }))
-        );
-        toast({
-          title: "Arquivo muito grande",
-          description: `Os arquivos ${oversizedFiles
+        setError(
+          `Os arquivos ${oversizedFiles
             .map((f) => f.name)
-            .join(", ")} excedem o limite de 2MB.`,
-          variant: "destructive",
-        });
+            .join(", ")} excedem o limite de 2MB.`
+        );
+        setTimeout(() => {
+          setError("");
+        }, 3000);
         return;
       }
 
@@ -330,34 +303,22 @@ export default function NewOcorrênciasPage({ onBack }: NewSinistroPageProps) {
       );
 
       if (invalidFiles.length > 0) {
-        console.log(
-          "❌ Tipos de arquivo inválidos:",
-          invalidFiles.map((f) => ({ name: f.name, type: f.type }))
-        );
-        toast({
-          title: "Tipo de arquivo não suportado",
-          description: `Os arquivos ${invalidFiles
+        setError(
+          `Os arquivos ${invalidFiles
             .map((f) => f.name)
-            .join(", ")} não são suportados.`,
-          variant: "destructive",
-        });
+            .join(", ")} não são suportados.`
+        );
+        setTimeout(() => {
+          setError("");
+        }, 3000);
         return;
       }
 
-      console.log("✅ Validações passadas, adicionando arquivos ao state");
       setFotos(totalFiles);
       setPreviews([
         ...previews,
         ...newFiles.map((file) => URL.createObjectURL(file)),
       ]);
-
-      console.log("📸 Previews criados:", newFiles.length, "arquivos");
-      console.log(
-        "📋 Estado atual - fotos:",
-        totalFiles.length,
-        "previews:",
-        previews.length + newFiles.length
-      );
 
       // Upload imediato de cada arquivo
       for (const file of newFiles) {
@@ -372,28 +333,21 @@ export default function NewOcorrênciasPage({ onBack }: NewSinistroPageProps) {
   const uploadFileImmediately = async (file: File) => {
     const fileId = `${file.name}-${Date.now()}`;
 
-    console.log(`🔄 Iniciando upload imediato: ${file.name}`);
     setUploadingFiles((prev) => new Set(prev).add(fileId));
 
     try {
       const uploadedId = await uploadDocument(file);
       setUploadedFileIds((prev) => [...prev, uploadedId]);
-      console.log(
-        `✅ Upload imediato concluído: ${file.name} -> ID: ${uploadedId}`
-      );
 
-      toast({
-        title: "Upload concluído",
-        description: `${file.name} foi enviado com sucesso.`,
-        variant: "success",
-      });
+      setMessage(`${file.name} foi enviado com sucesso.`);
+      setTimeout(() => {
+        setMessage("");
+      }, 3000);
     } catch (error) {
-      console.error(`❌ Erro no upload imediato: ${file.name}`, error);
-      toast({
-        title: "Erro no upload",
-        description: `Falha ao enviar ${file.name}.`,
-        variant: "destructive",
-      });
+      setError(`Falha ao enviar ${file.name}.`);
+      setTimeout(() => {
+        setError("");
+      }, 3000);
     } finally {
       setUploadingFiles((prev) => {
         const newSet = new Set(prev);
@@ -404,9 +358,6 @@ export default function NewOcorrênciasPage({ onBack }: NewSinistroPageProps) {
   };
 
   const handleRemoveFile = (index: number) => {
-    console.log("🗑️ Removendo arquivo no índice:", index);
-    console.log("📁 Arquivo removido:", fotos[index]?.name);
-
     const newFotos = [...fotos];
     const newPreviews = [...previews];
     const newUploadedIds = [...uploadedFileIds];
@@ -419,40 +370,18 @@ export default function NewOcorrênciasPage({ onBack }: NewSinistroPageProps) {
     setFotos(newFotos);
     setPreviews(newPreviews);
     setUploadedFileIds(newUploadedIds);
-
-    console.log("✅ Arquivo removido. Total restante:", newFotos.length);
-    console.log("📋 IDs restantes:", newUploadedIds);
   };
 
   // Função para upload de documento único usando o mesmo sistema das mensagens
   const uploadDocument = async (file: File): Promise<string> => {
-    console.log(
-      "🔄 Iniciando upload do arquivo:",
-      file.name,
-      "-",
-      new Date().toISOString()
-    );
-
     const formData = new FormData();
     formData.append("file", file);
-    console.log(
-      "📦 FormData criado com arquivo:",
-      file.name,
-      "(",
-      file.size,
-      "bytes)"
-    );
 
     // Timeout de 30 segundos para uploads
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 30000);
 
     try {
-      console.log("📤 Enviando requisição para /api/upload...");
-      console.log("📡 URL:", "/api/upload");
-      console.log("📡 Método: POST");
-      console.log("📡 Arquivo:", file.name);
-
       const response = await fetch("/api/upload", {
         method: "POST",
         body: formData,
@@ -460,49 +389,27 @@ export default function NewOcorrênciasPage({ onBack }: NewSinistroPageProps) {
       });
 
       clearTimeout(timeoutId);
-      console.log(
-        "📥 Resposta recebida da API de upload:",
-        response.status,
-        response.statusText
-      );
-      console.log(
-        "📥 Headers da resposta:",
-        Object.fromEntries(response.headers.entries())
-      );
 
       if (!response.ok) {
         const errorText = await response.text();
-        console.error("❌ Erro na API de upload:", response.status, errorText);
         throw new Error(`Erro no upload do arquivo: ${response.status}`);
       }
 
       const data = await response.json();
-      console.log("✅ Resposta da API de upload:", data);
-      console.log("✅ Tipo de resposta:", typeof data);
-      console.log("✅ Chaves da resposta:", Object.keys(data));
 
       // Verificar se o ID foi retornado
       if (!data.id) {
-        console.error("❌ API não retornou ID do arquivo:", data);
-        console.error(
-          "❌ Estrutura da resposta:",
-          JSON.stringify(data, null, 2)
-        );
         throw new Error(
           `API não retornou ID do arquivo. Resposta: ${JSON.stringify(data)}`
         );
       }
 
-      console.log("✅ ID do arquivo retornado:", data.id);
-      console.log("✅ Upload concluído com sucesso para:", file.name);
       return data.id; // Retorna o ID do arquivo no servidor
     } catch (error) {
       clearTimeout(timeoutId);
-      console.error("❌ Erro durante upload:", error);
 
       if (error instanceof Error && error.name === "AbortError") {
         const fileSizeMB = (file.size / (1024 * 1024)).toFixed(1);
-        console.error("❌ Timeout no upload:", fileSizeMB, "MB");
         throw new Error(
           `Timeout no upload (${fileSizeMB}MB) - verifique sua conexão ou tente novamente.`
         );
@@ -530,11 +437,10 @@ export default function NewOcorrênciasPage({ onBack }: NewSinistroPageProps) {
 
     // Verificação de campos obrigatórios
     if (!apolice || !data || !local || !descricao) {
-      toast({
-        title: "Campos obrigatórios",
-        description: "Preencha todos os campos marcados com *",
-        variant: "destructive",
-      });
+      setError("Preencha todos os campos marcados com *");
+      setTimeout(() => {
+        setError("");
+      }, 3000);
       return;
     }
 
@@ -544,10 +450,6 @@ export default function NewOcorrênciasPage({ onBack }: NewSinistroPageProps) {
     try {
       // Usar os IDs já carregados
       const documentosIds = uploadedFileIds;
-      console.log("📋 IDs de arquivos já carregados:", documentosIds);
-
-      // 2. Envio dos dados do sinistro
-      console.log("📝 Preparando payload para envio do sinistro");
       const payload = {
         id_apolice: apolice,
         nome_apolice: nomeApolice,
@@ -564,16 +466,6 @@ export default function NewOcorrênciasPage({ onBack }: NewSinistroPageProps) {
         user_id: profile?.user?.id,
       };
 
-      console.log("📦 Payload preparado:", {
-        id_apolice: payload.id_apolice,
-        nome_apolice: payload.nome_apolice,
-        tipo_apolice: payload.tipo_apolice,
-        tipo_sinistro: payload.tipo_sinistro,
-        id_anexos: payload.id_anexos,
-        user_id: payload.user_id,
-      });
-
-      console.log("🌐 Enviando requisição para /api/sinistro...");
       const response = await fetch("/api/sinistro", {
         method: "POST",
         headers: {
@@ -583,20 +475,11 @@ export default function NewOcorrênciasPage({ onBack }: NewSinistroPageProps) {
         body: JSON.stringify(payload),
       });
 
-      console.log(
-        "📥 Resposta recebida:",
-        response.status,
-        response.statusText
-      );
       const responseData = await response.json();
-      console.log("📄 Dados da resposta:", responseData);
 
       if (!response.ok) {
-        console.error("❌ Erro na resposta:", responseData);
         throw new Error(responseData.error || "Erro ao enviar sinistro");
       }
-
-      console.log("✅ Sinistro registrado com sucesso!");
 
       // Registrar atividade
       try {
@@ -609,14 +492,11 @@ export default function NewOcorrênciasPage({ onBack }: NewSinistroPageProps) {
         // Não interrompe o fluxo se falhar ao registrar atividade
       }
 
-      toast({
-        title: "Sucesso!",
-        description: "Sinistro registrado com sucesso.",
-        variant: "success",
-      });
-
+      setMessage("Sinistro registrado com sucesso!");
+      setTimeout(() => {
+        setMessage("");
+      }, 3000);
       // Limpar formulário após sucesso
-      console.log("🧹 Limpando formulário...");
       setFormData({
         apolice: "",
         nomeApolice: "",
@@ -635,14 +515,11 @@ export default function NewOcorrênciasPage({ onBack }: NewSinistroPageProps) {
       setUploadedFileIds([]);
       setUploadingFiles(new Set());
       setSelectedSinistroId("");
-      console.log("✅ Formulário limpo");
     } catch (error: any) {
-      console.error("Erro no processo:", error);
-      toast({
-        title: "Erro",
-        description: error.message || "Ocorreu um erro ao registrar o sinistro",
-        variant: "destructive",
-      });
+      setError(error.message || "Ocorreu um erro ao registrar o sinistro");
+      setTimeout(() => {
+        setError("");
+      }, 3000);
     } finally {
       setIsSubmitting(false);
       setUploadProgress(0);
@@ -663,7 +540,18 @@ export default function NewOcorrênciasPage({ onBack }: NewSinistroPageProps) {
         </h1>
       </div>
       <Toaster />
-
+      {message && (
+        <div className="mb-6 p-4 bg-green-100 text-green-700 rounded-md flex items-center gap-2 Z-50 fixed top-24 left-0 right-0 mx-auto w-fit">
+          <CheckCircle className="h-5 w-5 text-green-500" />
+          {message}
+        </div>
+      )}
+      {error && (
+        <div className="mb-6 p-4 bg-red-100 text-red-700 rounded-md flex items-center gap-2 Z-50 fixed top-24 left-0 right-0 mx-auto w-fit">
+          <AlertTriangle className="h-5 w-5 text-red-500" />
+          {error}
+        </div>
+      )}
       <Card>
         <CardHeader className="bg-gray-50">
           <CardTitle className="flex items-center gap-2 text-[#002256]">
@@ -677,12 +565,6 @@ export default function NewOcorrênciasPage({ onBack }: NewSinistroPageProps) {
         </CardHeader>
 
         <CardContent className="pt-6">
-          {error && (
-            <div className="mb-6 p-4 bg-red-100 text-red-700 rounded-md">
-              {error}
-            </div>
-          )}
-
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Seção Informações Básicas */}
             <div className="space-y-4">
@@ -743,15 +625,6 @@ export default function NewOcorrênciasPage({ onBack }: NewSinistroPageProps) {
                   <Select
                     value={selectedSinistroId}
                     onValueChange={(value) => {
-                      console.log("🔍 Tipo de sinistro selecionado:", value);
-                      console.log(
-                        "🔍 Estado atual formData.tipoSinistro:",
-                        formData.tipoSinistro
-                      );
-                      console.log(
-                        "🔍 Estado atual selectedSinistroId:",
-                        selectedSinistroId
-                      );
                       handleSelectChange("tipoSinistro", value);
                     }}
                     disabled={!formData.apolice || loadingSinistros}

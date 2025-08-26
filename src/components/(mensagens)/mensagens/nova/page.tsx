@@ -28,6 +28,7 @@ import { useRouter } from "next/navigation";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useMessageActivity } from "@/lib/activityExamples";
+import { useActivities } from "@/hooks/useActivities";
 
 // Interface para os anexos
 interface Attachment {
@@ -64,6 +65,7 @@ const getFileIcon = (type: string) => {
 export default function NovaMensagemPage() {
   const router = useRouter();
   const { registerMessageSentActivity } = useMessageActivity();
+  const { registerActivity } = useActivities();
   const [sending, setSending] = useState(false);
   const [formData, setFormData] = useState({
     to: "",
@@ -163,19 +165,12 @@ export default function NovaMensagemPage() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Verificar se todos os anexos terminaram o upload
-    const allUploaded = attachments.every((att) => att.progress === 100);
-    if (!allUploaded) {
-      toast({
-        title: "Aguarde o upload",
-        description: "Alguns anexos ainda estão sendo carregados.",
-        variant: "destructive",
-      });
-      return;
-    }
-
     // Validação básica
-    if (!formData.to || !formData.subject || !formData.message) {
+    if (
+      !formData.to.trim() ||
+      !formData.subject.trim() ||
+      !formData.message.trim()
+    ) {
       toast({
         title: "Campos obrigatórios",
         description: "Por favor, preencha todos os campos obrigatórios.",
@@ -184,22 +179,45 @@ export default function NovaMensagemPage() {
       return;
     }
 
+    console.log("✅ Validação passou - iniciando envio");
     setSending(true);
 
-    // Simulação de envio
-    setTimeout(async () => {
-      setSending(false);
+    // Registrar atividade de mensagem enviada ANTES da simulação
+    console.log("🔄 Registrando atividade de mensagem enviada...");
+    console.log("📧 Tipo:", "Nova");
+    console.log("📝 Assunto:", formData.subject);
+    console.log(
+      "📧 registerMessageSentActivity disponível:",
+      !!registerMessageSentActivity
+    );
 
-      // Registrar atividade de mensagem enviada
-      try {
-        await registerMessageSentActivity("Nova", formData.subject);
-      } catch (error) {
+    // Executar registro de atividade de forma síncrona
+    registerMessageSentActivity("Nova", formData.subject)
+      .then(() => {
+        console.log("✅ Atividade de mensagem enviada registrada com sucesso!");
+      })
+      .catch((error) => {
         console.error(
-          "Erro ao registrar atividade de mensagem enviada:",
+          "❌ Erro ao registrar atividade de mensagem enviada:",
           error
         );
-        // Não interrompe o fluxo se falhar ao registrar atividade
-      }
+        // Fallback: tentar registrar diretamente
+        console.log("🔄 Tentando fallback com registerActivity direto...");
+        registerActivity({
+          action: "MENSAGEM_ENVIADA",
+          description: `Mensagem Nova enviada - ${formData.subject}`,
+        })
+          .then(() => {
+            console.log("✅ Fallback: Atividade registrada com sucesso!");
+          })
+          .catch((fallbackError) => {
+            console.error("❌ Fallback também falhou:", fallbackError);
+          });
+      });
+
+    // Simulação de envio
+    setTimeout(() => {
+      setSending(false);
 
       toast({
         title: "Mensagem enviada",

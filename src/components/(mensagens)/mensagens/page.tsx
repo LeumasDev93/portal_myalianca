@@ -44,6 +44,7 @@ import { useUnreadCount } from "@/hooks/useUnreadCount";
 import { useUserProfile } from "@/hooks/useUserProfile ";
 import { useUnreadMessages } from "@/contexts/unread-messages-context";
 import { sendMessage } from "@/service/sendMessage";
+import { useMessageActivity } from "@/lib/activityExamples";
 
 type MensagemPageProps = {
   onSelectDetail: (id: string) => void;
@@ -55,6 +56,7 @@ export default function MensagensPage({
   onUnreadCountChange,
 }: MensagemPageProps) {
   const { profile } = useUserProfile();
+  const { registerMessageSentActivity } = useMessageActivity();
   const {
     unreadCount: globalUnreadCount,
     refreshUnreadCount,
@@ -193,6 +195,21 @@ export default function MensagensPage({
         },
         ...prev,
       ]);
+
+      // Registrar atividade de mensagem enviada
+      console.log("🔄 Registrando atividade de mensagem enviada no modal...");
+      registerMessageSentActivity("Nova", newMessage.subject)
+        .then(() => {
+          console.log(
+            "✅ Atividade de mensagem enviada registrada com sucesso no modal!"
+          );
+        })
+        .catch((error) => {
+          console.error(
+            "❌ Erro ao registrar atividade de mensagem enviada no modal:",
+            error
+          );
+        });
 
       // Não incrementar o contador pois a mensagem enviada já está marcada como lida
 

@@ -542,6 +542,7 @@ export default function SimulationForm({
           reset={reset}
           data={simulationResult}
           isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
         />
       )}
     </Tabs>

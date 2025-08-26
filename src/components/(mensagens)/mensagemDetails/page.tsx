@@ -272,7 +272,7 @@ export default function MensagemDetailPage({
   };
 
   return (
-    <div className="container mx-auto px-3 sm:px-4 md:px-6 py-4 sm:py-6 max-w-4xl">
+    <div className="container x-3 sm:px-4 md:px-6 py-4 sm:py-6 ">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 sm:mb-6 gap-3 sm:gap-4">
         <Button
           onClick={onBack}

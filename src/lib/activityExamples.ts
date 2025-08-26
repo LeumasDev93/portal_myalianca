@@ -180,13 +180,20 @@ export const useMessageActivity = () => {
   const { registerActivity } = useActivities();
 
   const registerMessageSentActivity = async (messageType: string, subject?: string) => {
+    
+    if (!registerActivity) {
+      throw new Error("registerActivity não está disponível");
+    }
+    
     try {
-      await registerActivity({
+      const result = await registerActivity({
         action: "MENSAGEM_ENVIADA",
         description: `Mensagem ${messageType} enviada${subject ? ` - ${subject}` : ''}`,
       });
+      
+      return result;
     } catch (error) {
-      console.error("Erro ao registrar atividade de mensagem enviada:", error);
+      throw error;
     }
   };
 

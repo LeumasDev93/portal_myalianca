@@ -23,14 +23,38 @@ export function SimulationResults({ data, onClose, isOpen, reset }: Props) {
 
   // eslint-disable-next-line react-hooks/rules-of-hooks
   const [copied, setCopied] = useState(false);
+
   const handleCopy = () => {
     navigator.clipboard.writeText(data.reference);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000); // Mensagem desaparece após 2s
   };
 
+  const handleClose = () => {
+    if (onClose) {
+      onClose();
+    }
+  };
+
+  const handleOverlayClick = (e: React.MouseEvent) => {
+    if (e.target === e.currentTarget) {
+      handleClose();
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Escape") {
+      handleClose();
+    }
+  };
+
   return (
-    <div className="fixed inset-0 z-50 flex justify-center items-center bg-black/50">
+    <div
+      className="fixed inset-0 z-50 flex justify-center items-center bg-black/50"
+      onClick={handleOverlayClick}
+      onKeyDown={handleKeyDown}
+      tabIndex={0}
+    >
       <div className="bg-white rounded-lg shadow-xl max-w-7xl w-full max-h-[90vh] overflow-y-auto">
         <div className="sticky top-0 bg-gray-100 p-6 border-b flex justify-between items-center">
           <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
@@ -53,7 +77,7 @@ export function SimulationResults({ data, onClose, isOpen, reset }: Props) {
           </h2>
 
           <button
-            onClick={onClose}
+            onClick={handleClose}
             className="text-gray-500 hover:text-gray-700 transition-colors"
           >
             <X size={24} />
@@ -162,7 +186,7 @@ export function SimulationResults({ data, onClose, isOpen, reset }: Props) {
             Minhas Simulações
           </button>
           <button
-            onClick={onClose}
+            onClick={handleClose}
             className="px-4 py-2 bg-[#002855] text-white rounded-lg hover:bg-[#002855]/70 transition-colors"
           >
             Fechar

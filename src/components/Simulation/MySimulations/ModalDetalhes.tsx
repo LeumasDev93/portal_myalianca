@@ -43,6 +43,24 @@ export function ModalDetails({ data, onClose, isOpen, reset }: Props) {
 
   if (!isOpen || !data?.results) return null;
 
+  const handleClose = () => {
+    if (onClose) {
+      onClose();
+    }
+  };
+
+  const handleOverlayClick = (e: React.MouseEvent) => {
+    if (e.target === e.currentTarget) {
+      handleClose();
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Escape") {
+      handleClose();
+    }
+  };
+
   const currency = data.results?.currency || "CVE";
 
   const handleCopy = () => {
@@ -102,7 +120,12 @@ export function ModalDetails({ data, onClose, isOpen, reset }: Props) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex justify-center items-center bg-black/50 p-4">
+    <div
+      className="fixed inset-0 z-50 flex justify-center items-center bg-black/50 p-4"
+      onClick={handleOverlayClick}
+      onKeyDown={handleKeyDown}
+      tabIndex={0}
+    >
       <div className="bg-white rounded-lg shadow-xl max-w-7xl w-full max-h-[90vh] overflow-y-auto flex flex-col">
         {/* Header */}
         <div className="sticky top-0 bg-gray-100 p-6 border-b flex justify-between items-center">
@@ -126,7 +149,7 @@ export function ModalDetails({ data, onClose, isOpen, reset }: Props) {
           </h2>
 
           <button
-            onClick={onClose}
+            onClick={handleClose}
             aria-label="Fechar modal"
             className="text-gray-500 hover:text-gray-700 transition-colors"
           >
@@ -328,7 +351,7 @@ export function ModalDetails({ data, onClose, isOpen, reset }: Props) {
 
         <div className="sticky bottom-0 bg-white p-4 border-t flex justify-end gap-4">
           <button
-            onClick={onClose}
+            onClick={handleClose}
             className="px-4 py-2 bg-[#002855] text-white rounded-lg hover:bg-[#002256]/70 transition-colors"
           >
             Fechar

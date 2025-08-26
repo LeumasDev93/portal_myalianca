@@ -21,19 +21,21 @@ export interface ActivityRequest {
 }
 
 export const useActivities = () => {
-  const [activities, setActivities] = useState<Activity[]>([]);
+  const [allActivities, setAllActivities] = useState<Activity[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
   const { profile } = useUserProfile();
 
   const apiKey = process.env.NEXT_PUBLIC_API_KEY;
   const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL_DEFAULT;
+  const ITEMS_PER_PAGE = 10;
 
-  // Buscar atividades do usuário
-  const fetchActivities = async (limit: number = 5) => {
+  // Buscar todas as atividades do usuário
+  const fetchActivities = async () => {
     if (!profile?.user?.id || !apiKey || !apiBaseUrl) {
       setError('Configuração incompleta');
-      setActivities([]); // Garantir que é sempre um array
+      setAllActivities([]); // Garantir que é sempre um array
       return;
     }
 
@@ -42,7 +44,7 @@ export const useActivities = () => {
 
     try {
       const response = await fetch(
-        `${apiBaseUrl}/user/activity/1.0.0/user/${profile.user.id}/last?limit=${limit}`,
+        `${apiBaseUrl}/user/activity/1.0.0/user/${profile.user.id}/last`,
         {
           method: 'GET',
           headers: {
@@ -62,18 +64,38 @@ export const useActivities = () => {
       // Extrair o array de atividades do formato da API
       const activitiesArray = data?.results && Array.isArray(data.results) ? data.results : [];
       
-      setActivities(activitiesArray);
+      // Ordenar por data mais recente primeiro
+      const sortedActivities = activitiesArray.sort((a: Activity, b: Activity) => 
+        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      );
+      
+      setAllActivities(sortedActivities);
+      setCurrentPage(1); // Reset para primeira página
     } catch (err) {
       console.error('Erro ao buscar atividades:', err);
       setError(err instanceof Error ? err.message : 'Erro desconhecido');
-      setActivities([]); // Garantir que é sempre um array mesmo em caso de erro
+      setAllActivities([]); // Garantir que é sempre um array mesmo em caso de erro
     } finally {
       setLoading(false);
     }
   };
 
+  // Calcular atividades da página atual
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const endIndex = startIndex + ITEMS_PER_PAGE;
+  const activities = allActivities.slice(startIndex, endIndex);
+  const totalPages = Math.ceil(allActivities.length / ITEMS_PER_PAGE);
+
+  // Mudar para uma página específica
+  const goToPage = (page: number) => {
+    if (page >= 1 && page <= totalPages && page !== currentPage) {
+      setCurrentPage(page);
+    }
+  };
+
   // Registrar nova atividade
   const registerActivity = async (activityData: Omit<ActivityRequest, 'user_id'>) => {
+    
     if (!profile?.user?.id || !apiKey || !apiBaseUrl) {
       throw new Error('Configuração incompleta');
     }
@@ -84,6 +106,7 @@ export const useActivities = () => {
     };
 
     try {
+      
       const response = await fetch(`${apiBaseUrl}/user/activity/1.0.0`, {
         method: 'POST',
         headers: {
@@ -93,6 +116,7 @@ export const useActivities = () => {
         body: JSON.stringify(requestData),
       });
 
+
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.message || 'Erro ao registrar atividade');
@@ -101,11 +125,11 @@ export const useActivities = () => {
       const newActivity = await response.json();
       
       // Atualizar a lista de atividades
-      setActivities(prev => [newActivity, ...prev.slice(0, 4)]);
+      setAllActivities(prev => [newActivity, ...prev.slice(0, 4)]);
       
       return newActivity;
     } catch (err) {
-      console.error('Erro ao registrar atividade:', err);
+      console.error('❌ useActivities: Erro ao registrar atividade:', err);
       throw err;
     }
   };
@@ -116,7 +140,7 @@ export const useActivities = () => {
       fetchActivities();
     } else {
       // Se não há profile, garantir que activities é um array vazio
-      setActivities([]);
+      setAllActivities([]);
     }
   }, [profile?.user?.id]);
 
@@ -124,7 +148,11 @@ export const useActivities = () => {
     activities: Array.isArray(activities) ? activities : [], // Garantir que sempre retorna array
     loading,
     error,
+    currentPage,
+    totalPages,
+    totalActivities: allActivities.length,
     fetchActivities,
+    goToPage,
     registerActivity,
   };
 };
