@@ -27,7 +27,6 @@ import { toast } from "@/components/ui/use-toast";
 import { useRouter } from "next/navigation";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Progress } from "@/components/ui/progress";
 import { useMessageActivity } from "@/lib/activityExamples";
 
 // Interface para os anexos
@@ -211,134 +210,182 @@ export default function NovaMensagemPage() {
   };
 
   return (
-    <div className="container mx-auto py-6">
-      <div className="flex items-center justify-between mb-6">
-        <Link href="/mensagens">
-          <Button variant="outline" className="flex items-center gap-2">
-            <ArrowLeft className="h-4 w-4" />
-            Voltar para mensagens
-          </Button>
+    <div className="container mx-auto px-3 sm:px-4 md:px-6 py-4 sm:py-6 max-w-4xl">
+      <div className="mb-4 sm:mb-6">
+        <Link
+          href="/mensagens"
+          className="inline-flex items-center text-sm sm:text-base text-blue-600 hover:text-blue-800 transition-colors"
+        >
+          <ArrowLeft className="h-4 w-4 sm:h-5 sm:w-5 mr-1 sm:mr-2" />
+          Voltar para Mensagens
         </Link>
+        <PageTitle title="Nova Mensagem" />
       </div>
 
-      <PageTitle title="Nova Mensagem" description="Envie uma nova mensagem" />
-
-      <Card className="mt-6">
-        <CardHeader>
-          <CardTitle className="text-xl">Compor Mensagem</CardTitle>
+      <Card className="w-full">
+        <CardHeader className="px-4 sm:px-6">
+          <CardTitle className="text-lg sm:text-xl md:text-2xl font-semibold text-gray-800">
+            Compor Nova Mensagem
+          </CardTitle>
         </CardHeader>
         <form onSubmit={handleSubmit}>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-4 sm:space-y-6 px-4 sm:px-6">
+            {/* Campo Para */}
             <div className="space-y-2">
-              <Label htmlFor="to">Para:</Label>
+              <Label htmlFor="to" className="text-sm sm:text-base font-medium">
+                Para *
+              </Label>
               <Input
                 id="to"
                 name="to"
+                type="email"
+                placeholder="Digite o email do destinatário"
                 value={formData.to}
                 onChange={handleChange}
-                placeholder="email@destinatario.com"
+                className="text-sm sm:text-base"
+                required
               />
             </div>
 
+            {/* Campo Assunto */}
             <div className="space-y-2">
-              <Label htmlFor="subject">Assunto:</Label>
+              <Label
+                htmlFor="subject"
+                className="text-sm sm:text-base font-medium"
+              >
+                Assunto *
+              </Label>
               <Input
                 id="subject"
                 name="subject"
+                type="text"
+                placeholder="Digite o assunto da mensagem"
                 value={formData.subject}
                 onChange={handleChange}
-                placeholder="Assunto da mensagem"
+                className="text-sm sm:text-base"
+                required
               />
             </div>
 
+            {/* Campo Mensagem */}
             <div className="space-y-2">
-              <Label htmlFor="message">Mensagem:</Label>
+              <Label
+                htmlFor="message"
+                className="text-sm sm:text-base font-medium"
+              >
+                Mensagem *
+              </Label>
               <Textarea
                 id="message"
                 name="message"
+                placeholder="Digite sua mensagem..."
                 value={formData.message}
                 onChange={handleChange}
-                placeholder="Escreva sua mensagem aqui..."
-                className="min-h-32"
+                className="min-h-[120px] sm:min-h-[150px] text-sm sm:text-base resize-none"
+                required
               />
             </div>
 
-            {/* Input de arquivo oculto */}
-            <input
-              type="file"
-              ref={fileInputRef}
-              onChange={handleFileChange}
-              className="hidden"
-              multiple
-              accept="image/*,application/pdf,.doc,.docx,.xls,.xlsx,.txt"
-            />
+            {/* Anexos */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <Label className="text-sm sm:text-base font-medium">
+                  Anexos
+                </Label>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={handleFileInputClick}
+                  className="text-xs sm:text-sm"
+                >
+                  <PaperclipIcon className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+                  Adicionar Arquivo
+                </Button>
+              </div>
 
-            {/* Lista de anexos */}
-            {attachments.length > 0 && (
-              <div className="space-y-2">
-                <Label>Anexos:</Label>
+              <input
+                ref={fileInputRef}
+                type="file"
+                multiple
+                onChange={handleFileChange}
+                className="hidden"
+                accept="image/*,.pdf,.doc,.docx,.txt"
+              />
+
+              {/* Lista de Anexos */}
+              {attachments.length > 0 && (
                 <div className="space-y-2">
-                  {attachments.map((attachment) => (
-                    <div
-                      key={attachment.id}
-                      className="flex items-center p-3 bg-gray-50 rounded border"
-                    >
-                      <div className="mr-3">{getFileIcon(attachment.type)}</div>
-                      <div className="flex-1">
-                        <div className="flex items-center justify-between">
-                          <div className="font-medium text-sm truncate max-w-[200px]">
-                            {attachment.name}
+                  <p className="text-xs sm:text-sm text-gray-600">
+                    {attachments.length} arquivo(s) anexado(s)
+                  </p>
+                  <div className="space-y-2">
+                    {attachments.map((attachment) => (
+                      <div
+                        key={attachment.id}
+                        className="flex items-center justify-between p-2 sm:p-3 bg-gray-50 rounded-lg"
+                      >
+                        <div className="flex items-center space-x-2 sm:space-x-3 flex-1 min-w-0">
+                          <div className="text-gray-500">
+                            {getFileIcon(attachment.type)}
                           </div>
-                          <div className="text-xs text-gray-500">
-                            {formatFileSize(attachment.size)}
+                          <div className="flex-1 min-w-0">
+                            <p className="text-xs sm:text-sm font-medium truncate">
+                              {attachment.name}
+                            </p>
+                            <p className="text-xs text-gray-500">
+                              {formatFileSize(attachment.size)}
+                            </p>
                           </div>
                         </div>
-                        <Progress
-                          value={attachment.progress}
-                          className="h-1 mt-1"
-                        />
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleRemoveAttachment(attachment.id)}
+                          className="h-6 w-6 sm:h-8 sm:w-8 p-0 text-red-500 hover:text-red-700"
+                        >
+                          <X className="h-3 w-3 sm:h-4 sm:w-4" />
+                        </Button>
                       </div>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        className="ml-2"
-                        onClick={() => handleRemoveAttachment(attachment.id)}
-                      >
-                        <X className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
+            </div>
           </CardContent>
 
-          <CardFooter className="flex justify-between">
-            <Button
-              type="button"
-              variant="outline"
-              className="flex items-center gap-2"
-              onClick={handleFileInputClick}
-            >
-              <PaperclipIcon className="h-4 w-4" />
-              Anexar arquivo
-            </Button>
-
-            <Button
-              type="submit"
-              disabled={sending}
-              className="flex items-center gap-2 bg-company-blue-600 hover:bg-company-blue-700"
-            >
-              {sending ? (
-                "Enviando..."
-              ) : (
-                <>
-                  <Send className="h-4 w-4" />
-                  Enviar
-                </>
-              )}
-            </Button>
+          <CardFooter className="px-4 sm:px-6 pt-4 sm:pt-6 border-t">
+            <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 w-full">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => router.push("/mensagens")}
+                disabled={sending}
+                className="w-full sm:w-auto order-2 sm:order-1"
+              >
+                Cancelar
+              </Button>
+              <Button
+                type="submit"
+                disabled={sending}
+                className="w-full sm:w-auto order-1 sm:order-2"
+              >
+                {sending ? (
+                  <>
+                    <Send className="mr-2 h-4 w-4 animate-pulse" />
+                    <span className="hidden sm:inline">Enviando...</span>
+                    <span className="sm:hidden">Enviando</span>
+                  </>
+                ) : (
+                  <>
+                    <Send className="mr-2 h-4 w-4" />
+                    <span className="hidden sm:inline">Enviar Mensagem</span>
+                    <span className="sm:hidden">Enviar</span>
+                  </>
+                )}
+              </Button>
+            </div>
           </CardFooter>
         </form>
       </Card>

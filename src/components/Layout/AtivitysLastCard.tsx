@@ -17,29 +17,31 @@ const AtivitysLastCard = () => {
   if (error) {
     return (
       <Card className="flex-1 bg-gray-50">
-        <CardHeader>
-          <CardTitle className="text-lg sm:text-xl font-semibold flex items-center justify-between">
-            <h1 className="text-xl font-bold text-[#002856]">
+        <CardHeader className="px-3 sm:px-4 md:px-6">
+          <CardTitle className="text-base sm:text-lg md:text-xl font-semibold flex items-center justify-between">
+            <h1 className="text-lg sm:text-xl md:text-2xl font-bold text-[#002856]">
               Últimas Atividades
             </h1>
             <Button
               variant="ghost"
               size="sm"
               onClick={handleRefresh}
-              className="h-8 w-8 p-0"
+              className="h-7 w-7 sm:h-8 sm:w-8 p-0"
             >
-              <RefreshCw className="h-4 w-4" />
+              <RefreshCw className="h-3 w-3 sm:h-4 sm:w-4" />
             </Button>
           </CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="text-center py-8">
-            <p className="text-red-600 text-sm">Erro ao carregar atividades</p>
+        <CardContent className="px-3 sm:px-4 md:px-6">
+          <div className="text-center py-6 sm:py-8">
+            <p className="text-red-600 text-xs sm:text-sm">
+              Erro ao carregar atividades
+            </p>
             <Button
               variant="outline"
               size="sm"
               onClick={handleRefresh}
-              className="mt-2"
+              className="mt-2 text-xs sm:text-sm"
             >
               Tentar Novamente
             </Button>
@@ -51,9 +53,9 @@ const AtivitysLastCard = () => {
 
   return (
     <Card className="flex-1 bg-gray-50">
-      <CardHeader>
-        <CardTitle className="text-lg sm:text-xl font-semibold flex items-center justify-between">
-          <h1 className="text-xl font-bold text-[#002856]">
+      <CardHeader className="px-3 sm:px-4 md:px-6">
+        <CardTitle className="text-base sm:text-lg md:text-xl font-semibold flex items-center justify-between">
+          <h1 className="text-lg sm:text-xl md:text-2xl font-bold text-[#002856]">
             Últimas Atividades
           </h1>
           <Button
@@ -61,26 +63,28 @@ const AtivitysLastCard = () => {
             size="sm"
             onClick={handleRefresh}
             disabled={loading}
-            className="h-8 w-8 p-0"
+            className="h-7 w-7 sm:h-8 sm:w-8 p-0"
           >
             {loading ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
+              <Loader2 className="h-3 w-3 sm:h-4 sm:w-4 animate-spin" />
             ) : (
-              <RefreshCw className="h-4 w-4" />
+              <RefreshCw className="h-3 w-3 sm:h-4 sm:w-4" />
             )}
           </Button>
         </CardTitle>
       </CardHeader>
 
-      <CardContent className="space-y-3">
+      <CardContent className="space-y-2 sm:space-y-3 px-3 sm:px-4 md:px-6">
         {loading && activities.length === 0 ? (
-          <div className="flex items-center justify-center py-8">
-            <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
-            <span className="ml-2 text-gray-500">Carregando atividades...</span>
+          <div className="flex items-center justify-center py-6 sm:py-8">
+            <Loader2 className="h-5 w-5 sm:h-6 sm:w-6 animate-spin text-gray-400" />
+            <span className="ml-2 text-gray-500 text-xs sm:text-sm">
+              Carregando atividades...
+            </span>
           </div>
         ) : activities.length === 0 ? (
-          <div className="text-center py-8">
-            <p className="text-gray-500 text-sm">
+          <div className="text-center py-6 sm:py-8">
+            <p className="text-gray-500 text-xs sm:text-sm">
               Nenhuma atividade encontrada
             </p>
           </div>
@@ -91,28 +95,30 @@ const AtivitysLastCard = () => {
             return (
               <div
                 key={activity.id}
-                className={`flex items-center justify-between p-4 rounded-md bg-white ${
-                  index !== activities.length - 1 ? "border-b" : ""
+                className={`flex items-center justify-between p-3 sm:p-4 rounded-md bg-white ${
+                  index !== activities.length - 1
+                    ? "border-b border-gray-100"
+                    : ""
                 }`}
               >
-                <div className="flex items-start gap-3">
+                <div className="flex items-start gap-2 sm:gap-3 flex-1 min-w-0">
                   <div
-                    className={`w-8 h-8 xl:w-10 xl:h-10 ${display.bgColor} text-white rounded-full flex items-center justify-center`}
+                    className={`w-7 h-7 sm:w-8 sm:h-8 md:w-10 md:h-10 ${display.bgColor} text-white rounded-full flex items-center justify-center flex-shrink-0`}
                   >
                     {display.icon}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-xs xl:text-sm font-semibold uppercase truncate">
+                    <p className="text-xs sm:text-sm md:text-base font-semibold uppercase truncate text-gray-800">
                       {activity.action.replace(/_/g, " ")}
                     </p>
-                    <p className="text-[10px] xl:text-xs text-gray-600 truncate">
+                    <p className="text-[10px] sm:text-xs md:text-sm text-gray-600 truncate mt-0.5">
                       {activity.description}
                     </p>
                   </div>
                 </div>
 
-                <div className="text-right flex-shrink-0 ml-2">
-                  <p className="text-[10px] xl:text-xs text-gray-500">
+                <div className="text-right flex-shrink-0 ml-2 sm:ml-3">
+                  <p className="text-[10px] sm:text-xs md:text-sm text-gray-500 whitespace-nowrap">
                     {formatActivityDate(activity.created_at)}
                   </p>
                 </div>

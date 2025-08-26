@@ -232,10 +232,7 @@ export default function MensagemDetailPage({
 
       // Registrar atividade de resposta
       try {
-        await registerMessageRepliedActivity(
-          "Resposta",
-          subject
-        );
+        await registerMessageRepliedActivity("Resposta", subject);
       } catch (error) {
         console.error("Erro ao registrar atividade de resposta:", error);
         // Não interrompe o fluxo se falhar ao registrar atividade
@@ -275,15 +272,15 @@ export default function MensagemDetailPage({
   };
 
   return (
-    <div className="container mx-auto py-6">
-      <div className="flex items-center justify-between mb-6">
+    <div className="container mx-auto px-3 sm:px-4 md:px-6 py-4 sm:py-6 max-w-4xl">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 sm:mb-6 gap-3 sm:gap-4">
         <Button
           onClick={onBack}
           variant="outline"
-          className="flex items-center gap-2 text-[#002856]"
+          className="flex items-center gap-2 text-[#002856] w-full sm:w-auto"
         >
           <ArrowLeft className="h-4 w-4" />
-          Voltar para mensagens
+          <span className="text-sm sm:text-base">Voltar para mensagens</span>
         </Button>
         <Button
           onClick={() => {
@@ -294,14 +291,14 @@ export default function MensagemDetailPage({
             replyFormRef.current?.submit();
           }}
           disabled={isSendingReply}
-          className="flex items-center gap-2 bg-company-blue-600 hover:bg-company-blue-700"
+          className="flex items-center gap-2 bg-company-blue-600 hover:bg-company-blue-700 w-full sm:w-auto"
         >
           {isSendingReply ? (
             <LoadingSpinner size="sm" variant="light" />
           ) : (
             <Send className="h-4 w-4" />
           )}
-          Enviar resposta
+          <span className="text-sm sm:text-base">Enviar resposta</span>
         </Button>
 
         {/* <div className="flex gap-2">
@@ -329,16 +326,18 @@ export default function MensagemDetailPage({
         description={`Conversa com ${firstMessage.sender}`}
       />
 
-      <div className="space-y-6 mt-6">
+      <div className="space-y-4 sm:space-y-6 mt-4 sm:mt-6">
         {conversation.map((message, index) => (
           <Card
             key={message.id}
-            className={`p-5 ${message.isFromMe ? "bg-blue-50" : "bg-white"}`}
+            className={`p-3 sm:p-5 ${
+              message.isFromMe ? "bg-blue-50" : "bg-white"
+            }`}
           >
-            <div className="flex justify-between mb-4">
-              <div className="flex items-center gap-3">
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start mb-3 sm:mb-4 gap-2 sm:gap-0">
+              <div className="flex items-center gap-2 sm:gap-3">
                 <Avatar
-                  className={`${
+                  className={`w-8 h-8 sm:w-10 sm:h-10 ${
                     message.isFromMe ? "bg-blue-600" : "bg-gray-700"
                   }`}
                 >
@@ -351,40 +350,42 @@ export default function MensagemDetailPage({
                       className="rounded-full"
                     />
                   ) : null}
-                  <AvatarFallback className="text-white">
+                  <AvatarFallback className="text-white text-xs sm:text-sm">
                     {message.isFromMe
                       ? profile?.user?.nome?.charAt(0) || "V"
                       : message.sender.charAt(0)}
                   </AvatarFallback>
                 </Avatar>
-                <div>
-                  <div className="font-semibold">
-                    {message.sender}
+                <div className="min-w-0 flex-1">
+                  <div className="font-semibold text-sm sm:text-base flex items-center gap-2">
+                    <span className="truncate">{message.sender}</span>
                     {message.isFromMe && (
-                      <Badge className="ml-2 bg-blue-600">Você</Badge>
+                      <Badge className="ml-0 sm:ml-2 bg-blue-600 text-xs">
+                        Você
+                      </Badge>
                     )}
                   </div>
-                  <div className="text-sm text-gray-500">
+                  <div className="text-xs sm:text-sm text-gray-500 truncate">
                     {message.senderEmail}
                   </div>
                 </div>
               </div>
-              <div className="text-sm text-gray-500">
+              <div className="text-xs sm:text-sm text-gray-500 self-end sm:self-start">
                 {new Date(message.date).toLocaleString("pt-BR")}
               </div>
             </div>
 
-            <div className="mb-4">
+            <div className="mb-3 sm:mb-4">
               <div
-                className="prose prose-blue max-w-none"
+                className="prose prose-blue max-w-none text-sm sm:text-base"
                 dangerouslySetInnerHTML={{ __html: message.content }}
               />
             </div>
 
             {message.attachments && message.attachments.length > 0 && (
-              <div className="mb-4">
-                <p className="text-sm font-medium mb-2">Anexos:</p>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="mb-3 sm:mb-4">
+                <p className="text-xs sm:text-sm font-medium mb-2">Anexos:</p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-4">
                   {message.attachments.map((attachment) => (
                     <MessageAttachment
                       key={attachment.id}
@@ -399,13 +400,14 @@ export default function MensagemDetailPage({
             )}
 
             {index === conversation.length - 1 && !isReplying && (
-              <div className="mt-4">
+              <div className="mt-3 sm:mt-4">
                 <Button
                   onClick={() => setIsReplying(true)}
-                  className="flex items-center gap-2 bg-[#002856] hover:bg-[#002856]/80"
+                  className="flex items-center gap-2 bg-[#002856] hover:bg-[#002856]/80 text-sm sm:text-base"
                 >
-                  <Reply className="h-4 w-4" />
-                  Responder
+                  <Reply className="h-3 w-3 sm:h-4 sm:w-4" />
+                  <span className="hidden sm:inline">Responder</span>
+                  <span className="sm:hidden">Resp</span>
                 </Button>
               </div>
             )}
@@ -413,8 +415,10 @@ export default function MensagemDetailPage({
         ))}
 
         {isReplying && (
-          <div className="mt-4">
-            <h3 className="text-lg font-medium mb-2">Sua resposta</h3>
+          <div className="mt-4 sm:mt-6">
+            <h3 className="text-base sm:text-lg font-medium mb-2 sm:mb-3">
+              Sua resposta
+            </h3>
             <MessageReplyForm
               ref={replyFormRef}
               onReply={handleReply}

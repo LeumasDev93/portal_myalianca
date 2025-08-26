@@ -26,7 +26,7 @@ export interface ActivityDisplay {
 }
 
 export const getActivityDisplay = (action: string): ActivityDisplay => {
-  const iconSize = "w-4 h-4 xl:w-5 xl:h-5 text-white";
+  const iconSize = "w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5 text-white";
 
   const activityMap: Record<string, ActivityDisplay> = {
     // Pagamentos
