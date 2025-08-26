@@ -45,6 +45,7 @@ import { ReciboPDFModal } from "../ModalRecibo";
 import ReactDOM from "react-dom/client";
 import { MdPayment } from "react-icons/md";
 import { toast } from "sonner";
+import { useReciboActivity } from "@/lib/activityExamples";
 
 type ViewMode = "grid" | "list";
 
@@ -66,6 +67,7 @@ export default function ReciboPage({}: ReciboPageProps) {
   const [downloadStatus, setDownloadStatus] = useState<DownloadStatus>({});
   const [viewMode, setViewMode] = useState<ViewMode>("list");
   const { token } = useSessionCheckToken();
+  const { registerReciboDownloadActivity } = useReciboActivity();
 
   const {
     filteredRecibos,
@@ -122,6 +124,16 @@ export default function ReciboPage({}: ReciboPageProps) {
 
       setDownloadStatus((prev) => ({ ...prev, [invoiceNumber]: "success" }));
       toast.success(`Recibo ${invoiceNumber} baixado com sucesso!`);
+
+      // Registrar atividade de download
+      try {
+        const recibo = recibos.find((r) => r.number === invoiceNumber);
+        const amount = recibo ? formatCurrency(recibo.value) : "N/A";
+        await registerReciboDownloadActivity(invoiceNumber, amount);
+      } catch (error) {
+        console.error("Erro ao registrar atividade de download:", error);
+        // Não interrompe o fluxo se falhar ao registrar atividade
+      }
 
       // Reset status after 3 seconds
       setTimeout(() => {

@@ -21,6 +21,7 @@ import { useUserProfile } from "@/hooks/useUserProfile ";
 import { useUnreadMessages } from "@/contexts/unread-messages-context";
 import { LoadingContainer } from "@/components/ui/loading-container";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import { useMessageActivity } from "@/lib/activityExamples";
 
 interface Attachment {
   id: string;
@@ -64,6 +65,7 @@ export default function MensagemDetailPage({
   onBack,
 }: MensagemDetailPageProps) {
   const router = useRouter();
+  const { registerMessageRepliedActivity } = useMessageActivity();
   const [conversation, setConversation] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isSendingReply, setIsSendingReply] = useState(false);
@@ -227,6 +229,17 @@ export default function MensagemDetailPage({
         title: "Resposta enviada",
         description: "Sua resposta foi enviada com sucesso.",
       });
+
+      // Registrar atividade de resposta
+      try {
+        await registerMessageRepliedActivity(
+          "Resposta",
+          subject
+        );
+      } catch (error) {
+        console.error("Erro ao registrar atividade de resposta:", error);
+        // Não interrompe o fluxo se falhar ao registrar atividade
+      }
 
       // Marcar a mensagem como lida quando o usuário responde
       markMessageAsRead(id);

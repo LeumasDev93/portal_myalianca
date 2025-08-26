@@ -15,6 +15,7 @@ import { getSafeGridClass } from "@/lib/utils";
 import { fetchVehicleBrands } from "@/service/marcaService";
 import { getSession } from "next-auth/react";
 import { SimulationResults } from "../MySimulations/SimulationResults";
+import { useSimulationActivity } from "@/lib/activityExamples";
 
 const defaultIconMap: Record<string, JSX.Element> = {
   "Dados Pessoais": <FaUser />,
@@ -63,6 +64,7 @@ export default function SimulationForm({
   initialData,
 }: SimulationFormProps) {
   const { product, loading, error } = useProductDetails(productId);
+  const { registerSimulationActivity } = useSimulationActivity();
   const [formValues, setFormValues] = useState<Record<string, any>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [activeTab, setActiveTab] = useState<string>("");
@@ -311,6 +313,17 @@ export default function SimulationForm({
         );
         setSimulationResult(data);
         setIsModalOpen(true);
+
+        // Registrar atividade de simulação
+        try {
+          await registerSimulationActivity(
+            product.category || "Seguro",
+            product.name || "Simulação"
+          );
+        } catch (error) {
+          console.error("Erro ao registrar atividade de simulação:", error);
+          // Não interrompe o fluxo se falhar ao registrar atividade
+        }
       } catch (error: any) {
         setSimulationError(error.message || "Erro ao executar simulação.");
       } finally {

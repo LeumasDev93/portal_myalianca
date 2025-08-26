@@ -31,6 +31,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { useUserProfile } from "@/hooks/useUserProfile ";
 import { useAuth } from "@/contexts/auth-context";
 import { LoadingContainer } from "@/components/ui/loading-container";
+import { useProfileActivity } from "@/lib/activityExamples";
 
 export interface UserProfile {
   id: string;
@@ -53,6 +54,7 @@ export interface UserProfile {
 export function PerfilPage() {
   const { profile, loading, hasChanges, updateProfile, saveChanges } =
     useUserProfile();
+  const { registerProfilePhotoActivity } = useProfileActivity();
   const [profileImage, setProfileImage] =
     useState<string>("/diverse-group.png");
   const [isUploading, setIsUploading] = useState(false);
@@ -221,6 +223,17 @@ export function PerfilPage() {
 
       const profileResult = await profileResponse.json();
       console.log("✅ Perfil atualizado com sucesso:", profileResult);
+
+      // Registrar atividade de alteração de foto
+      try {
+        await registerProfilePhotoActivity();
+      } catch (error) {
+        console.error(
+          "Erro ao registrar atividade de alteração de foto:",
+          error
+        );
+        // Não interrompe o fluxo se falhar ao registrar atividade
+      }
 
       // Atualizar o estado local do perfil
       await updateProfileImage(uploadResult.id);

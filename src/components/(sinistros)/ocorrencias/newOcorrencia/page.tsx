@@ -29,6 +29,7 @@ import Image from "next/image";
 import { useSessionCheckToken } from "@/hooks/useSessionToken";
 import { Toaster } from "@/components/ui/toaster";
 import { useUserProfile } from "@/hooks/useUserProfile ";
+import { useOcorrenciaActivity } from "@/lib/activityExamples";
 
 interface Apolice {
   id: string;
@@ -49,6 +50,7 @@ export default function NewOcorrênciasPage({ onBack }: NewSinistroPageProps) {
   const { toast } = useToast();
   const { token } = useSessionCheckToken();
   const { profile } = useUserProfile();
+  const { registerOcorrenciaActivity } = useOcorrenciaActivity();
 
   // Estados do componente
   const [apolices, setApolices] = useState<Apolice[]>([]);
@@ -595,6 +597,18 @@ export default function NewOcorrênciasPage({ onBack }: NewSinistroPageProps) {
       }
 
       console.log("✅ Sinistro registrado com sucesso!");
+
+      // Registrar atividade
+      try {
+        await registerOcorrenciaActivity(
+          tipoSinistro || "Sinistro",
+          `${nomeApolice} - ${local}`
+        );
+      } catch (error) {
+        console.error("Erro ao registrar atividade:", error);
+        // Não interrompe o fluxo se falhar ao registrar atividade
+      }
+
       toast({
         title: "Sucesso!",
         description: "Sinistro registrado com sucesso.",

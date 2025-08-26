@@ -9,12 +9,12 @@ import QuickAccessCard from "@/components/Layout/QuickAccessCard";
 import HistoryTable from "@/components/Historico/table/HistoryTable";
 import AtivitysLastCard from "@/components/Layout/AtivitysLastCard";
 import { useQuickAccess } from "@/hooks/useQuickAccess";
-import { useUserProfile } from "@/hooks/useUserProfile ";
 
 import IconCar from "@/assets/Icones/AliancaAuto_Icone.svg";
 import IconHosp from "@/assets/Icones/AliancaIncendio_Icone.svg";
 import IconMaritima from "@/assets/Icones/AliancaMaritimo_Icone.svg";
 import { DashboardCharts } from "./Charts/DashboartdCharts";
+import { useUserProfile } from "@/hooks/useUserProfile";
 
 type CardData = {
   icon: any;
@@ -245,9 +245,7 @@ export default function Historico({
       )}
 
       <div className="py-6">
-        <h2 className="text-lg xl:text-xl font-bold text-gray-800 mb-4">
-          Histórico
-        </h2>
+        <h1 className="text-xl font-bold text-[#002856]">Histórico</h1>
         <div className="flex flex-col lg:flex-row gap-4">
           <div
             className="w-full lg:w-[65%] xl:w-[70%] overflow-auto"

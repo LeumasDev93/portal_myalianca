@@ -13,6 +13,7 @@ import { Label } from "@/components/ui/label";
 
 import { useToast } from "@/components/ui/use-toast";
 import { useUserProfile } from "@/hooks/useUserProfile ";
+import { useActivities } from "@/hooks/useActivities";
 import { Loader2, X } from "lucide-react";
 import {
   IoGrid,
@@ -173,6 +174,7 @@ export function QuickAccessModal({
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const { profile } = useUserProfile();
+  const { registerActivity } = useActivities();
 
   // Filtra os menus baseado no tipo de cliente e verifica se já existem
   const availableMenus = AVAILABLE_MENUS.filter((menu) => {
@@ -280,6 +282,17 @@ export function QuickAccessModal({
         description: `${menu.nome} foi adicionado ao seu acesso rápido.`,
         variant: "default",
       });
+
+      // Registrar atividade
+      try {
+        await registerActivity({
+          action: "ITEM_ADICIONADO",
+          description: `${menu.nome} foi adicionado ao acesso rápido`,
+        });
+      } catch (error) {
+        console.error("Erro ao registrar atividade:", error);
+        // Não interrompe o fluxo se falhar ao registrar atividade
+      }
 
       // Chama o callback para atualizar a lista
       if (onItemAdded) {

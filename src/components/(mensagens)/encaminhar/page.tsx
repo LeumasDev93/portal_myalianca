@@ -27,6 +27,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { PageTitle } from "@/components/ui/page-title";
+import { useMessageActivity } from "@/lib/activityExamples";
 
 // Sample data for a specific message
 const getMessage = (id: string) => {
@@ -141,6 +142,7 @@ export default function EncaminharMensagemPage({
   onBack,
 }: MensagemEncaminharPageProps) {
   const router = useRouter();
+  const { registerMessageForwardedActivity } = useMessageActivity();
   const message = getMessage(id);
   const [sending, setSending] = useState(false);
   const [formData, setFormData] = useState({
@@ -280,8 +282,20 @@ export default function EncaminharMensagemPage({
     setSending(true);
 
     // Simulação de envio
-    setTimeout(() => {
+    setTimeout(async () => {
       setSending(false);
+
+      // Registrar atividade de mensagem encaminhada
+      try {
+        await registerMessageForwardedActivity("Encaminhada", message.subject);
+      } catch (error) {
+        console.error(
+          "Erro ao registrar atividade de mensagem encaminhada:",
+          error
+        );
+        // Não interrompe o fluxo se falhar ao registrar atividade
+      }
+
       toast({
         title: "Mensagem encaminhada",
         description: `Sua mensagem foi encaminhada com sucesso com ${attachments.length} anexo(s).`,

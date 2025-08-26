@@ -28,6 +28,7 @@ import { useRouter } from "next/navigation";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
+import { useMessageActivity } from "@/lib/activityExamples";
 
 // Interface para os anexos
 interface Attachment {
@@ -63,6 +64,7 @@ const getFileIcon = (type: string) => {
 
 export default function NovaMensagemPage() {
   const router = useRouter();
+  const { registerMessageSentActivity } = useMessageActivity();
   const [sending, setSending] = useState(false);
   const [formData, setFormData] = useState({
     to: "",
@@ -186,8 +188,20 @@ export default function NovaMensagemPage() {
     setSending(true);
 
     // Simulação de envio
-    setTimeout(() => {
+    setTimeout(async () => {
       setSending(false);
+
+      // Registrar atividade de mensagem enviada
+      try {
+        await registerMessageSentActivity("Nova", formData.subject);
+      } catch (error) {
+        console.error(
+          "Erro ao registrar atividade de mensagem enviada:",
+          error
+        );
+        // Não interrompe o fluxo se falhar ao registrar atividade
+      }
+
       toast({
         title: "Mensagem enviada",
         description: `Sua mensagem foi enviada com sucesso com ${attachments.length} anexo(s).`,
