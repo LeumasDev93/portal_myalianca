@@ -8,6 +8,7 @@ import { useSessionCheckToken } from "@/hooks/useSessionToken";
 import { useSinistros } from "@/hooks/useSinistros";
 import { tableMappeData } from "@/lib/tableMappe";
 import { getFirstAndLastName } from "@/lib/utils";
+import { useReciboActivity } from "@/lib/activityExamples";
 import React, { useEffect, useState } from "react";
 import {
   FaCar,
@@ -73,6 +74,7 @@ const HistoryTable = ({
   const loading = isLoadingApolices || isLoadingSinistros || isLoadingRecibos;
 
   const [loadingView, setLoadingView] = useState<ReciboLoadingState>({});
+  const { registerReciboDownloadActivity } = useReciboActivity();
 
   const visualizarPDF = async (
     invoiceNumber: string,
@@ -287,6 +289,18 @@ const HistoryTable = ({
       a.click();
 
       URL.revokeObjectURL(url);
+
+      // Registrar atividade de download
+      try {
+        const recibo = filteredRecibos.find((r) => r.number === invoiceNumber);
+        const amount = recibo
+          ? `${recibo.mbref} ${recibo.value.toFixed(2)}`
+          : "N/A";
+        await registerReciboDownloadActivity(invoiceNumber, amount);
+      } catch (error) {
+        console.error("Erro ao registrar atividade de download:", error);
+        // Não interrompe o fluxo se falhar ao registrar atividade
+      }
     } catch (error: any) {
       console.error("Erro ao baixar PDF:", error);
     } finally {
