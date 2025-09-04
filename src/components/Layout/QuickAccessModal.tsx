@@ -33,7 +33,7 @@ const AVAILABLE_MENUS = [
     descricao: "Faz Gerenciamentos de seus Seguros de forma fácil e rápida",
     icone: LuSquareKanban,
     iconName: "LuSquareKanban",
-    link: "gerenciamentoSOAT",
+    link: "gestaoSOAT",
     descricao_botao: "Acessar",
     border_color: "border-blue-200",
     icon_color: "text-blue-800",

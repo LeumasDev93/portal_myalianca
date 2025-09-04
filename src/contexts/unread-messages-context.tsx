@@ -19,6 +19,7 @@ interface UnreadMessagesContextType {
   markMessageAsRead: (messageId: string) => void;
   markMessageAsUnread: (messageId: string) => void;
   isMessageRead: (messageId: string) => boolean;
+  markAllMessagesAsRead: () => Promise<void>;
 }
 
 const UnreadMessagesContext = createContext<
@@ -138,6 +139,34 @@ export function UnreadMessagesProvider({ children }: { children: ReactNode }) {
     fetchUnreadCount();
   };
 
+  const markAllMessagesAsRead = useCallback(async () => {
+    try {
+      if (!profile?.user?.id) return;
+
+      // Buscar todas as mensagens
+      const res = await fetch(`/api/menssage?user_id=${profile.user.id}`, {
+        cache: "no-store",
+      });
+
+      if (!res.ok) throw new Error("Erro ao carregar mensagens");
+
+      const data = await res.json();
+      const messages = data.results || [];
+
+      // Marcar todas as mensagens como lidas no localStorage
+      const allMessageIds = messages.map((msg: { id: string }) => msg.id);
+      const newReadMessages = new Set([...readMessages, ...allMessageIds]);
+
+      setReadMessages(newReadMessages);
+      saveReadMessagesToStorage(newReadMessages);
+
+      // Zerar o contador
+      setUnreadCount(0);
+    } catch (error) {
+      console.error("Erro ao marcar todas as mensagens como lidas:", error);
+    }
+  }, [profile?.user?.id, readMessages, saveReadMessagesToStorage]);
+
   const isMessageRead = useCallback(
     (messageId: string) => {
       return readMessages.has(messageId);
@@ -162,6 +191,7 @@ export function UnreadMessagesProvider({ children }: { children: ReactNode }) {
         markMessageAsRead,
         markMessageAsUnread,
         isMessageRead,
+        markAllMessagesAsRead,
       }}
     >
       {children}

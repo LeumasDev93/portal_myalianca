@@ -2,10 +2,11 @@
 
 import React from "react";
 import { IconType } from "react-icons";
-import { IoGrid } from "react-icons/io5";
+import { IoGrid, IoBusinessSharp } from "react-icons/io5";
 import { IoShieldCheckmarkSharp } from "react-icons/io5";
 import { FaTriangleExclamation } from "react-icons/fa6";
 import { TbTopologyStar3 } from "react-icons/tb";
+import { useUserProfile } from "@/hooks/useUserProfile";
 
 interface BottomNavItem {
   title: string;
@@ -23,12 +24,16 @@ export const BottomNavigation = ({
   activePage,
   onNavigate,
 }: BottomNavigationProps) => {
+  const { profile } = useUserProfile();
+  const isCompany = profile?.user?.tipo_utilizador === "Company";
+
   const navItems: BottomNavItem[] = [
     {
-      title: "Histórico",
-      key: "Historico",
-      icon: IoGrid,
-      onClick: () => onNavigate("Historico"),
+      title: isCompany ? "Dashboard" : "Histórico",
+      key: isCompany ? "dashboardEmpresarial" : "Historico",
+      icon: isCompany ? IoBusinessSharp : IoGrid,
+      onClick: () =>
+        onNavigate(isCompany ? "dashboardEmpresarial" : "Historico"),
     },
     {
       title: "Apólice",

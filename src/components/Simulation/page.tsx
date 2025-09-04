@@ -68,7 +68,7 @@ export default function SimulationScreen() {
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         {/* Banner */}
         {!selectedProduct && (
-          <div className="relative bg-[#C41E3A] overflow-hidden h-[220px] sm:h-[270px] md:h-[300px] flex items-center">
+          <div className="relative bg-[#C41E3A]  overflow-hidden h-[220px] sm:h-[270px] md:h-[300px] flex items-center">
             {bannerImages.map((image, index) => (
               <div
                 key={index}

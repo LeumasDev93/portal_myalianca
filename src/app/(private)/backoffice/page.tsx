@@ -12,6 +12,7 @@ import {
   IoShieldCheckmarkSharp,
   IoNotifications,
   IoReceiptSharp,
+  IoBusinessSharp,
 } from "react-icons/io5";
 import { TbTopologyStar3 } from "react-icons/tb";
 import { FaTriangleExclamation, FaUserLarge } from "react-icons/fa6";
@@ -47,6 +48,9 @@ import OcorrenciaDetailsPage from "@/components/(sinistros)/ocorrencias/detailsO
 import { BottomNavigation } from "@/components/Layout/BottomNavigation";
 import NotificationsPage from "@/components/Notifications/page";
 import { LuSquareKanban } from "react-icons/lu";
+import DashboardEmpresarial from "@/components/dashboardEmpresarial/page";
+import { BackToDashboardButton } from "@/components/Layout/BackToDashboardButton";
+import PageGestaoSOAT from "@/components/gestaoSOAT/page";
 
 const Page = () => {
   const { profile } = useUserProfile();
@@ -148,14 +152,24 @@ const Page = () => {
       },
     ];
 
-    // Adiciona o menu SOAT apenas se o usuário for Company
+    // Adiciona menus específicos para usuários Company
     if (profile?.user?.tipo_utilizador === "Company") {
+      // Dashboard Empresarial
       baseMenus.splice(1, 0, {
+        title: "Dashboard Empresarial",
+        path: "dashboardEmpresarial",
+        icon: IoBusinessSharp,
+        hoverIcon: <IoBusinessSharp />,
+        onClick: () => handleMenuClick("dashboardEmpresarial"),
+      });
+
+      // Gestão de SOAT
+      baseMenus.splice(2, 0, {
         title: "Gestão de SOAT",
-        path: "gerenciamentoSOAT",
+        path: "gestaoSOAT",
         icon: LuSquareKanban,
         hoverIcon: <LuSquareKanban />,
-        onClick: () => handleMenuClick("gerenciamentoSOAT"),
+        onClick: () => handleMenuClick("gestaoSOAT"),
       });
     }
 
@@ -167,6 +181,15 @@ const Page = () => {
   useEffect(() => {
     setIsClient(true);
   }, []);
+
+  // Define a página padrão baseada no tipo de usuário
+  useEffect(() => {
+    if (profile?.user?.tipo_utilizador === "Company") {
+      setCurrentPage("dashboardEmpresarial");
+    } else {
+      setCurrentPage("Historico");
+    }
+  }, [profile?.user?.tipo_utilizador]);
 
   useEffect(() => {
     const handleResize = () => {
@@ -225,6 +248,8 @@ const Page = () => {
         isMobile={isMobile}
         onMenuClick={handleMenuClick}
         onSearchChange={handleSearchChange}
+        showSidebar={profile?.user?.tipo_utilizador !== "Company"}
+        onLogout={logout}
       />
 
       <div
@@ -252,7 +277,7 @@ const Page = () => {
           </>
         )}
 
-        {!isMobile && (
+        {!isMobile && profile?.user?.tipo_utilizador !== "Company" && (
           <div className="fixed left-0 top-16 h-[calc(100vh-4rem)] w-16 xl:w-64">
             <Menu
               onMenuClick={handleMenuClick}
@@ -262,23 +287,33 @@ const Page = () => {
           </div>
         )}
         <div
-          className={`flex-1 flex flex-col ${
+          className={`flex-1 flex flex-col relative ${
             currentPage === "Simulation"
               ? isMobile
                 ? "-mt-4 pb-20" // Simulation no mobile com padding bottom
-                : "ml-12 md:ml-12 xl:ml-60 -mt-4 xl:-mt-2 " // Simulation no desktop
+                : profile?.user?.tipo_utilizador === "Company"
+                ? "-mt-4" // Simulation no desktop sem sidebar (cliente empresarial)
+                : "ml-12 md:ml-12 xl:ml-60 -mt-4 xl:-mt-2 " // Simulation no desktop com sidebar
               : isMobile
               ? "pb-20" // outras páginas no mobile com padding bottom
-              : "ml-16 xl:ml-64" // outras páginas no desktop
+              : profile?.user?.tipo_utilizador === "Company"
+              ? "" // outras páginas no desktop sem sidebar (cliente empresarial)
+              : "ml-16 xl:ml-64" // outras páginas no desktop com sidebar
           }`}
         >
+          {/* Botão de Voltar para Dashboard Empresarial - só para Company */}
+          {profile?.user?.tipo_utilizador === "Company" &&
+            currentPage !== "dashboardEmpresarial" && (
+              <BackToDashboardButton
+                onClick={() => handleMenuClick("dashboardEmpresarial")}
+                isMobile={isMobile}
+              />
+            )}
+
           <div className="flex-grow p-4">
             {isLoading ? (
               <div className="flex justify-center items-center h-full">
-                <LoadingContainer
-                  fullHeight={true}
-                  message="CARREGANDO DASHBOARD..."
-                />
+                <LoadingContainer fullHeight={true} message="CARREGANDO..." />
               </div>
             ) : (
               <>
@@ -356,8 +391,12 @@ const Page = () => {
                     onBack={() => setCurrentPage("sinistro")}
                   />
                 )}
-                {currentPage === "Simulation" && <SimulationScreen />}
+                {currentPage === "Simulation" && <SimulationScreen />}{" "}
+                {currentPage === "gestaoSOAT" && <PageGestaoSOAT />}
                 {currentPage === "Notificacoes" && <NotificationsPage />}
+                {currentPage === "dashboardEmpresarial" && (
+                  <DashboardEmpresarial onNavigate={handleMenuClick} />
+                )}
                 {currentPage === "recibo" && (
                   <ReciboPage onSelectDetail={handleSelectMensagemDetail} />
                 )}
