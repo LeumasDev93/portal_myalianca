@@ -5,7 +5,30 @@ import { useState, useEffect } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import QuickAccessCard from "@/components/Layout/QuickAccessCard";
 import { useQuickAccess } from "@/hooks/useQuickAccess";
-import { FaUsers, FaShieldAlt, FaCar, FaDollarSign } from "react-icons/fa";
+import {
+  FaUsers,
+  FaShieldAlt,
+  FaCar,
+  FaDollarSign,
+  FaMapMarkerAlt,
+  FaExclamationTriangle,
+} from "react-icons/fa";
+import {
+  StatisticsCard,
+  StatisticData,
+} from "@/components/dashboardEmpresarial/components/StatisticsCard";
+import {
+  MenuCard,
+  MenuData,
+} from "@/components/dashboardEmpresarial/components/MenuCard";
+import {
+  IoGrid,
+  IoShieldCheckmarkSharp,
+  IoReceiptSharp,
+} from "react-icons/io5";
+import { TbTopologyStar3 } from "react-icons/tb";
+import { AiFillFileExclamation } from "react-icons/ai";
+import { LuSquareKanban } from "react-icons/lu";
 
 type DashboardEmpresarialProps = {
   onNavigate?: (page: string) => void;
@@ -20,7 +43,7 @@ export default function DashboardEmpresarial({
   const { quickAccessItems, refetch } = useQuickAccess();
 
   // Dados das estatísticas empresariais
-  const statisticsData = [
+  const statisticsData: StatisticData[] = [
     {
       title: "Funcionários Segurados",
       amount: "245",
@@ -48,6 +71,58 @@ export default function DashboardEmpresarial({
       description: "Benefícios corporativos",
       icon: FaDollarSign,
       color: "blue",
+    },
+  ];
+
+  // Dados dos menus do portal (exatos do sistema, mesma cor para todos)
+  const portalMenus: MenuData[] = [
+    {
+      title: "Gestão de SOAT",
+      description: "Gerencie SOAT dos trabalhadores",
+      icon: LuSquareKanban,
+      path: "gerenciamentoSOAT",
+    },
+    {
+      title: "Histórico",
+      description: "Visualize apólices, sinistros e recibos",
+      icon: IoGrid,
+      path: "Historico",
+    },
+    {
+      title: "Apólice",
+      description: "Gerencie suas apólices ativas",
+      icon: IoShieldCheckmarkSharp,
+      path: "apolice",
+    },
+    {
+      title: "Sinistros",
+      description: "Acompanhe sinistros registrados",
+      icon: FaExclamationTriangle,
+      path: "sinistro",
+    },
+    {
+      title: "Recibos & Pagamentos",
+      description: "Visualize e pague recibos",
+      icon: IoReceiptSharp,
+      path: "recibo",
+    },
+    {
+      title: "Ocorrências",
+      description: "Registre novas ocorrências",
+      icon: AiFillFileExclamation,
+      path: "ocorrencias",
+    },
+    {
+      title: "Simular & Contratar",
+      description: "Simule e contrate seguros",
+      icon: TbTopologyStar3,
+      path: "Simulation",
+    },
+    {
+      title: "Agências",
+      description: "Encontre agências próximas",
+      icon: FaMapMarkerAlt,
+      path: "Agencias",
     },
   ];
 
@@ -161,74 +236,8 @@ export default function DashboardEmpresarial({
     return null;
   };
 
-  // Função para obter as classes de cor baseadas na cor especificada
-  const getColorClasses = (color: string) => {
-    const colorMap = {
-      blue: {
-        bg: "bg-blue-100",
-        icon: "bg-blue-100 text-blue-600",
-        text: "text-blue-600",
-        border: "border-blue-200",
-      },
-      green: {
-        bg: "bg-green-50",
-        icon: "bg-green-100 text-green-600",
-        text: "text-green-600",
-        border: "border-green-200",
-      },
-      purple: {
-        bg: "bg-purple-50",
-        icon: "bg-purple-100 text-purple-600",
-        text: "text-purple-600",
-        border: "border-purple-200",
-      },
-      emerald: {
-        bg: "bg-emerald-50",
-        icon: "bg-emerald-100 text-emerald-600",
-        text: "text-emerald-600",
-        border: "border-emerald-200",
-      },
-    };
-    return colorMap[color as keyof typeof colorMap] || colorMap.blue;
-  };
-
   return (
     <div className="p-4 w-full">
-      <h1 className="text-2xl font-bold text-[#002256] mb-6">
-        Dashboard Empresarial
-      </h1>
-
-      {/* Cards de Estatísticas */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {statisticsData.map((stat, index) => {
-          const colors = getColorClasses(stat.color);
-          const IconComponent = stat.icon;
-
-          return (
-            <div
-              key={index}
-              className={`bg-white p-6 rounded-lg shadow-md border-2 ${colors.border} ${colors.bg}`}
-            >
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-sm font-medium text-gray-600 uppercase tracking-wide">
-                  {stat.title}
-                </h3>
-                <div className={`p-2 rounded-full ${colors.icon}`}>
-                  <IconComponent className="w-4 h-4" />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <p className={`text-xl font-bold ${colors.text}`}>
-                  {stat.amount}
-                </p>
-                <p className="text-sm text-gray-500">{stat.description}</p>
-              </div>
-            </div>
-          );
-        })}
-      </div>
-
       {/* Seção de Acesso Rápido */}
       <div className="mt-8">
         <h2 className="text-xl font-bold text-[#002856] mb-4">Acesso Rápido</h2>
@@ -280,6 +289,21 @@ export default function DashboardEmpresarial({
             ))}
           </div>
         )}
+      </div>
+      <h1 className="text-2xl font-bold text-[#002256] mb-6">
+        Dashboard Empresarial
+      </h1>
+
+      {/* Cards de Estatísticas */}
+      <StatisticsCard statistics={statisticsData} />
+
+      {/* Seção de Menus do Portal */}
+      <div className="mt-8">
+        <h2 className="text-xl font-bold text-[#002856] mb-6">
+          Menus do Portal
+        </h2>
+
+        <MenuCard menus={portalMenus} onNavigate={onNavigate} />
       </div>
     </div>
   );

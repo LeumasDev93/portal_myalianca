@@ -10,9 +10,15 @@ import { LoadingContainer } from "@/components/ui/loading-container";
 export default function AgenciasPage() {
   const { agencias, loading, error } = useAgencias();
 
+  if (!agencias || agencias.length === 0) {
+    return (
+      <LoadingContainer fullHeight={true} message="CARREGANDO AGÊNCIAS..." />
+    );
+  }
+
   return (
     <div className="container p-6">
-      <div className="mb-8">
+      <div className="mb-8 mt-6">
         <h1 className="text-xl lg:text-2xl xl:text-3xl font-bold mb-2 text-[#002256]">
           Nossas Agências
         </h1>
@@ -21,7 +27,7 @@ export default function AgenciasPage() {
         </p>
       </div>
       {loading ? (
-        <LoadingContainer fullHeight={true} message="CARREGANDO AGÊNCIAS..." />
+        <></>
       ) : error ? (
         <p className="text-red-500">{error}</p>
       ) : agencias.length === 0 ? (
