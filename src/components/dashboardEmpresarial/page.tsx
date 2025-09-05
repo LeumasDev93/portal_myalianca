@@ -80,7 +80,7 @@ export default function DashboardEmpresarial({
       title: "Gestão de SOAT",
       description: "Gerencie SOAT dos trabalhadores",
       icon: LuSquareKanban,
-      path: "gerenciamentoSOAT",
+      path: "gestaoSOAT",
     },
     {
       title: "Histórico",
