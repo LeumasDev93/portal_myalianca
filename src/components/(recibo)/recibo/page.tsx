@@ -299,7 +299,7 @@ export default function ReciboPage({}: ReciboPageProps) {
   }
 
   return (
-    <div className="flex-1 space-y-4 md:space-y-6 p-3 md:p-6 lg:p-8">
+    <div className="flex-1 space-y-4 md:space-y-6 p-3 md:p-6 lg:p-8 mt-4">
       <div className="flex items-center justify-between">
         <h1 className="text-lg md:text-2xl lg:text-3xl font-bold tracking-tight text-[#002256]">
           Meus Recibos

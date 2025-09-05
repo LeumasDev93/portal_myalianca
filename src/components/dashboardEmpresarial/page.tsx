@@ -5,22 +5,13 @@ import { useState, useEffect } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import QuickAccessCard from "@/components/Layout/QuickAccessCard";
 import { useQuickAccess } from "@/hooks/useQuickAccess";
-import {
-  FaUsers,
-  FaShieldAlt,
-  FaCar,
-  FaDollarSign,
-  FaMapMarkerAlt,
-  FaExclamationTriangle,
-} from "react-icons/fa";
-import {
-  StatisticsCard,
-  StatisticData,
-} from "@/components/dashboardEmpresarial/components/StatisticsCard";
+import { FaMapMarkerAlt, FaExclamationTriangle } from "react-icons/fa";
 import {
   MenuCard,
   MenuData,
 } from "@/components/dashboardEmpresarial/components/MenuCard";
+import { FinanceCard } from "@/components/dashboardEmpresarial/components/FinanceCard";
+import { StatisticsApiCard } from "@/components/dashboardEmpresarial/components/StatisticsApiCard";
 import {
   IoGrid,
   IoShieldCheckmarkSharp,
@@ -41,38 +32,6 @@ export default function DashboardEmpresarial({
   const [currentPage, setCurrentPage] = useState(0);
   const [isMobile, setIsMobile] = useState(false);
   const { quickAccessItems, refetch } = useQuickAccess();
-
-  // Dados das estatísticas empresariais
-  const statisticsData: StatisticData[] = [
-    {
-      title: "Funcionários Segurados",
-      amount: "245",
-      description: "+12% em relação ao mês anterior",
-      icon: FaUsers,
-      color: "blue",
-    },
-    {
-      title: "Apólices Ativas",
-      amount: "18",
-      description: "Cobertura completa",
-      icon: FaShieldAlt,
-      color: "blue",
-    },
-    {
-      title: "SOATs Ativos",
-      amount: "32",
-      description: "Frota empresarial",
-      icon: FaCar,
-      color: "blue",
-    },
-    {
-      title: "Economia Mensal",
-      amount: "12.450 ECV",
-      description: "Benefícios corporativos",
-      icon: FaDollarSign,
-      color: "blue",
-    },
-  ];
 
   // Dados dos menus do portal (exatos do sistema, mesma cor para todos)
   const portalMenus: MenuData[] = [
@@ -238,7 +197,6 @@ export default function DashboardEmpresarial({
 
   return (
     <div className="p-4 w-full">
-      {/* Seção de Acesso Rápido */}
       <div className="mt-8">
         <h2 className="text-xl font-bold text-[#002856] mb-4">Acesso Rápido</h2>
 
@@ -290,12 +248,21 @@ export default function DashboardEmpresarial({
           </div>
         )}
       </div>
-      <h1 className="text-2xl font-bold text-[#002256] mb-6">
-        Dashboard Empresarial
-      </h1>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-8">
+        <div>
+          <h1 className="text-2xl font-bold text-[#002256] mb-6">
+            Dashboard Empresarial
+          </h1>
+          <StatisticsApiCard />
+        </div>
+        <div>
+          <h2 className="text-xl font-bold text-[#002256] mb-6">
+            Resumo Financeiro
+          </h2>
 
-      {/* Cards de Estatísticas */}
-      <StatisticsCard statistics={statisticsData} />
+          <FinanceCard />
+        </div>
+      </div>
 
       {/* Seção de Menus do Portal */}
       <div className="mt-8">

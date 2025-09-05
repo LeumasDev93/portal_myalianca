@@ -215,7 +215,7 @@ export default function OcorrenciasPage({
   }
 
   return (
-    <div className="flex-1 space-y-6 p-6 md:p-8">
+    <div className="flex-1 space-y-6 p-6 md:p-8 mt-4">
       {/* Cabeçalho */}
       <div className="flex flex-row justify-between items-start md:items-center gap-4">
         <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-[#002256]">

@@ -242,7 +242,7 @@ export default function ApoliceDetailPage({
   }
 
   return (
-    <div className="flex-1 space-y-4 md:space-y-6 p-3 md:p-6 lg:p-8">
+    <div className="flex-1 space-y-4 md:space-y-6 p-3 md:p-6 lg:p-8 mt-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Button

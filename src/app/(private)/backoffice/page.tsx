@@ -49,8 +49,9 @@ import { BottomNavigation } from "@/components/Layout/BottomNavigation";
 import NotificationsPage from "@/components/Notifications/page";
 import { LuSquareKanban } from "react-icons/lu";
 import DashboardEmpresarial from "@/components/dashboardEmpresarial/page";
-import { BackToDashboardButton } from "@/components/Layout/BackToDashboardButton";
+import { BackToDashboardButton } from "@/components/ui/BackToDashboardButton";
 import PageGestaoSOAT from "@/components/gestaoSOAT/page";
+import { BackToTopButton } from "@/components/ui/BackToTopButton";
 
 const Page = () => {
   const { profile } = useUserProfile();
@@ -307,6 +308,7 @@ const Page = () => {
               <BackToDashboardButton
                 onClick={() => handleMenuClick("dashboardEmpresarial")}
                 isMobile={isMobile}
+                currentPage={currentPage}
               />
             )}
 
@@ -425,6 +427,8 @@ const Page = () => {
           <Footer />
         </div>
       </div>
+
+      <BackToTopButton />
     </main>
   );
 };

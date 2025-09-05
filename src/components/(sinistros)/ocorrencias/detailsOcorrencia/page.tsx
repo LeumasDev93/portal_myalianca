@@ -116,7 +116,7 @@ export default function OcorrenciaDetailsPage({
   }
 
   return (
-    <div className="flex-1 space-y-6 p-6 md:p-8">
+    <div className="flex-1 space-y-6 p-6 md:p-8 mt-4">
       <div className="flex items-center gap-2">
         <Button
           size="sm"

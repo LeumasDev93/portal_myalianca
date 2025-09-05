@@ -227,7 +227,7 @@ export default function PageGestaoSOAT() {
   };
 
   return (
-    <div className="p-4 w-full mt-4">
+    <div className="p-4 w-full mt-6">
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-[#002256] mb-2">
           Gestão de SOAT

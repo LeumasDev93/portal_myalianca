@@ -50,7 +50,9 @@ export default function ApolicePage({ onSelectDetail }: ApolicePageProps) {
   const [statusFilter, setStatusFilter] = useState("all");
 
   if (isLoadingApolices) {
-    return <LoadingContainer fullHeight={true} message="CARREGANDO APÓLICES..." />;
+    return (
+      <LoadingContainer fullHeight={true} message="CARREGANDO APÓLICES..." />
+    );
   }
 
   if (errorApolices) {
@@ -73,7 +75,9 @@ export default function ApolicePage({ onSelectDetail }: ApolicePageProps) {
   }
 
   if (!apolices || apolices.length === 0) {
-    return <LoadingContainer fullHeight={true} message="CARREGANDO APÓLICES..." />;
+    return (
+      <LoadingContainer fullHeight={true} message="CARREGANDO APÓLICES..." />
+    );
   }
 
   const filteredApolices = apolices.filter((apolice) => {
@@ -93,7 +97,7 @@ export default function ApolicePage({ onSelectDetail }: ApolicePageProps) {
   });
 
   return (
-    <div className="flex-1 space-y-6 p-6 md:p-8">
+    <div className="flex-1 space-y-6 p-6 md:p-8 mt-4">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-[#002256]">
           Minhas Apólices

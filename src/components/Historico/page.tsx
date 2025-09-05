@@ -195,7 +195,7 @@ export default function Historico({
   };
 
   return (
-    <div className="p-4 w-full mt-4">
+    <div className="p-4 w-full mt-6">
       <h1 className="text-xl font-bold text-[#002856]">Acesso Rápido</h1>
 
       <div className="relative mt-4">
