@@ -308,3 +308,43 @@ export interface Simulation {
   contacts: string[];
   invoices: any[];
 }
+
+//---------------------------------SOAT-----------------------------------//
+
+export interface SoatContent {
+  id: string;
+  id_soat: string;
+  json_content: string;
+}
+
+export interface SoatData {
+  id: string;
+  estado: string;
+  situacao: string;
+  contents: SoatContent[];
+  nome_ficheiro: string;
+  mes_referente: string;
+  data_criacao: string;
+  total_colaborador: number;
+  valor_total: string | null;
+}
+
+export interface SoatApiResponse {
+  info: {
+    count: number;
+    page: number;
+    status: number;
+    errors: null | string;
+  };
+  results: SoatData[];
+}
+
+export interface SoatDetailsApiResponse {
+  info: {
+    count: number;
+    page: number;
+    status: number;
+    errors: null | string;
+  };
+  results: SoatData;
+}

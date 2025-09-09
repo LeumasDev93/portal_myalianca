@@ -45,7 +45,7 @@ export function StatisticsApiCard() {
     <div className="">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 h-full">
         {/* Card Apólices Ativas */}
-        <div className="bg-white border border-blue-200 p-6 rounded-lg flex flex-col justify-between h-[150px]">
+        <div className="bg-blue-100 border border-blue-300 p-6 rounded-lg flex flex-col justify-between h-[150px] hover:bg-blue-200 hover:scale-105 selection:bg-blue-200 cursor-pointer transition-all duration-300">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-sm font-medium text-gray-600 uppercase">
               Apólices Ativas
@@ -62,7 +62,7 @@ export function StatisticsApiCard() {
         </div>
 
         {/* Card Sinistros Ativos */}
-        <div className="bg-white border border-red-200 p-6 rounded-lg flex flex-col justify-between h-[150px]">
+        <div className="bg-red-100 border border-red-300 hover:bg-red-200 hover:scale-105 selection:bg-red-200 p-6 rounded-lg flex flex-col justify-between h-[150px] cursor-pointer transition-all duration-300">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-sm font-medium text-gray-600 uppercase">
               Sinistros Ativos

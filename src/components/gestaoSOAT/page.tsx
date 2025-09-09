@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import { useState } from "react";
@@ -8,6 +9,7 @@ import {
   FaPaperPlane,
   FaTrash,
   FaDownload,
+  FaSpinner,
 } from "react-icons/fa";
 import {
   IoDocumentTextOutline,
@@ -19,45 +21,45 @@ import {
   StatisticsCard,
   StatisticData,
 } from "@/components/dashboardEmpresarial/components/StatisticsCard";
-
-interface SoatLista {
-  mesReferencia: string;
-  nomeArquivo: string;
-  dataCriacao: string;
-  totalTrabalhadores: number;
-  valorTotal: string;
-  status: string;
-  situacao: string;
-}
+import { useSoat } from "@/hooks/useSoat";
+import { useSoatDetails } from "@/hooks/useSoatDetails";
+import SoatDetailsModal from "./components/SoatDetailsModal";
+import AddSoatModal from "./components/AddSoatModal";
+import ConfirmationModal from "@/components/ui/ConfirmationModal";
+import Pagination from "@/components/ui/Pagination";
+import { usePagination } from "@/hooks/usePagination";
+import { removeSoat } from "@/service/removeSoatService";
 
 export default function PageGestaoSOAT() {
   const [searchQuery, setSearchQuery] = useState("");
   const [showModal, setShowModal] = useState(false);
-  const [soatListas, setSoatListas] = useState<SoatLista[]>([]);
+  const [showDetailsModal, setShowDetailsModal] = useState(false);
+  const [selectedSoatId, setSelectedSoatId] = useState<string>("");
+  const [removeLoading, setRemoveLoading] = useState<string | null>(null);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [soatToRemove, setSoatToRemove] = useState<any>(null);
 
-  // Estados do modal
-  const [modalData, setModalData] = useState({
-    periodo: "especifico", // "especifico" ou "intervalo"
-    mes: "",
-    ano: "",
-    mesInicio: "",
-    anoInicio: "",
-    mesFim: "",
-    anoFim: "",
-  });
+  const { soatData, loading, refetch } = useSoat();
+  const {
+    soatDetails,
+    loading: detailsLoading,
+    error: detailsError,
+    fetchSoatDetails,
+    clearDetails,
+  } = useSoatDetails();
 
   // Calcular estatísticas dinamicamente
-  const listasAtivas = soatListas.filter(
-    (lista) => lista.status === "Ativo"
+  const listasAtivas = soatData.filter(
+    (lista) => lista.estado === "Ativo"
   ).length;
-  const listasVencidas = soatListas.filter(
-    (lista) => lista.status === "Vencido"
+  const listasVencidas = soatData.filter(
+    (lista) => lista.estado === "Vencido"
   ).length;
-  const totalTrabalhadores = soatListas.reduce(
-    (total, lista) => total + lista.totalTrabalhadores,
+  const totalTrabalhadores = soatData.reduce(
+    (total, lista) => total + lista.total_colaborador,
     0
   );
-  const totalListas = soatListas.length;
+  const totalListas = soatData.length;
 
   // Dados das estatísticas SOAT (calculadas dinamicamente)
   const soatStats: StatisticData[] = [
@@ -92,138 +94,102 @@ export default function PageGestaoSOAT() {
   ];
 
   // Função para filtrar as listas baseado na busca
-  const filteredListas = soatListas.filter((lista) => {
+  const filteredListas = soatData.filter((lista) => {
     if (!searchQuery) return true;
 
     const searchLower = searchQuery.toLowerCase();
     return (
-      lista.mesReferencia.toLowerCase().includes(searchLower) ||
-      lista.nomeArquivo.toLowerCase().includes(searchLower) ||
-      lista.dataCriacao.includes(searchQuery) ||
-      lista.valorTotal.toLowerCase().includes(searchLower) ||
-      lista.status.toLowerCase().includes(searchLower) ||
+      lista.mes_referente.toLowerCase().includes(searchLower) ||
+      lista.nome_ficheiro.toLowerCase().includes(searchLower) ||
+      lista.data_criacao.includes(searchQuery) ||
+      (lista.valor_total &&
+        lista.valor_total.toLowerCase().includes(searchLower)) ||
+      lista.estado.toLowerCase().includes(searchLower) ||
       lista.situacao.toLowerCase().includes(searchLower)
     );
   });
 
-  // Função para validar o formulário
-  const isFormValid = () => {
-    if (modalData.periodo === "especifico") {
-      return modalData.mes && modalData.ano;
-    } else {
-      return (
-        modalData.mesInicio &&
-        modalData.anoInicio &&
-        modalData.mesFim &&
-        modalData.anoFim
-      );
-    }
-  };
+  // Paginação para SOATs
+  const soatsPagination = usePagination({
+    data: filteredListas,
+    itemsPerPage: 5,
+    sortBy: "data_criacao", // Usando data_criacao que existe nos dados
+    sortOrder: "desc",
+  });
 
-  // Função para obter nome do mês
-  const getMonthName = (monthNumber: string) => {
-    const months = [
-      "janeiro",
-      "fevereiro",
-      "março",
-      "abril",
-      "maio",
-      "junho",
-      "julho",
-      "agosto",
-      "setembro",
-      "outubro",
-      "novembro",
-      "dezembro",
-    ];
-    return months[parseInt(monthNumber) - 1] || "";
+  // Função para abrir modal de detalhes
+  const handleViewDetails = async (soatId: string) => {
+    setSelectedSoatId(soatId);
+    setShowDetailsModal(true);
+    clearDetails();
+    await fetchSoatDetails(soatId);
   };
 
   // Função para criar nova lista SOAT
-  const handleCreateSOAT = () => {
-    if (!isFormValid()) return;
-
-    if (modalData.periodo === "especifico") {
-      // Criar uma lista para mês específico
-      const monthName = getMonthName(modalData.mes);
-      const newLista = {
-        mesReferencia: `${monthName} de ${modalData.ano}`,
-        nomeArquivo: `SOAT_${
-          monthName.charAt(0).toUpperCase() + monthName.slice(1)
-        }_${modalData.ano}.xlsx`,
-        dataCriacao: new Date().toLocaleDateString("pt-BR"),
-        totalTrabalhadores: Math.floor(Math.random() * 50) + 30, // Simular número de trabalhadores
-        valorTotal: `R$ ${(Math.random() * 2000 + 1500)
-          .toFixed(2)
-          .replace(".", ",")}`,
-        status: "Ativo",
-        situacao: "Não enviado",
-      };
-
-      setSoatListas((prev) => [newLista, ...prev]);
-    } else {
-      // Criar uma única lista para intervalo de meses
-      const mesInicio = getMonthName(modalData.mesInicio);
-      const mesFim = getMonthName(modalData.mesFim);
-      const anoInicio = modalData.anoInicio;
-      const anoFim = modalData.anoFim;
-
-      // Calcular número total de meses no intervalo
-      const startDate = new Date(
-        parseInt(anoInicio),
-        parseInt(modalData.mesInicio) - 1
-      );
-      const endDate = new Date(
-        parseInt(anoFim),
-        parseInt(modalData.mesFim) - 1
-      );
-      const diffMonths =
-        (endDate.getFullYear() - startDate.getFullYear()) * 12 +
-        (endDate.getMonth() - startDate.getMonth()) +
-        1;
-
-      const mesReferencia =
-        anoInicio === anoFim
-          ? `${mesInicio} a ${mesFim} de ${anoInicio}`
-          : `${mesInicio} de ${anoInicio} a ${mesFim} de ${anoFim}`;
-
-      const nomeArquivo =
-        anoInicio === anoFim
-          ? `SOAT_${mesInicio.charAt(0).toUpperCase() + mesInicio.slice(1)}_${
-              mesFim.charAt(0).toUpperCase() + mesFim.slice(1)
-            }_${anoInicio}.xlsx`
-          : `SOAT_${
-              mesInicio.charAt(0).toUpperCase() + mesInicio.slice(1)
-            }_${anoInicio}_${
-              mesFim.charAt(0).toUpperCase() + mesFim.slice(1)
-            }_${anoFim}.xlsx`;
-
-      const newLista: SoatLista = {
-        mesReferencia,
-        nomeArquivo,
-        dataCriacao: new Date().toLocaleDateString("pt-BR"),
-        totalTrabalhadores: Math.floor(Math.random() * 50) + 30 * diffMonths, // Mais trabalhadores para intervalo
-        valorTotal: `R$ ${((Math.random() * 2000 + 1500) * diffMonths)
-          .toFixed(2)
-          .replace(".", ",")}`,
-        status: "Ativo",
-        situacao: "Não enviado",
-      };
-
-      setSoatListas((prev) => [newLista, ...prev]);
+  const handleCreateSOAT = async (data: {
+    periodo: string;
+    mes: string;
+    ano: string;
+    mesInicio: string;
+    anoInicio: string;
+    mesFim: string;
+    anoFim: string;
+  }) => {
+    try {
+      console.log("Dados do formulário:", data);
+      // Aqui você pode implementar a chamada para a API para criar um novo SOAT
+      // Por enquanto, vamos apenas recarregar os dados
+      await refetch();
+    } catch (error) {
+      console.error("Erro ao criar SOAT:", error);
     }
+  };
 
-    // Fechar modal e limpar dados
-    setShowModal(false);
-    setModalData({
-      periodo: "especifico",
-      mes: "",
-      ano: "",
-      mesInicio: "",
-      anoInicio: "",
-      mesFim: "",
-      anoFim: "",
-    });
+  const handleRemoveSoat = (soat: any) => {
+    setSoatToRemove(soat);
+    setShowConfirmModal(true);
+  };
+
+  const confirmRemoveSoat = async () => {
+    if (!soatToRemove) return;
+
+    try {
+      const soatId = soatToRemove.id;
+
+      if (!soatId) {
+        throw new Error("ID do SOAT não encontrado");
+      }
+
+      setRemoveLoading(soatId);
+
+      console.log("Removendo SOAT:", soatId);
+
+      // Chamar a API para remover o SOAT
+      const response = await removeSoat(soatId);
+
+      if (response.info.status === 200) {
+        console.log("SOAT removido com sucesso:", response);
+
+        // Fechar modal de confirmação
+        setShowConfirmModal(false);
+        setSoatToRemove(null);
+
+        // Recarregar dados após remover
+        refetch();
+      } else {
+        throw new Error(response.info.errors || "Erro ao remover SOAT");
+      }
+    } catch (error: any) {
+      console.error("Erro ao remover SOAT:", error);
+      alert(`Erro ao remover SOAT: ${error.message}`);
+    } finally {
+      setRemoveLoading(null);
+    }
+  };
+
+  const cancelRemoveSoat = () => {
+    setShowConfirmModal(false);
+    setSoatToRemove(null);
   };
 
   return (
@@ -265,13 +231,15 @@ export default function PageGestaoSOAT() {
               </button>
             )}
           </div>
-          <button
-            onClick={() => setShowModal(true)}
-            className="bg-[#B7021C] hover:bg-[#B7021C]/90 text-white px-6 py-3 rounded-lg font-medium flex items-center gap-2 transition-colors"
-          >
-            <FaPlus className="w-4 h-4" />
-            Adicionar SOAT
-          </button>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setShowModal(true)}
+              className="bg-[#B7021C] hover:bg-[#B7021C]/90 text-white px-6 py-3 rounded-lg font-medium flex items-center gap-2 transition-colors"
+            >
+              <FaPlus className="w-4 h-4" />
+              Adicionar SOAT
+            </button>
+          </div>
         </div>
       </div>
 
@@ -315,7 +283,19 @@ export default function PageGestaoSOAT() {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {soatListas.length === 0 ? (
+              {loading ? (
+                <tr>
+                  <td
+                    colSpan={8}
+                    className="px-6 py-12 text-center text-gray-500"
+                  >
+                    <div className="flex flex-col items-center">
+                      <FaSpinner className="w-8 h-8 text-gray-300 mb-4 animate-spin" />
+                      <p>Carregando dados do SOAT...</p>
+                    </div>
+                  </td>
+                </tr>
+              ) : soatData.length === 0 ? (
                 <tr>
                   <td
                     colSpan={8}
@@ -340,7 +320,7 @@ export default function PageGestaoSOAT() {
                     </div>
                   </td>
                 </tr>
-              ) : filteredListas.length === 0 ? (
+              ) : soatsPagination.paginatedData.length === 0 ? (
                 <tr>
                   <td
                     colSpan={8}
@@ -356,32 +336,32 @@ export default function PageGestaoSOAT() {
                   </td>
                 </tr>
               ) : (
-                filteredListas.map((lista, index) => (
-                  <tr key={index} className="hover:bg-gray-50">
+                soatsPagination.paginatedData.map((lista) => (
+                  <tr key={lista.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-red-600 font-medium">
-                      {lista.mesReferencia}
+                      {lista.mes_referente}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-red-600">
-                      {lista.nomeArquivo}
+                      {lista.nome_ficheiro}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {lista.dataCriacao}
+                      {new Date(lista.data_criacao).toLocaleDateString("pt-BR")}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {lista.totalTrabalhadores}
+                      {lista.total_colaborador}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {lista.valorTotal}
+                      {lista.valor_total || "N/A"}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span
-                        className={`inline-flex px-3 py-1 rounded-full text-xs font-medium ${
-                          lista.status === "Ativo"
-                            ? "bg-green-100 text-green-800"
+                        className={`inline-flex px-3 py-1 rounded-sm text-xs font-semibold ${
+                          lista.estado === "Ativo"
+                            ? "bg-green-500 text-white"
                             : "bg-red-100 text-red-800"
                         }`}
                       >
-                        {lista.status}
+                        {lista.estado}
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
@@ -397,27 +377,33 @@ export default function PageGestaoSOAT() {
                           </>
                         ) : (
                           <span className="text-gray-600 text-sm">
-                            Não enviado
+                            {lista.situacao}
                           </span>
                         )}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       <div className="flex space-x-2">
-                        <button className="text-blue-600 hover:text-blue-800 p-1 rounded">
+                        <button
+                          onClick={() => handleViewDetails(lista.id)}
+                          className="bg-blue-50 border border-blue-200 flex  items-center justify-center text-blue-600 hover:text-blue-800 p-2 cursor-pointer rounded"
+                        >
                           <FaEye className="w-4 h-4" />
                         </button>
                         {lista.situacao !== "Enviado" && (
                           <>
-                            <button className="text-blue-600 hover:text-blue-800 p-1 rounded">
+                            <button className="bg-blue-50 border border-blue-200 flex  items-center justify-center text-blue-600 hover:text-blue-800 p-2 cursor-pointer rounded">
                               <FaPaperPlane className="w-4 h-4" />
                             </button>
-                            <button className="text-red-600 hover:text-red-800 p-1 rounded">
+                            <button
+                              className="bg-red-50 border border-red-200 flex  items-center justify-center text-red-600 hover:text-red-800 p-2 rounded cursor-pointer"
+                              onClick={() => handleRemoveSoat(lista)}
+                            >
                               <FaTrash className="w-4 h-4" />
                             </button>
                           </>
                         )}
-                        <button className="text-green-600 hover:text-green-800 p-1 rounded">
+                        <button className="bg-green-50 border border-green-200 flex  items-center justify-center text-green-600 hover:text-green-800 p-2 rounded cursor-pointer">
                           <FaDownload className="w-4 h-4" />
                         </button>
                       </div>
@@ -430,234 +416,58 @@ export default function PageGestaoSOAT() {
         </div>
       </div>
 
-      {/* Modal Adicionar Nova Lista de SOAT */}
-      {showModal && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-lg shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-6">
-              <h2 className="text-xl font-bold text-[#002256] mb-2">
-                Adicionar Nova Lista de SOAT
-              </h2>
-              <p className="text-sm text-gray-600 mb-6">
-                Crie uma nova lista de SOAT para um mês específico. Os dados
-                serão importados do Excel configurado no backend.
-              </p>
-
-              {/* Período */}
-              <div className="mb-6">
-                <label className="block text-sm font-medium text-gray-700 mb-3">
-                  Período <span className="text-red-500">*</span>
-                </label>
-
-                <div className="space-y-3">
-                  <label className="flex items-center space-x-3 cursor-pointer">
-                    <input
-                      type="radio"
-                      name="periodo"
-                      value="especifico"
-                      checked={modalData.periodo === "especifico"}
-                      onChange={(e) =>
-                        setModalData({ ...modalData, periodo: e.target.value })
-                      }
-                      className="w-4 h-4 text-[#002256] border-gray-300 focus:ring-[#002256]"
-                    />
-                    <div>
-                      <div className="flex items-center space-x-2">
-                        <span className="text-blue-600">📅</span>
-                        <span className="font-medium text-gray-900">
-                          Mês Específico
-                        </span>
-                      </div>
-                      <p className="text-sm text-gray-500 ml-6">
-                        Criar lista para um único mês
-                      </p>
-                    </div>
-                  </label>
-
-                  <label className="flex items-center space-x-3 cursor-pointer">
-                    <input
-                      type="radio"
-                      name="periodo"
-                      value="intervalo"
-                      checked={modalData.periodo === "intervalo"}
-                      onChange={(e) =>
-                        setModalData({ ...modalData, periodo: e.target.value })
-                      }
-                      className="w-4 h-4 text-[#002256] border-gray-300 focus:ring-[#002256]"
-                    />
-                    <div>
-                      <div className="flex items-center space-x-2">
-                        <span className="text-green-600">📊</span>
-                        <span className="font-medium text-gray-900">
-                          Intervalo de Meses
-                        </span>
-                      </div>
-                      <p className="text-sm text-gray-500 ml-6">
-                        Criar listas para múltiplos meses consecutivos
-                      </p>
-                    </div>
-                  </label>
-                </div>
-              </div>
-
-              {/* Mês/Ano */}
-              <div className="mb-6">
-                <label className="block text-sm font-medium text-gray-700 mb-3">
-                  Mês/Ano <span className="text-red-500">*</span>
-                </label>
-
-                {modalData.periodo === "especifico" ? (
-                  <div className="grid grid-cols-2 gap-4">
-                    <select
-                      value={modalData.mes}
-                      onChange={(e) =>
-                        setModalData({ ...modalData, mes: e.target.value })
-                      }
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#002256] focus:border-transparent"
-                    >
-                      <option value="">Selecione o mês</option>
-                      <option value="01">Janeiro</option>
-                      <option value="02">Fevereiro</option>
-                      <option value="03">Março</option>
-                      <option value="04">Abril</option>
-                      <option value="05">Maio</option>
-                      <option value="06">Junho</option>
-                      <option value="07">Julho</option>
-                      <option value="08">Agosto</option>
-                      <option value="09">Setembro</option>
-                      <option value="10">Outubro</option>
-                      <option value="11">Novembro</option>
-                      <option value="12">Dezembro</option>
-                    </select>
-                    <select
-                      value={modalData.ano}
-                      onChange={(e) =>
-                        setModalData({ ...modalData, ano: e.target.value })
-                      }
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#002256] focus:border-transparent"
-                    >
-                      <option value="">Selecione o ano</option>
-                      <option value="2024">2024</option>
-                      <option value="2025">2025</option>
-                      <option value="2026">2026</option>
-                    </select>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
-                      <select
-                        value={modalData.mesInicio}
-                        onChange={(e) =>
-                          setModalData({
-                            ...modalData,
-                            mesInicio: e.target.value,
-                          })
-                        }
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#002256] focus:border-transparent"
-                      >
-                        <option value="">Mês início</option>
-                        <option value="01">Janeiro</option>
-                        <option value="02">Fevereiro</option>
-                        <option value="03">Março</option>
-                        <option value="04">Abril</option>
-                        <option value="05">Maio</option>
-                        <option value="06">Junho</option>
-                        <option value="07">Julho</option>
-                        <option value="08">Agosto</option>
-                        <option value="09">Setembro</option>
-                        <option value="10">Outubro</option>
-                        <option value="11">Novembro</option>
-                        <option value="12">Dezembro</option>
-                      </select>
-                      <select
-                        value={modalData.anoInicio}
-                        onChange={(e) =>
-                          setModalData({
-                            ...modalData,
-                            anoInicio: e.target.value,
-                          })
-                        }
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#002256] focus:border-transparent"
-                      >
-                        <option value="">Ano início</option>
-                        <option value="2024">2024</option>
-                        <option value="2025">2025</option>
-                        <option value="2026">2026</option>
-                      </select>
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <select
-                        value={modalData.mesFim}
-                        onChange={(e) =>
-                          setModalData({ ...modalData, mesFim: e.target.value })
-                        }
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#002256] focus:border-transparent"
-                      >
-                        <option value="">Mês fim</option>
-                        <option value="01">Janeiro</option>
-                        <option value="02">Fevereiro</option>
-                        <option value="03">Março</option>
-                        <option value="04">Abril</option>
-                        <option value="05">Maio</option>
-                        <option value="06">Junho</option>
-                        <option value="07">Julho</option>
-                        <option value="08">Agosto</option>
-                        <option value="09">Setembro</option>
-                        <option value="10">Outubro</option>
-                        <option value="11">Novembro</option>
-                        <option value="12">Dezembro</option>
-                      </select>
-                      <select
-                        value={modalData.anoFim}
-                        onChange={(e) =>
-                          setModalData({ ...modalData, anoFim: e.target.value })
-                        }
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#002256] focus:border-transparent"
-                      >
-                        <option value="">Ano fim</option>
-                        <option value="2024">2024</option>
-                        <option value="2025">2025</option>
-                        <option value="2026">2026</option>
-                      </select>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* Botões */}
-              <div className="flex justify-end space-x-3">
-                <button
-                  onClick={() => {
-                    setShowModal(false);
-                    setModalData({
-                      periodo: "especifico",
-                      mes: "",
-                      ano: "",
-                      mesInicio: "",
-                      anoInicio: "",
-                      mesFim: "",
-                      anoFim: "",
-                    });
-                  }}
-                  className="px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-                >
-                  Cancelar
-                </button>
-                <button
-                  onClick={() => {
-                    // Função para criar nova lista SOAT
-                    handleCreateSOAT();
-                  }}
-                  disabled={!isFormValid()}
-                  className="px-4 py-2 bg-[#B7021C] text-white rounded-lg hover:bg-[#B7021C]/90 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
-                >
-                  Criar Lista
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
+      {/* Paginação para SOATs */}
+      {soatsPagination.totalPages > 1 && (
+        <Pagination
+          currentPage={soatsPagination.currentPage}
+          totalPages={soatsPagination.totalPages}
+          onPageChange={soatsPagination.goToPage}
+          onNext={soatsPagination.nextPage}
+          onPrev={soatsPagination.prevPage}
+          canGoNext={soatsPagination.canGoNext}
+          canGoPrev={soatsPagination.canGoPrev}
+          totalItems={soatsPagination.totalItems}
+          startIndex={soatsPagination.startIndex}
+          endIndex={soatsPagination.endIndex}
+        />
       )}
+
+      {/* Modal Adicionar Nova Lista de SOAT */}
+      <AddSoatModal
+        isOpen={showModal}
+        onClose={() => setShowModal(false)}
+        onCreate={handleCreateSOAT}
+      />
+
+      {/* Modal Detalhes do SOAT */}
+      <SoatDetailsModal
+        isOpen={showDetailsModal}
+        onClose={() => {
+          setShowDetailsModal(false);
+          clearDetails();
+        }}
+        soatDetails={soatDetails}
+        loading={detailsLoading}
+        error={detailsError}
+        onRefresh={() => {
+          if (selectedSoatId) {
+            fetchSoatDetails(selectedSoatId);
+          }
+        }}
+      />
+
+      {/* Modal de Confirmação para Remover SOAT */}
+      <ConfirmationModal
+        isOpen={showConfirmModal}
+        onClose={cancelRemoveSoat}
+        onConfirm={confirmRemoveSoat}
+        title="Remover SOAT"
+        message={`Tem certeza que deseja remover este SOAT? Esta ação não pode ser desfeita.`}
+        confirmText="Remover"
+        cancelText="Cancelar"
+        loading={removeLoading === soatToRemove?.id}
+        type="danger"
+      />
     </div>
   );
 }

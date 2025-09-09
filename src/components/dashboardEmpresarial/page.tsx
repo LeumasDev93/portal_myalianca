@@ -88,8 +88,10 @@ export default function DashboardEmpresarial({
   useEffect(() => {
     const updateCardsPerPage = () => {
       const width = window.innerWidth;
-      if (width >= 1536) {
+      if (width >= 2000) {
         setCardsPerPage(6);
+      } else if (width >= 1920) {
+        setCardsPerPage(5);
       } else if (width >= 1280) {
         setCardsPerPage(5);
       } else if (width >= 1024) {

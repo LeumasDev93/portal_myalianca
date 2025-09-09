@@ -50,7 +50,7 @@ export function FinanceCard() {
     <div className="">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 h-full">
         {/* Card Pago */}
-        <div className="bg-green-50 border border-green-200 p-6 rounded-lg flex flex-col justify-between h-[150px]">
+        <div className="bg-green-50 border border-green-200 p-6 rounded-lg flex flex-col justify-between h-[150px] hover:bg-green-100 hover:scale-105 cursor-pointer transition-all duration-300">
           <div className="text-center">
             <h3 className="text-sm font-medium text-gray-600 uppercase mb-4">
               Pago
@@ -69,7 +69,7 @@ export function FinanceCard() {
         </div>
 
         {/* Card Em Cobrança */}
-        <div className="bg-orange-50 border border-orange-200 p-6 rounded-lg flex flex-col justify-between h-[150px]">
+        <div className="bg-orange-50 border border-orange-200 p-6 rounded-lg flex flex-col justify-between h-[150px] hover:bg-orange-100 hover:scale-105 cursor-pointer transition-all duration-300">
           <div className="text-center">
             <h3 className="text-sm font-medium text-gray-600 uppercase mb-4">
               Em Cobrança
