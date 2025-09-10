@@ -10,8 +10,7 @@ export const useSoat = () => {
 
   const { profile } = useUserProfile();
 
-  // Usar userId do perfil ou um fixo para teste
-  const userId = profile?.user?.id || "614ba529-9b3a-443d-b97d-bbdb1ff9ed1f";
+  const userId = profile?.user?.id;
 
   const fetchSoatData = useCallback(async () => {
     if (!userId || userId.trim() === '') {
@@ -54,13 +53,16 @@ export const useSoat = () => {
       console.log('Resposta da API SOAT:', data);
       
       if (data.info.status === 200) {
-        setSoatData(data.results);
-        console.log('Dados SOAT carregados com sucesso:', data.results.length, 'itens');
+        const sortedData = data.results.sort((a: any, b: any) => {
+          const dateA = new Date(a.data_criacao);
+          const dateB = new Date(b.data_criacao);
+          return dateB.getTime() - dateA.getTime();
+        });
+        setSoatData(sortedData);
       } else {
         setError(`Erro na API: ${data.info.errors || 'Status não é 200'}`);
       }
     } catch (err: any) {
-      console.error('Erro ao buscar dados do SOAT:', err);
       setError(`Erro na requisição: ${err instanceof Error ? err.message : 'Erro desconhecido'}`);
     } finally {
       setLoading(false);

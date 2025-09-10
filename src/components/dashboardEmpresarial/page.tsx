@@ -5,6 +5,7 @@ import { useState, useEffect } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import QuickAccessCard from "@/components/Layout/QuickAccessCard";
 import { useQuickAccess } from "@/hooks/useQuickAccess";
+import { useUserProfile } from "@/hooks/useUserProfile";
 import { FaMapMarkerAlt, FaExclamationTriangle } from "react-icons/fa";
 import {
   MenuCard,
@@ -32,6 +33,7 @@ export default function DashboardEmpresarial({
   const [currentPage, setCurrentPage] = useState(0);
   const [isMobile, setIsMobile] = useState(false);
   const { quickAccessItems, refetch } = useQuickAccess();
+  const { profile } = useUserProfile();
 
   // Dados dos menus do portal (exatos do sistema, mesma cor para todos)
   const portalMenus: MenuData[] = [
@@ -112,8 +114,20 @@ export default function DashboardEmpresarial({
   const organizePages = () => {
     const pages: any[][] = [];
 
+    // Filtrar cards de acesso rápido baseado no tipo de usuário
+    const filteredQuickAccessItems = quickAccessItems.filter((item) => {
+      // Se o usuário não for "Company", esconder o card "Gestão de SOAT"
+      if (
+        profile?.user?.tipo_utilizador !== "Company" &&
+        item.link === "gestaoSOAT"
+      ) {
+        return false;
+      }
+      return true;
+    });
+
     // Adiciona cards de acesso rápido da API e ordena pelo order_number
-    const quickAccessCards = quickAccessItems
+    const quickAccessCards = filteredQuickAccessItems
       .map((item) => ({
         type: "quickAccess" as const,
         data: item,

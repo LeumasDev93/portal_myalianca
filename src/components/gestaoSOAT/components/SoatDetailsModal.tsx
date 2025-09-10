@@ -10,7 +10,9 @@ import Pagination from "@/components/ui/Pagination";
 import { usePagination } from "@/hooks/usePagination";
 import { addCollaborator } from "@/service/addCollaboratorService";
 import { removeCollaborator } from "@/service/removeCollaboratorService";
+import { updateCollaborator } from "@/service/updateCollaboratorService";
 import * as XLSX from "xlsx";
+import { LoadingContainer } from "@/components/ui/loading-container";
 
 interface SoatDetailsModalProps {
   isOpen: boolean;
@@ -159,7 +161,11 @@ export default function SoatDetailsModal({
   const handleEditCollaborator = (content: any) => {
     try {
       const collaborator = JSON.parse(content.json_content);
-      setSelectedCollaborator(collaborator);
+      // Incluir o ID do colaborador nos dados selecionados
+      setSelectedCollaborator({
+        ...collaborator,
+        id: content.id, // ID do colaborador para a API
+      });
       setModalMode("edit");
       setShowCollaboratorModal(true);
     } catch (error) {
@@ -175,8 +181,41 @@ export default function SoatDetailsModal({
       if (modalMode === "edit") {
         // Lógica para editar colaborador
         console.log("Editando colaborador:", collaboratorData);
-        // Aqui você pode implementar a chamada para a API para editar
-        await new Promise((resolve) => setTimeout(resolve, 1000));
+        console.log("ID do colaborador:", selectedCollaborator?.id);
+        console.log("ID do SOAT:", soatDetails?.id);
+
+        if (!selectedCollaborator?.id || !soatDetails?.id) {
+          throw new Error("ID do colaborador ou SOAT não encontrado");
+        }
+
+        // Preparar os dados para a API
+        const requestData = {
+          id_soat: soatDetails.id,
+          json_content: JSON.stringify(collaboratorData),
+        };
+
+        console.log("Dados da requisição de edição:", requestData);
+
+        // Chamar a API para editar o colaborador
+        const response = await updateCollaborator(
+          selectedCollaborator.id.toString(),
+          requestData
+        );
+
+        if (response.info.status === 200) {
+          console.log("Colaborador editado com sucesso:", response);
+
+          // Fechar modal após sucesso
+          setShowCollaboratorModal(false);
+          setSelectedCollaborator(null);
+
+          // Recarregar dados da tabela de colaboradores
+          if (onRefresh) {
+            onRefresh();
+          }
+        } else {
+          throw new Error(response.info.errors || "Erro ao editar colaborador");
+        }
       } else {
         // Lógica para adicionar colaborador
         console.log("Adicionando colaborador:", collaboratorData);
@@ -278,7 +317,6 @@ export default function SoatDetailsModal({
       }
     } catch (error: any) {
       console.error("Erro ao remover colaborador:", error);
-      alert(`Erro ao remover colaborador: ${error.message}`);
     } finally {
       setRemoveLoading(null);
     }
@@ -294,15 +332,17 @@ export default function SoatDetailsModal({
       <div className="bg-gray-100 rounded-lg shadow-xl max-w-6xl w-full max-h-[90vh] overflow-y-auto">
         {loading ? (
           <div className="flex justify-center items-center py-12">
-            <FaSpinner className="w-8 h-8 text-gray-400 animate-spin mr-3" />
-            <span className="text-gray-600">Carregando detalhes...</span>
+            <LoadingContainer message="Carregando detalhes..." />
           </div>
         ) : error ? (
           <div className="p-6">
             <div className="bg-red-50 border border-red-200 rounded-lg p-4">
               <div className="flex items-center">
                 <IoAlertCircleOutline className="w-5 h-5 text-red-600 mr-2" />
-                <p className="text-red-800">{error}</p>
+                <p className="text-red-800">
+                  Serviços temporariamente indisponível! Tente novamente mais
+                  tarde.
+                </p>
               </div>
             </div>
           </div>
@@ -326,10 +366,10 @@ export default function SoatDetailsModal({
                   </div>
                   <div className="flex items-center space-x-4 text-sm">
                     <span>Arquivo: {soatDetails.nome_ficheiro}</span>
-                    <span>|</span>
+                    {/* <span>|</span>
                     <span>
                       Total: {soatDetails.total_colaborador} colaboradores
-                    </span>
+                    </span> */}
                   </div>
                 </div>
                 <button
@@ -359,19 +399,7 @@ export default function SoatDetailsModal({
                     Colaboradores Ativos
                   </div>
                   <div className="text-2xl text-left font-bold text-green-600">
-                    {
-                      filteredContents.filter((content: any) => {
-                        try {
-                          const colaborador = JSON.parse(content.json_content);
-                          return (
-                            colaborador.status === "Ativo" ||
-                            colaborador.status === "ativo"
-                          );
-                        } catch {
-                          return false;
-                        }
-                      }).length
-                    }
+                    {filteredContents.length}
                   </div>
                 </div>
                 <div className="bg-white rounded-lg p-4 text-center">

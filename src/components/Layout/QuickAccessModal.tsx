@@ -160,8 +160,8 @@ const AVAILABLE_MENUS = [
 interface QuickAccessModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onItemAdded?: () => void; // Callback para atualizar a lista após adicionar item
-  existingItems?: Array<{ nome: string }>; // Lista de itens já existentes no acesso rápido
+  onItemAdded?: () => void;
+  existingItems?: Array<{ nome: string }>;
 }
 
 export function QuickAccessModal({
@@ -176,13 +176,11 @@ export function QuickAccessModal({
   const { profile } = useUserProfile();
   const { registerActivity } = useActivities();
 
-  // Filtra os menus baseado no tipo de cliente e verifica se já existem
   const availableMenus = AVAILABLE_MENUS.filter((menu) => {
-    // Se o menu tem onlyForCompany, só mostra para Company
     if (menu.onlyForCompany) {
       return profile?.user?.tipo_utilizador === "Company";
     }
-    return true; // Mostra todos os outros menus
+    return true;
   }).map((menu) => ({
     ...menu,
     isDisabled: existingItems.some((item) => item.nome === menu.nome),
@@ -216,7 +214,6 @@ export function QuickAccessModal({
         throw new Error("Configuração da API incompleta");
       }
 
-      // Garantir que todos os campos tenham valores válidos
       const requestData = {
         nome: String(menu.nome || ""),
         titulo: String(menu.titulo || ""),
@@ -232,7 +229,6 @@ export function QuickAccessModal({
         order_number: Number(menu.order_number || 1),
       };
 
-      // Verificar se todos os campos estão presentes
       const requiredFields = [
         "nome",
         "titulo",
@@ -291,10 +287,8 @@ export function QuickAccessModal({
         });
       } catch (error) {
         console.error("Erro ao registrar atividade:", error);
-        // Não interrompe o fluxo se falhar ao registrar atividade
       }
 
-      // Chama o callback para atualizar a lista
       if (onItemAdded) {
         onItemAdded();
       }

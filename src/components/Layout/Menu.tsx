@@ -27,6 +27,10 @@ export function Menu({ onMenuClick, menuItems, activePath }: MenuProps) {
   const mainItems = menuItems.filter((item) => item.title !== "Sair");
   const logoutItem = menuItems.find((item) => item.title === "Sair");
 
+  const handleLogoClick = () => {
+    onMenuClick("Historico");
+  };
+
   useEffect(() => {
     const handleResize = () => {
       setIsCollapsed(window.innerWidth < 1280);
@@ -61,7 +65,11 @@ export function Menu({ onMenuClick, menuItems, activePath }: MenuProps) {
       >
         {/* Cabeçalho */}
         <div className="flex items-center px-4 py-[16px] xl:py-[15px] bg-white shadow-sm border-b border-gray-100">
-          <div className="flex items-center">
+          <div
+            className="flex items-center cursor-pointer"
+            onClick={handleLogoClick}
+            title="Voltar ao início"
+          >
             <Image
               src={Logo}
               alt="Logo"

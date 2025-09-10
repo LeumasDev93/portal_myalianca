@@ -88,19 +88,26 @@ export default function Historico({
       "Agências",
     ];
 
-    // Adiciona "Gestão de SOAT" apenas se o usuário for Company
-    if (profile?.user?.tipo_utilizador === "Company") {
-      allAvailableMenus.push("Gestão de SOAT");
-    }
+    // Filtrar cards de acesso rápido baseado no tipo de usuário
+    const filteredQuickAccessItems = quickAccessItems.filter((item) => {
+      // Se o usuário não for "Company", esconder o card "Gestão de SOAT"
+      if (
+        profile?.user?.tipo_utilizador !== "Company" &&
+        item.link === "gestaoSOAT"
+      ) {
+        return false;
+      }
+      return true;
+    });
 
-    // Verifica se todos os menus disponíveis estão adicionados
-    const addedMenuNames = quickAccessItems.map((item) => item.nome);
+    // Verifica se todos os menus disponíveis estão adicionados (usando itens filtrados)
+    const addedMenuNames = filteredQuickAccessItems.map((item) => item.nome);
     const allMenusAdded = allAvailableMenus.every((menuName) =>
       addedMenuNames.includes(menuName)
     );
 
-    // Adiciona cards de acesso rápido da API e ordena pelo order_number
-    const quickAccessCards = quickAccessItems
+    // Adiciona cards de acesso rápido da API e ordena pelo order_number (usando itens filtrados)
+    const quickAccessCards = filteredQuickAccessItems
       .map((item) => ({
         type: "quickAccess" as const,
         data: item,
@@ -163,6 +170,11 @@ export default function Historico({
           icon_color={item.data.icon_color}
           order_number={item.data.order_number}
           descricao_botao={item.data.descricao_botao}
+          hideDelete={
+            item.data.link === "gestaoSOAT" ||
+            item.data.link === "ocorrencias" ||
+            item.data.link === "Simulation"
+          }
           onClick={() => {
             if (item.data.link && onNavigate) {
               onNavigate(item.data.link);

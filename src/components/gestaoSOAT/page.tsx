@@ -66,7 +66,7 @@ export default function PageGestaoSOAT() {
   const totalListas = soatData.length;
 
   // Verificar se existe SOAT com estado pendente
-  const hasPendingSoat = soatData.some((soat) => soat.estado === "Pendente");
+  const hasPendingSoat = soatData.some((soat) => soat.situacao === "Pendente");
 
   // Dados das estatísticas SOAT (calculadas dinamicamente)
   const soatStats: StatisticData[] = [
@@ -294,12 +294,7 @@ export default function PageGestaoSOAT() {
           <div className="flex gap-2">
             <button
               onClick={handleCreateSOATClick}
-              disabled={hasPendingSoat}
-              className={`px-6 py-3 rounded-lg font-medium flex items-center gap-2 transition-colors ${
-                hasPendingSoat
-                  ? "bg-gray-400 text-gray-600 cursor-not-allowed"
-                  : "bg-[#B7021C] hover:bg-[#B7021C]/90 text-white"
-              }`}
+              className={`px-6 py-3 rounded-lg font-medium flex items-center gap-2 transition-colors bg-[#B7021C] hover:bg-[#B7021C]/90 text-white`}
               title={
                 hasPendingSoat
                   ? "Existe um SOAT pendente. Finalize-o antes de criar um novo."
@@ -520,6 +515,9 @@ export default function PageGestaoSOAT() {
         loading={detailsLoading}
         error={detailsError}
         onRefresh={() => {
+          // Atualizar dados principais do SOAT (para atualizar total_colaborador)
+          refetch();
+          // Atualizar detalhes do SOAT selecionado
           if (selectedSoatId) {
             fetchSoatDetails(selectedSoatId);
           }
@@ -557,10 +555,37 @@ export default function PageGestaoSOAT() {
         isOpen={showPendingWarningModal}
         onClose={closePendingWarningModal}
         onConfirm={closePendingWarningModal}
-        title="SOAT Pendente"
-        message="Existe um SOAT com estado 'Pendente' na tabela. Finalize o SOAT pendente antes de criar um novo."
-        confirmText="Entendi"
-        cancelText="Fechar"
+        title=" SOAT Pendente"
+        message={
+          <div className="space-y-3">
+            <div className="text-red-600 font-semibold">
+              🚫 NÃO É POSSÍVEL CRIAR UM NOVO SOAT NO MOMENTO
+            </div>
+
+            <div>
+              <div className="font-semibold mb-2">📋 SITUAÇÃO ATUAL:</div>
+              <div className="ml-4">
+                • Existe um SOAT com estado &quot;Pendente&quot; na sua lista
+              </div>
+            </div>
+
+            <div>
+              <div className="font-semibold mb-2">
+                ✅ PARA CRIAR UM NOVO SOAT, VOCÊ DEVE PRIMEIRO:
+              </div>
+              <div className="ml-4 space-y-1">
+                <div>1️⃣ Finalizar o SOAT pendente</div>
+                <div>2️⃣ Adicionar todos os colaboradores necessários</div>
+                <div>3️⃣ Enviar o SOAT para processamento</div>
+              </div>
+            </div>
+
+            <div className="text-blue-600">
+              💡 Após completar essas etapas, você poderá criar um novo SOAT.
+            </div>
+          </div>
+        }
+        confirmText="OK"
         loading={false}
         type="warning"
       />

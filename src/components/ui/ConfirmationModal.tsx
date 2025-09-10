@@ -1,11 +1,12 @@
 import { FaExclamationTriangle } from "react-icons/fa";
+import { ReactNode } from "react";
 
 interface ConfirmationModalProps {
   isOpen: boolean;
   onClose: () => void;
   onConfirm: () => void;
   title: string;
-  message: string;
+  message: string | ReactNode;
   confirmText?: string;
   cancelText?: string;
   loading?: boolean;
@@ -61,17 +62,17 @@ export default function ConfirmationModal({
       <div className="bg-white rounded-lg shadow-xl max-w-md w-full">
         <div className="p-6">
           <div className="flex items-center mb-4">
-            <div className={`${styles.iconColor} mr-3`}>
-              {styles.icon}
-            </div>
-            <h2 className="text-xl font-bold text-gray-900">
-              {title}
-            </h2>
+            <div className={`${styles.iconColor} mr-3`}>{styles.icon}</div>
+            <h2 className="text-xl font-bold text-gray-900">{title}</h2>
           </div>
-          
-          <p className="text-gray-600 mb-6">
-            {message}
-          </p>
+
+          <div className="text-gray-600 mb-6 text-left">
+            {typeof message === "string" ? (
+              <div className="whitespace-pre-line">{message}</div>
+            ) : (
+              message
+            )}
+          </div>
 
           <div className="flex justify-end space-x-3">
             <button
