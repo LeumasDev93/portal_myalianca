@@ -34,7 +34,9 @@ export function BackToDashboardButton({
 
   return (
     <div
-      className={`fixed z-40 ${isMobile ? "hidden" : "left-4 top-1/2"} group`}
+      className={`fixed z-40 ${
+        isMobile ? "hidden" : "left-1/2 -translate-x-1/2 top-20"
+      } group`}
     >
       <button
         onClick={onClick}

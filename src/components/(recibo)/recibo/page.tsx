@@ -51,6 +51,7 @@ type ViewMode = "grid" | "list";
 
 type ReciboPageProps = {
   onSelectDetail?: (id: string) => void;
+  filterParams?: Record<string, string>;
 };
 
 type ReciboLoadingState = {
@@ -61,13 +62,16 @@ type DownloadStatus = {
   [number: string]: "idle" | "downloading" | "success" | "error";
 };
 
-export default function ReciboPage({}: ReciboPageProps) {
+export default function ReciboPage({ filterParams }: ReciboPageProps) {
   const [loadingStates, setLoadingStates] = useState<ReciboLoadingState>({});
   const [loadingView, setLoadingView] = useState<ReciboLoadingState>({});
   const [downloadStatus, setDownloadStatus] = useState<DownloadStatus>({});
   const [viewMode, setViewMode] = useState<ViewMode>("list");
   const { token } = useSessionCheckToken();
   const { registerReciboDownloadActivity } = useReciboActivity();
+
+  // Debug: verificar se os parâmetros estão chegando
+  console.log("ReciboPage - filterParams:", filterParams);
 
   const {
     filteredRecibos,
@@ -79,7 +83,7 @@ export default function ReciboPage({}: ReciboPageProps) {
     statusFilter,
     setStatusFilter,
     resetFilters,
-  } = useRecibos();
+  } = useRecibos(filterParams);
 
   const handleDownload = async (invoiceNumber: string) => {
     setLoadingStates((prev) => ({ ...prev, [invoiceNumber]: true }));

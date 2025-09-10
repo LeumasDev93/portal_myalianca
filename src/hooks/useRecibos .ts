@@ -3,13 +3,19 @@ import { useSessionCheckToken } from './useSessionToken';
 import { useUserProfile } from './useUserProfile ';
 import { ReciboData } from '@/types/typesData';
 
-export const useRecibos = () => {
+export const useRecibos = (initialFilters?: Record<string, string>) => {
     const [recibos, setRecibos] = useState<ReciboData[]>([]);
     const [filteredRecibos, setFilteredRecibos] = useState<ReciboData[]>([]);
     const [isLoadingRecibos, setIsLoadingRecibos] = useState(false);
     const [errorRecibo, setErrorRecibo] = useState<string | null>(null);
     const [searchTerm, setSearchTerm] = useState('');
-    const [statusFilter, setStatusFilter] = useState<string>('all');
+    const [statusFilter, setStatusFilter] = useState<string>(
+        initialFilters?.estado || 'all'
+    );
+    
+    // Debug: verificar se os filtros iniciais estão chegando
+    console.log('useRecibos - initialFilters:', initialFilters);
+    console.log('useRecibos - statusFilter inicial:', initialFilters?.estado || 'all');
     const { token } = useSessionCheckToken();
     const { profile } = useUserProfile();
     // Busca os recibos da API
@@ -82,7 +88,17 @@ export const useRecibos = () => {
         // Filtro de status
         if (statusFilter !== "all") {
             const statusNum = parseInt(statusFilter);
-            result = result.filter((recibo) => recibo.status === statusNum);
+            console.log('Aplicando filtro de status:', statusFilter, '->', statusNum);
+            console.log('Recibos antes do filtro:', result.length);
+            
+            // Para "Em Cobrança" (status 1), incluir também status 2
+            if (statusNum === 1) {
+                result = result.filter((recibo) => recibo.status === 1 || recibo.status === 2);
+            } else {
+                result = result.filter((recibo) => recibo.status === statusNum);
+            }
+            
+            console.log('Recibos após filtro:', result.length);
         }
 
         setFilteredRecibos(result);

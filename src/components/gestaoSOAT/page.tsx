@@ -29,6 +29,7 @@ import ConfirmationModal from "@/components/ui/ConfirmationModal";
 import Pagination from "@/components/ui/Pagination";
 import { usePagination } from "@/hooks/usePagination";
 import { removeSoat } from "@/service/removeSoatService";
+import { sendSoat } from "@/service/sendSoatService";
 
 export default function PageGestaoSOAT() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -38,6 +39,10 @@ export default function PageGestaoSOAT() {
   const [removeLoading, setRemoveLoading] = useState<string | null>(null);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [soatToRemove, setSoatToRemove] = useState<any>(null);
+  const [sendLoading, setSendLoading] = useState<string | null>(null);
+  const [showSendConfirmModal, setShowSendConfirmModal] = useState(false);
+  const [soatToSend, setSoatToSend] = useState<any>(null);
+  const [showPendingWarningModal, setShowPendingWarningModal] = useState(false);
 
   const { soatData, loading, refetch } = useSoat();
   const {
@@ -55,11 +60,13 @@ export default function PageGestaoSOAT() {
   const listasVencidas = soatData.filter(
     (lista) => lista.estado === "Vencido"
   ).length;
-  const totalTrabalhadores = soatData.reduce(
-    (total, lista) => total + lista.total_colaborador,
-    0
-  );
+  // Pegar apenas o total de colaboradores da última linha adicionada (mais recente)
+  const totalTrabalhadores =
+    soatData.length > 0 ? soatData[0].total_colaborador : 0;
   const totalListas = soatData.length;
+
+  // Verificar se existe SOAT com estado pendente
+  const hasPendingSoat = soatData.some((soat) => soat.estado === "Pendente");
 
   // Dados das estatísticas SOAT (calculadas dinamicamente)
   const soatStats: StatisticData[] = [
@@ -123,6 +130,15 @@ export default function PageGestaoSOAT() {
     setShowDetailsModal(true);
     clearDetails();
     await fetchSoatDetails(soatId);
+  };
+
+  // Função para verificar se pode criar novo SOAT
+  const handleCreateSOATClick = () => {
+    if (hasPendingSoat) {
+      setShowPendingWarningModal(true);
+    } else {
+      setShowModal(true);
+    }
   };
 
   // Função para criar nova lista SOAT
@@ -192,6 +208,50 @@ export default function PageGestaoSOAT() {
     setSoatToRemove(null);
   };
 
+  const handleSendSoat = (soat: any) => {
+    setSoatToSend(soat);
+    setShowSendConfirmModal(true);
+  };
+
+  const confirmSendSoat = async () => {
+    if (!soatToSend?.id) {
+      alert("ID do SOAT não encontrado");
+      return;
+    }
+
+    setSendLoading(soatToSend.id);
+    try {
+      console.log("Enviando SOAT:", soatToSend.id);
+
+      const response = await sendSoat({
+        soatId: soatToSend.id,
+      });
+
+      console.log("SOAT enviado com sucesso:", response);
+
+      // Fechar modal de confirmação
+      setShowSendConfirmModal(false);
+      setSoatToSend(null);
+
+      // Recarregar dados após envio
+      refetch();
+    } catch (error: any) {
+      console.error("Erro ao enviar SOAT:", error);
+      alert(`Erro ao enviar SOAT: ${error.message}`);
+    } finally {
+      setSendLoading(null);
+    }
+  };
+
+  const cancelSendSoat = () => {
+    setShowSendConfirmModal(false);
+    setSoatToSend(null);
+  };
+
+  const closePendingWarningModal = () => {
+    setShowPendingWarningModal(false);
+  };
+
   return (
     <div className="p-4 w-full mt-6">
       <div className="mb-6">
@@ -233,8 +293,18 @@ export default function PageGestaoSOAT() {
           </div>
           <div className="flex gap-2">
             <button
-              onClick={() => setShowModal(true)}
-              className="bg-[#B7021C] hover:bg-[#B7021C]/90 text-white px-6 py-3 rounded-lg font-medium flex items-center gap-2 transition-colors"
+              onClick={handleCreateSOATClick}
+              disabled={hasPendingSoat}
+              className={`px-6 py-3 rounded-lg font-medium flex items-center gap-2 transition-colors ${
+                hasPendingSoat
+                  ? "bg-gray-400 text-gray-600 cursor-not-allowed"
+                  : "bg-[#B7021C] hover:bg-[#B7021C]/90 text-white"
+              }`}
+              title={
+                hasPendingSoat
+                  ? "Existe um SOAT pendente. Finalize-o antes de criar um novo."
+                  : "Adicionar novo SOAT"
+              }
             >
               <FaPlus className="w-4 h-4" />
               Adicionar SOAT
@@ -272,10 +342,7 @@ export default function PageGestaoSOAT() {
                   Valor Total
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Status
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Situação
+                  Estado
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Ações
@@ -311,8 +378,18 @@ export default function PageGestaoSOAT() {
                         primeira lista de trabalhadores.
                       </p>
                       <button
-                        onClick={() => setShowModal(true)}
-                        className="bg-[#B7021C] hover:bg-[#B7021C]/90 text-white px-4 py-2 rounded-lg font-medium flex items-center gap-2 transition-colors"
+                        onClick={handleCreateSOATClick}
+                        disabled={hasPendingSoat}
+                        className={`px-4 py-2 rounded-lg font-medium flex items-center gap-2 transition-colors ${
+                          hasPendingSoat
+                            ? "bg-gray-400 text-gray-600 cursor-not-allowed"
+                            : "bg-[#B7021C] hover:bg-[#B7021C]/90 text-white"
+                        }`}
+                        title={
+                          hasPendingSoat
+                            ? "Existe um SOAT pendente. Finalize-o antes de criar um novo."
+                            : "Adicionar novo SOAT"
+                        }
                       >
                         <FaPlus className="w-4 h-4" />
                         Adicionar SOAT
@@ -354,17 +431,6 @@ export default function PageGestaoSOAT() {
                       {lista.valor_total || "N/A"}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span
-                        className={`inline-flex px-3 py-1 rounded-sm text-xs font-semibold ${
-                          lista.estado === "Ativo"
-                            ? "bg-green-500 text-white"
-                            : "bg-red-100 text-red-800"
-                        }`}
-                      >
-                        {lista.estado}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
                         {lista.situacao === "Enviado" ? (
                           <>
@@ -392,7 +458,11 @@ export default function PageGestaoSOAT() {
                         </button>
                         {lista.situacao !== "Enviado" && (
                           <>
-                            <button className="bg-blue-50 border border-blue-200 flex  items-center justify-center text-blue-600 hover:text-blue-800 p-2 cursor-pointer rounded">
+                            <button
+                              onClick={() => handleSendSoat(lista)}
+                              className="bg-blue-50 border border-blue-200 flex items-center justify-center text-blue-600 hover:text-blue-800 p-2 cursor-pointer rounded"
+                              title="Enviar SOAT"
+                            >
                               <FaPaperPlane className="w-4 h-4" />
                             </button>
                             <button
@@ -467,6 +537,32 @@ export default function PageGestaoSOAT() {
         cancelText="Cancelar"
         loading={removeLoading === soatToRemove?.id}
         type="danger"
+      />
+
+      {/* Modal de Confirmação para Enviar SOAT */}
+      <ConfirmationModal
+        isOpen={showSendConfirmModal}
+        onClose={cancelSendSoat}
+        onConfirm={confirmSendSoat}
+        title="Enviar SOAT"
+        message={`Tem certeza que deseja enviar este SOAT?`}
+        confirmText="Enviar"
+        cancelText="Cancelar"
+        loading={sendLoading === soatToSend?.id}
+        type="info"
+      />
+
+      {/* Modal de Aviso - SOAT Pendente */}
+      <ConfirmationModal
+        isOpen={showPendingWarningModal}
+        onClose={closePendingWarningModal}
+        onConfirm={closePendingWarningModal}
+        title="SOAT Pendente"
+        message="Existe um SOAT com estado 'Pendente' na tabela. Finalize o SOAT pendente antes de criar um novo."
+        confirmText="Entendi"
+        cancelText="Fechar"
+        loading={false}
+        type="warning"
       />
     </div>
   );

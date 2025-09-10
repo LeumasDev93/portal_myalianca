@@ -32,6 +32,7 @@ interface QuickAccessCardProps {
   existingItems?: Array<{ nome: string }>; // Lista de itens já existentes no acesso rápido
   id?: string; // ID do item para deletar
   onDelete?: () => void; // Callback para atualizar a lista após deletar item
+  hideDelete?: boolean; // Esconder o botão de deletar
 }
 
 const QuickAccessCard: React.FC<QuickAccessCardProps> = ({
@@ -49,6 +50,7 @@ const QuickAccessCard: React.FC<QuickAccessCardProps> = ({
   onClick,
   onItemAdded,
   existingItems = [],
+  hideDelete = false,
   id,
   onDelete,
 }) => {
@@ -155,7 +157,7 @@ const QuickAccessCard: React.FC<QuickAccessCardProps> = ({
             : border_color,
         }}
       >
-        {!isAddCard && id && onDelete && (
+        {!isAddCard && id && onDelete && !hideDelete && (
           <button
             onClick={handleDelete}
             disabled={isDeleting}

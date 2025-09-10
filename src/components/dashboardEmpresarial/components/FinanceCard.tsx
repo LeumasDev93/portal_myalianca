@@ -1,6 +1,10 @@
 import { useFinanceSummary } from "@/hooks/useFinanceSummary";
 
-export function FinanceCard() {
+interface FinanceCardProps {
+  onNavigate?: (page: string, params?: Record<string, string>) => void;
+}
+
+export function FinanceCard({ onNavigate }: FinanceCardProps) {
   const { data: financeData, isLoading, error } = useFinanceSummary();
 
   // Função para formatar valores monetários
@@ -9,6 +13,20 @@ export function FinanceCard() {
       minimumFractionDigits: 0,
       maximumFractionDigits: 0,
     })} ${moeda}`;
+  };
+
+  // Função para navegar para recibos com filtro "Pago"
+  const handlePagoClick = () => {
+    if (onNavigate) {
+      onNavigate("recibo", { estado: "5" }); // 5 = Cobrado (Pago)
+    }
+  };
+
+  // Função para navegar para recibos com filtro "Em Cobrança"
+  const handleEmCobrancaClick = () => {
+    if (onNavigate) {
+      onNavigate("recibo", { estado: "1" }); // 1 = Em Cobrança
+    }
   };
 
   if (isLoading) {
@@ -30,9 +48,7 @@ export function FinanceCard() {
   if (error) {
     return (
       <div className="bg-red-50 border border-red-200 rounded-lg p-6 mb-6">
-        <h2 className="text-xl font-bold text-[#002256] mb-4">
-          Resumo Financeiro
-        </h2>
+        <h2 className="text-xl font-bold text-[#002256] mb-4"></h2>
         <div className="flex items-center space-x-3">
           <div className="text-red-500">⚠️</div>
           <div>
@@ -50,7 +66,11 @@ export function FinanceCard() {
     <div className="">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 h-full">
         {/* Card Pago */}
-        <div className="bg-green-50 border border-green-200 p-6 rounded-lg flex flex-col justify-between h-[150px] hover:bg-green-100 hover:scale-105 cursor-pointer transition-all duration-300">
+        <div
+          className="bg-green-50 border border-green-200 p-6 rounded-lg flex flex-col justify-between h-[150px] hover:bg-green-100 hover:scale-105 cursor-pointer transition-all duration-300"
+          onClick={handlePagoClick}
+          title="Ver recibos pagos"
+        >
           <div className="text-center">
             <h3 className="text-sm font-medium text-gray-600 uppercase mb-4">
               Pago
@@ -60,7 +80,7 @@ export function FinanceCard() {
             </p>
           </div>
           <div className="text-center">
-            <p className="text-2xl font-bold text-[#002256] mb-2">
+            <p className="text-xl xl:text-2xl font-bold text-[#002256] mb-2">
               {financeData?.pago
                 ? formatValue(financeData.pago.valor, financeData.pago.moeda)
                 : "0 ECV"}
@@ -69,7 +89,11 @@ export function FinanceCard() {
         </div>
 
         {/* Card Em Cobrança */}
-        <div className="bg-orange-50 border border-orange-200 p-6 rounded-lg flex flex-col justify-between h-[150px] hover:bg-orange-100 hover:scale-105 cursor-pointer transition-all duration-300">
+        <div
+          className="bg-orange-50 border border-orange-200 p-6 rounded-lg flex flex-col justify-between h-[150px] hover:bg-orange-100 hover:scale-105 cursor-pointer transition-all duration-300"
+          onClick={handleEmCobrancaClick}
+          title="Ver recibos em cobrança"
+        >
           <div className="text-center">
             <h3 className="text-sm font-medium text-gray-600 uppercase mb-4">
               Em Cobrança
@@ -79,7 +103,7 @@ export function FinanceCard() {
             </p>
           </div>
           <div className="text-center">
-            <p className="text-2xl font-bold text-[#002256] mb-2">
+            <p className="text-xl xl:text-2xl font-bold text-[#002256] mb-2">
               {financeData?.emCobranca
                 ? formatValue(
                     Math.abs(financeData.emCobranca.valor),

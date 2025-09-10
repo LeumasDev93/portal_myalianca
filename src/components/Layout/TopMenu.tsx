@@ -48,6 +48,15 @@ export function TopMenu({
 
   const { logout } = useAuth();
   const searchInputRef = useRef<HTMLInputElement>(null);
+
+  // Função para navegação condicional baseada no tipo de usuário
+  const handleLogoClick = () => {
+    if (profile?.user?.tipo_utilizador === "Company") {
+      onMenuClick("dashboardEmpresarial");
+    } else {
+      onMenuClick("Historico");
+    }
+  };
   const profilePopupRef = useRef<HTMLDivElement>(null);
   const messagesPopupRef = useRef<HTMLDivElement>(null);
   const notificationsPopupRef = useRef<HTMLDivElement>(null);
@@ -94,7 +103,7 @@ export function TopMenu({
       Agencias: "Agências",
       Ajuda: "Ajuda",
       newOcorrencia: "Nova Ocorrência",
-      gerenciamentoSOAT: "Gestão de SOAT",
+      gestaoSOAT: "Gestão de SOAT",
       dashboardEmpresarial: "Dashboard Empresarial",
     };
     return pageTitles[currentPage] || currentPage;
@@ -149,7 +158,11 @@ export function TopMenu({
     >
       <div className="flex items-center gap-4">
         {!showSidebar && (
-          <div className="flex items-center border-r border-gray-300 pr-4">
+          <div
+            className="flex items-center border-r border-gray-300 pr-4 cursor-pointer hover:opacity-80 transition-opacity"
+            onClick={handleLogoClick}
+            title="Voltar ao início"
+          >
             <Image
               src={Logo}
               alt="Logo"

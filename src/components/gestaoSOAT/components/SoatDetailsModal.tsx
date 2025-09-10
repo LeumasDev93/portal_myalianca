@@ -1,14 +1,16 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState } from "react";
 import { Plus, X } from "lucide-react";
 import { FaTrash, FaDownload, FaSpinner, FaEdit } from "react-icons/fa";
-import { IoDocumentTextOutline, IoAlertCircleOutline } from "react-icons/io5";
+import { IoAlertCircleOutline } from "react-icons/io5";
 import CollaboratorModal from "./CollaboratorModal";
 import ConfirmationModal from "@/components/ui/ConfirmationModal";
 import Pagination from "@/components/ui/Pagination";
 import { usePagination } from "@/hooks/usePagination";
 import { addCollaborator } from "@/service/addCollaboratorService";
 import { removeCollaborator } from "@/service/removeCollaboratorService";
+import * as XLSX from "xlsx";
 
 interface SoatDetailsModalProps {
   isOpen: boolean;
@@ -38,6 +40,7 @@ export default function SoatDetailsModal({
   const [removeLoading, setRemoveLoading] = useState<string | null>(null);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [collaboratorToRemove, setCollaboratorToRemove] = useState<any>(null);
+  const [exportLoading, setExportLoading] = useState(false);
 
   // Filtrar colaboradores baseado na busca
   const filteredContents =
@@ -74,6 +77,84 @@ export default function SoatDetailsModal({
   });
 
   if (!isOpen) return null;
+
+  const handleExportToExcel = async () => {
+    setExportLoading(true);
+    try {
+      // Preparar dados para exportação
+      const exportData = filteredContents.map((content: any, index: number) => {
+        try {
+          const colaborador = JSON.parse(content.json_content);
+          return {
+            Nº: index + 1,
+            Nome: colaborador.name || "N/A",
+            NIF: colaborador.nif
+              ? colaborador.nif
+                  .toString()
+                  .replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4")
+              : "N/A",
+            Cargo: colaborador.cargo || colaborador.position || "N/A",
+            Salário: colaborador.salary
+              ? (colaborador.salary / 100).toLocaleString("pt-CV", {
+                  style: "currency",
+                  currency: "CVE",
+                  minimumFractionDigits: 2,
+                })
+              : "N/A",
+            Status: colaborador.status || "Ativo",
+            "Data de Criação": new Date(
+              content.created_at || Date.now()
+            ).toLocaleDateString("pt-BR"),
+          };
+        } catch (error) {
+          return {
+            Nº: index + 1,
+            Nome: "Erro ao processar",
+            NIF: "N/A",
+            Cargo: "N/A",
+            Salário: "N/A",
+            Status: "N/A",
+            "Data de Criação": "N/A",
+          };
+        }
+      });
+
+      // Criar workbook e worksheet
+      const workbook = XLSX.utils.book_new();
+      const worksheet = XLSX.utils.json_to_sheet(exportData);
+
+      // Definir largura das colunas
+      const columnWidths = [
+        { wch: 5 }, // Nº
+        { wch: 25 }, // Nome
+        { wch: 15 }, // NIF
+        { wch: 20 }, // Cargo
+        { wch: 15 }, // Salário
+        { wch: 12 }, // Status
+        { wch: 15 }, // Data de Criação
+      ];
+      worksheet["!cols"] = columnWidths;
+
+      // Adicionar worksheet ao workbook
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Colaboradores");
+
+      // Gerar nome do arquivo
+      const fileName = `Colaboradores_${soatDetails.mes_referente.replace(
+        "_",
+        "_"
+      )}_${new Date().toISOString().split("T")[0]}.xlsx`;
+
+      // Exportar arquivo
+      XLSX.writeFile(workbook, fileName);
+
+      console.log("Arquivo Excel exportado com sucesso:", fileName);
+    } catch (error) {
+      console.error("Erro ao exportar para Excel:", error);
+      alert("Erro ao exportar arquivo Excel. Tente novamente.");
+    } finally {
+      setExportLoading(false);
+    }
+  };
 
   const handleEditCollaborator = (content: any) => {
     try {
@@ -231,10 +312,18 @@ export default function SoatDetailsModal({
             <div className=" text-[#002256] p-6 rounded-t-lg">
               <div className="flex justify-between items-start">
                 <div>
-                  <h2 className="text-2xl font-bold mb-2">
-                    Colaboradores -{" "}
-                    {soatDetails.mes_referente.replace("_", " de ")}
-                  </h2>
+                  <div className="flex items-center gap-3 mb-2">
+                    <h2 className="text-2xl font-bold">
+                      Colaboradores -{" "}
+                      {soatDetails.mes_referente.replace("_", " de ")}
+                    </h2>
+                    {soatDetails.situacao === "Enviado" && (
+                      <span className="bg-green-100 text-green-800 text-xs font-medium px-2.5 py-0.5 rounded-full flex items-center gap-1">
+                        <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+                        Enviado
+                      </span>
+                    )}
+                  </div>
                   <div className="flex items-center space-x-4 text-sm">
                     <span>Arquivo: {soatDetails.nome_ficheiro}</span>
                     <span>|</span>
@@ -350,12 +439,14 @@ export default function SoatDetailsModal({
                     </button>
                   )}
                 </div>
-                <button
-                  onClick={handleAddCollaborator}
-                  className="cursor-pointer bg-[#002256] text-white px-4 py-2 rounded-lg font-medium flex items-center gap-2 transition-colors hover:bg-[#002256]/90"
-                >
-                  <Plus /> Adicionar Colaborador
-                </button>
+                {soatDetails?.situacao !== "Enviado" && (
+                  <button
+                    onClick={handleAddCollaborator}
+                    className="cursor-pointer bg-[#002256] text-white px-4 py-2 rounded-lg font-medium flex items-center gap-2 transition-colors hover:bg-[#002256]/90"
+                  >
+                    <Plus /> Adicionar Colaborador
+                  </button>
+                )}
               </div>
             </div>
 
@@ -374,12 +465,11 @@ export default function SoatDetailsModal({
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Salário
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Status
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Ações
-                      </th>
+                      {soatDetails?.situacao !== "Enviado" && (
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Ações
+                        </th>
+                      )}
                     </tr>
                   </thead>
                   <tbody className="bg-gra-100 divide-y divide-gray-200">
@@ -418,38 +508,29 @@ export default function SoatDetailsModal({
                                       )
                                     : "N/A"}
                                 </td>
-                                <td className="px-6 py-4 whitespace-nowrap">
-                                  <span
-                                    className={`inline-flex px-3 py-1 rounded-sm text-xs font-semibold ${
-                                      colaborador.status === "Ativo"
-                                        ? "bg-green-500 text-white"
-                                        : "bg-blue-600 text-white"
-                                    }`}
-                                  >
-                                    {colaborador.status || "Ativo"}
-                                  </span>
-                                </td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                  <div className="flex space-x-2">
-                                    <button
-                                      onClick={() =>
-                                        handleEditCollaborator(content)
-                                      }
-                                      className="bg-blue-50 border border-blue-200 flex  items-center justify-center p-2 text-blue-600  cursor-pointer hover:text-blue-800 rounded"
-                                      title="Editar colaborador"
-                                    >
-                                      <FaEdit className="w-4 h-4" />
-                                    </button>
-                                    <button
-                                      className="bg-red-50 border border-red-200 flex  items-center justify-center text-red-600  cursor-pointer hover:text-red-800 p-2 rounded"
-                                      title="Excluir colaborador"
-                                      onClick={() =>
-                                        handleRemoveCollaborator(content)
-                                      }
-                                    >
-                                      <FaTrash className="w-4 h-4" />
-                                    </button>
-                                  </div>
+                                  {soatDetails?.situacao !== "Enviado" && (
+                                    <div className="flex space-x-2">
+                                      <button
+                                        onClick={() =>
+                                          handleEditCollaborator(content)
+                                        }
+                                        className="bg-blue-50 border border-blue-200 flex  items-center justify-center p-2 text-blue-600  cursor-pointer hover:text-blue-800 rounded"
+                                        title="Editar colaborador"
+                                      >
+                                        <FaEdit className="w-4 h-4" />
+                                      </button>
+                                      <button
+                                        className="bg-red-50 border border-red-200 flex  items-center justify-center text-red-600  cursor-pointer hover:text-red-800 p-2 rounded"
+                                        title="Excluir colaborador"
+                                        onClick={() =>
+                                          handleRemoveCollaborator(content)
+                                        }
+                                      >
+                                        <FaTrash className="w-4 h-4" />
+                                      </button>
+                                    </div>
+                                  )}
                                 </td>
                               </tr>
                             );
@@ -457,7 +538,9 @@ export default function SoatDetailsModal({
                             return (
                               <tr key={content.id} className="hover:bg-gray-50">
                                 <td
-                                  colSpan={6}
+                                  colSpan={
+                                    soatDetails?.situacao === "Enviado" ? 4 : 5
+                                  }
                                   className="px-6 py-4 text-center text-sm text-red-600"
                                 >
                                   Erro ao processar dados do colaborador
@@ -470,7 +553,7 @@ export default function SoatDetailsModal({
                     ) : (
                       <tr>
                         <td
-                          colSpan={6}
+                          colSpan={soatDetails?.situacao === "Enviado" ? 4 : 5}
                           className="px-6 py-8 text-center text-gray-500"
                         >
                           {searchQuery ? (
@@ -501,20 +584,24 @@ export default function SoatDetailsModal({
             <div className="px-6 pb-6">
               <div className="flex justify-between items-center">
                 <div className="flex space-x-3">
-                  <button className="bg-[#002256] hover:bg-[#002256]/80 cursor-pointer text-white px-4 py-2 rounded-lg font-medium flex items-center gap-2 transition-colors">
-                    <FaDownload className="w-4 h-4" />
-                    Exportar Lista
-                  </button>
-                  <button className="bg-green-600 hover:bg-green-700 cursor-pointer  text-white px-4 py-2 rounded-lg font-medium flex items-center gap-2 transition-colors">
-                    <IoDocumentTextOutline className="w-4 h-4" />
-                    Gerar Relatório
+                  <button
+                    onClick={handleExportToExcel}
+                    disabled={exportLoading || filteredContents.length === 0}
+                    className="bg-[#002256] hover:bg-[#002256]/80 disabled:bg-gray-400 disabled:cursor-not-allowed cursor-pointer text-white px-4 py-2 rounded-lg font-medium flex items-center gap-2 transition-colors"
+                  >
+                    {exportLoading ? (
+                      <FaSpinner className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <FaDownload className="w-4 h-4" />
+                    )}
+                    {exportLoading ? "Exportando..." : "Exportar Lista"}
                   </button>
                 </div>
                 <button
                   onClick={onClose}
-                  className="bg-gray-400 border border-gray-800 cursor-pointer hover:bg-gray-500 text-white px-4 py-2 rounded-lg font-medium transition-colors"
+                  className="bg-gray-400  cursor-pointer hover:bg-gray-500 text-white px-4 py-2 rounded-lg font-medium transition-colors"
                 >
-                  Fechar
+                  OK
                 </button>
               </div>
             </div>

@@ -211,13 +211,10 @@ export const STATUS_COLORS = {
 
 export const STATUS_OPTIONS_RECIBOS = [
   { value: "all", label: "--Selecionar um estado--" },
-  { value: "A", label: "Em Curso / Aberto" },
-  { value: "E", label: "Encerrado" },
-  { value: "T", label: "Encerrado Técnicamente" },
-  { value: "N", label: "Sem Efeito" },
-  { value: "I", label: "Sem Efeito" },
-  { value: "R", label: "Recusado" },
-  { value: "P", label: "Pendente" },
+  { value: "1", label: "Em Cobrança" },
+  { value: "5", label: "Cobrado" },
+  { value: "8", label: "Regularizado" },
+  { value: "9", label: "Anulado" },
 ];
 
 // Funções de mapeamento

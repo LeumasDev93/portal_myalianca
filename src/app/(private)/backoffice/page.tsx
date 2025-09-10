@@ -78,6 +78,7 @@ const Page = () => {
   const [selectedEncaminharId, setSelectedEncaminharId] = useState<
     string | null
   >(null);
+  const [filterParams, setFilterParams] = useState<Record<string, string>>({});
 
   const { logout, user } = useAuth();
   const { countdown } = useAutoLogout(logout);
@@ -207,9 +208,23 @@ const Page = () => {
 
   if (!isClient) return null;
 
-  const handleMenuClick = (menuPage: string) => {
+  const handleMenuClick = (
+    menuPage: string,
+    params?: Record<string, string>
+  ) => {
+    console.log("handleMenuClick - menuPage:", menuPage, "params:", params);
     setIsLoading(true);
     setCurrentPage(menuPage);
+
+    // Armazenar parâmetros de filtro se fornecidos
+    if (params) {
+      setFilterParams(params);
+      console.log("Parâmetros de filtro definidos:", params);
+    } else {
+      setFilterParams({});
+      console.log("Parâmetros de filtro limpos");
+    }
+
     setTimeout(() => {
       setIsLoading(false);
     }, 1000);
@@ -400,7 +415,10 @@ const Page = () => {
                   <DashboardEmpresarial onNavigate={handleMenuClick} />
                 )}
                 {currentPage === "recibo" && (
-                  <ReciboPage onSelectDetail={handleSelectMensagemDetail} />
+                  <ReciboPage
+                    onSelectDetail={handleSelectMensagemDetail}
+                    filterParams={filterParams}
+                  />
                 )}
                 {currentPage === "Perfil" && <PerfilPage />}
                 {currentPage === "Agencias" && <AgenciasPage />}
@@ -427,8 +445,7 @@ const Page = () => {
           <Footer />
         </div>
       </div>
-
-      <BackToTopButton />
+      {!isMobile && <BackToTopButton />}
     </main>
   );
 };

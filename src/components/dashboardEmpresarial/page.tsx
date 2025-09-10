@@ -22,7 +22,7 @@ import { AiFillFileExclamation } from "react-icons/ai";
 import { LuSquareKanban } from "react-icons/lu";
 
 type DashboardEmpresarialProps = {
-  onNavigate?: (page: string) => void;
+  onNavigate?: (page: string, params?: Record<string, string>) => void;
 };
 
 export default function DashboardEmpresarial({
@@ -93,9 +93,9 @@ export default function DashboardEmpresarial({
       } else if (width >= 1920) {
         setCardsPerPage(5);
       } else if (width >= 1280) {
-        setCardsPerPage(5);
-      } else if (width >= 1024) {
         setCardsPerPage(4);
+      } else if (width >= 1024) {
+        setCardsPerPage(3);
       } else if (width >= 640) {
         setCardsPerPage(3);
       } else {
@@ -159,6 +159,12 @@ export default function DashboardEmpresarial({
   const renderCard = (item: any) => {
     // Renderiza cards de acesso rápido da API
     if (item && typeof item === "object" && item.type === "quickAccess") {
+      // Verifica se deve esconder o botão de deletar
+      const shouldHideDelete =
+        item.data.link === "gestaoSOAT" ||
+        item.data.link === "ocorrencias" ||
+        item.data.link === "Simulation";
+
       return (
         <QuickAccessCard
           key={item.data.id}
@@ -173,6 +179,7 @@ export default function DashboardEmpresarial({
           icon_color={item.data.icon_color}
           order_number={item.data.order_number}
           descricao_botao={item.data.descricao_botao}
+          hideDelete={shouldHideDelete}
           onClick={() => {
             if (item.data.link && onNavigate) {
               onNavigate(item.data.link);
@@ -250,26 +257,21 @@ export default function DashboardEmpresarial({
           </div>
         )}
       </div>
+
+      <h1 className="text-2xl font-bold text-[#002256] mb-6">Dashboard</h1>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-8">
         <div>
-          <h1 className="text-2xl font-bold text-[#002256] mb-6">
-            Dashboard Empresarial
-          </h1>
-          <StatisticsApiCard />
+          <StatisticsApiCard onNavigate={onNavigate} />
         </div>
         <div>
-          <h2 className="text-xl font-bold text-[#002256] mb-6">
-            Resumo Financeiro
-          </h2>
-
-          <FinanceCard />
+          <FinanceCard onNavigate={onNavigate} />
         </div>
       </div>
 
       {/* Seção de Menus do Portal */}
       <div className="mt-8">
         <h2 className="text-xl font-bold text-[#002856] mb-6">
-          Menus do Portal
+          Menus Principais
         </h2>
 
         <MenuCard menus={portalMenus} onNavigate={onNavigate} />
