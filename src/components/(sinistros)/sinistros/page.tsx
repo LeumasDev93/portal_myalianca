@@ -9,7 +9,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Eye } from "lucide-react";
+import { Eye, SearchX } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { FaFilter, FaRegCalendar, FaSearch } from "react-icons/fa";
 import {
@@ -86,24 +86,25 @@ export default function SinistrosPage({
     return matchesSearch && matchesStatus;
   });
 
-  if (sinistros.length === 0) {
+  // Verificar se há filtros ativos
+  const hasActiveFilters = searchTerm !== "" || statusFilter !== "all";
+
+  // Se não estiver carregando e não há dados originais
+  if (!isLoadingSinistros && sinistros.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center gap-2 py-8">
+      <div className="flex flex-col items-center justify-center gap-2 py-8 h-screen">
         <div className="relative">
-          <FaSearch className="text-4xl text-gray-400 animate-pulse" />
-          <FaFilter
-            className="absolute -top-2 -right-2 text-xl text-[#2d4e7f] animate-spin-slow"
-            style={{ animationDuration: "3s" }}
-          />
+          <FaSearch className="text-4xl text-gray-400" />
         </div>
         <p className="text-gray-500 text-center">
           Nenhum sinistro encontrado!
           <br />
-          Tente novamente mais tarde.
+          Não há sinistros para exibir no momento.
         </p>
       </div>
     );
   }
+
   return (
     <div className="flex-1 space-y-6 p-6 md:p-8 mt-4">
       <div className="flex items-center justify-between">
@@ -151,10 +152,11 @@ export default function SinistrosPage({
 
       <div className="flex flex-col gap-6">
         {filteredSinistros.length === 0 ? (
-          <div className="flex flex-col items-center justify-center gap-4 py-8">
-            <FaSearch className="text-4xl text-gray-400" />
-            <p className="text-gray-500 text-center">
-              Nenhum sinistro encontrado com os filtros aplicados.
+          <div className="flex flex-col items-center justify-center space-y-4 text-center py-12">
+            <SearchX className="h-12 w-12 text-muted-foreground" />
+            <h3 className="text-lg font-medium">Nenhum resultado encontrado</h3>
+            <p className="text-sm text-muted-foreground">
+              Sua busca não retornou nenhum sinistro com os filtros aplicados.
             </p>
           </div>
         ) : (

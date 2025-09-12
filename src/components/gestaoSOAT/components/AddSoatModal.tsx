@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { FaSpinner } from "react-icons/fa";
 import { addSoat } from "@/service/addSoatService";
+import { AlertTriangle } from "lucide-react";
+import { useUserProfile } from "@/hooks/useUserProfile ";
 
 interface ModalData {
   periodo: string;
@@ -34,6 +36,9 @@ export default function AddSoatModal({
   });
   const [loading, setLoading] = useState(false);
 
+  const { profile } = useUserProfile();
+  const [error, setError] = useState<string | null>(null);
+
   const handleClose = () => {
     setModalData({
       periodo: "especifico",
@@ -66,7 +71,7 @@ export default function AddSoatModal({
     setLoading(true);
     try {
       // ID do utilizador fixo (você pode pegar do contexto de autenticação)
-      const idUtilizador = "614ba529-9b3a-443d-b97d-bbdb1ff9ed1f";
+      const idUtilizador = profile?.user?.id || "";
 
       let requestData;
 
@@ -88,27 +93,23 @@ export default function AddSoatModal({
         };
       }
 
-      console.log("Dados da requisição:", requestData);
-
       // Chamar a API para criar o SOAT
       const response = await addSoat(requestData);
 
       if (response.info.status === 200) {
-        console.log("SOAT criado com sucesso:", response);
-
-        // Chamar a função onCreate para notificar o componente pai
         onCreate(modalData);
 
         // Fechar modal
         handleClose();
       } else {
-        throw new Error(response.info.errors || "Erro ao criar SOAT");
       }
     } catch (error: unknown) {
-      console.error("Erro ao criar SOAT:", error);
       const errorMessage =
         error instanceof Error ? error.message : "Erro desconhecido";
-      alert(`Erro ao criar SOAT: ${errorMessage}`);
+      setError(errorMessage);
+      setTimeout(() => {
+        setError(null);
+      }, 5000);
     } finally {
       setLoading(false);
     }
@@ -127,7 +128,12 @@ export default function AddSoatModal({
             Crie uma nova lista de SOAT para um mês específico. Os dados serão
             importados do Excel configurado no backend.
           </p>
-
+          {error && (
+            <div className="flex items-center justify-center space-x-2 bg-red-50 border border-red-200 rounded-lg py-2 px-4 mb-4">
+              <AlertTriangle color="#B7021C" size={20} />
+              <p className="text-red-500">{error}</p>
+            </div>
+          )}
           {/* Período */}
           <div className="mb-6">
             <label className="block text-sm font-medium text-gray-700 mb-3">

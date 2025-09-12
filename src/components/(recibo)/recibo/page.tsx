@@ -277,6 +277,16 @@ export default function ReciboPage({ filterParams }: ReciboPageProps) {
     }
   };
 
+  // Função para determinar se deve mostrar botão de pagamento
+  const shouldShowPaymentButton = (status: number) => {
+    return status === 1 || status === 2; // Em Cobrança
+  };
+
+  // Função para determinar se deve mostrar botão de download
+  const shouldShowDownloadButton = (status: number) => {
+    return status === 5; // Cobrado
+  };
+
   if (isLoadingRecibos) {
     return (
       <LoadingContainer fullHeight={true} message="CARREGANDO RECIBOS..." />
@@ -391,8 +401,7 @@ export default function ReciboPage({ filterParams }: ReciboPageProps) {
               <CardHeader className="border-b p-3 md:p-6">
                 <CardTitle className="flex items-center justify-between text-sm md:text-base">
                   <div className="flex items-center gap-2">
-                    <MdPayment className="text-[#002256] size-4 md:size-5" />
-                    <span>#{recibo.number}</span>
+                    <CopiableNumber number={recibo.number} />
                   </div>
                   <span
                     className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusReciverColors(
@@ -444,15 +453,30 @@ export default function ReciboPage({ filterParams }: ReciboPageProps) {
                     )}
                     <span className="ml-1">Ver</span>
                   </Button>
-                  <Button
-                    onClick={() => handleDownload(recibo.number)}
-                    disabled={loadingStates[recibo.number]}
-                    variant={getDownloadButtonVariant(recibo.number)}
-                    size="sm"
-                    className="flex-1 text-xs md:text-sm py-2"
-                  >
-                    {getDownloadButtonContent(recibo.number)}
-                  </Button>
+                  {shouldShowPaymentButton(recibo.status) && (
+                    <Button
+                      onClick={() => {
+                        // Implementar lógica de pagamento
+                        console.log("Pagar recibo:", recibo.number);
+                      }}
+                      size="sm"
+                      className="flex-1 text-xs md:text-sm py-2 bg-green-600 hover:bg-green-700 text-white"
+                    >
+                      <MdPayment className="size-3 md:size-4" />
+                      <span className="ml-1">Pagar</span>
+                    </Button>
+                  )}
+                  {shouldShowDownloadButton(recibo.status) && (
+                    <Button
+                      onClick={() => handleDownload(recibo.number)}
+                      disabled={loadingStates[recibo.number]}
+                      variant={getDownloadButtonVariant(recibo.number)}
+                      size="sm"
+                      className="flex-1 text-xs md:text-sm py-2"
+                    >
+                      {getDownloadButtonContent(recibo.number)}
+                    </Button>
+                  )}
                 </div>
               </CardFooter>
             </Card>
@@ -529,15 +553,30 @@ export default function ReciboPage({ filterParams }: ReciboPageProps) {
                       )}
                       <span className="ml-1">Ver</span>
                     </Button>
-                    <Button
-                      onClick={() => handleDownload(recibo.number)}
-                      disabled={loadingStates[recibo.number]}
-                      variant={getDownloadButtonVariant(recibo.number)}
-                      size="sm"
-                      className="flex-1 md:flex-none text-xs md:text-sm py-2"
-                    >
-                      {getDownloadButtonContent(recibo.number)}
-                    </Button>
+                    {shouldShowPaymentButton(recibo.status) && (
+                      <Button
+                        onClick={() => {
+                          // Implementar lógica de pagamento
+                          console.log("Pagar recibo:", recibo.number);
+                        }}
+                        size="sm"
+                        className="flex-1 md:flex-none text-xs md:text-sm py-2 bg-green-600 hover:bg-green-700 text-white"
+                      >
+                        <MdPayment className="size-3 md:size-4" />
+                        <span className="ml-1">Pagar</span>
+                      </Button>
+                    )}
+                    {shouldShowDownloadButton(recibo.status) && (
+                      <Button
+                        onClick={() => handleDownload(recibo.number)}
+                        disabled={loadingStates[recibo.number]}
+                        variant={getDownloadButtonVariant(recibo.number)}
+                        size="sm"
+                        className="flex-1 md:flex-none text-xs md:text-sm py-2"
+                      >
+                        {getDownloadButtonContent(recibo.number)}
+                      </Button>
+                    )}
                   </div>
                 </div>
               </div>

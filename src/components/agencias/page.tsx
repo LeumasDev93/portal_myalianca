@@ -1,7 +1,7 @@
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { MapPin, Phone, Clock } from "lucide-react";
+import { MapPin, Phone, Clock, Mail } from "lucide-react";
 import Link from "next/link";
 import { FaMapMarker } from "react-icons/fa";
 import { useAgencias } from "@/hooks/useAgencias";
@@ -44,14 +44,30 @@ export default function AgenciasPage() {
                   <MapPin className="h-5 w-5 text-[#002256] mt-0.5" />
                   <span>{agencia.localizacao}</span>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Phone className="h-5 w-5 text-[#002256]" />
-                  <span>Sem telefone</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Clock className="h-5 w-5 text-[#002256]" />
-                  <span>Horário indisponível</span>
-                </div>
+                {agencia.telefone && (
+                  <div className="flex items-center gap-2">
+                    <Phone className="h-5 w-5 text-[#002256]" />
+                    <span>{agencia.telefone}</span>
+                  </div>
+                )}
+                {agencia.email && (
+                  <div className="flex items-center gap-2">
+                    <Mail className="h-5 w-5 text-[#002256]" />
+                    <span>{agencia.email}</span>
+                  </div>
+                )}
+                {agencia.horarios && agencia.horarios.length > 0 && (
+                  <div className="flex items-start gap-2">
+                    <Clock className="h-5 w-5 text-[#002256] mt-0.5" />
+                    <div className="space-y-1">
+                      {agencia.horarios.map((horario, index) => (
+                        <div key={index} className="text-sm">
+                          {horario}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
                 <Link
                   href={`https://www.google.com/maps/search/?api=1&query=${agencia.latitude},${agencia.longitude}`}
                   target="_blank"

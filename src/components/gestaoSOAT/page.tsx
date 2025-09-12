@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   FaSearch,
   FaPlus,
@@ -11,8 +11,8 @@ import {
   FaDownload,
   FaSpinner,
 } from "react-icons/fa";
+import { BsCashCoin } from "react-icons/bs";
 import {
-  IoDocumentTextOutline,
   IoAlertCircleOutline,
   IoPeopleOutline,
   IoListOutline,
@@ -30,6 +30,7 @@ import Pagination from "@/components/ui/Pagination";
 import { usePagination } from "@/hooks/usePagination";
 import { removeSoat } from "@/service/removeSoatService";
 import { sendSoat } from "@/service/sendSoatService";
+import { X } from "lucide-react";
 
 export default function PageGestaoSOAT() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -43,6 +44,8 @@ export default function PageGestaoSOAT() {
   const [showSendConfirmModal, setShowSendConfirmModal] = useState(false);
   const [soatToSend, setSoatToSend] = useState<any>(null);
   const [showPendingWarningModal, setShowPendingWarningModal] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string>("");
+  const [showError, setShowError] = useState(false);
 
   const { soatData, loading, refetch } = useSoat();
   const {
@@ -54,27 +57,58 @@ export default function PageGestaoSOAT() {
   } = useSoatDetails();
 
   // Calcular estatísticas dinamicamente
-  const listasAtivas = soatData.filter(
-    (lista) => lista.estado === "Ativo"
-  ).length;
   const listasVencidas = soatData.filter(
     (lista) => lista.estado === "Vencido"
   ).length;
   // Pegar apenas o total de colaboradores da última linha adicionada (mais recente)
   const totalTrabalhadores =
     soatData.length > 0 ? soatData[0].total_colaborador : 0;
+  // Pegar o valor total da SOAT mais recente
+  const valorTotalMaisRecente =
+    soatData.length > 0 ? soatData[0].valor_total || "N/A" : "N/A";
   const totalListas = soatData.length;
 
   // Verificar se existe SOAT com estado pendente
   const hasPendingSoat = soatData.some((soat) => soat.situacao === "Pendente");
 
+  // Função para formatar valores monetários
+  const formatCurrency = (
+    value: string | number | null | undefined
+  ): string => {
+    if (!value || value === "N/A" || value === "") return "N/A";
+
+    // Se for string, tentar converter para número
+    const numericValue = typeof value === "string" ? parseFloat(value) : value;
+
+    if (isNaN(numericValue)) return "N/A";
+
+    // Formatar como moeda (Escudo Cabo-verdiano)
+    return new Intl.NumberFormat("pt-CV", {
+      style: "currency",
+      currency: "CVE",
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(numericValue);
+  };
+
+  // Limpar detalhes quando o modal for fechado
+  useEffect(() => {
+    if (!showDetailsModal) {
+      // Limpar detalhes após um pequeno delay para evitar problemas de reabertura
+      const timer = setTimeout(() => {
+        clearDetails();
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [showDetailsModal, clearDetails]);
+
   // Dados das estatísticas SOAT (calculadas dinamicamente)
   const soatStats: StatisticData[] = [
     {
-      title: "Listas Ativas",
-      amount: listasAtivas.toString(),
-      description: "Em dia",
-      icon: IoDocumentTextOutline,
+      title: "Valor Total",
+      amount: formatCurrency(valorTotalMaisRecente),
+      description: "Último período",
+      icon: BsCashCoin,
       color: "green",
     },
     {
@@ -126,9 +160,12 @@ export default function PageGestaoSOAT() {
 
   // Função para abrir modal de detalhes
   const handleViewDetails = async (soatId: string) => {
+    // Se for um SOAT diferente do atual, limpar detalhes
+    if (selectedSoatId !== soatId) {
+      clearDetails();
+    }
     setSelectedSoatId(soatId);
     setShowDetailsModal(true);
-    clearDetails();
     await fetchSoatDetails(soatId);
   };
 
@@ -197,7 +234,7 @@ export default function PageGestaoSOAT() {
       }
     } catch (error: any) {
       console.error("Erro ao remover SOAT:", error);
-      alert(`Erro ao remover SOAT: ${error.message}`);
+      showErrorMessage(`Erro ao remover SOAT: ${error.message}`);
     } finally {
       setRemoveLoading(null);
     }
@@ -215,7 +252,7 @@ export default function PageGestaoSOAT() {
 
   const confirmSendSoat = async () => {
     if (!soatToSend?.id) {
-      alert("ID do SOAT não encontrado");
+      showErrorMessage("ID do SOAT não encontrado");
       return;
     }
 
@@ -237,7 +274,7 @@ export default function PageGestaoSOAT() {
       refetch();
     } catch (error: any) {
       console.error("Erro ao enviar SOAT:", error);
-      alert(`Erro ao enviar SOAT: ${error.message}`);
+      showErrorMessage(`Erro ao enviar SOAT: ${error.message}`);
     } finally {
       setSendLoading(null);
     }
@@ -252,6 +289,23 @@ export default function PageGestaoSOAT() {
     setShowPendingWarningModal(false);
   };
 
+  // Função para mostrar erros na interface
+  const showErrorMessage = (message: string) => {
+    setErrorMessage(message);
+    setShowError(true);
+    // Auto-hide após 5 segundos
+    setTimeout(() => {
+      setShowError(false);
+      setErrorMessage("");
+    }, 5000);
+  };
+
+  // Função para fechar mensagem de erro
+  const closeErrorMessage = () => {
+    setShowError(false);
+    setErrorMessage("");
+  };
+
   return (
     <div className="p-4 w-full mt-6">
       <div className="mb-6">
@@ -263,6 +317,22 @@ export default function PageGestaoSOAT() {
           trabalhadores da empresa
         </p>
       </div>
+
+      {/* Mensagem de Erro */}
+      {showError && (
+        <div className="mb-6 bg-red-50 border border-red-200 rounded-lg p-4 flex items-center justify-between">
+          <div className="flex items-center">
+            <IoAlertCircleOutline className="w-5 h-5 text-red-600 mr-3" />
+            <p className="text-red-800 font-medium">{errorMessage}</p>
+          </div>
+          <button
+            onClick={closeErrorMessage}
+            className="text-red-600 hover:text-red-800 font-bold text-lg"
+          >
+            <X />
+          </button>
+        </div>
+      )}
 
       {/* Cards de Estatísticas */}
       <div className="mb-8">
@@ -423,7 +493,7 @@ export default function PageGestaoSOAT() {
                       {lista.total_colaborador}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {lista.valor_total || "N/A"}
+                      {formatCurrency(lista.valor_total)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
@@ -509,7 +579,8 @@ export default function PageGestaoSOAT() {
         isOpen={showDetailsModal}
         onClose={() => {
           setShowDetailsModal(false);
-          clearDetails();
+          // Não limpar os detalhes imediatamente para evitar problemas de reabertura
+          // clearDetails();
         }}
         soatDetails={soatDetails}
         loading={detailsLoading}

@@ -15,17 +15,25 @@ export function BackToDashboardButton({
   const getPageDisplayName = (page: string) => {
     const pageNames: Record<string, string> = {
       Historico: "Histórico",
-      apolice: "Apólices",
+      apolice: "Apólice",
+      apoliceDetails: "Detalhes da Apólice",
       sinistro: "Sinistros",
-      recibo: "Recibos",
+      Pagamento: "Pagamentos",
       ocorrencias: "Ocorrências",
-      Simulation: "Simular",
-      gerenciamentoSOAT: "Gestão SOAT",
-      gestaoSOAT: "Gestão SOAT",
-      mensagens: "Mensagens",
-      Agencias: "Agências",
+      Simulation: "Simular & Contratar",
       Perfil: "Perfil",
+      mensagens: "Mensagens",
       Notificacoes: "Notificações",
+      recibo: "Recibos",
+      Agencias: "Agências",
+      Ajuda: "Ajuda",
+      newOcorrencia: "Nova Ocorrência",
+      gestaoSOAT: "Gestão de SOAT",
+      dashboardEmpresarial: "Dashboard Empresarial",
+      mensagemDetails: "Detalhes Mensagem",
+      encaminhar: "Encaminhar Mensagem",
+      detailsOcorrencia: "Detalhes Ocorrência",
+      sinistroDetails: "Detalhes Sinistro",
     };
     return pageNames[page] || page;
   };

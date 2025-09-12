@@ -53,14 +53,14 @@ export default function Pagination({
         <button
           onClick={onPrev}
           disabled={!canGoPrev}
-          className="relative inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="relative inline-flex items-center px-4 py-2 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           Anterior
         </button>
         <button
           onClick={onNext}
           disabled={!canGoNext}
-          className="relative ml-3 inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="relative ml-3 inline-flex items-center px-4 py-2 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           Próximo
         </button>
@@ -68,7 +68,7 @@ export default function Pagination({
 
       <div className="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
         <div>
-          <p className="text-sm text-gray-700">
+          <p className="text-xs text-gray-700">
             Mostrando <span className="font-medium">{startIndex + 1}</span> até{" "}
             <span className="font-medium">
               {Math.min(endIndex, totalItems)}
@@ -82,7 +82,7 @@ export default function Pagination({
             <button
               onClick={onPrev}
               disabled={!canGoPrev}
-              className="relative inline-flex items-center px-2 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-l-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="relative inline-flex items-center px-2 py-2 text-xs font-medium text-gray-500 bg-white border border-gray-300 rounded-l-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <FaChevronLeft className="w-4 h-4" />
             </button>
@@ -91,7 +91,7 @@ export default function Pagination({
               <button
                 key={page}
                 onClick={() => onPageChange(page)}
-                className={`relative inline-flex items-center px-4 py-2 text-sm font-medium border ${
+                className={`relative inline-flex items-center px-4 py-2 text-xs font-medium border ${
                   page === currentPage
                     ? "z-10 bg-[#002256] border-[#002256] text-white"
                     : "bg-white border-gray-300 text-gray-500 hover:bg-gray-50"
@@ -104,7 +104,7 @@ export default function Pagination({
             <button
               onClick={onNext}
               disabled={!canGoNext}
-              className="relative inline-flex items-center px-2 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-r-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="relative inline-flex items-center px-2 py-2 text-xs font-medium text-gray-500 bg-white border border-gray-300 rounded-r-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <FaChevronRight className="w-4 h-4" />
             </button>

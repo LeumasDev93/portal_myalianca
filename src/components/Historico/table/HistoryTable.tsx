@@ -653,21 +653,21 @@ const HistoryTable = ({
 
           {activeTab === "Recibos" && (
             <>
-              {(!selectedItem?.rawData?.status ||
-                (selectedItem.rawData.status !== 1 &&
-                  selectedItem.rawData.status !== 2 &&
-                  selectedItem.rawData.status !== 5)) && (
-                <button
-                  onClick={() => {
-                    handlePayment(selectedItem.rawData.number);
-                    setShowPopup(false);
-                  }}
-                  className="w-full cursor-pointer text-left px-3 py-3 text-xs sm:text-sm md:text-base text-gray-700 hover:text-gray-800 hover:bg-gray-100 flex items-center gap-3 rounded-md mx-1"
-                >
-                  <MdOutlinePayment className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
-                  <span className="flex-1">Pagar Agora</span>
-                </button>
-              )}
+              {/* Botão Pagar - apenas para status 1 e 2 (Em Cobrança) */}
+              {selectedItem?.rawData?.status &&
+                (selectedItem.rawData.status === 1 ||
+                  selectedItem.rawData.status === 2) && (
+                  <button
+                    onClick={() => {
+                      handlePayment(selectedItem.rawData.number);
+                      setShowPopup(false);
+                    }}
+                    className="w-full cursor-pointer text-left px-3 py-3 text-xs sm:text-sm md:text-base text-gray-700 hover:text-gray-800 hover:bg-gray-100 flex items-center gap-3 rounded-md mx-1"
+                  >
+                    <MdOutlinePayment className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
+                    <span className="flex-1">Pagar Agora</span>
+                  </button>
+                )}
 
               <button
                 onClick={() => {
@@ -683,10 +683,9 @@ const HistoryTable = ({
                 <FaEye className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
                 <span className="flex-1">Ver detalhes</span>
               </button>
+              {/* Botão Download - apenas para status 5 (Cobrado) */}
               {selectedItem?.rawData?.status &&
-                (selectedItem.rawData.status === 1 ||
-                  selectedItem.rawData.status === 2 ||
-                  selectedItem.rawData.status === 5) && (
+                selectedItem.rawData.status === 5 && (
                   <button
                     onClick={() => {
                       handleDownload(selectedItem.rawData.number);

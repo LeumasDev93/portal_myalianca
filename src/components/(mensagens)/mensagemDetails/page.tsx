@@ -353,12 +353,14 @@ export default function MensagemDetailPage({
                   <AvatarFallback className="text-white text-xs sm:text-sm">
                     {message.isFromMe
                       ? profile?.user?.nome?.charAt(0) || "V"
-                      : message.sender.charAt(0)}
+                      : message.sender?.charAt(0) || "U"}
                   </AvatarFallback>
                 </Avatar>
                 <div className="min-w-0 flex-1">
                   <div className="font-semibold text-sm sm:text-base flex items-center gap-2">
-                    <span className="truncate">{message.sender}</span>
+                    <span className="truncate">
+                      {message.sender || "Usuário"}
+                    </span>
                     {message.isFromMe && (
                       <Badge className="ml-0 sm:ml-2 bg-blue-600 text-xs">
                         Você
@@ -366,7 +368,7 @@ export default function MensagemDetailPage({
                     )}
                   </div>
                   <div className="text-xs sm:text-sm text-gray-500 truncate">
-                    {message.senderEmail}
+                    {message.senderEmail || "Email não disponível"}
                   </div>
                 </div>
               </div>

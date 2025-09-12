@@ -6,6 +6,9 @@ interface Agencia {
   localizacao: string;
   latitude: number;
   longitude: number;
+  telefone?: string;
+  email?: string;
+  horarios?: string[];
   criado_por: string | null;
 }
 
@@ -15,6 +18,9 @@ interface AgenciaAPI {
   localizacao: string;
   latitude: string | number;
   longitude: string | number;
+  telefone?: string;
+  email?: string;
+  horarios?: string[];
   criado_por?: string | null;
 }
 
@@ -42,6 +48,9 @@ export function useAgencias() {
           localizacao: agencia.localizacao,
           latitude: Number(agencia.latitude),
           longitude: Number(agencia.longitude),
+          telefone: agencia.telefone,
+          email: agencia.email,
+          horarios: agencia.horarios,
           criado_por: agencia.criado_por ?? null,
         }));
 

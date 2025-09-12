@@ -40,6 +40,7 @@ import { useUserProfile } from "@/hooks/useUserProfile ";
 import { useOcorrenciaActivity } from "@/lib/activityExamples";
 
 interface Apolice {
+  registration: string;
   id: string;
   policyNumber: string;
   insuranceType?: string; // Opcional para compatibilidade
@@ -63,10 +64,8 @@ export default function NewOcorrênciasPage({ onBack }: NewSinistroPageProps) {
   // Estados do componente
   const [apolices, setApolices] = useState<Apolice[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [loadingSinistros, setLoadingSinistros] = useState(false);
   const [error, setError] = useState<string | null>("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [sinistrosDisponiveis, setSinistrosDisponiveis] = useState<any[]>([]);
   const [uploadProgress, setUploadProgress] = useState<number>(0);
 
   // Dados do formulário
@@ -83,9 +82,6 @@ export default function NewOcorrênciasPage({ onBack }: NewSinistroPageProps) {
     boletimOcorrencia: "nao",
     numeroBO: "",
   });
-
-  // Estado para controlar o sinistro selecionado
-  const [selectedSinistroId, setSelectedSinistroId] = useState<string>("");
 
   // Upload de fotos
   const [fotos, setFotos] = useState<File[]>([]);
@@ -150,14 +146,8 @@ export default function NewOcorrênciasPage({ onBack }: NewSinistroPageProps) {
       const newData = { ...prev, [name]: value };
 
       if (name === "apolice") {
-        // Limpar completamente os dados relacionados a sinistros
-        newData.tipoSinistro = "";
+        // Limpar dados relacionados (exceto tipoSinistro que é independente)
         newData.tipoApolice = "";
-        setSelectedSinistroId("");
-        setSinistrosDisponiveis([]);
-
-        // Buscar novos sinistros para a apólice selecionada
-        fetchSinistros(value);
 
         // Buscar dados da apólice selecionada
         const apoliceSelecionada = apolices.find(
@@ -171,77 +161,12 @@ export default function NewOcorrênciasPage({ onBack }: NewSinistroPageProps) {
       }
 
       if (name === "tipoSinistro") {
-        // Atualizar o ID do sinistro selecionado
-        setSelectedSinistroId(value);
-
-        // Buscar dados do sinistro selecionado pelo claimNumber
-        const sinistroSelecionado = sinistrosDisponiveis.find(
-          (sinistro) => String(sinistro.claimNumber) === value
-        );
-
-        if (sinistroSelecionado) {
-          // Definir apenas o produto do sinistro selecionado (não concatenar)
-          const tipoSinistroText =
-            sinistroSelecionado.product ||
-            `Sinistro ${sinistroSelecionado.claimNumber}`;
-
-          // Garantir que apenas um valor seja definido
-          newData.tipoSinistro = tipoSinistroText;
-        } else {
-          // Se não encontrar, limpar o campo
-          newData.tipoSinistro = "";
-
-          setError("❌ Sinistros disponíveis");
-          setTimeout(() => {
-            setError("");
-          }, 3000);
-        }
+        // Usar o valor selecionado diretamente
+        newData.tipoSinistro = value;
       }
 
       return newData;
     });
-  };
-
-  const fetchSinistros = async (apoliceId: string) => {
-    if (!token || !apoliceId) return;
-
-    const apoliceIdNumber = apoliceId;
-    setLoadingSinistros(true);
-    try {
-      console.log("🔍 Buscando sinistros para apólice:", apoliceIdNumber);
-
-      const response = await fetch(
-        `/api/anywhere/api/v1/private/mobile/contract/${apoliceIdNumber}/claims`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-            Accept: "application/json",
-          },
-        }
-      );
-
-      if (!response.ok) throw new Error(`Erro ${response.status}`);
-
-      const data = await response.json();
-      const sinistros = Array.isArray(data) ? data : [data];
-
-      // Remover sinistros duplicados baseados no claimNumber
-      const sinistrosUnicos = sinistros.filter(
-        (sinistro, index, self) =>
-          index ===
-          self.findIndex((s) => s.claimNumber === sinistro.claimNumber)
-      );
-
-      setSinistrosDisponiveis(sinistrosUnicos);
-    } catch (error) {
-      setError("❌ Erro ao buscar sinistros");
-      setTimeout(() => {
-        setError("");
-      }, 3000);
-    } finally {
-      setLoadingSinistros(false);
-    }
   };
 
   // Manipuladores de eventos
@@ -514,7 +439,6 @@ export default function NewOcorrênciasPage({ onBack }: NewSinistroPageProps) {
       setPreviews([]);
       setUploadedFileIds([]);
       setUploadingFiles(new Set());
-      setSelectedSinistroId("");
     } catch (error: any) {
       setError(error.message || "Ocorreu um erro ao registrar o sinistro");
       setTimeout(() => {
@@ -572,7 +496,7 @@ export default function NewOcorrênciasPage({ onBack }: NewSinistroPageProps) {
                 Informações Básicas
               </h3>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-4 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="apolice">
                     Apólice relacionada{" "}
@@ -603,7 +527,7 @@ export default function NewOcorrênciasPage({ onBack }: NewSinistroPageProps) {
                           key={apolice.contractNumber}
                           value={String(apolice.contractNumber)}
                         >
-                          {apolice.productName}
+                          {apolice.registration}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -621,45 +545,19 @@ export default function NewOcorrênciasPage({ onBack }: NewSinistroPageProps) {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="tipoSinistro">Tipo de Sinistro</Label>
+                  <Label htmlFor="tipoSinistro">Tipo de Ocorrência</Label>
                   <Select
-                    value={selectedSinistroId}
+                    value={formData.tipoSinistro}
                     onValueChange={(value) => {
                       handleSelectChange("tipoSinistro", value);
                     }}
-                    disabled={!formData.apolice || loadingSinistros}
                   >
                     <SelectTrigger className="w-full">
-                      <SelectValue
-                        placeholder={
-                          loadingSinistros
-                            ? "Carregando..."
-                            : !formData.apolice
-                            ? "Selecione uma apólice primeiro"
-                            : sinistrosDisponiveis.length === 0
-                            ? "Nenhum sinistro disponível"
-                            : "Selecione o sinistro"
-                        }
-                      />
+                      <SelectValue placeholder="Selecione o tipo de sinistro" />
                     </SelectTrigger>
                     <SelectContent>
-                      {sinistrosDisponiveis.length > 0 ? (
-                        sinistrosDisponiveis.map((sinistro, index) => (
-                          <SelectItem
-                            key={`sinistro-${sinistro.claimNumber}-${index}`}
-                            value={String(sinistro.claimNumber)}
-                          >
-                            {sinistro.product ||
-                              `Sinistro ${sinistro.claimNumber}`}
-                          </SelectItem>
-                        ))
-                      ) : (
-                        <div className="p-2 text-sm text-muted-foreground">
-                          {formData.apolice
-                            ? "Nenhum sinistro encontrado"
-                            : "Selecione uma apólice"}
-                        </div>
-                      )}
+                      <SelectItem value="Sinistro">Sinistro</SelectItem>
+                      <SelectItem value="Suporte">Suporte</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -715,70 +613,37 @@ export default function NewOcorrênciasPage({ onBack }: NewSinistroPageProps) {
               <h3 className="text-lg font-semibold text-[#002256]">
                 Detalhes do Sinistro
               </h3>
-
-              <div className="space-y-2">
-                <Label htmlFor="descricao">
-                  Descrição Detalhada{" "}
-                  <span className="text-company-red-500">*</span>
-                </Label>
-                <Textarea
-                  id="descricao"
-                  name="descricao"
-                  placeholder="Descreva com detalhes o que aconteceu"
-                  rows={5}
-                  value={formData.descricao}
-                  onChange={handleChange}
-                  required
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="envolvidos">
-                  Pessoas ou Veículos Envolvidos
-                </Label>
-                <Textarea
-                  id="envolvidos"
-                  name="envolvidos"
-                  placeholder="Liste outras pessoas ou veículos envolvidos no sinistro, se houver"
-                  rows={3}
-                  value={formData.envolvidos}
-                  onChange={handleChange}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label>Boletim de Ocorrência</Label>
-                <RadioGroup
-                  value={formData.boletimOcorrencia}
-                  onValueChange={(value) =>
-                    handleSelectChange("boletimOcorrencia", value)
-                  }
-                >
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="sim" id="bo-sim" />
-                    <Label htmlFor="bo-sim">Sim, já registrei um B.O.</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="nao" id="bo-nao" />
-                    <Label htmlFor="bo-nao">Não registrei um B.O.</Label>
-                  </div>
-                </RadioGroup>
-              </div>
-
-              {formData.boletimOcorrencia === "sim" && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="numeroBO">
-                    Número do Boletim de Ocorrência
+                  <Label htmlFor="descricao">
+                    Descrição Detalhada{" "}
+                    <span className="text-company-red-500">*</span>
                   </Label>
-                  <Input
-                    id="numeroBO"
-                    name="numeroBO"
-                    placeholder="Informe o número do B.O."
-                    value={formData.numeroBO}
+                  <Textarea
+                    id="descricao"
+                    name="descricao"
+                    placeholder="Descreva com detalhes o que aconteceu"
+                    rows={3}
+                    value={formData.descricao}
+                    onChange={handleChange}
+                    required
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="envolvidos">
+                    Pessoas ou Veículos Envolvidos
+                  </Label>
+                  <Textarea
+                    id="envolvidos"
+                    name="envolvidos"
+                    placeholder="Liste outras pessoas ou veículos envolvidos no sinistro, se houver"
+                    rows={3}
+                    value={formData.envolvidos}
                     onChange={handleChange}
                   />
                 </div>
-              )}
+              </div>
             </div>
 
             <Separator />

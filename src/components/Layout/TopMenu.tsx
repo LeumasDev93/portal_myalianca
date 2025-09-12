@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { useUserProfile } from "@/hooks/useUserProfile ";
 import { useNotificationsContext } from "@/contexts/notifications-context";
 import { useUnreadMessages } from "@/contexts/unread-messages-context";
@@ -105,6 +106,10 @@ export function TopMenu({
       newOcorrencia: "Nova Ocorrência",
       gestaoSOAT: "Gestão de SOAT",
       dashboardEmpresarial: "Dashboard Empresarial",
+      mensagemDetails: "Detalhes Mensagem",
+      encaminhar: "Encaminhar Mensagem",
+      detailsOcorrencia: "Detalhes Ocorrência",
+      sinistroDetails: "Detalhes Sinistro",
     };
     return pageTitles[currentPage] || currentPage;
   };
@@ -216,7 +221,7 @@ export function TopMenu({
 
       {!isMobile && (
         <div className="flex items-center gap-4">
-          {showSearch ? (
+          {/* {showSearch ? (
             <div className="relative w-64" ref={searchInputRef}>
               <input
                 type="text"
@@ -235,7 +240,7 @@ export function TopMenu({
             >
               <FaSearch className="size-5 xl:size-6" />
             </button>
-          )}
+          )} */}
 
           <button
             onClick={() => setShowMessagesPopup(!showMessagesPopup)}

@@ -26,6 +26,8 @@ import {
   Mail,
   MailOpen,
   MoreVertical,
+  List,
+  Grid3X3,
 } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
 import { Badge } from "@/components/ui/badge";
@@ -86,6 +88,21 @@ export default function MensagensPage({
     message: "",
   });
   const [sending, setSending] = useState(false);
+  const [viewMode, setViewMode] = useState<"list" | "grid">("list");
+
+  // Função para truncar título em mobile
+  const truncateTitle = (
+    title: string | undefined,
+    isMobile: boolean = false
+  ) => {
+    if (!title) return "";
+    if (!isMobile) return title;
+
+    const words = title.split(" ");
+    if (words.length <= 3) return title;
+
+    return words.slice(0, 3).join(" ") + "...";
+  };
 
   useEffect(() => {
     if (onUnreadCountChange) {
@@ -231,7 +248,7 @@ export default function MensagensPage({
     }
   };
 
-  // Se estiver carregando ou erro, renderiza adequadamente
+  // Se estiver carregando, renderiza loading
   if (loading)
     return (
       <div className="w-full h-full p-4 md:p-6 flex items-center justify-center">
@@ -239,6 +256,7 @@ export default function MensagensPage({
       </div>
     );
 
+  // Se houver erro, renderiza erro
   if (error)
     return (
       <div className="w-full h-full p-4 md:p-6 bg-company-gray-200 flex items-center justify-center">
@@ -246,11 +264,26 @@ export default function MensagensPage({
       </div>
     );
 
+  // Se não estiver carregando e não houver mensagens, renderiza mensagem de nenhum resultado
+  if (!loading && messages.length === 0)
+    return (
+      <div className="w-full h-full p-4 md:p-6 bg-company-gray-200 flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-gray-500 text-lg mb-2">
+            Nenhuma mensagem encontrada
+          </div>
+          <div className="text-gray-400 text-sm">
+            Não há mensagens para exibir no momento.
+          </div>
+        </div>
+      </div>
+    );
+
   return (
     <div className="w-full h-full p-3 sm:p-4 md:p-6 bg-company-gray-200 overflow-y-auto">
       {/* Header responsivo */}
       <div className="flex flex-col gap-4 mb-4 sm:mb-6">
-        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 sm:gap-4">
+        <div className="flex justify-between items-center gap-3 sm:gap-4">
           <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
             <div>
               <h1 className="text-lg sm:text-xl md:text-2xl text-[#002856] font-bold">
@@ -268,312 +301,502 @@ export default function MensagensPage({
             )}
           </div>
 
-          <Button
-            className="bg-[#002856] hover:bg-company-blue-700 w-full sm:w-auto"
-            onClick={openComposeDialog}
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            Nova Mensagem
-          </Button>
+          <div className="flex flex-col gap-2">
+            {/* Botão Nova Mensagem */}
+            <Button
+              className="bg-[#002856] hover:bg-[#002856]/80 order-1"
+              onClick={openComposeDialog}
+            >
+              <Plus className="h-4 w-4" />
+              Nova Mensagem
+            </Button>
+
+            {/* Botões de visualização */}
+            <div className="flex items-center justify-end gap-2 order-2">
+              <div className="flex gap-2">
+                <Button
+                  size="sm"
+                  onClick={() => setViewMode("list")}
+                  className={`h-8 px-2 sm:h-9 sm:px-3 ${
+                    viewMode === "list"
+                      ? "bg-[#002856] hover:bg-[#002856]/80 text-white"
+                      : "bg-white text-gray-600 hover:text-white hover:bg-[#002856]/50"
+                  }`}
+                  title="Visualização em lista"
+                >
+                  <List className="h-3 w-3 sm:h-4 sm:w-4" />
+                </Button>
+                <Button
+                  size="sm"
+                  onClick={() => setViewMode("grid")}
+                  className={`h-8 px-2 sm:h-9 sm:px-3 ${
+                    viewMode === "grid"
+                      ? "bg-[#002856] hover:bg-[#002856]/80 text-white"
+                      : "bg-white text-gray-600 hover:text-white hover:bg-[#002856]/50"
+                  }`}
+                  title="Visualização em grade"
+                >
+                  <Grid3X3 className="h-3 w-3 sm:h-4 sm:w-4" />
+                </Button>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
       {/* Lista de mensagens responsiva */}
-      <div className="space-y-2 sm:space-y-3 md:space-y-4 w-full">
-        {messages.map((message) => (
-          <Card
-            key={message.id}
-            className={`cursor-pointer transition-colors hover:bg-gray-50 w-full ${
-              !isMessageRead(message.id)
-                ? "border-l-4 border-l-[#002856] bg-blue-50"
-                : ""
-            }`}
-          >
-            <CardContent className="p-3 sm:p-4">
-              <div className="flex items-start gap-3 sm:gap-4">
-                {/* Avatar */}
-                <div className="relative flex-shrink-0">
-                  {message.starred && (
-                    <Star className="absolute -top-1 -left-1 h-3 w-3 sm:h-4 sm:w-4 text-yellow-500 fill-yellow-500 z-50" />
-                  )}
-                  <Avatar
-                    className={`h-8 w-8 sm:h-10 sm:w-10 flex items-center justify-center text-[#002856] ${
-                      !isMessageRead(message.id) ? "bg-blue-200" : "bg-blue-100"
+      <div
+        className={
+          viewMode === "grid"
+            ? "grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2 sm:gap-3 md:gap-4"
+            : "space-y-2 sm:space-y-3 md:space-y-4 w-full"
+        }
+      >
+        {messages
+          .sort((a, b) => {
+            // Primeiro, ordenar por status de leitura (não lidas primeiro)
+            const aIsRead = isMessageRead(a.id);
+            const bIsRead = isMessageRead(b.id);
+
+            if (aIsRead !== bIsRead) {
+              return aIsRead ? 1 : -1; // Não lidas primeiro
+            }
+
+            // Se ambas têm o mesmo status de leitura, ordenar por data (mais recentes primeiro)
+            const aDate = new Date(a.data_criacao || 0);
+            const bDate = new Date(b.data_criacao || 0);
+            return bDate.getTime() - aDate.getTime();
+          })
+          .map((message) => (
+            <Card
+              key={message.id}
+              className={`cursor-pointer transition-colors hover:bg-gray-50 w-full relative ${
+                !isMessageRead(message.id)
+                  ? viewMode === "list"
+                    ? "border-l-4 border-l-[#002856] bg-blue-50"
+                    : "border-2 border-[#002856] bg-blue-50"
+                  : ""
+              }`}
+            >
+              <CardContent
+                className={`${
+                  viewMode === "grid" ? "p-1 sm:p-2 md:p-3" : "p-3 sm:p-4"
+                }`}
+              >
+                <div
+                  className={`flex items-start gap-1 sm:gap-2 md:gap-3 lg:gap-4 ${
+                    viewMode === "grid" ? "flex-col" : ""
+                  }`}
+                >
+                  {/* Avatar */}
+                  <div
+                    className={`relative flex-shrink-0 ${
+                      viewMode === "grid" ? "self-center" : ""
                     }`}
                   >
-                    <AvatarImage
-                      src={`/api/proxy-image?url=${encodeURIComponent(
-                        `${process.env.NEXT_PUBLIC_API_BASE_URL_IMAGE}/${profile?.user?.imagem_id}`
-                      )}`}
-                      className="rounded-full"
-                    />
-                    <AvatarFallback className="text-white hover:text-[#002256] text-xs sm:text-sm">
-                      {profile?.user?.nome?.charAt(0)}
-                    </AvatarFallback>
-                  </Avatar>
-                </div>
-
-                {/* Conteúdo da mensagem */}
-                <Link
-                  href={``}
-                  onClick={async () => {
-                    // Marcar como lida se não estiver lida
-                    if (!isMessageRead(message.id)) {
-                      markMessageAsRead(message.id);
-                      await markAsRead(message.id);
-                    }
-                    onSelectDetail(message.id);
-                  }}
-                  className="flex-1 min-w-0"
-                >
-                  <div className="flex flex-col gap-1">
-                    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-1">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <h3
-                          className={`text-sm sm:text-base font-medium ${
-                            !isMessageRead(message.id)
-                              ? "font-bold text-company-blue-800"
-                              : "text-gray-800"
-                          }`}
-                        >
-                          {message.assunto}
-                        </h3>
-
-                        {!isMessageRead(message.id) && (
-                          <Badge className="bg-company-blue-600 text-[#002856] text-xs">
-                            Nova
-                          </Badge>
-                        )}
-                      </div>
-                      <span className="text-xs text-gray-500 whitespace-nowrap">
-                        {message.data_criacao
-                          ? new Date(message.data_criacao).toLocaleDateString(
-                              "pt-BR"
-                            )
-                          : "-"}
-                      </span>
-                    </div>
-                    <p className="text-xs text-gray-500">
-                      De: {message.nome_cliente}
-                    </p>
-                    <p className="text-xs text-gray-500 hidden sm:block">
-                      Última atualização:{" "}
-                      {message.data_ultima_mensagem
-                        ? new Date(message.data_ultima_mensagem).toLocaleString(
-                            "pt-BR"
-                          )
-                        : "-"}
-                    </p>
-                  </div>
-                </Link>
-
-                {/* Botões de ação - Desktop */}
-                <div className="hidden md:flex items-center gap-1 flex-shrink-0">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      setMessages((prev) =>
-                        prev.map((msg) =>
-                          msg.id === message.id
-                            ? { ...msg, starred: !msg.starred }
-                            : msg
-                        )
-                      );
-                      toast({
-                        title: message.starred
-                          ? "Destaque removido"
-                          : "Mensagem destacada",
-                        description: message.starred
-                          ? "A mensagem foi removida dos favoritos."
-                          : "A mensagem foi adicionada aos favoritos.",
-                      });
-                    }}
-                    title={
-                      message.starred ? "Remover destaque" : "Destacar mensagem"
-                    }
-                  >
-                    <Star
-                      className={`h-4 w-4 ${
-                        message.starred
-                          ? "text-yellow-500 fill-yellow-500"
-                          : "text-gray-400"
-                      }`}
-                    />
-                  </Button>
-
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8"
-                    onClick={async (e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-
-                      if (isMessageRead(message.id)) {
-                        markMessageAsUnread(message.id);
-                        await markAsUnread(message.id);
-                      } else {
-                        markMessageAsRead(message.id);
-                        await markAsRead(message.id);
-                      }
-                    }}
-                    title={
-                      isMessageRead(message.id)
-                        ? "Marcar como não lida"
-                        : "Marcar como lida"
-                    }
-                  >
-                    {isMessageRead(message.id) ? (
-                      <Mail className="h-4 w-4 text-gray-400" />
-                    ) : (
-                      <MailOpen className="h-4 w-4 text-company-blue-600" />
+                    {message.starred && (
+                      <Star
+                        className={`absolute ${
+                          viewMode === "grid"
+                            ? "top-0 right-0"
+                            : "-top-1 -left-1"
+                        } h-3 w-3 sm:h-4 sm:w-4 text-yellow-500 fill-yellow-500 z-50`}
+                      />
                     )}
-                  </Button>
+                    <Avatar
+                      className={`${
+                        viewMode === "grid"
+                          ? "h-6 w-6 sm:h-8 sm:w-8 md:h-10 md:w-10 lg:h-12 lg:w-12"
+                          : "h-8 w-8 sm:h-10 sm:w-10"
+                      } flex items-center justify-center text-[#002856] ${
+                        !isMessageRead(message.id)
+                          ? "bg-blue-200"
+                          : "bg-blue-100"
+                      }`}
+                    >
+                      <AvatarImage
+                        src={`/api/proxy-image?url=${encodeURIComponent(
+                          `${process.env.NEXT_PUBLIC_API_BASE_URL_IMAGE}/${profile?.user?.imagem_id}`
+                        )}`}
+                        className="rounded-full"
+                      />
+                      <AvatarFallback className="text-white hover:text-[#002256] text-xs sm:text-sm">
+                        {profile?.user?.nome?.charAt(0)}
+                      </AvatarFallback>
+                    </Avatar>
+                  </div>
 
-                  <Button
+                  {/* Conteúdo da mensagem */}
+                  <Link
+                    href={``}
                     onClick={async () => {
                       // Marcar como lida se não estiver lida
                       if (!isMessageRead(message.id)) {
                         markMessageAsRead(message.id);
                         await markAsRead(message.id);
-                        refreshUnreadCount();
                       }
                       onSelectDetail(message.id);
                     }}
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8"
-                    title="Ver mensagem"
+                    className={`${
+                      viewMode === "grid"
+                        ? "w-full text-center"
+                        : "flex-1 min-w-0"
+                    }`}
                   >
-                    <Eye className="h-4 w-4 text-gray-400" />
-                  </Button>
-
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8"
-                    onClick={(e) => openDeleteDialog(message.id, e)}
-                    title="Excluir mensagem"
-                  >
-                    <Trash2 className="h-4 w-4 text-gray-400" />
-                  </Button>
-                </div>
-
-                {/* Menu dropdown para mobile */}
-                <div className="md:hidden flex-shrink-0">
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 p-1"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                        }}
+                    <div className="flex flex-col gap-1">
+                      <div
+                        className={`flex flex-col gap-1 ${
+                          viewMode === "grid"
+                            ? "items-center"
+                            : "sm:flex-row sm:justify-between sm:items-start"
+                        }`}
                       >
-                        <MoreVertical className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent
-                      align="end"
-                      className="w-56 md:w-48 min-w-[200px] max-w-[280px] p-1"
-                      sideOffset={8}
-                    >
-                      <DropdownMenuItem
-                        onClick={async () => {
-                          if (!isMessageRead(message.id)) {
-                            markMessageAsRead(message.id);
-                            await markAsRead(message.id);
-                            refreshUnreadCount();
-                          }
-                          onSelectDetail(message.id);
-                        }}
-                        className="flex items-center gap-3 p-3 text-sm md:text-base cursor-pointer hover:bg-gray-100 rounded-md"
-                      >
-                        <Eye className="h-4 w-4 flex-shrink-0" />
-                        <span className="flex-1">Ver mensagem</span>
-                      </DropdownMenuItem>
-
-                      <DropdownMenuItem
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          setMessages((prev) =>
-                            prev.map((msg) =>
-                              msg.id === message.id
-                                ? { ...msg, starred: !msg.starred }
-                                : msg
-                            )
-                          );
-                          toast({
-                            title: message.starred
-                              ? "Destaque removido"
-                              : "Mensagem destacada",
-                            description: message.starred
-                              ? "A mensagem foi removida dos favoritos."
-                              : "A mensagem foi adicionada aos favoritos.",
-                          });
-                        }}
-                        className="flex items-center gap-3 p-3 text-sm md:text-base cursor-pointer hover:bg-gray-100 rounded-md"
-                      >
-                        <Star
-                          className={`h-4 w-4 flex-shrink-0 ${
-                            message.starred
-                              ? "text-yellow-500 fill-yellow-500"
-                              : "text-gray-400"
+                        <div
+                          className={`flex items-center gap-2 flex-wrap ${
+                            viewMode === "grid" ? "justify-center" : ""
                           }`}
+                        >
+                          <h3
+                            className={`${
+                              viewMode === "grid"
+                                ? "text-xs sm:text-sm md:text-base"
+                                : "text-sm sm:text-base"
+                            } font-medium ${
+                              !isMessageRead(message.id)
+                                ? "font-bold text-company-blue-800"
+                                : "text-gray-800"
+                            }`}
+                          >
+                            {viewMode === "grid"
+                              ? truncateTitle(message.assunto, true)
+                              : message.assunto}
+                          </h3>
+
+                          {!isMessageRead(message.id) && (
+                            <Badge
+                              className={`bg-company-blue-600 text-[#002856] ${
+                                viewMode === "grid" ? "text-xs" : "text-xs"
+                              }`}
+                            >
+                              Nova
+                            </Badge>
+                          )}
+                        </div>
+                        <span
+                          className={`${
+                            viewMode === "grid" ? "text-xs" : "text-xs"
+                          } text-gray-500 ${
+                            viewMode === "grid"
+                              ? "text-center"
+                              : "whitespace-nowrap"
+                          }`}
+                        >
+                          {message.data_criacao
+                            ? new Date(message.data_criacao).toLocaleDateString(
+                                "pt-BR"
+                              )
+                            : "-"}
+                        </span>
+                      </div>
+                      <p
+                        className={`${
+                          viewMode === "grid" ? "text-xs" : "text-xs"
+                        } text-gray-500 ${
+                          viewMode === "grid"
+                            ? "text-center hidden sm:block"
+                            : ""
+                        }`}
+                      >
+                        De: {message.nome_cliente}
+                      </p>
+                      <p
+                        className={`${
+                          viewMode === "grid" ? "text-xs" : "text-xs"
+                        } text-gray-500 ${
+                          viewMode === "grid"
+                            ? "text-center hidden sm:block"
+                            : "hidden sm:block"
+                        }`}
+                      >
+                        Última atualização:{" "}
+                        {message.data_ultima_mensagem
+                          ? new Date(
+                              message.data_ultima_mensagem
+                            ).toLocaleString("pt-BR")
+                          : "-"}
+                      </p>
+                    </div>
+                  </Link>
+
+                  {/* Botões de ação - Desktop */}
+                  <div
+                    className={`hidden md:flex items-center gap-1 flex-shrink-0 ${
+                      viewMode === "grid" ? "justify-center w-full" : ""
+                    }`}
+                  >
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className={`${
+                        viewMode === "grid"
+                          ? "h-6 w-6 sm:h-8 sm:w-8"
+                          : "h-8 w-8"
+                      }`}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setMessages((prev) =>
+                          prev.map((msg) =>
+                            msg.id === message.id
+                              ? { ...msg, starred: !msg.starred }
+                              : msg
+                          )
+                        );
+                        toast({
+                          title: message.starred
+                            ? "Destaque removido"
+                            : "Mensagem destacada",
+                          description: message.starred
+                            ? "A mensagem foi removida dos favoritos."
+                            : "A mensagem foi adicionada aos favoritos.",
+                        });
+                      }}
+                      title={
+                        message.starred
+                          ? "Remover destaque"
+                          : "Destacar mensagem"
+                      }
+                    >
+                      <Star
+                        className={`${
+                          viewMode === "grid"
+                            ? "h-3 w-3 sm:h-4 sm:w-4"
+                            : "h-4 w-4"
+                        } ${
+                          message.starred
+                            ? "text-yellow-500 fill-yellow-500"
+                            : "text-gray-400"
+                        }`}
+                      />
+                    </Button>
+
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className={`${
+                        viewMode === "grid"
+                          ? "h-6 w-6 sm:h-8 sm:w-8"
+                          : "h-8 w-8"
+                      }`}
+                      onClick={async (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+
+                        if (isMessageRead(message.id)) {
+                          markMessageAsUnread(message.id);
+                          await markAsUnread(message.id);
+                        } else {
+                          markMessageAsRead(message.id);
+                          await markAsRead(message.id);
+                        }
+                      }}
+                      title={
+                        isMessageRead(message.id)
+                          ? "Marcar como não lida"
+                          : "Marcar como lida"
+                      }
+                    >
+                      {isMessageRead(message.id) ? (
+                        <Mail
+                          className={`${
+                            viewMode === "grid"
+                              ? "h-3 w-3 sm:h-4 sm:w-4"
+                              : "h-4 w-4"
+                          } text-gray-400`}
                         />
-                        <span className="flex-1">
-                          {message.starred ? "Remover destaque" : "Destacar"}
-                        </span>
-                      </DropdownMenuItem>
+                      ) : (
+                        <MailOpen
+                          className={`${
+                            viewMode === "grid"
+                              ? "h-3 w-3 sm:h-4 sm:w-4"
+                              : "h-4 w-4"
+                          } text-company-blue-600`}
+                        />
+                      )}
+                    </Button>
 
-                      <DropdownMenuItem
-                        onClick={async (e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
+                    <Button
+                      onClick={async () => {
+                        // Marcar como lida se não estiver lida
+                        if (!isMessageRead(message.id)) {
+                          markMessageAsRead(message.id);
+                          await markAsRead(message.id);
+                          refreshUnreadCount();
+                        }
+                        onSelectDetail(message.id);
+                      }}
+                      variant="ghost"
+                      size="icon"
+                      className={`${
+                        viewMode === "grid"
+                          ? "h-6 w-6 sm:h-8 sm:w-8"
+                          : "h-8 w-8"
+                      }`}
+                      title="Ver mensagem"
+                    >
+                      <Eye
+                        className={`${
+                          viewMode === "grid"
+                            ? "h-3 w-3 sm:h-4 sm:w-4"
+                            : "h-4 w-4"
+                        } text-gray-400`}
+                      />
+                    </Button>
 
-                          if (isMessageRead(message.id)) {
-                            markMessageAsUnread(message.id);
-                            await markAsUnread(message.id);
-                          } else {
-                            markMessageAsRead(message.id);
-                            await markAsRead(message.id);
-                          }
-                        }}
-                        className="flex items-center gap-3 p-3 text-sm md:text-base cursor-pointer hover:bg-gray-100 rounded-md"
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className={`${
+                        viewMode === "grid"
+                          ? "h-6 w-6 sm:h-8 sm:w-8"
+                          : "h-8 w-8"
+                      }`}
+                      onClick={(e) => openDeleteDialog(message.id, e)}
+                      title="Excluir mensagem"
+                    >
+                      <Trash2
+                        className={`${
+                          viewMode === "grid"
+                            ? "h-3 w-3 sm:h-4 sm:w-4"
+                            : "h-4 w-4"
+                        } text-gray-400`}
+                      />
+                    </Button>
+                  </div>
+
+                  {/* Menu dropdown para mobile */}
+                  <div
+                    className={`md:hidden flex-shrink-0 ${
+                      viewMode === "grid" ? "absolute top-1 right-1" : ""
+                    }`}
+                  >
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className={`${
+                            viewMode === "grid"
+                              ? "h-6 w-6 p-0.5"
+                              : "h-8 w-8 p-1"
+                          }`}
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                          }}
+                        >
+                          <MoreVertical
+                            className={`${
+                              viewMode === "grid" ? "h-3 w-3" : "h-4 w-4"
+                            }`}
+                          />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent
+                        align="end"
+                        className="w-64 sm:w-56 md:w-48 min-w-[240px] sm:min-w-[200px] max-w-[320px] sm:max-w-[280px] p-1"
+                        sideOffset={8}
                       >
-                        {isMessageRead(message.id) ? (
-                          <Mail className="h-4 w-4 flex-shrink-0 text-gray-400" />
-                        ) : (
-                          <MailOpen className="h-4 w-4 flex-shrink-0 text-company-blue-600" />
-                        )}
-                        <span className="flex-1">
-                          {isMessageRead(message.id)
-                            ? "Marcar como não lida"
-                            : "Marcar como lida"}
-                        </span>
-                      </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={async () => {
+                            if (!isMessageRead(message.id)) {
+                              markMessageAsRead(message.id);
+                              await markAsRead(message.id);
+                              refreshUnreadCount();
+                            }
+                            onSelectDetail(message.id);
+                          }}
+                          className="flex items-center gap-2 sm:gap-3 p-2 sm:p-2 text-xs sm:text-sm cursor-pointer hover:bg-gray-100 rounded-md"
+                        >
+                          <Eye className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
+                          <span className="flex-1">Ver mensagem</span>
+                        </DropdownMenuItem>
 
-                      <DropdownMenuItem
-                        onClick={(e) => openDeleteDialog(message.id, e)}
-                        className="flex items-center gap-3 p-3 text-sm md:text-base cursor-pointer hover:bg-red-50 rounded-md text-red-600"
-                      >
-                        <Trash2 className="h-4 w-4 flex-shrink-0" />
-                        <span className="flex-1">Excluir</span>
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                        <DropdownMenuItem
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            setMessages((prev) =>
+                              prev.map((msg) =>
+                                msg.id === message.id
+                                  ? { ...msg, starred: !msg.starred }
+                                  : msg
+                              )
+                            );
+                            toast({
+                              title: message.starred
+                                ? "Destaque removido"
+                                : "Mensagem destacada",
+                              description: message.starred
+                                ? "A mensagem foi removida dos favoritos."
+                                : "A mensagem foi adicionada aos favoritos.",
+                            });
+                          }}
+                          className="flex items-center gap-2 sm:gap-3 p-2 sm:p-2 text-xs sm:text-sm cursor-pointer hover:bg-gray-100 rounded-md"
+                        >
+                          <Star
+                            className={`h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0 ${
+                              message.starred
+                                ? "text-yellow-500 fill-yellow-500"
+                                : "text-gray-400"
+                            }`}
+                          />
+                          <span className="flex-1">
+                            {message.starred ? "Remover destaque" : "Destacar"}
+                          </span>
+                        </DropdownMenuItem>
+
+                        <DropdownMenuItem
+                          onClick={async (e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+
+                            if (isMessageRead(message.id)) {
+                              markMessageAsUnread(message.id);
+                              await markAsUnread(message.id);
+                            } else {
+                              markMessageAsRead(message.id);
+                              await markAsRead(message.id);
+                            }
+                          }}
+                          className="flex items-center gap-2 sm:gap-3 p-2 sm:p-2 text-xs sm:text-sm cursor-pointer hover:bg-gray-100 rounded-md"
+                        >
+                          {isMessageRead(message.id) ? (
+                            <Mail className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0 text-gray-400" />
+                          ) : (
+                            <MailOpen className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0 text-company-blue-600" />
+                          )}
+                          <span className="flex-1">
+                            {isMessageRead(message.id)
+                              ? "Marcar como não lida"
+                              : "Marcar como lida"}
+                          </span>
+                        </DropdownMenuItem>
+
+                        <DropdownMenuItem
+                          onClick={(e) => openDeleteDialog(message.id, e)}
+                          className="flex items-center gap-2 sm:gap-3 p-2 sm:p-2 text-xs sm:text-sm cursor-pointer hover:bg-red-50 rounded-md text-red-600"
+                        >
+                          <Trash2 className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
+                          <span className="flex-1">Excluir</span>
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+              </CardContent>
+            </Card>
+          ))}
       </div>
 
       {/* Delete Confirmation Dialog */}

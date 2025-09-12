@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Plus, X } from "lucide-react";
 import { FaTrash, FaDownload, FaSpinner, FaEdit } from "react-icons/fa";
 import { IoAlertCircleOutline } from "react-icons/io5";
@@ -77,6 +77,13 @@ export default function SoatDetailsModal({
     sortBy: "created_at", // Assumindo que existe um campo de data de criação
     sortOrder: "desc",
   });
+
+  // Resetar paginação quando o modal for fechado
+  useEffect(() => {
+    if (!isOpen) {
+      collaboratorsPagination.resetPagination();
+    }
+  }, [isOpen, collaboratorsPagination]);
 
   if (!isOpen) return null;
 
@@ -608,8 +615,23 @@ export default function SoatDetailsModal({
               </div>
             </div>
 
+            {/* Paginação para colaboradores */}
+            {collaboratorsPagination.totalPages > 1 && (
+              <Pagination
+                currentPage={collaboratorsPagination.currentPage}
+                totalPages={collaboratorsPagination.totalPages}
+                onPageChange={collaboratorsPagination.goToPage}
+                onNext={collaboratorsPagination.nextPage}
+                onPrev={collaboratorsPagination.prevPage}
+                canGoNext={collaboratorsPagination.canGoNext}
+                canGoPrev={collaboratorsPagination.canGoPrev}
+                totalItems={collaboratorsPagination.totalItems}
+                startIndex={collaboratorsPagination.startIndex}
+                endIndex={collaboratorsPagination.endIndex}
+              />
+            )}
             {/* Footer com botões */}
-            <div className="px-6 pb-6">
+            <div className="px-6 py-6">
               <div className="flex justify-between items-center">
                 <div className="flex space-x-3">
                   <button
@@ -635,22 +657,6 @@ export default function SoatDetailsModal({
             </div>
           </div>
         ) : null}
-
-        {/* Paginação para colaboradores */}
-        {collaboratorsPagination.totalPages > 1 && (
-          <Pagination
-            currentPage={collaboratorsPagination.currentPage}
-            totalPages={collaboratorsPagination.totalPages}
-            onPageChange={collaboratorsPagination.goToPage}
-            onNext={collaboratorsPagination.nextPage}
-            onPrev={collaboratorsPagination.prevPage}
-            canGoNext={collaboratorsPagination.canGoNext}
-            canGoPrev={collaboratorsPagination.canGoPrev}
-            totalItems={collaboratorsPagination.totalItems}
-            startIndex={collaboratorsPagination.startIndex}
-            endIndex={collaboratorsPagination.endIndex}
-          />
-        )}
       </div>
 
       {/* Modal Unificado de Colaborador */}

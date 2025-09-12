@@ -462,7 +462,7 @@ export default function ApoliceDetailPage({
                     </div>
                   </div>
 
-                  <Separator className="bg-red-600" />
+                  {/* <Separator className="bg-red-600" />
                   <div className="py-3 md:py-4">
                     <div className="flex flex-col md:flex-row justify-center lg:justify-end gap-2 md:gap-2">
                       <Button className="bg-white px-3 md:px-4 py-2 text-xs md:text-sm border border-blue-950 hover:bg-blue-950 text-blue-950 hover:text-white">
@@ -472,7 +472,7 @@ export default function ApoliceDetailPage({
                         Renovar Apolice
                       </Button>
                     </div>
-                  </div>
+                  </div> */}
                 </TabsContent>
 
                 <TabsContent value="coberturas">

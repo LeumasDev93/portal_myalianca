@@ -10,7 +10,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Eye } from "lucide-react";
+import { Eye, SearchX } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import {
   FaDollarSign,
@@ -66,17 +66,11 @@ export default function ApolicePage({ onSelectDetail }: ApolicePageProps) {
           />
         </div>
         <p className="text-gray-500 text-center">
-          Nenhum apolice encontrado!
+          Erro ao carregar apólices!
           <br />
           Tente novamente mais tarde.
         </p>
       </div>
-    );
-  }
-
-  if (!apolices || apolices.length === 0) {
-    return (
-      <LoadingContainer fullHeight={true} message="CARREGANDO APÓLICES..." />
     );
   }
 
@@ -95,6 +89,25 @@ export default function ApolicePage({ onSelectDetail }: ApolicePageProps) {
 
     return matchesSearch && matchesStatus;
   });
+
+  // Verificar se há filtros ativos
+  const hasActiveFilters = searchTerm !== "" || statusFilter !== "all";
+
+  // Se não estiver carregando e não há dados originais
+  if (!isLoadingApolices && (!apolices || apolices.length === 0)) {
+    return (
+      <div className="flex flex-col items-center justify-center gap-2 py-8 h-screen">
+        <div className="relative">
+          <FaSearch className="text-4xl text-gray-400" />
+        </div>
+        <p className="text-gray-500 text-center">
+          Nenhuma apólice encontrada!
+          <br />
+          Não há apólices para exibir no momento.
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="flex-1 space-y-6 p-6 md:p-8 mt-4">
@@ -143,10 +156,11 @@ export default function ApolicePage({ onSelectDetail }: ApolicePageProps) {
 
       <div className="grid gap-6">
         {filteredApolices.length === 0 ? (
-          <div className="flex flex-col items-center justify-center gap-4 py-8">
-            <FaSearch className="text-4xl text-gray-400" />
-            <p className="text-gray-500 text-center">
-              Nenhuma apólice encontrada com os filtros aplicados.
+          <div className="flex flex-col items-center justify-center space-y-4 text-center py-12">
+            <SearchX className="h-12 w-12 text-muted-foreground" />
+            <h3 className="text-lg font-medium">Nenhum resultado encontrado</h3>
+            <p className="text-sm text-muted-foreground">
+              Sua busca não retornou nenhuma apólice com os filtros aplicados.
             </p>
           </div>
         ) : (

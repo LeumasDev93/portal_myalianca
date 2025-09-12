@@ -19,6 +19,7 @@ interface UsePaginationReturn<T> {
   canGoPrev: boolean;
   startIndex: number;
   endIndex: number;
+  resetPagination: () => void;
 }
 
 export function usePagination<T>({
@@ -72,6 +73,10 @@ export function usePagination<T>({
   const canGoNext = currentPage < totalPages;
   const canGoPrev = currentPage > 1;
 
+  const resetPagination = () => {
+    setCurrentPage(1);
+  };
+
   return {
     currentPage,
     totalPages,
@@ -84,5 +89,6 @@ export function usePagination<T>({
     canGoPrev,
     startIndex,
     endIndex,
+    resetPagination,
   };
 }
