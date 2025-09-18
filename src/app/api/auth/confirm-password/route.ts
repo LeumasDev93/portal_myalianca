@@ -14,7 +14,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const apiUrl = `${process.env.NEXT_PUBLIC_API_BASE_URL}/accounts/password/recover-confirm`;
+    const apiUrl = `${process.env.NEXT_PUBLIC_API_BASE_URL}/accounts/password/change`;
 
     const response = await fetch(apiUrl, {
       method: 'POST',

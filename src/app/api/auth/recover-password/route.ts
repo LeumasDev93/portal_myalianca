@@ -45,10 +45,7 @@ export async function POST(request: Request) {
       );
     }
 
-    return NextResponse.json({
-      message: data.message,
-      details: data.message_details,
-    });
+    return NextResponse.json(data);
 
   } catch (error) {
     console.error('Erro interno:', error);

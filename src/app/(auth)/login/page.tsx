@@ -87,21 +87,23 @@ export default function LoginPage() {
       });
 
       const data = await res.json();
+      console.log("Recover password response:", data);
+      console.log("Response status:", res.status);
 
       // Tratamento de erro
       if (data.error) {
-        const errorMessage = data.details?.response?.desc || data.error;
-        setErro(errorMessage);
+        setErro(data.error);
         setTimeout(() => {
           setErro("");
         }, 5000);
         return;
       }
 
-      // Tratamento de sucesso
-      if (data.message === "SUCCESS") {
-        setSuccessMessage(data.details || "Código OTP enviado com sucesso.");
-        console.log(data.details, "chedou");
+      // Tratamento de sucesso - API retorna results.code === 1 e results.message === "SUCCESS"
+      if (data.results?.code === 1 && data.results?.message === "SUCCESS") {
+        setSuccessMessage(
+          data.results.message_details || "Código OTP enviado com sucesso."
+        );
         setTimeout(() => {
           setStep("otp");
           setSuccessMessage("");
@@ -109,7 +111,17 @@ export default function LoginPage() {
         return;
       }
 
+      // Verificar se há erro na estrutura info
+      if (data.info?.errors && data.info.errors.length > 0) {
+        setErro(data.info.errors.join(" / "));
+        setTimeout(() => {
+          setErro("");
+        }, 5000);
+        return;
+      }
+
       // Formato não reconhecido
+      console.log("Resposta não reconhecida:", data);
       setErro("Resposta do servidor não reconhecida");
       setTimeout(() => {
         setErro("");
@@ -140,17 +152,19 @@ export default function LoginPage() {
       });
 
       const data = await res.json();
+      console.log("Validate OTP response:", data);
 
-      if (data.error) {
-        const errorMessage = data.details?.response?.desc || data.error;
-        setErro(errorMessage);
+      // Tratamento de erro - API retorna code: 0 ou 3 para erros
+      if (data.code === 0 || data.code === 3) {
+        setErro(data.message || "Código inválido.");
         setTimeout(() => {
           setErro("");
         }, 5000);
         return;
       }
 
-      if (data.message === "SUCCESS") {
+      // Tratamento de sucesso - API retorna code: 1
+      if (data.code === 1) {
         setSuccessMessage("Código validado com sucesso!");
         setTimeout(() => {
           setStep("password");
@@ -187,24 +201,23 @@ export default function LoginPage() {
         body: JSON.stringify({ email, otp, new_password }),
       });
 
-      console.log(res);
       const data = await res.json();
+      console.log("Confirm password response:", data);
 
-      // ✅ Se a resposta NÃO for 200–299
-      if (!res.ok) {
-        // Se existir o array de erros dentro de info, mostre só a mensagem do array
+      // Tratamento de erro - API retorna error ou code: 3
+      if (data.error || data.code === 3) {
+        // Se existir o array de erros dentro de details.info.errors
         if (data.details?.info?.errors?.length > 0) {
           setErro(data.details.info.errors.join(" / "));
         } else {
-          // Outras mensagens
-          setErro(data.message || data.error || "Erro desconhecido");
+          setErro(data.message || data.error || "Erro ao redefinir senha.");
         }
         setTimeout(() => setErro(""), 5000);
         return;
       }
 
-      // ✅ Sucesso
-      if (data.message === "SUCCESS") {
+      // Tratamento de sucesso - API retorna code: 1
+      if (data.code === 1) {
         setSuccessMessage("Senha redefinida com sucesso!");
         setTimeout(() => {
           setIsLoginForm(true);
