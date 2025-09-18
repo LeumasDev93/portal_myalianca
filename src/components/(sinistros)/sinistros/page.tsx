@@ -174,7 +174,7 @@ export default function SinistrosPage({
                       <FaTriangleExclamation className="size-4 sm:size-5 xl:size-6" />
                     </div>
                     <div className="flex flex-col">
-                      <CardTitle className="flex items-center gap-2 text-company-blue-600">
+                      <CardTitle className="flex items-center gap-2 text-[#002256]">
                         {sinistro.insuredObjectName}
                       </CardTitle>
                       <CardDescription>
@@ -218,14 +218,14 @@ export default function SinistrosPage({
                       <div className="bg-gray-200  p-2 rounded-full ">
                         <IoShieldCheckmarkSharp className="size-3 sm:size-4 xl:size-5 text-[#002256]" />
                       </div>
-                      <p className="font-bold text-gray-900 text-[12px] xl:text-base uppercase">
+                      <h3 className="text-sm font-medium text-[#002256]">
                         Tipo
-                      </p>
+                      </h3>
                     </div>
                     <div className="flex items-center gap-2">
-                      <p className="font-bold text-gray-900 text-[12px] xl:text-base ">
+                      <h3 className="text-sm font-medium text-[#002256]">
                         {sinistro.product}
-                      </p>
+                      </h3>
                     </div>
                   </div>
                   <div className="flex justify-between">
@@ -233,14 +233,14 @@ export default function SinistrosPage({
                       <div className="bg-gray-200  p-2 rounded-full ">
                         <FaRegCalendar className="size-3 sm:size-4 xl:size-5 text-[#002256]" />
                       </div>
-                      <p className="font-bold text-gray-900 text-[12px] xl:text-base uppercase">
+                      <h3 className="text-sm font-medium text-[#002256]">
                         Data da Ocorrência
-                      </p>
+                      </h3>
                     </div>
                     <div className="flex items-center gap-2">
-                      <p className="font-bold text-gray-900 text-[12px] xl:text-base ">
+                      <h3 className="text-sm font-medium text-[#002256]">
                         {formatDate(sinistro.occurenceDate)}
-                      </p>
+                      </h3>
                     </div>
                   </div>
                 </div>

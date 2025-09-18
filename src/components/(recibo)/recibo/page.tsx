@@ -412,25 +412,31 @@ export default function ReciboPage({ filterParams }: ReciboPageProps) {
                   </span>
                 </CardTitle>
                 <CardDescription className="flex items-center gap-2 text-xs md:text-sm">
-                  <FaUser className="text-gray-400 size-3 md:size-4" />
-                  {recibo.clientName}
+                  <FaUser className="text-[#002256] size-3 md:size-4" />
+                  <h3 className="text-sm font-medium text-[#002256]">
+                    {recibo.clientName}
+                  </h3>
                 </CardDescription>
               </CardHeader>
               <CardContent className="pt-3 md:pt-4 p-3 md:p-6">
                 <div className="space-y-2">
                   <div className="flex justify-between">
-                    <span className="text-xs md:text-sm text-gray-500">
+                    <h3 className="text-sm font-medium text-[#002256]">
                       Valor:
-                    </span>
-                    <span className="font-semibold text-[#002256] text-xs md:text-sm">
+                    </h3>
+
+                    <h3 className="text-sm font-medium text-[#002256]">
                       {formatCurrency(recibo.value)}
-                    </span>
+                    </h3>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-xs md:text-sm text-gray-500">
+                    <h3 className="text-sm font-medium text-[#002256]">
                       Referência:
-                    </span>
-                    <span className="text-xs md:text-sm">{recibo.mbref}</span>
+                    </h3>
+
+                    <h3 className="text-sm font-medium text-[#002256]">
+                      {recibo.mbref}
+                    </h3>
                   </div>
                 </div>
               </CardContent>
@@ -456,7 +462,6 @@ export default function ReciboPage({ filterParams }: ReciboPageProps) {
                   {shouldShowPaymentButton(recibo.status) && (
                     <Button
                       onClick={() => {
-                        // Implementar lógica de pagamento
                         console.log("Pagar recibo:", recibo.number);
                       }}
                       size="sm"
@@ -472,7 +477,7 @@ export default function ReciboPage({ filterParams }: ReciboPageProps) {
                       disabled={loadingStates[recibo.number]}
                       variant={getDownloadButtonVariant(recibo.number)}
                       size="sm"
-                      className="flex-1 text-xs md:text-sm py-2"
+                      className="flex-1 text-xs md:text-sm py-2 bg-[#002256] hover:bg-[#002256]/90 text-white"
                     >
                       {getDownloadButtonContent(recibo.number)}
                     </Button>
@@ -492,40 +497,48 @@ export default function ReciboPage({ filterParams }: ReciboPageProps) {
               <div className="flex flex-col md:flex-row md:justify-between md:items-start gap-3 md:gap-0">
                 <div className="space-y-2">
                   <div className="flex items-center gap-2">
-                    <span className="font-semibold text-xs md:text-sm">
+                    <h3 className="text-sm font-medium text-[#002256]">
                       Número:
-                    </span>
+                    </h3>
+
                     <CopiableNumber number={recibo.number} />
                   </div>
-                  <div className="flex items-center gap-2">
-                    <span className="font-semibold text-xs md:text-sm">
+                  <div className="flex items-start gap-2">
+                    <h3 className="text-sm font-medium text-[#002256]">
                       Cliente:
-                    </span>
-                    <span className="text-xs md:text-sm">
+                    </h3>
+                    <h3 className="text-sm font-medium text-[#002256]">
                       {recibo.clientName}
-                    </span>
+                    </h3>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <span className="font-semibold text-xs md:text-sm">
+                  <div className="flex items-start gap-2">
+                    <h3 className="text-sm font-medium text-[#002256]">
                       Valor:
-                    </span>
-                    <span className="text-[#002256] font-semibold text-xs md:text-sm">
+                    </h3>
+                    <h3 className="text-sm font-medium text-[#002256]">
                       {formatCurrency(recibo.value)}
-                    </span>
+                    </h3>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <span className="font-semibold text-xs md:text-sm">
+                  <div className="flex items-start gap-2">
+                    <h3 className="text-sm font-medium text-[#002256]">
                       Referência:
-                    </span>
-                    <span className="text-xs md:text-sm">{recibo.mbref}</span>
+                    </h3>
+                    <h3 className="text-sm font-medium text-[#002256]">
+                      {recibo.mbref}
+                    </h3>
+                    <h3 className="text-sm font-medium text-[#002256]">
+                      {recibo.mbref}
+                    </h3>
                   </div>
                 </div>
                 <div className="mt-2 md:mt-3 grid grid-cols-1 md:grid-cols-4 gap-2 text-xs md:text-sm">
                   <div>
-                    <span className="text-gray-500">Data Faturação:</span>
-                    <p>
+                    <h3 className="text-sm font-medium text-[#002256]">
+                      Data Faturação:
+                    </h3>
+                    <h3 className="text-sm font-medium text-[#002256]">
                       {formatDate(recibo.from)} - {formatDate(recibo.to)}
-                    </p>
+                    </h3>
                   </div>
                 </div>
                 <div className="flex flex-col items-start md:items-end gap-2">
@@ -572,7 +585,7 @@ export default function ReciboPage({ filterParams }: ReciboPageProps) {
                         disabled={loadingStates[recibo.number]}
                         variant={getDownloadButtonVariant(recibo.number)}
                         size="sm"
-                        className="flex-1 md:flex-none text-xs md:text-sm py-2"
+                        className="flex-1 md:flex-none text-xs md:text-sm py-2 bg-[#002256] hover:bg-[#002256]"
                       >
                         {getDownloadButtonContent(recibo.number)}
                       </Button>

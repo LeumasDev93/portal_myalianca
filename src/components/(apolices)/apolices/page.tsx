@@ -174,7 +174,7 @@ export default function ApolicePage({ onSelectDetail }: ApolicePageProps) {
                         <IoShieldCheckmarkSharp className="size-4 sm:size-5 xl:size-6" />
                       </div>
                       <div className="flex flex-col">
-                        <CardTitle className="flex items-center gap-2 text-company-blue-600">
+                        <CardTitle className="flex items-center gap-2 text-[#002256]">
                           {apolice.productName}
                         </CardTitle>
                         <CardDescription>
@@ -221,14 +221,14 @@ export default function ApolicePage({ onSelectDetail }: ApolicePageProps) {
                         <div className="bg-gray-200  p-2 rounded-full ">
                           <FaRegCalendar className="size-3 sm:size-4 xl:size-5 text-[#002256]" />
                         </div>
-                        <p className="font-bold text-gray-900 text-[12px] xl:text-base uppercase">
+                        <h3 className="text-sm font-medium text-[#002256]">
                           Data Inicio
-                        </p>
+                        </h3>
                       </div>
                       <div className="flex items-center gap-2">
-                        <p className="font-bold text-gray-900 text-[12px] xl:text-base ">
+                        <h3 className="text-sm font-medium text-[#002256]">
                           {formatDate(apolice.startDate)}
-                        </p>
+                        </h3>
                       </div>
                     </div>
                     <div className="flex justify-between">
@@ -236,14 +236,14 @@ export default function ApolicePage({ onSelectDetail }: ApolicePageProps) {
                         <div className="bg-gray-200  p-2 rounded-full ">
                           <FaRegCalendar className="size-3 sm:size-4 xl:size-5 text-[#002256]" />
                         </div>
-                        <p className="font-bold text-gray-900 text-[12px] xl:text-base uppercase">
+                        <h3 className="text-sm font-medium text-[#002256]">
                           Data Vencimento
-                        </p>
+                        </h3>
                       </div>
                       <div className="flex items-center gap-2">
-                        <p className="font-bold text-gray-900 text-[12px] xl:text-base ">
+                        <h3 className="text-sm font-medium text-[#002256]">
                           {formatDate(apolice.endDate)}
-                        </p>
+                        </h3>
                       </div>
                     </div>
                     <div className="flex justify-between">
@@ -251,14 +251,14 @@ export default function ApolicePage({ onSelectDetail }: ApolicePageProps) {
                         <div className="bg-gray-200  p-2 rounded-full ">
                           <FaDollarSign className="size-3 sm:size-4 xl:size-5 text-[#002256]" />
                         </div>
-                        <p className="font-bold text-gray-900 text-[12px] xl:text-base uppercase">
+                        <h3 className="text-sm font-medium text-[#002256]">
                           valor
-                        </p>
+                        </h3>
                       </div>
                       <div className="flex flex-col items-center">
-                        <p className="font-bold text-gray-900 text-[12px] xl:text-base ">
+                        <h3 className="text-sm font-medium text-[#002256]">
                           {formatCurrency(apolice.totalPremium)}
-                        </p>
+                        </h3>
                       </div>
                     </div>
                   </div>

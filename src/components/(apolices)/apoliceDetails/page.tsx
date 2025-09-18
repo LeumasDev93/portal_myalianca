@@ -313,7 +313,7 @@ export default function ApoliceDetailPage({
                 defaultValue="detalhes"
                 className="space-y-4 md:space-y-6 bg-white"
               >
-                <TabsList className="flex justify-start space-x-1 md:space-x-2 bg-white overflow-x-auto">
+                <TabsList className="flex justify-start space-x-1 md:space-x-2 bg-white">
                   <TabsTrigger
                     className="px-2 md:px-4 py-1 md:py-2 text-xs md:text-lg rounded-md text-[#002256] font-semibold hover:bg-[#002256] hover:text-white data-[state=active]:bg-[#002256] data-[state=active]:text-white transition-colors whitespace-nowrap"
                     value="detalhes"
@@ -342,7 +342,7 @@ export default function ApoliceDetailPage({
 
                 <TabsContent value="detalhes" className="">
                   <div>
-                    <h3 className="text-base md:text-lg font-semibold uppercase">
+                    <h3 className="text-base md:text-lg font-semibold text-[#002256] uppercase">
                       Informações da Apólice
                     </h3>
                     <div className="flex flex-col gap-4 md:gap-6 py-3 md:py-4 xl:py-6">
@@ -351,14 +351,14 @@ export default function ApoliceDetailPage({
                           <div className="bg-gray-200 p-2 rounded-full">
                             <FaRegCalendar className="size-3 md:size-4 xl:size-5 text-[#002256]" />
                           </div>
-                          <p className="font-bold text-gray-900 text-xs md:text-base uppercase">
+                          <h3 className="text-sm font-medium text-[#002256]">
                             Data Inicio
-                          </p>
+                          </h3>
                         </div>
                         <div className="flex items-center gap-2 md:justify-end">
-                          <p className="font-bold text-gray-900 text-xs md:text-base">
+                          <h3 className="text-sm font-medium text-[#002256]">
                             {formatDate(apolice.startDate)}
-                          </p>
+                          </h3>
                         </div>
                       </div>
                       <div className="flex flex-col md:flex-row md:justify-between gap-2 md:gap-0">
@@ -366,14 +366,14 @@ export default function ApoliceDetailPage({
                           <div className="bg-gray-200 p-2 rounded-full">
                             <FaRegCalendar className="size-3 md:size-4 xl:size-5 text-[#002256]" />
                           </div>
-                          <p className="font-bold text-gray-900 text-xs md:text-base uppercase">
+                          <h3 className="text-sm font-medium text-[#002256]">
                             Data Vencimento
-                          </p>
+                          </h3>
                         </div>
                         <div className="flex items-center gap-2 md:justify-end">
-                          <p className="font-bold text-gray-900 text-xs md:text-base">
+                          <h3 className="text-sm font-medium text-[#002256]">
                             {formatDate(apolice.endDate)}
-                          </p>
+                          </h3>
                         </div>
                       </div>
                       <div className="flex flex-col md:flex-row md:justify-between gap-2 md:gap-0">
@@ -381,21 +381,21 @@ export default function ApoliceDetailPage({
                           <div className="bg-gray-200 p-2 rounded-full">
                             <FaDollarSign className="size-3 md:size-4 xl:size-5 text-[#002256]" />
                           </div>
-                          <p className="font-bold text-gray-900 text-xs md:text-base uppercase">
+                          <h3 className="text-sm font-medium text-[#002256]">
                             Prêmio
-                          </p>
+                          </h3>
                         </div>
                         <div className="flex items-center gap-2 md:justify-end">
-                          <p className="font-bold text-gray-900 text-xs md:text-base">
+                          <h3 className="text-sm font-medium text-[#002256]">
                             {formatCurrency(apolice.premium)}
-                          </p>
+                          </h3>
                         </div>
                       </div>
                     </div>
                   </div>
                   <Separator className="bg-red-600" />
                   <div className="mt-4">
-                    <h3 className="text-base md:text-lg font-semibold uppercase">
+                    <h3 className="text-base md:text-lg font-semibold text-[#002256] uppercase">
                       Informações do Segurado
                     </h3>
                     <div className="flex flex-col gap-4 md:gap-6 py-3 md:py-4 xl:py-6">
@@ -404,14 +404,14 @@ export default function ApoliceDetailPage({
                           <div className="bg-gray-200 p-2 rounded-full">
                             <FaUser className="size-3 md:size-4 xl:size-5 text-[#002256]" />
                           </div>
-                          <p className="font-bold text-gray-900 text-xs md:text-base uppercase">
+                          <h3 className="text-sm font-medium text-[#002256]">
                             Nome Completo
-                          </p>
+                          </h3>
                         </div>
                         <div className="flex flex-col items-start md:items-end gap-2">
-                          <p className="font-bold text-gray-900 text-xs md:text-base">
+                          <h3 className="text-sm font-medium text-[#002256]">
                             {apolice.clientName}
-                          </p>
+                          </h3>
                         </div>
                       </div>
                       <div className="flex flex-col md:flex-row md:justify-between gap-2 md:gap-0">
@@ -419,14 +419,14 @@ export default function ApoliceDetailPage({
                           <div className="bg-gray-200 p-2 rounded-full">
                             <FaAddressCard className="size-3 md:size-4 xl:size-5 text-[#002256]" />
                           </div>
-                          <p className="font-bold text-gray-900 text-xs md:text-base uppercase">
+                          <h3 className="text-sm font-medium text-[#002256]">
                             Nif
-                          </p>
+                          </h3>
                         </div>
                         <div className="flex items-center gap-2 md:justify-end">
-                          <p className="font-bold text-gray-900 text-xs md:text-base">
+                          <h3 className="text-sm font-medium text-[#002256]">
                             {apolice.primaryMobileContact}
-                          </p>
+                          </h3>
                         </div>
                       </div>
                       <div className="flex flex-col md:flex-row md:justify-between gap-2 md:gap-0">
@@ -434,14 +434,14 @@ export default function ApoliceDetailPage({
                           <div className="bg-gray-200 p-2 rounded-full">
                             <FaMobile className="size-3 md:size-4 xl:size-5 text-[#002256]" />
                           </div>
-                          <p className="font-bold text-gray-900 text-xs md:text-base uppercase">
+                          <h3 className="text-sm font-medium text-[#002256]">
                             Telefone
-                          </p>
+                          </h3>
                         </div>
                         <div className="flex items-center gap-2 md:justify-end">
-                          <p className="font-bold text-gray-900 text-xs md:text-base">
+                          <h3 className="text-sm font-medium text-[#002256]">
                             {apolice.contacts[1]}
-                          </p>
+                          </h3>
                         </div>
                       </div>
                       <div className="flex flex-col md:flex-row md:justify-between gap-2 md:gap-0">
@@ -449,14 +449,14 @@ export default function ApoliceDetailPage({
                           <div className="bg-gray-200 p-2 rounded-full">
                             <MdEmail className="size-3 md:size-4 xl:size-5 text-[#002256]" />
                           </div>
-                          <p className="font-bold text-gray-900 text-xs md:text-base uppercase">
+                          <h3 className="text-sm font-medium text-[#002256]">
                             Email
-                          </p>
+                          </h3>
                         </div>
                         <div className="flex items-center gap-2 md:justify-end">
-                          <p className="font-bold text-gray-900 text-xs md:text-base">
+                          <h3 className="text-sm font-medium text-[#002256]">
                             {apolice.contacts[0]}
-                          </p>
+                          </h3>
                         </div>
                       </div>
                     </div>

@@ -11,8 +11,8 @@ export async function GET(request: NextRequest) {
       return new Response('URL da imagem não fornecida', { status: 400 });
     }
 
-    const apiKey = process.env.NEXT_PUBLIC_API_KEY || "2b10688d-0539-4dff-8d30-d9195b32f5d6";
-    const apiToken = process.env.API_SECRET_TOKEN || "2b10688d-0539-4dff-8d30-d9195b32f5d6";
+    const apiKey = process.env.NEXT_PUBLIC_API_KEY || "";
+    const apiToken = process.env.API_SECRET_TOKEN || "";
 
     console.log('🔧 Configurações da API Proxy:');
     console.log('  - API Key:', apiKey ? 'Definida' : 'Não definida');

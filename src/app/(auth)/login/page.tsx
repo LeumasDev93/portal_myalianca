@@ -17,7 +17,6 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import { CheckCircle2 } from "lucide-react";
-import ImageBG from "@/assets/imagelogin.jpg";
 
 interface ApiErrorDetails {
   response?: {
@@ -54,6 +53,9 @@ export default function LoginPage() {
   const [otp, setOtp] = useState("");
   const [new_password, setNewPassword] = useState("");
 
+  const ImageCapa = `/api/proxy-image?url=${encodeURIComponent(
+    `${process.env.NEXT_PUBLIC_API_BASE_URL_DEFAULT}/files/1.0.0/login-file`
+  )}`;
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     clearError();
@@ -234,7 +236,7 @@ export default function LoginPage() {
       <div className="hidden md:flex md:w-1/2 relative bg-gradient-to-br from-blue-800 to-blue-600">
         <div className="absolute h-full inset-0 opacity-90">
           <Image
-            src={ImageBG}
+            src={ImageCapa}
             alt="Insurance portal"
             fill
             className="object-cover"
