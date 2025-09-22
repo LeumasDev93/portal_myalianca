@@ -374,10 +374,9 @@ export default function SoatDetailsModal({
                   </div>
                   <div className="flex items-center space-x-4 text-sm">
                     <span>Arquivo: {soatDetails.nome_ficheiro}</span>
-                    {/* <span>|</span>
-                    <span>
-                      Total: {soatDetails.total_colaborador} colaboradores
-                    </span> */}
+                  </div>
+                  <div className="flex items-center space-x-4 text-sm">
+                    <span>Período : {soatDetails.mes_referente}</span>
                   </div>
                 </div>
                 <button

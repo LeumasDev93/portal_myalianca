@@ -35,24 +35,78 @@ export default function CollaboratorModal({
 }: CollaboratorModalProps) {
   const [formData, setFormData] = useState<Record<string, string | number>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [currencyInputs, setCurrencyInputs] = useState<Record<string, string>>(
+    {}
+  );
+
+  // Função simples para converter valor para número
+  const parseCurrencyValue = (value: string): number => {
+    if (!value) return 0;
+
+    // Remover tudo exceto números
+    const numbers = value.replace(/\D/g, "");
+
+    return parseFloat(numbers) || 0;
+  };
 
   // Inicializar formData baseado no modo e dados
   useEffect(() => {
     if (mode === "edit" && collaborator) {
       // Modo edição: carregar dados do colaborador
-      setFormData(collaborator);
+      const processedData: Record<string, string | number> = {};
+
+      // Processar cada campo do colaborador
+      Object.keys(collaborator).forEach((key) => {
+        const value = collaborator[key];
+
+        // Verificar se é um campo numérico baseado nos fields
+        const field = fields.find((f) => f.name === key);
+
+        if (field && field.type === "number") {
+          // Para campos numéricos, garantir que seja um número
+          if (typeof value === "string") {
+            // Se for string, tentar converter para número
+            const numericValue = parseFloat(value) || 0;
+            processedData[key] = numericValue;
+          } else if (typeof value === "number") {
+            processedData[key] = value;
+          } else {
+            processedData[key] = 0;
+          }
+        } else {
+          // Para campos não numéricos, manter como string
+          processedData[key] = value || "";
+        }
+      });
+
+      setFormData(processedData);
       setErrors({});
+
+      // Inicializar inputs de moeda para campos numéricos
+      const currencyInputsData: Record<string, string> = {};
+      fields.forEach((field) => {
+        if (field.type === "number" && processedData[field.name]) {
+          // Mostrar o valor original sem formatação
+          currencyInputsData[field.name] = String(processedData[field.name]);
+        }
+      });
+      setCurrencyInputs(currencyInputsData);
     } else if (mode === "add" && fields && fields.length > 0) {
       // Modo adição: inicializar com valores padrão
       const initialData: Record<string, string | number> = {};
+      const currencyInputsData: Record<string, string> = {};
+
       fields.forEach((field) => {
         if (field.type === "number") {
           initialData[field.name] = 0;
+          currencyInputsData[field.name] = "";
         } else {
           initialData[field.name] = "";
         }
       });
+
       setFormData(initialData);
+      setCurrencyInputs(currencyInputsData);
       setErrors({});
     }
   }, [mode, collaborator, fields]);
@@ -161,10 +215,24 @@ export default function CollaboratorModal({
     return value;
   };
 
+  // Função simples para lidar com entrada de moeda
+  const handleCurrencyInput = (fieldName: string, inputValue: string) => {
+    // Atualizar o input visual
+    setCurrencyInputs((prev) => ({
+      ...prev,
+      [fieldName]: inputValue,
+    }));
+
+    // Converter para número e salvar
+    const numericValue = parseCurrencyValue(inputValue);
+    handleInputChange(fieldName, numericValue);
+  };
+
   const handleClose = () => {
     // Resetar formulário ao fechar
     setFormData({});
     setErrors({});
+    setCurrencyInputs({});
     onClose();
   };
 
@@ -213,25 +281,15 @@ export default function CollaboratorModal({
                     {field.type === "number" ? (
                       <div className="relative">
                         <input
-                          type="number"
-                          value={
-                            formData[field.name] !== undefined &&
-                            formData[field.name] !== null &&
-                            typeof formData[field.name] === "number" &&
-                            (formData[field.name] as number) > 0
-                              ? (formData[field.name] as number) / 100
-                              : ""
-                          }
+                          type="text"
+                          value={currencyInputs[field.name] || ""}
                           onChange={(e) => {
-                            const value = parseFloat(e.target.value) || 0;
-                            handleInputChange(field.name, value * 100);
+                            handleCurrencyInput(field.name, e.target.value);
                           }}
                           className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#002256] ${
                             hasError ? "border-red-500" : "border-gray-300"
                           }`}
-                          placeholder={field.field_placeholder || ""}
-                          step="0.01"
-                          min="0"
+                          placeholder={field.field_placeholder || "0,00 CVE"}
                         />
                       </div>
                     ) : (

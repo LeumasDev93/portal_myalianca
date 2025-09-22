@@ -47,6 +47,9 @@ export default function PageGestaoSOAT() {
   const [errorMessage, setErrorMessage] = useState<string>("");
   const [showError, setShowError] = useState(false);
   const [downloadTemplateLoading, setDownloadTemplateLoading] = useState(false);
+  const [rowDownloadLoading, setRowDownloadLoading] = useState<string | null>(
+    null
+  );
 
   const { soatData, loading, refetch } = useSoat();
   const {
@@ -141,13 +144,15 @@ export default function PageGestaoSOAT() {
 
     const searchLower = searchQuery.toLowerCase();
     return (
-      lista.mes_referente.toLowerCase().includes(searchLower) ||
-      lista.nome_ficheiro.toLowerCase().includes(searchLower) ||
-      lista.data_criacao.includes(searchQuery) ||
+      lista.mes_referente?.toLowerCase().includes(searchLower) ||
+      lista.nome_ficheiro?.toLowerCase().includes(searchLower) ||
+      lista.data_criacao?.includes(searchQuery) ||
       (lista.valor_total &&
-        lista.valor_total.toLowerCase().includes(searchLower)) ||
-      lista.estado.toLowerCase().includes(searchLower) ||
-      lista.situacao.toLowerCase().includes(searchLower)
+        String(lista.valor_total || "")
+          .toLowerCase()
+          .includes(searchLower)) ||
+      lista.estado?.toLowerCase().includes(searchLower) ||
+      lista.situacao?.toLowerCase().includes(searchLower)
     );
   });
 
@@ -220,6 +225,46 @@ export default function PageGestaoSOAT() {
       setShowError(true);
     } finally {
       setDownloadTemplateLoading(false);
+    }
+  };
+
+  // Download de uma lista SOAT específica
+  const handleDownloadSoat = async (soatId: string, suggestedName?: string) => {
+    try {
+      setRowDownloadLoading(soatId);
+      const response = await fetch(`/api/soat/${soatId}/download`, {
+        method: "GET",
+      });
+      if (!response.ok) {
+        throw new Error("Erro ao baixar SOAT");
+      }
+
+      // Tentar obter nome do arquivo
+      const contentDisposition = response.headers.get("content-disposition");
+      let filename = suggestedName || `soat_${soatId}.xlsx`;
+      if (contentDisposition) {
+        const filenameMatch = contentDisposition.match(
+          /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/
+        );
+        if (filenameMatch && filenameMatch[1]) {
+          filename = filenameMatch[1].replace(/['"]/g, "");
+        }
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error("Erro ao baixar SOAT:", error);
+      showErrorMessage("Erro ao baixar SOAT");
+    } finally {
+      setRowDownloadLoading(null);
     }
   };
 
@@ -417,7 +462,7 @@ export default function PageGestaoSOAT() {
               ) : (
                 <FaDownload />
               )}
-              {downloadTemplateLoading ? "Baixando..." : "Baixar Lista"}
+              {downloadTemplateLoading ? "Baixando..." : "Baixar Template"}
             </button>
             <button
               onClick={handleCreateSOATClick}
@@ -595,8 +640,22 @@ export default function PageGestaoSOAT() {
                             </button>
                           </>
                         )}
-                        <button className="bg-green-50 border border-green-200 flex  items-center justify-center text-green-600 hover:text-green-800 p-2 rounded cursor-pointer">
-                          <FaDownload className="w-4 h-4" />
+                        <button
+                          className="bg-green-50 border border-green-200 flex  items-center justify-center text-green-600 hover:text-green-800 p-2 rounded cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                          onClick={() =>
+                            handleDownloadSoat(
+                              lista.id,
+                              lista.nome_ficheiro || undefined
+                            )
+                          }
+                          disabled={rowDownloadLoading === lista.id}
+                          title="Baixar SOAT"
+                        >
+                          {rowDownloadLoading === lista.id ? (
+                            <FaSpinner className="w-4 h-4 animate-spin" />
+                          ) : (
+                            <FaDownload className="w-4 h-4" />
+                          )}
                         </button>
                       </div>
                     </td>

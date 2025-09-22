@@ -96,7 +96,7 @@ const Card = ({ product }: CardProps) => {
   };
 
   return (
-    <div className="flex flex-col items-center justify-between bg-blue-100 border border-[#002855] rounded-xl w-32 h-32 xl:h-40 sm:w-[200px] xl:w-[270px] px-4 py-6 xl:py-8 cursor-pointer hover:bg-blue-50 transition-colors">
+    <div className="flex flex-col items-center justify-between bg-blue-100 border border-[#002855] rounded-xl w-full h-full xl:h-40 sm:w-[200px] xl:w-[270px] px-4 py-6 xl:py-8 cursor-pointer hover:bg-blue-50 transition-colors">
       <div className="w-full flex justify-between items-start">
         <div>
           <h3 className="text-xs xl:text-lg text-[#002855] font-semibold">
