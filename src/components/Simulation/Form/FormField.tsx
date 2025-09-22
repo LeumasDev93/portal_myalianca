@@ -377,11 +377,13 @@ export default function FormField({
   return (
     <div
       ref={containerRef}
-      className={`md:col-span-${field.fieldSize || 1} relative mb-4`}
+      className={`w-full sm:col-span-${
+        field.fieldSize || 1
+      } relative mb-3 sm:mb-4`}
     >
       <label
         htmlFor={field.name}
-        className="block text-sm font-medium text-gray-700 mb-1"
+        className="block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2"
       >
         {field.label}
         {field.required && <span className="text-red-500 ml-1">*</span>}
@@ -393,6 +395,7 @@ export default function FormField({
             name={field.name}
             type="date"
             value={value}
+            className="w-full px-3 py-2 sm:px-4 sm:py-3 text-xs sm:text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#002B5B] focus:border-transparent"
             onChange={(e) => {
               const selectedDate = e.target.value;
               const today = new Date();

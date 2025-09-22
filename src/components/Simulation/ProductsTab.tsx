@@ -19,16 +19,18 @@ export default function ProductsTab({
   if (products.length === 0) return <EmptyState />;
 
   return (
-    <div className="flex gap-4 items-center justify-center">
-      {products.map((product) => (
-        <div
-          key={product.productId}
-          onClick={() => onSelect(product)}
-          className="cursor-pointer"
-        >
-          <Card product={product} />
-        </div>
-      ))}
+    <div className="w-full">
+      <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 lg:gap-6 items-stretch sm:items-center justify-center max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {products.map((product) => (
+          <div
+            key={product.productId}
+            onClick={() => onSelect(product)}
+            className="cursor-pointer w-full sm:w-auto sm:flex-1 sm:max-w-[280px] lg:max-w-[320px]"
+          >
+            <Card product={product} />
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

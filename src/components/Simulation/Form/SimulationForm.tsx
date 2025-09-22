@@ -494,9 +494,13 @@ export default function SimulationForm({
               description={tab.form.description}
               title={tab.form.title}
             />
-            <div className="space-y-8 mt-6">
-              <div className="border-b border-gray-200 pb-8 last:border-0">
-                <div className={getSafeGridClass(tab.form.webGridSize)}>
+            <div className="space-y-4 sm:space-y-6 lg:space-y-8 mt-4 sm:mt-6">
+              <div className="border-b border-gray-200 pb-4 sm:pb-6 lg:pb-8 last:border-0">
+                <div
+                  className={`grid grid-cols-1 sm:grid-cols-2 lg:${getSafeGridClass(
+                    tab.form.webGridSize
+                  )} gap-3 sm:gap-4 lg:gap-6`}
+                >
                   {tab.form.fields
                     .sort((a: any, b: any) => a.position - b.position)
                     .map((field: any) => {

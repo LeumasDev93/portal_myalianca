@@ -96,21 +96,21 @@ const Card = ({ product }: CardProps) => {
   };
 
   return (
-    <div className="flex flex-col items-center justify-between bg-blue-100 border border-[#002855] rounded-xl w-full h-full xl:h-40 sm:w-[200px] xl:w-[270px] px-4 py-6 xl:py-8 cursor-pointer hover:bg-blue-50 transition-colors">
-      <div className="w-full flex justify-between items-start">
-        <div>
-          <h3 className="text-xs xl:text-lg text-[#002855] font-semibold">
+    <div className="flex flex-col items-center justify-between bg-blue-100 border border-[#002855] rounded-xl w-full h-full min-h-[120px] sm:min-h-[140px] lg:min-h-[160px] px-3 py-4 sm:px-4 sm:py-6 lg:px-6 lg:py-8 cursor-pointer hover:bg-blue-50 transition-colors">
+      <div className="w-full flex justify-between items-start mb-3 sm:mb-4">
+        <div className="flex-1 pr-2">
+          <h3 className="text-sm sm:text-base lg:text-lg text-[#002855] font-semibold leading-tight">
             {product.name}
           </h3>
-          <span className="text-[10px] xl:text-sm text-[#002855]">
+          <span className="text-xs sm:text-sm text-[#002855] leading-tight block mt-1">
             {product.description}
           </span>
         </div>
-        <span className="text-[#002855] text-xl lg:text-2xl">
+        <span className="text-[#002855] text-lg sm:text-xl lg:text-2xl flex-shrink-0">
           {getIconComponent(product.webIcon)}
         </span>
       </div>
-      <button className="w-full cursor-pointer bg-[#002855] hover:bg-[#002855]/70 py-1 xl:px-4 rounded-lg text-white text-center text-xs xl:text-base transition-colors">
+      <button className="w-full cursor-pointer bg-[#002855] hover:bg-[#002855]/70 py-2 sm:py-3 px-3 sm:px-4 rounded-lg text-white text-center text-sm sm:text-base transition-colors">
         Simular Agora
       </button>
     </div>

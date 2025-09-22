@@ -432,14 +432,14 @@ export default function PageGestaoSOAT() {
       {/* Seção Buscar */}
       <div className="mb-6">
         <h2 className="text-lg font-semibold text-[#002256]">Buscar</h2>
-        <div className="flex justify-between">
-          <div className="w-1/2 relative">
+        <div className="flex flex-col sm:flex-row gap-2 justify-between">
+          <div className="sm:w-1/2 w-full relative">
             <input
               type="text"
               placeholder="Buscar por mês ou nome do arquivo..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-10 py-3 border border-gray-300 rounded-lg focus:outline-none"
+              className="w-full pl-10 pr-10 py-3 border border-gray-300 rounded-lg focus:outline-none text-sm sm:text-base"
             />
             <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
             {searchQuery && (
@@ -451,11 +451,11 @@ export default function PageGestaoSOAT() {
               </button>
             )}
           </div>
-          <div className="flex gap-2">
+          <div className="flex  gap-2">
             <button
               onClick={handleDownloadTemplate}
               disabled={downloadTemplateLoading}
-              className="px-6 py-3 rounded-lg font-medium flex items-center gap-2 transition-colors bg-[#002256] hover:bg-[#002256]/90 text-white disabled:opacity-50 disabled:cursor-not-allowed"
+              className="sm:px-6 sm:py-3 px-4 py-2 text-sm sm:text-base rounded-lg font-medium flex items-center gap-2 transition-colors bg-[#002256] hover:bg-[#002256]/90 text-white disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {downloadTemplateLoading ? (
                 <FaSpinner className="animate-spin" />
@@ -466,7 +466,7 @@ export default function PageGestaoSOAT() {
             </button>
             <button
               onClick={handleCreateSOATClick}
-              className={`px-6 py-3 rounded-lg font-medium flex items-center gap-2 transition-colors bg-[#B7021C] hover:bg-[#B7021C]/90 text-white`}
+              className={`sm:px-6 sm:py-3 px-4 py-2 text-sm sm:text-base rounded-lg font-medium flex items-center gap-2 transition-colors bg-[#B7021C] hover:bg-[#B7021C]/90 text-white`}
               title={
                 hasPendingSoat
                   ? "Existe um SOAT pendente. Finalize-o antes de criar um novo."

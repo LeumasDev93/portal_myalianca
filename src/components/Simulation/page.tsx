@@ -191,7 +191,9 @@ export default function SimulationScreen() {
                 Escolha um Produto e faça uma simulação.
               </p>
 
-              {loading && <LoadingContainer message="CARREGANDO SIMULAÇÕES..." />}
+              {loading && (
+                <LoadingContainer message="CARREGANDO SIMULAÇÕES..." />
+              )}
               {error && (
                 <div className="flex items-center gap-2 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg mb-4">
                   <FaExclamationTriangle className="h-5 w-5 text-red-600" />
@@ -208,17 +210,12 @@ export default function SimulationScreen() {
               )}
 
               {products && products.length > 0 && (
-                <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 items-center justify-center">
-                  {products.map((product) => (
-                    <ProductsTab
-                      key={product.productId}
-                      loading={loading}
-                      error={error}
-                      products={[product]}
-                      onSelect={setSelectedProduct}
-                    />
-                  ))}
-                </div>
+                <ProductsTab
+                  loading={loading}
+                  error={error}
+                  products={products}
+                  onSelect={setSelectedProduct}
+                />
               )}
             </>
           )}

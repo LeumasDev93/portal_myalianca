@@ -1,9 +1,8 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(
 	request: NextRequest,
-	{ params }: { params: { id: string } }
+	{ params }: { params: Promise<{ id: string }> }
 ) {
 	try {
 		const apiKey = process.env.NEXT_PUBLIC_API_KEY;
@@ -17,7 +16,8 @@ export async function GET(
 			);
 		}
 
-		const soatId = params.id;
+		const resolvedParams = await params;
+		const soatId = resolvedParams.id;
 		if (!soatId) {
 			return NextResponse.json(
 				{ error: "ID do SOAT é obrigatório" },
