@@ -395,7 +395,9 @@ export default function FormField({
             name={field.name}
             type="date"
             value={value}
-            className="w-full px-3 py-2 sm:px-4 sm:py-3 text-xs sm:text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#002B5B] focus:border-transparent"
+            className={`w-full px-3 py-2 sm:px-4 sm:py-3 text-xs sm:text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#002B5B] focus:border-transparent ${
+              licenseDateError ? "border-red-500" : "border-gray-300"
+            }`}
             onChange={(e) => {
               const selectedDate = e.target.value;
               const today = new Date();
@@ -440,9 +442,6 @@ export default function FormField({
                 onChange("");
               }
             }}
-            className={`w-full p-2 border rounded-md focus:ring-2 focus:ring-[#002256] ${
-              licenseDateError ? "border-red-500" : "border-gray-300"
-            }`}
             required={field.required}
             max={new Date().toISOString().split("T")[0]} // Usa new Date() diretamente aqui
             min="1900-01-01" // Data mínima razoável
