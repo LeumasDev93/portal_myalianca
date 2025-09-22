@@ -46,6 +46,7 @@ export default function PageGestaoSOAT() {
   const [showPendingWarningModal, setShowPendingWarningModal] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string>("");
   const [showError, setShowError] = useState(false);
+  const [downloadTemplateLoading, setDownloadTemplateLoading] = useState(false);
 
   const { soatData, loading, refetch } = useSoat();
   const {
@@ -175,6 +176,50 @@ export default function PageGestaoSOAT() {
       setShowPendingWarningModal(true);
     } else {
       setShowModal(true);
+    }
+  };
+
+  // Função para baixar template SOAT
+  const handleDownloadTemplate = async () => {
+    setDownloadTemplateLoading(true);
+    try {
+      const response = await fetch("/api/soat/template/download", {
+        method: "GET",
+      });
+
+      if (!response.ok) {
+        throw new Error("Erro ao baixar template");
+      }
+
+      // Obter o nome do arquivo do header Content-Disposition
+      const contentDisposition = response.headers.get("content-disposition");
+      let filename = "template_soat.xlsx";
+
+      if (contentDisposition) {
+        const filenameMatch = contentDisposition.match(
+          /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/
+        );
+        if (filenameMatch && filenameMatch[1]) {
+          filename = filenameMatch[1].replace(/['"]/g, "");
+        }
+      }
+
+      // Criar blob e fazer download
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error("Erro ao baixar template:", error);
+      setErrorMessage("Erro ao baixar template SOAT");
+      setShowError(true);
+    } finally {
+      setDownloadTemplateLoading(false);
     }
   };
 
@@ -362,6 +407,18 @@ export default function PageGestaoSOAT() {
             )}
           </div>
           <div className="flex gap-2">
+            <button
+              onClick={handleDownloadTemplate}
+              disabled={downloadTemplateLoading}
+              className="px-6 py-3 rounded-lg font-medium flex items-center gap-2 transition-colors bg-[#002256] hover:bg-[#002256]/90 text-white disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {downloadTemplateLoading ? (
+                <FaSpinner className="animate-spin" />
+              ) : (
+                <FaDownload />
+              )}
+              {downloadTemplateLoading ? "Baixando..." : "Baixar Lista"}
+            </button>
             <button
               onClick={handleCreateSOATClick}
               className={`px-6 py-3 rounded-lg font-medium flex items-center gap-2 transition-colors bg-[#B7021C] hover:bg-[#B7021C]/90 text-white`}

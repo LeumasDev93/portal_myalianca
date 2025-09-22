@@ -204,14 +204,9 @@ export default function LoginPage() {
       const data = await res.json();
       console.log("Confirm password response:", data);
 
-      // Tratamento de erro - API retorna error ou code: 3
-      if (data.error || data.code === 3) {
-        // Se existir o array de erros dentro de details.info.errors
-        if (data.details?.info?.errors?.length > 0) {
-          setErro(data.details.info.errors.join(" / "));
-        } else {
-          setErro(data.message || data.error || "Erro ao redefinir senha.");
-        }
+      // Tratamento de erro - pegar o erro diretamente do campo `error`
+      if (!res.ok || data.error || data.code === 3) {
+        setErro(data.error || "Erro ao redefinir senha.");
         setTimeout(() => setErro(""), 5000);
         return;
       }

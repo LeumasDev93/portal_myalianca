@@ -13,6 +13,7 @@ import { removeCollaborator } from "@/service/removeCollaboratorService";
 import { updateCollaborator } from "@/service/updateCollaboratorService";
 import * as XLSX from "xlsx";
 import { LoadingContainer } from "@/components/ui/loading-container";
+import { formatCurrency } from "@/lib/utils";
 
 interface SoatDetailsModalProps {
   isOpen: boolean;
@@ -414,7 +415,7 @@ export default function SoatDetailsModal({
                     Valor Total
                   </div>
                   <div className="text-xl text-left font-bold text-[#002256]">
-                    {(
+                    {formatCurrency(
                       filteredContents.reduce((total: number, content: any) => {
                         try {
                           const colaborador = JSON.parse(content.json_content);
@@ -422,12 +423,8 @@ export default function SoatDetailsModal({
                         } catch {
                           return total;
                         }
-                      }, 0) / 100
-                    ).toLocaleString("pt-CV", {
-                      style: "currency",
-                      currency: "CVE",
-                      minimumFractionDigits: 2,
-                    })}
+                      }, 0)
+                    )}
                   </div>
                 </div>
                 <div className="bg-white rounded-lg p-4 text-center">
@@ -533,14 +530,7 @@ export default function SoatDetailsModal({
 
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                   {colaborador.salary
-                                    ? (colaborador.salary / 100).toLocaleString(
-                                        "pt-CV",
-                                        {
-                                          style: "currency",
-                                          currency: "CVE",
-                                          minimumFractionDigits: 2,
-                                        }
-                                      )
+                                    ? formatCurrency(colaborador.salary)
                                     : "N/A"}
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">

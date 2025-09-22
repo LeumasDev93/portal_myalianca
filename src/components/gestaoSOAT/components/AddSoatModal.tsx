@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { FaSpinner } from "react-icons/fa";
+import { FaSpinner, FaUpload } from "react-icons/fa";
 import { addSoat } from "@/service/addSoatService";
 import { AlertTriangle } from "lucide-react";
 import { useUserProfile } from "@/hooks/useUserProfile ";
@@ -35,6 +35,8 @@ export default function AddSoatModal({
     anoFim: "",
   });
   const [loading, setLoading] = useState(false);
+  const [uploadLoading, setUploadLoading] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
   const { profile } = useUserProfile();
   const [error, setError] = useState<string | null>(null);
@@ -49,7 +51,92 @@ export default function AddSoatModal({
       mesFim: "",
       anoFim: "",
     });
+    setError(null);
+    setSelectedFile(null);
     onClose();
+  };
+
+  // Função para lidar com o upload de arquivo
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      // Verificar se é um arquivo Excel
+      const allowedTypes = [
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", // .xlsx
+        "application/vnd.ms-excel", // .xls
+        "text/csv", // .csv
+      ];
+
+      if (!allowedTypes.includes(file.type)) {
+        setError(
+          "Por favor, selecione um arquivo Excel (.xlsx, .xls) ou CSV (.csv)"
+        );
+        return;
+      }
+
+      // Verificar tamanho do arquivo (máximo 10MB)
+      const maxSize = 10 * 1024 * 1024; // 10MB
+      if (file.size > maxSize) {
+        setError("O arquivo deve ter no máximo 10MB");
+        return;
+      }
+
+      setSelectedFile(file);
+      setError(null);
+    }
+  };
+
+  // Função para processar o upload quando criar lista
+  const handleUploadFile = async () => {
+    if (!selectedFile) {
+      setError("Por favor, selecione um arquivo para importar");
+      return;
+    }
+
+    setUploadLoading(true);
+    setError(null);
+
+    try {
+      const formData = new FormData();
+      formData.append("file", selectedFile);
+
+      // Construir URL com parâmetros baseados no modalData
+      let uploadUrl = "/api/soat/upload?";
+
+      if (modalData.periodo === "especifico") {
+        uploadUrl += `inicio_mes_referente=${modalData.mes}&fim_mes_referente=${modalData.mes}&inicio_ano_referente=${modalData.ano}&fim_ano_referente=${modalData.ano}`;
+      } else {
+        uploadUrl += `inicio_mes_referente=${modalData.mesInicio}&fim_mes_referente=${modalData.mesFim}&inicio_ano_referente=${modalData.anoInicio}&fim_ano_referente=${modalData.anoFim}`;
+      }
+
+      if (profile?.user?.id) {
+        uploadUrl += `&id_utilizador=${profile.user.id}`;
+      }
+
+      const response = await fetch(uploadUrl, {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error("Erro ao fazer upload do arquivo");
+      }
+
+      const result = await response.json();
+      console.log("Upload realizado com sucesso:", result);
+
+      // Fechar modal e limpar dados
+      setSelectedFile(null);
+      handleClose();
+
+      // Chamar onCreate para atualizar a lista
+      onCreate(modalData);
+    } catch (error) {
+      console.error("Erro ao fazer upload:", error);
+      setError("Erro ao fazer upload do arquivo. Tente novamente.");
+    } finally {
+      setUploadLoading(false);
+    }
   };
 
   const isFormValid = () => {
@@ -68,6 +155,13 @@ export default function AddSoatModal({
   const handleCreate = async () => {
     if (!isFormValid()) return;
 
+    // Se há arquivo selecionado, fazer upload
+    if (selectedFile) {
+      await handleUploadFile();
+      return;
+    }
+
+    // Se não há arquivo, criar SOAT normalmente
     setLoading(true);
     try {
       // ID do utilizador fixo (você pode pegar do contexto de autenticação)
@@ -119,7 +213,7 @@ export default function AddSoatModal({
 
   return (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-lg shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
+      <div className="bg-white rounded-lg shadow-xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
         <div className="p-6">
           <h2 className="text-xl font-bold text-[#002256] mb-2">
             Adicionar Nova Lista de SOAT
@@ -314,23 +408,52 @@ export default function AddSoatModal({
               </div>
             )}
           </div>
-
+          {selectedFile && (
+            <div className="text-sm text-gray-600 pb-4">
+              Arquivo selecionado:{" "}
+              <span className="font-medium">{selectedFile.name}</span>
+            </div>
+          )}
           {/* Botões */}
-          <div className="flex justify-end space-x-3">
-            <button
-              onClick={handleClose}
-              className="px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-            >
-              Cancelar
-            </button>
-            <button
-              onClick={handleCreate}
-              disabled={!isFormValid() || loading}
-              className="px-4 py-2 bg-[#B7021C] text-white rounded-lg hover:bg-[#B7021C]/90 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
-            >
-              {loading && <FaSpinner className="w-4 h-4 animate-spin" />}
-              {loading ? "Criando..." : "Criar Lista"}
-            </button>
+          <div className="flex justify-between space-x-3">
+            <div className="flex flex-col gap-2">
+              <input
+                type="file"
+                accept=".xlsx,.xls,.csv"
+                onChange={handleFileUpload}
+                className="hidden"
+                id="file-upload"
+              />
+              <label
+                htmlFor="file-upload"
+                className="px-4 py-2 bg-[#002256] text-white rounded-lg hover:bg-[#002256]/90 transition-colors flex items-center gap-2 cursor-pointer"
+              >
+                <FaUpload />
+                Importar Lista
+              </label>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={handleClose}
+                className="px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleCreate}
+                disabled={!isFormValid() || loading || uploadLoading}
+                className="px-4 py-2 bg-[#B7021C] text-white rounded-lg hover:bg-[#B7021C]/90 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
+              >
+                {(loading || uploadLoading) && (
+                  <FaSpinner className="w-4 h-4 animate-spin" />
+                )}
+                {uploadLoading
+                  ? "Importando..."
+                  : loading
+                  ? "Criando..."
+                  : "Criar Lista"}
+              </button>
+            </div>
           </div>
         </div>
       </div>
