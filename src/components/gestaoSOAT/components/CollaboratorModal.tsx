@@ -38,6 +38,7 @@ export default function CollaboratorModal({
   const [currencyInputs, setCurrencyInputs] = useState<Record<string, string>>(
     {}
   );
+  const [nifInputs, setNifInputs] = useState<Record<string, string>>({});
 
   // Função simples para converter valor para número
   const parseCurrencyValue = (value: string): number => {
@@ -51,55 +52,72 @@ export default function CollaboratorModal({
 
   // Inicializar formData baseado no modo e dados
   useEffect(() => {
-    if (mode === "edit" && collaborator) {
+    if (mode === "edit" && collaborator && fields && fields.length > 0) {
       // Modo edição: carregar dados do colaborador
       const processedData: Record<string, string | number> = {};
+      const currencyInputsData: Record<string, string> = {};
+      const nifInputsData: Record<string, string> = {};
 
-      // Processar cada campo do colaborador
-      Object.keys(collaborator).forEach((key) => {
-        const value = collaborator[key];
+      // Inicializar todos os campos baseado na definição dos fields
+      fields.forEach((field) => {
+        const value = collaborator[field.name];
 
-        // Verificar se é um campo numérico baseado nos fields
-        const field = fields.find((f) => f.name === key);
-
-        if (field && field.type === "number") {
-          // Para campos numéricos, garantir que seja um número
-          if (typeof value === "string") {
-            // Se for string, tentar converter para número
-            const numericValue = parseFloat(value) || 0;
-            processedData[key] = numericValue;
-          } else if (typeof value === "number") {
-            processedData[key] = value;
+        if (field.name === "nif") {
+          // Para NIF (prioridade sobre type)
+          if (value !== undefined && value !== null) {
+            // Converter para string, removendo formatação se existir
+            const nifValue = String(value).replace(/\D/g, "");
+            processedData[field.name] = nifValue;
+            nifInputsData[field.name] = nifValue;
           } else {
-            processedData[key] = 0;
+            processedData[field.name] = "";
+            nifInputsData[field.name] = "";
+          }
+        } else if (field.type === "number") {
+          // Para campos numéricos (exceto NIF), garantir que seja um número
+          if (value !== undefined && value !== null) {
+            if (typeof value === "string") {
+              const numericValue = parseFloat(value) || 0;
+              processedData[field.name] = numericValue;
+              currencyInputsData[field.name] = String(numericValue);
+            } else if (typeof value === "number") {
+              processedData[field.name] = value;
+              currencyInputsData[field.name] = String(value);
+            } else {
+              processedData[field.name] = 0;
+              currencyInputsData[field.name] = "0";
+            }
+          } else {
+            processedData[field.name] = 0;
+            currencyInputsData[field.name] = "0";
           }
         } else {
-          // Para campos não numéricos, manter como string
-          processedData[key] = value || "";
+          // Para outros campos de texto
+          if (value !== undefined && value !== null) {
+            processedData[field.name] = String(value);
+          } else {
+            processedData[field.name] = "";
+          }
         }
       });
 
       setFormData(processedData);
-      setErrors({});
-
-      // Inicializar inputs de moeda para campos numéricos
-      const currencyInputsData: Record<string, string> = {};
-      fields.forEach((field) => {
-        if (field.type === "number" && processedData[field.name]) {
-          // Mostrar o valor original sem formatação
-          currencyInputsData[field.name] = String(processedData[field.name]);
-        }
-      });
       setCurrencyInputs(currencyInputsData);
+      setNifInputs(nifInputsData);
+      setErrors({});
     } else if (mode === "add" && fields && fields.length > 0) {
       // Modo adição: inicializar com valores padrão
       const initialData: Record<string, string | number> = {};
       const currencyInputsData: Record<string, string> = {};
+      const nifInputsData: Record<string, string> = {};
 
       fields.forEach((field) => {
         if (field.type === "number") {
           initialData[field.name] = 0;
           currencyInputsData[field.name] = "";
+        } else if (field.name === "nif") {
+          initialData[field.name] = "";
+          nifInputsData[field.name] = "";
         } else {
           initialData[field.name] = "";
         }
@@ -107,9 +125,37 @@ export default function CollaboratorModal({
 
       setFormData(initialData);
       setCurrencyInputs(currencyInputsData);
+      setNifInputs(nifInputsData);
       setErrors({});
     }
   }, [mode, collaborator, fields]);
+
+  // Função para validar NIF usando algoritmo de validação
+  const validateNIF = (nif: string): boolean => {
+    // Verificar se tem exatamente 9 dígitos
+    if (!/^\d{9}$/.test(nif)) {
+      return false;
+    }
+
+    // Verificar se não são todos os dígitos iguais
+    if (/^(\d)\1{8}$/.test(nif)) {
+      return false;
+    }
+
+    // Algoritmo de validação do NIF
+    const checkDigit = parseInt(nif[8]);
+    const firstEightDigits = nif.substring(0, 8);
+
+    let sum = 0;
+    for (let i = 0; i < 8; i++) {
+      sum += parseInt(firstEightDigits[i]) * (9 - i);
+    }
+
+    const remainder = sum % 11;
+    const calculatedCheckDigit = remainder < 2 ? 0 : 11 - remainder;
+
+    return checkDigit === calculatedCheckDigit;
+  };
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
@@ -155,15 +201,33 @@ export default function CollaboratorModal({
         return;
       }
 
-      // Validação específica para NIF (apenas 9 dígitos numéricos)
-      if (
-        field.format === "XXX.XXX.XXX" &&
-        value &&
-        typeof value === "string"
-      ) {
+      // Validação específica para NIF (algoritmo de validação completo)
+      if (field.name === "nif" && typeof value === "string") {
         const numbers = value.replace(/\D/g, "");
+
+        // Se o campo está vazio e é obrigatório, já foi validado acima
+        if (!value || numbers.length === 0) {
+          return;
+        }
+
+        // Verificar se tem exatamente 9 dígitos
         if (numbers.length !== 9) {
-          newErrors[field.name] = `${fieldLabel} deve ter exatamente 9 dígitos`;
+          newErrors[
+            field.name
+          ] = `${fieldLabel} deve ter exatamente 9 dígitos numéricos`;
+          return;
+        }
+
+        // Verificar se são apenas números
+        if (!/^\d{9}$/.test(numbers)) {
+          newErrors[field.name] = `${fieldLabel} deve conter apenas números`;
+          return;
+        }
+
+        // Validar NIF usando algoritmo de validação
+        const isValidNIF = validateNIF(numbers);
+        if (!isValidNIF) {
+          newErrors[field.name] = `${fieldLabel} não é um NIF válido`;
           return;
         }
       }
@@ -202,6 +266,24 @@ export default function CollaboratorModal({
     }
   };
 
+  // Função específica para lidar com input do NIF
+  const handleNifInput = (fieldName: string, value: string) => {
+    // Remover tudo exceto números
+    const numbers = value.replace(/\D/g, "");
+
+    // Limitar a 9 dígitos
+    const limitedNumbers = numbers.slice(0, 9);
+
+    // Atualizar o input visual (sem formatação)
+    setNifInputs((prev) => ({
+      ...prev,
+      [fieldName]: limitedNumbers,
+    }));
+
+    // Salvar apenas os números no formData para validação
+    handleInputChange(fieldName, limitedNumbers);
+  };
+
   const formatFieldValue = (value: string, field: Field) => {
     if (!field.format || !value) return value;
 
@@ -233,6 +315,7 @@ export default function CollaboratorModal({
     setFormData({});
     setErrors({});
     setCurrencyInputs({});
+    setNifInputs({});
     onClose();
   };
 
@@ -254,7 +337,7 @@ export default function CollaboratorModal({
 
   return (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-lg shadow-xl max-w-md w-full">
+      <div className="bg-white rounded-lg shadow-xl max-w-md sm:max-w-xl w-full">
         <div className="p-6">
           <div className="mb-4">
             <h2 className="text-xl font-bold text-[#002256] mb-2">
@@ -264,62 +347,79 @@ export default function CollaboratorModal({
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
-            {fields
-              .sort((a, b) => a.position - b.position)
-              .map((field) => {
-                const fieldLabel = field.label || field.name;
-                const isRequired = field.required;
-                const hasError = errors[field.name];
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {" "}
+              {fields
+                .sort((a, b) => a.position - b.position)
+                .map((field) => {
+                  const fieldLabel = field.label || field.name;
+                  const isRequired = field.required;
+                  const hasError = errors[field.name];
 
-                return (
-                  <div key={field.id}>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      {fieldLabel}{" "}
-                      {isRequired && <span className="text-red-500">*</span>}
-                    </label>
+                  return (
+                    <div key={field.id}>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        {fieldLabel}{" "}
+                        {isRequired && <span className="text-red-500">*</span>}
+                      </label>
 
-                    {field.type === "number" ? (
-                      <div className="relative">
+                      {field.name === "nif" ? (
                         <input
                           type="text"
-                          value={currencyInputs[field.name] || ""}
+                          value={nifInputs[field.name] || ""}
                           onChange={(e) => {
-                            handleCurrencyInput(field.name, e.target.value);
+                            handleNifInput(field.name, e.target.value);
                           }}
                           className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#002256] ${
                             hasError ? "border-red-500" : "border-gray-300"
                           }`}
-                          placeholder={field.field_placeholder || "0,00 CVE"}
+                          placeholder="Digite apenas 9 dígitos"
+                          maxLength={9} // 9 dígitos numéricos
+                          inputMode="numeric"
                         />
-                      </div>
-                    ) : (
-                      <input
-                        type={field.type}
-                        value={formData[field.name] || ""}
-                        onChange={(e) => {
-                          const value = field.format
-                            ? formatFieldValue(e.target.value, field)
-                            : e.target.value;
-                          handleInputChange(field.name, value);
-                        }}
-                        className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#002256] ${
-                          hasError ? "border-red-500" : "border-gray-300"
-                        }`}
-                        placeholder={
-                          field.field_placeholder ||
-                          `Digite ${fieldLabel.toLowerCase()}`
-                        }
-                        maxLength={field.field_max_size || undefined}
-                        minLength={field.field_min_size || undefined}
-                      />
-                    )}
+                      ) : field.type === "number" ? (
+                        <div className="relative">
+                          <input
+                            type="text"
+                            value={currencyInputs[field.name] || ""}
+                            onChange={(e) => {
+                              handleCurrencyInput(field.name, e.target.value);
+                            }}
+                            className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#002256] ${
+                              hasError ? "border-red-500" : "border-gray-300"
+                            }`}
+                            placeholder={field.field_placeholder || "0,00 CVE"}
+                          />
+                        </div>
+                      ) : (
+                        <input
+                          type={field.type === "date" ? "date" : "text"}
+                          value={formData[field.name] || ""}
+                          onChange={(e) => {
+                            const value = field.format
+                              ? formatFieldValue(e.target.value, field)
+                              : e.target.value;
+                            handleInputChange(field.name, value);
+                          }}
+                          className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#002256] ${
+                            hasError ? "border-red-500" : "border-gray-300"
+                          }`}
+                          placeholder={
+                            field.field_placeholder ||
+                            `Digite ${fieldLabel.toLowerCase()}`
+                          }
+                          maxLength={field.field_max_size || undefined}
+                          minLength={field.field_min_size || undefined}
+                        />
+                      )}
 
-                    {hasError && (
-                      <p className="text-red-500 text-sm mt-1">{hasError}</p>
-                    )}
-                  </div>
-                );
-              })}
+                      {hasError && (
+                        <p className="text-red-500 text-sm mt-1">{hasError}</p>
+                      )}
+                    </div>
+                  );
+                })}
+            </div>
 
             {/* Botões */}
             <div className="flex justify-between pt-4">

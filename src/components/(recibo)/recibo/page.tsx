@@ -287,31 +287,52 @@ export default function ReciboPage({ filterParams }: ReciboPageProps) {
     return status === 5; // Cobrado
   };
 
+  // 1️⃣ LOADING
   if (isLoadingRecibos) {
     return (
-      <LoadingContainer fullHeight={true} message="CARREGANDO RECIBOS..." />
+      <div className="flex-1 w-full h-screen flex items-center justify-center">
+        <LoadingContainer fullHeight={true} message="CARREGANDO RECIBOS..." />
+      </div>
     );
   }
 
+  // 2️⃣ ERRO
   if (errorRecibo) {
     return (
-      <div className="flex-1 space-y-6 p-6 md:p-8">
-        <div className="flex items-center justify-center h-64">
-          <div className="text-center">
-            <FaExclamationTriangle className="mx-auto h-12 w-12 text-red-500 mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">
-              Erro ao carregar recibos
-            </h3>
-            <p className="text-gray-500 mb-4">{errorRecibo}</p>
-            <Button onClick={() => window.location.reload()}>
-              Tentar novamente
-            </Button>
-          </div>
+      <div className="flex-1 w-full h-screen flex items-center justify-center">
+        <div className="flex flex-col items-center justify-center gap-2 py-8">
+          <FaExclamationTriangle className="text-4xl text-red-500" />
+          <h3 className="text-lg font-medium text-gray-900">
+            Erro ao carregar recibos
+          </h3>
+          <p className="text-gray-500 text-center">{errorRecibo}</p>
+          <Button onClick={() => window.location.reload()} className="mt-4">
+            Tentar novamente
+          </Button>
         </div>
       </div>
     );
   }
 
+  // 3️⃣ SEM RECIBOS
+  if (recibos.length === 0) {
+    return (
+      <div className="flex-1 space-y-6 p-6 md:p-8 mt-4">
+        <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-[#002256]">
+          Meus Recibos
+        </h1>
+        <div className="flex flex-col items-center justify-center space-y-4 text-center py-12">
+          <FaUser className="h-12 w-12 text-gray-400" />
+          <h3 className="text-lg font-medium">Nenhum recibo encontrado</h3>
+          <p className="text-sm text-muted-foreground">
+            Você ainda não possui recibos cadastrados no sistema.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // 4️⃣ TEM DADOS
   return (
     <div className="flex-1 space-y-4 md:space-y-6 p-3 md:p-6 lg:p-8 mt-4">
       <div className="flex items-center justify-between">

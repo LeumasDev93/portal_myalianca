@@ -44,7 +44,12 @@ export default function SoatDetailsModal({
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [collaboratorToRemove, setCollaboratorToRemove] = useState<any>(null);
   const [exportLoading, setExportLoading] = useState(false);
-
+  const [rowDownloadLoading, setRowDownloadLoading] = useState<string | null>(
+    null
+  );
+  const [errorMessage, setErrorMessage] = useState<string>("");
+  const [showError, setShowError] = useState(false);
+  const [isSuccessMessage, setIsSuccessMessage] = useState(false);
   // Filtrar colaboradores baseado na busca
   const filteredContents =
     soatDetails?.contents?.filter((content: any) => {
@@ -104,12 +109,8 @@ export default function SoatDetailsModal({
                   .replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4")
               : "N/A",
             Cargo: colaborador.cargo || colaborador.position || "N/A",
-            Salário: colaborador.salary
-              ? (colaborador.salary / 100).toLocaleString("pt-CV", {
-                  style: "currency",
-                  currency: "CVE",
-                  minimumFractionDigits: 2,
-                })
+            Salário: colaborador.salario
+              ? formatCurrency(colaborador.salario)
               : "N/A",
             Status: colaborador.status || "Ativo",
             "Data de Criação": new Date(
@@ -169,6 +170,7 @@ export default function SoatDetailsModal({
   const handleEditCollaborator = (content: any) => {
     try {
       const collaborator = JSON.parse(content.json_content);
+      console.log("Dados do colaborador parseados:", collaborator);
       // Incluir o ID do colaborador nos dados selecionados
       setSelectedCollaborator({
         ...collaborator,
@@ -335,14 +337,89 @@ export default function SoatDetailsModal({
     setCollaboratorToRemove(null);
   };
 
-  return (
-    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-      <div className="bg-gray-100 rounded-lg shadow-xl max-w-6xl w-full max-h-[90vh] overflow-y-auto">
-        {loading ? (
-          <div className="flex justify-center items-center py-12">
-            <LoadingContainer message="Carregando detalhes..." />
-          </div>
-        ) : error ? (
+  const showErrorMessage = (message: string) => {
+    setErrorMessage(message);
+    setIsSuccessMessage(false);
+    setShowError(true);
+    // Auto-hide após 5 segundos
+    setTimeout(() => {
+      setShowError(false);
+      setErrorMessage("");
+    }, 5000);
+  };
+
+  const showSuccessMessage = (message: string) => {
+    setErrorMessage(message);
+    setIsSuccessMessage(true);
+    setShowError(true);
+    // Auto-hide após 3 segundos
+    setTimeout(() => {
+      setShowError(false);
+      setErrorMessage("");
+    }, 3000);
+  };
+
+  // Função para fechar mensagem
+  const closeMessage = () => {
+    setShowError(false);
+    setErrorMessage("");
+  };
+
+  const handleDownloadSoat = async (soatId: string, suggestedName?: string) => {
+    try {
+      setRowDownloadLoading(soatId);
+      const response = await fetch(`/api/soat/${soatId}/download`, {
+        method: "GET",
+      });
+      if (!response.ok) {
+        throw new Error("Erro ao baixar SOAT");
+      }
+
+      // Tentar obter nome do arquivo
+      const contentDisposition = response.headers.get("content-disposition");
+      let filename = suggestedName || `soat_${soatId}.xlsx`;
+      if (contentDisposition) {
+        const filenameMatch = contentDisposition.match(
+          /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/
+        );
+        if (filenameMatch && filenameMatch[1]) {
+          filename = filenameMatch[1].replace(/['"]/g, "");
+        }
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error("Erro ao baixar SOAT:", error);
+      showErrorMessage("Erro ao baixar SOAT");
+    } finally {
+      setRowDownloadLoading(null);
+    }
+  };
+
+  // Loading State - retornar apenas loading
+  if (loading) {
+    return (
+      <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+        <div className="bg-white rounded-lg shadow-xl p-12">
+          <LoadingContainer message="Carregando detalhes..." />
+        </div>
+      </div>
+    );
+  }
+
+  // Error State
+  if (error) {
+    return (
+      <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+        <div className="bg-gray-100 rounded-lg shadow-xl max-w-6xl w-full max-h-[90vh] overflow-y-auto">
           <div className="p-6">
             <div className="bg-red-50 border border-red-200 rounded-lg p-4">
               <div className="flex items-center">
@@ -353,8 +430,24 @@ export default function SoatDetailsModal({
                 </p>
               </div>
             </div>
+            <div className="mt-4 flex justify-end">
+              <button
+                onClick={onClose}
+                className="bg-gray-400 cursor-pointer hover:bg-gray-500 text-white px-4 py-2 rounded-lg font-medium transition-colors"
+              >
+                Fechar
+              </button>
+            </div>
           </div>
-        ) : soatDetails ? (
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+      <div className="bg-gray-100 rounded-lg shadow-xl max-w-6xl w-full max-h-[90vh] overflow-y-auto">
+        {soatDetails ? (
           <div>
             {/* Header com informações do arquivo */}
             <div className=" text-[#002256] p-6 rounded-t-lg">
@@ -418,7 +511,7 @@ export default function SoatDetailsModal({
                       filteredContents.reduce((total: number, content: any) => {
                         try {
                           const colaborador = JSON.parse(content.json_content);
-                          return total + (colaborador.salary || 0);
+                          return total + (colaborador.salario || 0);
                         } catch {
                           return total;
                         }
@@ -487,15 +580,17 @@ export default function SoatDetailsModal({
                 <table className="w-full">
                   <thead className="bg-gray-50">
                     <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Nome
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        NIF
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Salário
-                      </th>
+                      {/* Headers dinâmicos baseados nos fields */}
+                      {soatDetails?.fields
+                        ?.sort((a: any, b: any) => a.position - b.position)
+                        .map((field: any) => (
+                          <th
+                            key={field.id}
+                            className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                          >
+                            {field.label}
+                          </th>
+                        ))}
                       {soatDetails?.situacao !== "Enviado" && (
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                           Ações
@@ -513,25 +608,52 @@ export default function SoatDetailsModal({
                             );
                             return (
                               <tr key={content.id} className="hover:bg-gray-50">
-                                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                                  {colaborador.name || "N/A"}
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                  {colaborador.nif
-                                    ? colaborador.nif
-                                        .toString()
-                                        .replace(
-                                          /(\d{3})(\d{3})(\d{3})(\d{2})/,
-                                          "$1.$2.$3-$4"
-                                        )
-                                    : "N/A"}
-                                </td>
+                                {/* Células dinâmicas baseadas nos fields */}
+                                {soatDetails?.fields
+                                  ?.sort(
+                                    (a: any, b: any) => a.position - b.position
+                                  )
+                                  .map((field: any) => {
+                                    const value = colaborador[field.name];
+                                    let displayValue = "N/A";
 
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                  {colaborador.salary
-                                    ? formatCurrency(colaborador.salary)
-                                    : "N/A"}
-                                </td>
+                                    if (
+                                      value !== undefined &&
+                                      value !== null &&
+                                      value !== ""
+                                    ) {
+                                      if (
+                                        field.type === "number" &&
+                                        field.name === "salario"
+                                      ) {
+                                        displayValue = formatCurrency(value);
+                                      } else if (
+                                        field.type === "number" &&
+                                        field.name === "nif"
+                                      ) {
+                                        displayValue = value
+                                          .toString()
+                                          .replace(
+                                            /(\d{3})(\d{3})(\d{3})(\d{2})/,
+                                            "$1.$2.$3-$4"
+                                          );
+                                      } else if (field.type === "date") {
+                                        // Formatar data se necessário
+                                        displayValue = value;
+                                      } else {
+                                        displayValue = value.toString();
+                                      }
+                                    }
+
+                                    return (
+                                      <td
+                                        key={field.id}
+                                        className="px-6 py-4 whitespace-nowrap text-sm text-gray-900"
+                                      >
+                                        {displayValue}
+                                      </td>
+                                    );
+                                  })}
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                   {soatDetails?.situacao !== "Enviado" && (
                                     <div className="flex space-x-2">
@@ -624,16 +746,27 @@ export default function SoatDetailsModal({
               <div className="flex justify-between items-center">
                 <div className="flex space-x-3">
                   <button
-                    onClick={handleExportToExcel}
-                    disabled={exportLoading || filteredContents.length === 0}
                     className="bg-[#002256] hover:bg-[#002256]/80 disabled:bg-gray-400 disabled:cursor-not-allowed cursor-pointer text-white px-4 py-2 rounded-lg font-medium flex items-center gap-2 transition-colors"
+                    onClick={() =>
+                      handleDownloadSoat(
+                        soatDetails.id,
+                        soatDetails.nome_ficheiro || undefined
+                      )
+                    }
+                    disabled={rowDownloadLoading === soatDetails.id}
+                    title={`Baixar SOAT - ${soatDetails.mes_referente}`}
                   >
-                    {exportLoading ? (
-                      <FaSpinner className="w-4 h-4 animate-spin" />
+                    {rowDownloadLoading === soatDetails.id ? (
+                      <>
+                        <FaSpinner className="w-4 h-4 animate-spin" />
+                        <span>Baixando...</span>
+                      </>
                     ) : (
-                      <FaDownload className="w-4 h-4" />
+                      <>
+                        <FaDownload className="w-4 h-4" />
+                        <span>Baixar SOAT</span>
+                      </>
                     )}
-                    {exportLoading ? "Exportando..." : "Exportar Lista"}
                   </button>
                 </div>
                 <button
@@ -645,7 +778,11 @@ export default function SoatDetailsModal({
               </div>
             </div>
           </div>
-        ) : null}
+        ) : (
+          <div className="p-6 text-center text-gray-500">
+            Nenhum detalhe disponível
+          </div>
+        )}
       </div>
 
       {/* Modal Unificado de Colaborador */}
@@ -671,6 +808,48 @@ export default function SoatDetailsModal({
         loading={removeLoading === collaboratorToRemove?.id}
         type="danger"
       />
+
+      {/* Notificação de erro/sucesso */}
+      {showError && (
+        <div
+          className={`fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg max-w-sm ${
+            isSuccessMessage
+              ? "bg-green-50 border border-green-200 text-green-800"
+              : "bg-red-50 border border-red-200 text-red-800"
+          }`}
+        >
+          <div className="flex items-center justify-between">
+            <div className="flex items-center">
+              {isSuccessMessage ? (
+                <div className="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center mr-3">
+                  <svg
+                    className="w-3 h-3 text-white"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M5 13l4 4L19 7"
+                    />
+                  </svg>
+                </div>
+              ) : (
+                <IoAlertCircleOutline className="w-5 h-5 mr-3" />
+              )}
+              <p className="text-sm font-medium">{errorMessage}</p>
+            </div>
+            <button
+              onClick={closeMessage}
+              className="ml-3 text-gray-400 hover:text-gray-600"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

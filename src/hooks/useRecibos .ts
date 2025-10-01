@@ -3,32 +3,43 @@ import { useSessionCheckToken } from './useSessionToken';
 import { useUserProfile } from './useUserProfile ';
 import { ReciboData } from '@/types/typesData';
 
+interface RecibosState {
+    recibos: ReciboData[];
+    isLoading: boolean;
+    error: string | null;
+}
+
 export const useRecibos = (initialFilters?: Record<string, string>) => {
-    const [recibos, setRecibos] = useState<ReciboData[]>([]);
-    const [filteredRecibos, setFilteredRecibos] = useState<ReciboData[]>([]);
-    const [isLoadingRecibos, setIsLoadingRecibos] = useState(false);
-    const [errorRecibo, setErrorRecibo] = useState<string | null>(null);
+    // Estado único para evitar múltiplos re-renders
+    const [state, setState] = useState<RecibosState>({
+        recibos: [],
+        isLoading: true,
+        error: null
+    });
+    
+    const [dataLoaded, setDataLoaded] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState<string>(
         initialFilters?.estado || 'all'
     );
     
-    // Debug: verificar se os filtros iniciais estão chegando
-    console.log('useRecibos - initialFilters:', initialFilters);
-    console.log('useRecibos - statusFilter inicial:', initialFilters?.estado || 'all');
     const { token } = useSessionCheckToken();
     const { profile } = useUserProfile();
-    // Busca os recibos da API
     const nifUser = profile?.user?.nif;
+
+    // Busca os recibos da API
     useEffect(() => {
-        if (!token || !nifUser) return;
+        if (!token || !nifUser) {
+            setState({ recibos: [], isLoading: false, error: null });
+            return;
+        }
 
         const controller = new AbortController();
         const { signal } = controller;
 
         const fetchRecibos = async () => {
-            setIsLoadingRecibos(true);
-            setErrorRecibo(null);
+            // Iniciar loading
+            setState({ recibos: [], isLoading: true, error: null });
 
             try {
                 const response = await fetch(
@@ -51,17 +62,26 @@ export const useRecibos = (initialFilters?: Record<string, string>) => {
                 const data = await response.json();
                 const recibosData = Array.isArray(data) ? data : [data];
 
-                setRecibos(recibosData);
-                setFilteredRecibos(recibosData); // Inicializa com todos os recibos
+                // ✅ Atualização ATÔMICA - tudo de uma vez
+                setState({
+                    recibos: recibosData,
+                    isLoading: false,
+                    error: null
+                });
+                setDataLoaded(true);
             } catch (error) {
                 if (signal.aborted) return;
 
                 const errorMessage = error instanceof Error
                     ? error.message
                     : "Erro ao carregar recibos";
-                setErrorRecibo(errorMessage);
-            } finally {
-                setIsLoadingRecibos(false);
+                    
+                // ✅ Erro ATÔMICO
+                setState({
+                    recibos: [],
+                    isLoading: false,
+                    error: errorMessage
+                });
             }
         };
 
@@ -71,44 +91,38 @@ export const useRecibos = (initialFilters?: Record<string, string>) => {
     }, [token, nifUser]);
 
     // Aplica os filtros sempre que houver mudanças
-    useEffect(() => {
-        let result = [...recibos];
-
+    const filteredRecibos = state.recibos.filter((recibo) => {
         // Filtro de texto
         if (searchTerm.trim() !== "") {
             const term = searchTerm.toLowerCase();
-            result = result.filter(
-                (recibo) =>
-                    recibo.clientName?.toLowerCase().includes(term) ||
-                    recibo.number?.toLowerCase().includes(term) ||
-                    (recibo.mbref && recibo.mbref.toLowerCase().includes(term))
-            );
+            const matchesText =
+                recibo.clientName?.toLowerCase().includes(term) ||
+                recibo.number?.toLowerCase().includes(term) ||
+                (recibo.mbref && recibo.mbref.toLowerCase().includes(term));
+            
+            if (!matchesText) return false;
         }
 
         // Filtro de status
         if (statusFilter !== "all") {
             const statusNum = parseInt(statusFilter);
-            console.log('Aplicando filtro de status:', statusFilter, '->', statusNum);
-            console.log('Recibos antes do filtro:', result.length);
             
             // Para "Em Cobrança" (status 1), incluir também status 2
             if (statusNum === 1) {
-                result = result.filter((recibo) => recibo.status === 1 || recibo.status === 2);
+                return recibo.status === 1 || recibo.status === 2;
             } else {
-                result = result.filter((recibo) => recibo.status === statusNum);
+                return recibo.status === statusNum;
             }
-            
-            console.log('Recibos após filtro:', result.length);
         }
 
-        setFilteredRecibos(result);
-    }, [searchTerm, statusFilter, recibos]);
+        return true;
+    });
 
     return {
-        recibos,
+        recibos: state.recibos,
         filteredRecibos,
-        isLoadingRecibos,
-        errorRecibo,
+        isLoadingRecibos: state.isLoading || !dataLoaded,
+        errorRecibo: state.error,
         searchTerm,
         setSearchTerm,
         statusFilter,

@@ -4,25 +4,38 @@ import { useSessionCheckToken } from './useSessionToken';
 import { useUserProfile } from './useUserProfile ';
 import { ApoliceData } from '@/types/typesData';
 
+interface ApolicesState {
+    apolices: ApoliceData[];
+    isLoading: boolean;
+    error: string | null;
+}
 
 export const useApolices = () => {
-    const [apolices, setApolices] = useState<ApoliceData[]>([]);
-    const [isLoadingApolices, setIsLoadingApolices] = useState(false);
-    const [errorApolices, setErrorApolices] = useState<string | null>(null);
+    // Estado único - SEM inicializar apolices como array vazio
+    const [state, setState] = useState<ApolicesState>({
+        apolices: [],
+        isLoading: true,
+        error: null
+    });
+    
+    const [dataLoaded, setDataLoaded] = useState(false);
+
     const { token } = useSessionCheckToken();
     const { profile } = useUserProfile();
-
     const nifUser = profile?.user?.nif;
 
     useEffect(() => {
-        if (!token || !nifUser) return;
+        if (!token || !nifUser) {
+            setState({ apolices: [], isLoading: false, error: null });
+            return;
+        }
 
         const controller = new AbortController();
         const { signal } = controller;
 
         const fetchApolices = async () => {
-            setIsLoadingApolices(true);
-            setErrorApolices(null);
+            // Iniciar loading
+            setState({ apolices: [], isLoading: true, error: null });
 
             try {
                 const response = await fetch(
@@ -43,7 +56,15 @@ export const useApolices = () => {
                 }
 
                 const data = await response.json();
-                setApolices(Array.isArray(data) ? data : [data]);
+                const apolicesData = Array.isArray(data) ? data : [data];
+                
+                // ✅ Atualização ATÔMICA - tudo de uma vez
+                setState({
+                    apolices: apolicesData,
+                    isLoading: false,
+                    error: null
+                });
+                setDataLoaded(true);
             } catch (error) {
                 if (signal.aborted) {
                     console.log("Requisição cancelada");
@@ -55,9 +76,13 @@ export const useApolices = () => {
                     : "Erro ao carregar apólices. Tente novamente mais tarde.";
 
                 console.error("Erro ao buscar apólices:", error);
-                setErrorApolices(errorMessage);
-            } finally {
-                setIsLoadingApolices(false);
+                
+                // ✅ Erro ATÔMICO
+                setState({
+                    apolices: [],
+                    isLoading: false,
+                    error: errorMessage
+                });
             }
         };
 
@@ -68,5 +93,10 @@ export const useApolices = () => {
         };
     }, [token, nifUser]);
 
-    return { apolices, isLoadingApolices, errorApolices };
+    return { 
+        apolices: state.apolices, 
+        isLoadingApolices: state.isLoading || !dataLoaded, 
+        errorApolices: state.error,
+        hasData: dataLoaded && state.apolices.length > 0
+    };
 };

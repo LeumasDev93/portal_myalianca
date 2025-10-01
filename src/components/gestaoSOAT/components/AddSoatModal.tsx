@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { useState } from "react";
 import { FaSpinner, FaUpload } from "react-icons/fa";
 import { addSoat } from "@/service/addSoatService";
@@ -122,8 +123,7 @@ export default function AddSoatModal({
         throw new Error("Erro ao fazer upload do arquivo");
       }
 
-      const result = await response.json();
-      console.log("Upload realizado com sucesso:", result);
+      await response.json();
 
       // Fechar modal e limpar dados
       setSelectedFile(null);
@@ -132,7 +132,6 @@ export default function AddSoatModal({
       // Chamar onCreate para atualizar a lista
       onCreate(modalData);
     } catch (error) {
-      console.error("Erro ao fazer upload:", error);
       setError("Erro ao fazer upload do arquivo. Tente novamente.");
     } finally {
       setUploadLoading(false);

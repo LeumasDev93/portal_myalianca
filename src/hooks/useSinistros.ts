@@ -3,25 +3,38 @@ import { useSessionCheckToken } from './useSessionToken';
 import { useUserProfile } from './useUserProfile ';
 import { SinistroData } from '@/types/typesData';
 
+interface SinistrosState {
+    sinistros: SinistroData[];
+    isLoading: boolean;
+    error: string | null;
+}
 
 export const useSinistros = () => {
-    const [sinistros, setSinistros] = useState<SinistroData[]>([]);
-    const [isLoadingSinistros, setIsLoadingSinistros] = useState(false);
-    const [errorSinistros, setErrorSinistros] = useState<string | null>(null);
+    // Estado único para evitar múltiplos re-renders
+    const [state, setState] = useState<SinistrosState>({
+        sinistros: [],
+        isLoading: true,
+        error: null
+    });
+    
+    const [dataLoaded, setDataLoaded] = useState(false);
+
     const { token } = useSessionCheckToken();
     const { profile } = useUserProfile();
-
     const nifUser = profile?.user?.nif;
 
     useEffect(() => {
-        if (!token || !nifUser) return;
+        if (!token || !nifUser) {
+            setState({ sinistros: [], isLoading: false, error: null });
+            return;
+        }
 
         const controller = new AbortController();
         const { signal } = controller;
 
         const fetchSinistros = async () => {
-            setIsLoadingSinistros(true);
-            setErrorSinistros(null);
+            // Iniciar loading
+            setState({ sinistros: [], isLoading: true, error: null });
 
             try {
                 const response = await fetch(
@@ -42,7 +55,15 @@ export const useSinistros = () => {
                 }
 
                 const data = await response.json();
-                setSinistros(Array.isArray(data) ? data : [data]);
+                const sinistrosData = Array.isArray(data) ? data : [data];
+                
+                // ✅ Atualização ATÔMICA - tudo de uma vez
+                setState({
+                    sinistros: sinistrosData,
+                    isLoading: false,
+                    error: null
+                });
+                setDataLoaded(true);
             } catch (error) {
                 if (signal.aborted) {
                     console.log("Requisição de sinistros cancelada");
@@ -54,9 +75,13 @@ export const useSinistros = () => {
                     : "Erro ao carregar sinistros. Tente novamente mais tarde.";
 
                 console.error("Erro ao buscar sinistros:", error);
-                setErrorSinistros(errorMessage);
-            } finally {
-                setIsLoadingSinistros(false);
+                
+                // ✅ Erro ATÔMICO
+                setState({
+                    sinistros: [],
+                    isLoading: false,
+                    error: errorMessage
+                });
             }
         };
 
@@ -68,13 +93,8 @@ export const useSinistros = () => {
     }, [token, nifUser]);
 
     return {
-        sinistros,
-        isLoadingSinistros,
-        errorSinistros,
-        refetch: () => {
-            // Forçar nova requisição se necessário
-            setSinistros([]);
-            setErrorSinistros(null);
-        }
+        sinistros: state.sinistros,
+        isLoadingSinistros: state.isLoading || !dataLoaded,
+        errorSinistros: state.error,
     };
 };

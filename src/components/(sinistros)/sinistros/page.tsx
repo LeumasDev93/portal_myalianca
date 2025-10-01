@@ -48,70 +48,82 @@ export default function SinistrosPage({
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
 
+  // 1️⃣ LOADING
   if (isLoadingSinistros) {
     return (
-      <div className="flex items-center justify-center h-screen">
+      <div className="flex-1 w-full h-screen flex items-center justify-center">
         <LoadingContainer message="CARREGANDO SINISTROS..." />
       </div>
     );
   }
 
+  // 2️⃣ ERRO
   if (errorSinistros) {
     return (
-      <div className="flex items-center justify-center h-screen">
-        <p className="text-red-500 text-center">{errorSinistros}</p>
+      <div className="flex-1 w-full h-screen flex items-center justify-center">
+        <div className="flex flex-col items-center justify-center gap-2 py-8">
+          <div className="relative">
+            <FaSearch className="text-4xl text-gray-400 animate-pulse" />
+            <FaFilter
+              className="absolute -top-2 -right-2 text-xl text-[#2d4e7f] animate-spin-slow"
+              style={{ animationDuration: "3s" }}
+            />
+          </div>
+          <p className="text-gray-500 text-center">
+            Não há dados no momento.
+            <br />
+            Tente novamente mais tarde.
+          </p>
+        </div>
       </div>
     );
   }
 
+  // 3️⃣ SEM SINISTROS
+  if (sinistros.length === 0) {
+    return (
+      <div className="flex-1 space-y-6 p-6 md:p-8 mt-4">
+        <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-[#002256]">
+          Meus Sinistros
+        </h1>
+        <div className="flex flex-col items-center justify-center space-y-4 text-center py-12">
+          <SearchX className="h-12 w-12 text-muted-foreground" />
+          <h3 className="text-lg font-medium">Nenhum sinistro encontrado</h3>
+          <p className="text-sm text-muted-foreground">
+            Você ainda não possui sinistros cadastrados no sistema.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // 4️⃣ TEM DADOS - Processar filtros
+  const hasActiveFilters = searchTerm !== "" || statusFilter !== "all";
+
   const filteredSinistros = sinistros.filter((sinistro) => {
-    // Converte o termo de busca para minúsculas uma única vez
     const searchTermLower = searchTerm.toLowerCase();
 
-    // Filtro unificado por termo de busca
     const matchesSearch =
       sinistro.contractNumber
         .toString()
         .toLowerCase()
-        .includes(searchTermLower) || // Número do sinistro
+        .includes(searchTermLower) ||
       (sinistro.insuredObjectDescription &&
         sinistro.insuredObjectDescription
           .toLowerCase()
-          .includes(searchTermLower)); // Descrição do objeto segurado
+          .includes(searchTermLower));
 
-    // Filtro por status
     const matchesStatus =
       statusFilter === "all" || sinistro.status === statusFilter;
 
     return matchesSearch && matchesStatus;
   });
 
-  // Verificar se há filtros ativos
-  const hasActiveFilters = searchTerm !== "" || statusFilter !== "all";
-
-  // Se não estiver carregando e não há dados originais
-  if (!isLoadingSinistros && sinistros.length === 0) {
-    return (
-      <div className="flex flex-col items-center justify-center gap-2 py-8 h-screen">
-        <div className="relative">
-          <FaSearch className="text-4xl text-gray-400" />
-        </div>
-        <p className="text-gray-500 text-center">
-          Nenhum sinistro encontrado!
-          <br />
-          Não há sinistros para exibir no momento.
-        </p>
-      </div>
-    );
-  }
-
   return (
     <div className="flex-1 space-y-6 p-6 md:p-8 mt-4">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-[#002256]">
-          Meus Sinistros
-        </h1>
-      </div>
+      <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-[#002256]">
+        Meus Sinistros
+      </h1>
 
       {/* Filtros */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -139,7 +151,7 @@ export default function SinistrosPage({
             </SelectContent>
           </Select>
           <Button
-            className=" flex items-center justify-cente bg-white rounded-md border border-gray-300 hover:bg-gray-200 p-2 text-gray-700"
+            className="flex items-center justify-center bg-white rounded-md border border-gray-300 hover:bg-gray-200 p-2 text-gray-700"
             onClick={() => {
               setSearchTerm("");
               setStatusFilter("all");
@@ -150,8 +162,9 @@ export default function SinistrosPage({
         </div>
       </div>
 
+      {/* Lista */}
       <div className="flex flex-col gap-6">
-        {filteredSinistros.length === 0 ? (
+        {hasActiveFilters && filteredSinistros.length === 0 ? (
           <div className="flex flex-col items-center justify-center space-y-4 text-center py-12">
             <SearchX className="h-12 w-12 text-muted-foreground" />
             <h3 className="text-lg font-medium">Nenhum resultado encontrado</h3>
