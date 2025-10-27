@@ -46,6 +46,8 @@ import ReactDOM from "react-dom/client";
 import { MdPayment } from "react-icons/md";
 import { toast } from "sonner";
 import { useReciboActivity } from "@/lib/activityExamples";
+import { useUserProfile } from "@/hooks/useUserProfile ";
+import { processPayment } from "@/service/paymentService";
 
 type ViewMode = "grid" | "list";
 
@@ -65,10 +67,12 @@ type DownloadStatus = {
 export default function ReciboPage({ filterParams }: ReciboPageProps) {
   const [loadingStates, setLoadingStates] = useState<ReciboLoadingState>({});
   const [loadingView, setLoadingView] = useState<ReciboLoadingState>({});
+  const [loadingPayment, setLoadingPayment] = useState<ReciboLoadingState>({}); // Loading para pagamento
   const [downloadStatus, setDownloadStatus] = useState<DownloadStatus>({});
   const [viewMode, setViewMode] = useState<ViewMode>("list");
   const { token } = useSessionCheckToken();
   const { registerReciboDownloadActivity } = useReciboActivity();
+  const { profile } = useUserProfile(); // Dados do usuário
 
   // Debug: verificar se os parâmetros estão chegando
   console.log("ReciboPage - filterParams:", filterParams);
@@ -195,10 +199,44 @@ export default function ReciboPage({ filterParams }: ReciboPageProps) {
         URL.revokeObjectURL(url);
       };
 
-      const handlePaymentInModal = () => {
-        // Implementação para pagamento
-        console.log("Pagar recibo:", invoiceNumber);
-        closeModal();
+      const handlePaymentInModal = async () => {
+        if (!profile?.user) {
+          toast.error("Dados do usuário não disponíveis");
+          return;
+        }
+
+        // Buscar dados do recibo pelo número
+        const recibo = recibos.find((r) => r.number === invoiceNumber);
+        if (!recibo) {
+          toast.error("Recibo não encontrado");
+          return;
+        }
+
+        setLoadingPayment((prev) => ({
+          ...prev,
+          [invoiceNumber]: true,
+        }));
+
+        try {
+          await processPayment(
+            recibo.value, // amount
+            profile.user.nome, // userName
+            profile.user.email || "", // userEmail
+            profile.user.nif || "", // userPhone
+            invoiceNumber // merchantRef
+          );
+
+          toast.success("Checkout aberto! Conclua o pagamento na nova aba.");
+          closeModal();
+        } catch (error) {
+          console.error("Erro ao processar pagamento:", error);
+          toast.error("Erro ao processar pagamento. Tente novamente.");
+        } finally {
+          setLoadingPayment((prev) => ({
+            ...prev,
+            [invoiceNumber]: false,
+          }));
+        }
       };
 
       const handleDownloadInModal = () => {
@@ -482,13 +520,50 @@ export default function ReciboPage({ filterParams }: ReciboPageProps) {
                   </Button>
                   {shouldShowPaymentButton(recibo.status) && (
                     <Button
-                      onClick={() => {
-                        console.log("Pagar recibo:", recibo.number);
+                      onClick={async () => {
+                        if (!profile?.user) {
+                          toast.error("Dados do usuário não disponíveis");
+                          return;
+                        }
+
+                        setLoadingPayment((prev) => ({
+                          ...prev,
+                          [recibo.number]: true,
+                        }));
+
+                        try {
+                          await processPayment(
+                            recibo.value, // amount
+                            profile.user.nome, // userName
+                            profile.user.email || "", // userEmail
+                            profile.user.nif || "", // userPhone
+                            recibo.number // merchantRef
+                          );
+
+                          toast.success(
+                            "Checkout aberto! Conclua o pagamento na nova aba."
+                          );
+                        } catch (error) {
+                          console.error("Erro ao processar pagamento:", error);
+                          toast.error(
+                            "Erro ao processar pagamento. Tente novamente."
+                          );
+                        } finally {
+                          setLoadingPayment((prev) => ({
+                            ...prev,
+                            [recibo.number]: false,
+                          }));
+                        }
                       }}
+                      disabled={loadingPayment[recibo.number]}
                       size="sm"
-                      className="flex-1 text-xs md:text-sm py-2 bg-green-600 hover:bg-green-700 text-white"
+                      className="flex-1 text-xs md:text-sm py-2 bg-green-600 hover:bg-green-700 text-white disabled:opacity-50"
                     >
-                      <MdPayment className="size-3 md:size-4" />
+                      {loadingPayment[recibo.number] ? (
+                        <LoadingSpinner size="sm" />
+                      ) : (
+                        <MdPayment className="size-3 md:size-4" />
+                      )}
                       <span className="ml-1">Pagar</span>
                     </Button>
                   )}
@@ -589,14 +664,53 @@ export default function ReciboPage({ filterParams }: ReciboPageProps) {
                     </Button>
                     {shouldShowPaymentButton(recibo.status) && (
                       <Button
-                        onClick={() => {
-                          // Implementar lógica de pagamento
-                          console.log("Pagar recibo:", recibo.number);
+                        onClick={async () => {
+                          if (!profile?.user) {
+                            toast.error("Dados do usuário não disponíveis");
+                            return;
+                          }
+
+                          setLoadingPayment((prev) => ({
+                            ...prev,
+                            [recibo.number]: true,
+                          }));
+
+                          try {
+                            await processPayment(
+                              recibo.value, // amount
+                              profile.user.nome, // userName
+                              profile.user.email || "", // userEmail
+                              profile.user.nif || "", // userPhone (usando NIF como fallback)
+                              recibo.number // merchantRef
+                            );
+
+                            toast.success(
+                              "Checkout aberto! Conclua o pagamento na nova aba."
+                            );
+                          } catch (error) {
+                            console.error(
+                              "Erro ao processar pagamento:",
+                              error
+                            );
+                            toast.error(
+                              "Erro ao processar pagamento. Tente novamente."
+                            );
+                          } finally {
+                            setLoadingPayment((prev) => ({
+                              ...prev,
+                              [recibo.number]: false,
+                            }));
+                          }
                         }}
+                        disabled={loadingPayment[recibo.number]}
                         size="sm"
-                        className="flex-1 md:flex-none text-xs md:text-sm py-2 bg-green-600 hover:bg-green-700 text-white"
+                        className="flex-1 md:flex-none text-xs md:text-sm py-2 bg-green-600 hover:bg-green-700 text-white disabled:opacity-50"
                       >
-                        <MdPayment className="size-3 md:size-4" />
+                        {loadingPayment[recibo.number] ? (
+                          <LoadingSpinner size="sm" />
+                        ) : (
+                          <MdPayment className="size-3 md:size-4" />
+                        )}
                         <span className="ml-1">Pagar</span>
                       </Button>
                     )}

@@ -202,7 +202,6 @@ export default function LoginPage() {
       });
 
       const data = await res.json();
-      console.log("Confirm password response:", data);
 
       // Tratamento de erro - pegar o erro diretamente do campo `error`
       if (!res.ok || data.error || data.code === 3) {
@@ -350,7 +349,7 @@ export default function LoginPage() {
                 </label>
                 <button
                   type="button"
-                  className="absolute right-3 top-3.5 text-gray-400 hover:text-blue-500 transition-colors"
+                  className="absolute right-3 top-3.5 text-gray-400 hover:text-blue-500 transition-colors cursor-pointer"
                   onClick={() => setShowPassword(!showPassword)}
                   aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"}
                 >
@@ -370,7 +369,7 @@ export default function LoginPage() {
                     setIsLoginForm(false);
                     setStep("email");
                   }}
-                  className="text-sm text-blue-600 hover:text-blue-800 transition-colors duration-200 underline-offset-4 hover:underline"
+                  className="text-sm text-blue-600 cursor-pointer hover:text-blue-800 transition-colors duration-200 underline-offset-4 hover:underline"
                 >
                   Esqueceu a senha?
                 </button>
@@ -383,7 +382,7 @@ export default function LoginPage() {
                 className={`w-full py-3 px-4 inline-flex justify-center items-center gap-2 rounded-lg font-medium text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 ${
                   isLoading
                     ? "bg-blue-400 cursor-not-allowed"
-                    : "bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 shadow-md hover:shadow-lg"
+                    : "bg-gradient-to-r from-blue-600 cursor-pointer to-blue-700 hover:from-blue-700 hover:to-blue-800 shadow-md hover:shadow-lg"
                 }`}
               >
                 {isLoading ? (
@@ -514,7 +513,7 @@ export default function LoginPage() {
                 className={`w-full py-3 px-4 inline-flex justify-center items-center gap-2 rounded-lg font-medium text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 ${
                   isloading
                     ? "bg-blue-400 cursor-not-allowed"
-                    : "bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 shadow-md hover:shadow-lg"
+                    : "bg-gradient-to-r cursor-pointer from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 shadow-md hover:shadow-lg"
                 }`}
               >
                 {isloading ? (
@@ -539,7 +538,7 @@ export default function LoginPage() {
               <button
                 type="button"
                 onClick={() => setIsLoginForm(true)}
-                className="text-sm text-blue-600 hover:text-blue-800 transition-colors duration-200 underline-offset-4 hover:underline flex items-center justify-center gap-1"
+                className="text-sm text-blue-600 cursor-pointer hover:text-blue-800 transition-colors duration-200 underline-offset-4 hover:underline flex items-center justify-center gap-1"
               >
                 <ArrowLeft className="h-4 w-4" />
                 Voltar para login

@@ -6,9 +6,12 @@ import { useApolices } from "@/hooks/useApolices";
 import { useRecibos } from "@/hooks/useRecibos ";
 import { useSessionCheckToken } from "@/hooks/useSessionToken";
 import { useSinistros } from "@/hooks/useSinistros";
+import { useUserProfile } from "@/hooks/useUserProfile ";
 import { tableMappeData } from "@/lib/tableMappe";
 import { getFirstAndLastName } from "@/lib/utils";
 import { useReciboActivity } from "@/lib/activityExamples";
+import { processPayment } from "@/service/paymentService";
+import { toast } from "sonner";
 import React, { useEffect, useState } from "react";
 import {
   FaCar,
@@ -61,7 +64,9 @@ const HistoryTable = ({
   const [currentPage, setCurrentPage] = useState(1);
 
   const [loadingStates, setLoadingStates] = useState<ReciboLoadingState>({});
+  const [loadingPayment, setLoadingPayment] = useState<ReciboLoadingState>({});
   const { token } = useSessionCheckToken();
+  const { profile } = useUserProfile();
 
   const { errorRecibo, filteredRecibos, isLoadingRecibos } = useRecibos();
 
@@ -257,8 +262,43 @@ const HistoryTable = ({
   const handleRenewPolicy = (contractNumber: number) => {
     // Implementação para renovar apólice
   };
-  const handlePayment = (contractNumber: number) => {
-    // Implementação para renovar apólice
+  const handlePayment = async (invoiceNumber: string) => {
+    if (!profile?.user) {
+      toast.error("Dados do usuário não disponíveis");
+      return;
+    }
+
+    // Buscar dados do recibo pelo número
+    const recibo = filteredRecibos.find((r) => r.number === invoiceNumber);
+    if (!recibo) {
+      toast.error("Recibo não encontrado");
+      return;
+    }
+
+    setLoadingPayment((prev) => ({
+      ...prev,
+      [invoiceNumber]: true,
+    }));
+
+    try {
+      await processPayment(
+        recibo.value, // amount
+        profile.user.nome, // userName
+        profile.user.email || "", // userEmail
+        profile.user.nif || "", // userPhone
+        invoiceNumber // merchantRef
+      );
+
+      toast.success("Checkout aberto! Conclua o pagamento na nova aba.");
+    } catch (error) {
+      console.error("Erro ao processar pagamento:", error);
+      toast.error("Erro ao processar pagamento. Tente novamente.");
+    } finally {
+      setLoadingPayment((prev) => ({
+        ...prev,
+        [invoiceNumber]: false,
+      }));
+    }
   };
 
   const handleDownload = async (invoiceNumber: string) => {

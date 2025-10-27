@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 "use client";
 
@@ -302,12 +301,6 @@ export default function SinistroDetailPage({
                     </TabsTrigger>
                     <TabsTrigger
                       className="sm:px-4 xl:text-lg sm:py-2 px-2 py-1 rounded-md text-[#002256] font-semibold hover:bg-[#002256] hover:text-white data-[state=active]:bg-[#002256] data-[state=active]:text-white transition-colors"
-                      value="recibo"
-                    >
-                      Recibo
-                    </TabsTrigger>
-                    <TabsTrigger
-                      className="sm:px-4 xl:text-lg sm:py-2 px-2 py-1 rounded-md text-[#002256] font-semibold hover:bg-[#002256] hover:text-white data-[state=active]:bg-[#002256] data-[state=active]:text-white transition-colors"
                       value="sinistrados"
                     >
                       Sinistrados
@@ -372,109 +365,6 @@ export default function SinistroDetailPage({
                           </div>
                         </div>
                       </div>
-                    </div>
-                  </TabsContent>
-                  <TabsContent value="recibo">
-                    <div className="bg-gray-100 rounded-xl p-4 gap-4 shadow-sm hover:shadow-md transition-shadow">
-                      {isLoadingRecibos ? (
-                        <div className="flex flex-col items-center justify-center py-8">
-                          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#002256]"></div>
-                          <span className="mt-2 text-sm text-[#002256]">
-                            Carregando Recibos...
-                          </span>
-                        </div>
-                      ) : errorRecibos ? (
-                        <div className="flex flex-col items-center">
-                          <div className="flex items-center gap-3">
-                            <div className="flex items-center bg-red-100 p-2 rounded-full">
-                              <FaTriangleExclamation className="size-2 sm:size-4 xl:size-6 text-red-600" />
-                            </div>
-                            <div className="flex flex-col">
-                              <span className="font-medium text-red-600">
-                                Erro ao carregar Recibos
-                              </span>
-                              <span className="text-sm text-red-500">
-                                {errorRecibos}
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                      ) : compensations.length === 0 ? (
-                        <div className="flex flex-col items-center">
-                          <div className="flex items-center gap-3">
-                            <div className="flex items-center bg-gray-200 p-2 rounded-full">
-                              <FaTriangleExclamation className="size-2 sm:size-4 xl:size-6 text-[#002256]" />
-                            </div>
-                            <div className="flex flex-col">
-                              <span className="font-medium text-[#002256]">
-                                Nenhuma recibo encontrada
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                      ) : (
-                        <div className="bg-gray-100 rounded-xl p-3 md:p-4 gap-3 md:gap-4">
-                          {compensations.map((comp, idx) => {
-                            const reference = (comp.reference ||
-                              (comp as any).reference ||
-                              comp.number ||
-                              String(idx)) as string;
-                            const loading = !!loadingStates[reference];
-                            return (
-                              <div key={reference} className="flex flex-col">
-                                <div className="flex flex-col md:flex-row md:items-center md:justify-between py-2 gap-3 md:gap-0">
-                                  <div className="flex items-center gap-3">
-                                    <div className="flex items-center bg-gray-200 p-2 rounded-full">
-                                      <IoReceiptSharp className="size-4 md:size-6 xl:size-8 text-[#002256]" />
-                                    </div>
-                                    <div className="flex flex-col">
-                                      <span className="font-medium underline text-[#002256] text-sm md:text-base">
-                                        Recibo Nº {reference}
-                                      </span>
-                                      {typeof comp.value === "number" && (
-                                        <span className="text-xs md:text-sm text-gray-400">
-                                          Valor do Prêmio:{" "}
-                                          {formatCurrency(comp.value)}
-                                        </span>
-                                      )}
-                                      <span className="text-xs md:text-sm text-gray-400">
-                                        Tipo:{" "}
-                                        {(() => {
-                                          const t = comp.type ?? comp.status;
-                                          const map: Record<string, string> = {
-                                            I: "Indemnização",
-                                            R: "Reembolso",
-                                            P: "Pensão",
-                                          };
-                                          return (
-                                            map[String(t)] || String(t || "-")
-                                          );
-                                        })()}
-                                      </span>
-                                    </div>
-                                  </div>
-                                  <div className="flex flex-col items-start md:items-end">
-                                    <Button
-                                      onClick={() => handleDownload(reference)}
-                                      disabled={loading}
-                                      className="bg-[#002256] hover:bg-[#002256]/50 px-3 md:px-4 py-2 text-xs md:text-sm text-white"
-                                    >
-                                      {loading ? (
-                                        <FaSpinner className="animate-spin" />
-                                      ) : (
-                                        <>
-                                          <Download className="size-3 md:size-4 xl:size-5 text-white" />
-                                          <span>Baixar</span>
-                                        </>
-                                      )}
-                                    </Button>
-                                  </div>
-                                </div>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      )}
                     </div>
                   </TabsContent>
                   <TabsContent value="sinistrados">
