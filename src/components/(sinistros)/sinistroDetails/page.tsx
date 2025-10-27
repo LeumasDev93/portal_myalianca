@@ -453,22 +453,6 @@ export default function SinistroDetailPage({
                                       </span>
                                     </div>
                                   </div>
-                                  <div className="flex flex-col items-start md:items-end">
-                                    <Button
-                                      onClick={() => handleDownload(reference)}
-                                      disabled={loading}
-                                      className="bg-[#002256] hover:bg-[#002256]/50 px-3 md:px-4 py-2 text-xs md:text-sm text-white"
-                                    >
-                                      {loading ? (
-                                        <FaSpinner className="animate-spin" />
-                                      ) : (
-                                        <>
-                                          <Download className="size-3 md:size-4 xl:size-5 text-white" />
-                                          <span>Baixar</span>
-                                        </>
-                                      )}
-                                    </Button>
-                                  </div>
                                 </div>
                               </div>
                             );
