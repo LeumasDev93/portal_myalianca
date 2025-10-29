@@ -69,12 +69,33 @@ export default function MensagemDetailPage({
   const [conversation, setConversation] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isSendingReply, setIsSendingReply] = useState(false);
-  const [isReplying, setIsReplying] = useState(false);
   const { profile } = useUserProfile();
   const { markMessageAsRead } = useUnreadMessages();
   const replyFormRef = useRef<MessageReplyFormRef>(null);
 
   const userId = profile?.user.id || "";
+
+  // Formata o tempo relativo (ex: "há 3 min", "há 2 h")
+  const formatTimeAgo = (dateString: string) => {
+    const now = new Date();
+    const date = new Date(dateString);
+    const diffMs = now.getTime() - date.getTime();
+    const diffSec = Math.floor(diffMs / 1000);
+    if (diffSec < 5) return "agora";
+    if (diffSec < 60) return `há ${diffSec}s`;
+    const diffMin = Math.floor(diffSec / 60);
+    if (diffMin < 60) return `há ${diffMin} min`;
+    const diffH = Math.floor(diffMin / 60);
+    if (diffH < 24) return `há ${diffH} h`;
+    const diffD = Math.floor(diffH / 24);
+    if (diffD < 7) return `há ${diffD} d`;
+    const diffW = Math.floor(diffD / 7);
+    if (diffW < 4) return `há ${diffW} sem`;
+    const diffM = Math.floor(diffD / 30);
+    if (diffM < 12) return `há ${diffM} m`;
+    const diffY = Math.floor(diffD / 365);
+    return `há ${diffY} a`;
+  };
 
   // Função para transformar a resposta da API no formato do state
   const mapThreadToMessages = async (thread: any): Promise<Message[]> => {
@@ -117,8 +138,8 @@ export default function MensagemDetailPage({
     return messages;
   };
 
-  const fetchConversation = async () => {
-    setIsLoading(true);
+  const fetchConversation = async (showLoading = true) => {
+    if (showLoading) setIsLoading(true);
     try {
       const res = await fetch(
         `/api/menssage/threads?thread_id=${id}&user_id=${userId}`
@@ -130,19 +151,44 @@ export default function MensagemDetailPage({
       setConversation(messages);
     } catch (error) {
       console.error(error);
-      toast({
-        title: "Erro",
-        description: "Não foi possível carregar a conversa.",
-        variant: "destructive",
-      });
+      if (showLoading) {
+        toast({
+          title: "Erro",
+          description: "Não foi possível carregar a conversa.",
+          variant: "destructive",
+        });
+      }
     } finally {
-      setIsLoading(false);
+      if (showLoading) setIsLoading(false);
     }
   };
 
   useEffect(() => {
     if (userId) fetchConversation();
   }, [id, userId]);
+
+  // Atualizar mensagens quando a tela recebe foco (sem loading)
+  useEffect(() => {
+    const handleFocus = () => {
+      if (userId) {
+        fetchConversation(false); // false = sem loading
+      }
+    };
+
+    window.addEventListener('focus', handleFocus);
+    return () => window.removeEventListener('focus', handleFocus);
+  }, [userId]);
+
+  // Atualização automática silenciosa a cada 10 segundos
+  useEffect(() => {
+    if (!userId) return;
+
+    const interval = setInterval(() => {
+      fetchConversation(false); // Atualização silenciosa
+    }, 10000); // 10 segundos
+
+    return () => clearInterval(interval);
+  }, [userId]);
 
   if (isLoading) {
     return (
@@ -228,6 +274,7 @@ export default function MensagemDetailPage({
       toast({
         title: "Resposta enviada",
         description: "Sua resposta foi enviada com sucesso.",
+        variant: "success",
       });
 
       // Registrar atividade de resposta
@@ -241,11 +288,10 @@ export default function MensagemDetailPage({
       // Marcar a mensagem como lida quando o usuário responde
       markMessageAsRead(id);
 
-      // Recarregar conversa com mapeamento (sincronização)
-      await fetchConversation();
+      // Recarregar conversa com mapeamento (sincronização) - sem loading
+      await fetchConversation(false);
       // Forçar atualização de dados do App Router
       router.refresh();
-      setIsReplying(false);
     } catch (error) {
       console.error(error);
       toast({
@@ -272,8 +318,8 @@ export default function MensagemDetailPage({
   };
 
   return (
-    <div className="container x-3 sm:px-4 md:px-6 py-4 sm:py-6 ">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 sm:mb-6 gap-3 sm:gap-4">
+    <div className="max-w-7xl mx-auto sm:px-4 md:px-6 py-4 sm:py-6 ">
+      <div className="flex items-center mb-4 sm:mb-6">
         <Button
           onClick={onBack}
           variant="outline"
@@ -281,24 +327,6 @@ export default function MensagemDetailPage({
         >
           <ArrowLeft className="h-4 w-4" />
           <span className="text-sm sm:text-base">Voltar para mensagens</span>
-        </Button>
-        <Button
-          onClick={() => {
-            if (!isReplying) {
-              setIsReplying(true);
-              return;
-            }
-            replyFormRef.current?.submit();
-          }}
-          disabled={isSendingReply}
-          className="flex items-center gap-2 bg-company-blue-600 hover:bg-company-blue-700 w-full sm:w-auto"
-        >
-          {isSendingReply ? (
-            <LoadingSpinner size="sm" variant="light" />
-          ) : (
-            <Send className="h-4 w-4" />
-          )}
-          <span className="text-sm sm:text-base">Enviar resposta</span>
         </Button>
 
         {/* <div className="flex gap-2">
@@ -326,68 +354,62 @@ export default function MensagemDetailPage({
         description={`Conversa com ${firstMessage.sender}`}
       />
 
-      <div className="space-y-4 sm:space-y-6 mt-4 sm:mt-6">
+      <div className="mt-4 sm:mt-6 max-w-4xl mx-auto px-4">
         {conversation.map((message, index) => (
-          <Card
+          <div
             key={message.id}
-            className={`p-3 sm:p-5 ${
-              message.isFromMe ? "bg-blue-50" : "bg-white"
-            }`}
+            className={`flex ${
+              message.isFromMe ? "justify-end" : "justify-start"
+            } mb-4`}
           >
-            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start mb-3 sm:mb-4 gap-2 sm:gap-0">
-              <div className="flex items-center gap-2 sm:gap-3">
-                <Avatar
-                  className={`w-8 h-8 sm:w-10 sm:h-10 ${
-                    message.isFromMe ? "bg-blue-600" : "bg-gray-700"
-                  }`}
-                >
-                  {message.isFromMe && profile?.user?.imagem_id ? (
-                    <AvatarImage
-                      src={`/api/proxy-image?url=${encodeURIComponent(
-                        `${process.env.NEXT_PUBLIC_API_BASE_URL_IMAGE}/${profile.user.imagem_id}`
-                      )}`}
-                      alt={profile?.user?.nome || "Você"}
-                      className="rounded-full"
-                    />
-                  ) : null}
-                  <AvatarFallback className="text-white text-xs sm:text-sm">
-                    {message.isFromMe
-                      ? profile?.user?.nome?.charAt(0) || "V"
-                      : message.sender?.charAt(0) || "U"}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="min-w-0 flex-1">
-                  <div className="font-semibold text-sm sm:text-base flex items-center gap-2">
-                    <span className="truncate">
-                      {message.sender || "Usuário"}
-                    </span>
-                    {message.isFromMe && (
-                      <Badge className="ml-0 sm:ml-2 bg-blue-600 text-xs">
-                        Você
-                      </Badge>
-                    )}
-                  </div>
-                  <div className="text-xs sm:text-sm text-gray-500 truncate">
-                    {message.senderEmail || "Email não disponível"}
-                  </div>
+            <div
+              className={`max-w-[70%] rounded-2xl px-4 py-3 ${
+                message.isFromMe 
+                  ? "bg-[#DCF8C6] rounded-br-md" 
+                  : "bg-white border border-gray-200 rounded-bl-md"
+              }`}
+            >
+            <div className="flex items-start gap-2 mb-2">
+              <Avatar
+                className={`w-6 h-6 ${
+                  message.isFromMe ? "bg-blue-600" : "bg-gray-700"
+                }`}
+              >
+                {message.isFromMe && profile?.user?.imagem_id ? (
+                  <AvatarImage
+                    src={`/api/proxy-image?url=${encodeURIComponent(
+                      `${process.env.NEXT_PUBLIC_API_BASE_URL_IMAGE}/${profile.user.imagem_id}`
+                    )}`}
+                    alt={profile?.user?.nome || "Você"}
+                    className="rounded-full"
+                  />
+                ) : null}
+                <AvatarFallback className="text-gray-700 text-xs border border-gray-200 rounded-full">
+                  {message.isFromMe
+                    ? profile?.user?.nome?.charAt(0) || "V"
+                    : message.sender?.charAt(0) || "U"}
+                </AvatarFallback>
+              </Avatar>
+              <div className="flex-1">
+                <div className="font-medium text-sm text-gray-700 mb-1">
+                  {message.isFromMe ? "Você" : message.sender || "Usuário"}
                 </div>
-              </div>
-              <div className="text-xs sm:text-sm text-gray-500 self-end sm:self-start">
-                {new Date(message.date).toLocaleString("pt-BR")}
+                <div className="text-xs text-gray-500">
+                  {formatTimeAgo(message.date)}
+                </div>
               </div>
             </div>
 
-            <div className="mb-3 sm:mb-4">
+            <div className="mb-2">
               <div
-                className="prose prose-blue max-w-none text-sm sm:text-base"
+                className="text-sm leading-relaxed"
                 dangerouslySetInnerHTML={{ __html: message.content }}
               />
             </div>
 
             {message.attachments && message.attachments.length > 0 && (
-              <div className="mb-3 sm:mb-4">
-                <p className="text-xs sm:text-sm font-medium mb-2">Anexos:</p>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-4">
+              <div className="mb-2">
+                <div className="grid grid-cols-1 gap-2">
                   {message.attachments.map((attachment) => (
                     <MessageAttachment
                       key={attachment.id}
@@ -401,33 +423,20 @@ export default function MensagemDetailPage({
               </div>
             )}
 
-            {index === conversation.length - 1 && !isReplying && (
-              <div className="mt-3 sm:mt-4">
-                <Button
-                  onClick={() => setIsReplying(true)}
-                  className="flex items-center gap-2 bg-[#002856] hover:bg-[#002856]/80 text-sm sm:text-base"
-                >
-                  <Reply className="h-3 w-3 sm:h-4 sm:w-4" />
-                  <span className="hidden sm:inline">Responder</span>
-                  <span className="sm:hidden">Resp</span>
-                </Button>
-              </div>
-            )}
-          </Card>
+            </div>
+          </div>
         ))}
 
-        {isReplying && (
-          <div className="mt-4 sm:mt-6">
-            <h3 className="text-base sm:text-lg font-medium mb-2 sm:mb-3">
-              Sua resposta
-            </h3>
-            <MessageReplyForm
-              ref={replyFormRef}
-              onReply={handleReply}
-              isLoading={isSendingReply}
-            />
-          </div>
-        )}
+        <div className="mt-4 sm:mt-6 max-w-4xl mx-auto">
+          <h3 className="text-base sm:text-lg font-medium mb-2 sm:mb-3">
+            Sua resposta
+          </h3>
+          <MessageReplyForm
+            ref={replyFormRef}
+            onReply={handleReply}
+            isLoading={isSendingReply}
+          />
+        </div>
       </div>
     </div>
   );

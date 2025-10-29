@@ -314,6 +314,13 @@ export const MessageReplyForm = forwardRef<
     });
   };
 
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleSubmit(e as any);
+    }
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -395,7 +402,8 @@ export const MessageReplyForm = forwardRef<
       <Textarea
         value={replyContent}
         onChange={(e) => setReplyContent(e.target.value)}
-        placeholder="Escreva sua resposta..."
+        onKeyDown={handleKeyDown}
+        placeholder="Escreva sua resposta... (Enter para enviar, Shift+Enter para nova linha)"
         className="min-h-24 w-full"
       />
 
