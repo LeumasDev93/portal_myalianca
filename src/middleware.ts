@@ -7,9 +7,11 @@ const LOGIN_REDIRECT = '/login';
 export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
   
-  // Permite POST do SISP diretamente para /backoffice (callback) sem exigir token
+  // Intercepta POST para /backoffice e redireciona para a API de callback
   if (pathname.startsWith('/backoffice') && req.method === 'POST') {
-    return NextResponse.next();
+    const rewriteUrl = req.nextUrl.clone();
+    rewriteUrl.pathname = '/api/backoffice';
+    return NextResponse.rewrite(rewriteUrl);
   }
   
   // Pula middleware para rotas que não precisam de autenticação

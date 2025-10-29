@@ -53,7 +53,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    let body: Record<string, any> = {};
+    let body: Record<string, string> = {};
     const contentType = request.headers.get('content-type') || '';
 
     if (contentType.includes('application/x-www-form-urlencoded') || contentType.includes('multipart/form-data')) {
