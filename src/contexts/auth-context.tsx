@@ -178,7 +178,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       pathname?.startsWith(route)
     );
 
+    // Evita redirecionar para login durante o retorno do pagamento
+    const hasPaymentParams = (() => {
+      try {
+        const sp = new URLSearchParams(window.location.search);
+        return (
+          sp.has("payment_status") ||
+          sp.has("status") ||
+          sp.has("reference") ||
+          sp.has("merchantRef")
+        );
+      } catch {
+        return false;
+      }
+    })();
+
+    const hasPostPayCookie = ((): boolean => {
+      try {
+        return document.cookie.split(";").map(c=>c.trim()).some(c=>c.startsWith("postpay="));
+      } catch {
+        return false;
+      }
+    })();
+
     if (!user && !isPublicRoute) {
+      if (hasPaymentParams || hasPostPayCookie) {
+        // Aguarda rehidratar via cookie e deixa a página carregar
+        return;
+      }
       const loginUrl = new URL("/login", window.location.origin);
       loginUrl.searchParams.set("from", pathname || "/");
       router.push(loginUrl.toString());
