@@ -49,20 +49,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const searchParams = useSearchParams();
 
   const setAuthCookies = (token: string) => {
-    document.cookie = `token=${token}; path=/; max-age=${
-      60 * 60 * 24 * 7
-    }; SameSite=Lax`;
+    // Cookie de sessão (sem max-age) → é removido ao fechar o navegador
+    document.cookie = `token=${token}; path=/; SameSite=Lax`;
   };
 
   const clearAuthCookies = () => {
     document.cookie = "token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
   };
 
+  const clearAuthData = useCallback(() => {
+    sessionStorage.removeItem("user");
+    sessionStorage.removeItem("token");
+    setUser(null);
+    setToken(null);
+    clearAuthCookies();
+  }, []);
+
   useEffect(() => {
     const initializeAuth = async () => {
       try {
-        const userData = localStorage.getItem("user");
-        const authToken = localStorage.getItem("token");
+        const userData = sessionStorage.getItem("user");
+        const authToken = sessionStorage.getItem("token");
 
         console.log("Initializing auth with userData:", userData);
 
@@ -70,6 +77,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setUser(JSON.parse(userData));
           setToken(authToken);
           setAuthCookies(authToken);
+        } else {
+          clearAuthCookies();
         }
       } catch (err) {
         console.error("Auth initialization error:", err);
@@ -80,15 +89,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
 
     initializeAuth();
-  }, []);
-
-  const clearAuthData = useCallback(() => {
-    localStorage.removeItem("user");
-    localStorage.removeItem("token");
-    setUser(null);
-    setToken(null);
-    clearAuthCookies();
-  }, []);
+  }, [clearAuthData]);
 
   const login = useCallback(
     async (username: string, password: string) => {
@@ -103,9 +104,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         const { token, ...userData } = response.data;
 
-        localStorage.setItem("user", JSON.stringify(userData));
+        sessionStorage.setItem("user", JSON.stringify(userData));
 
-        localStorage.setItem("token", token);
+        sessionStorage.setItem("token", token);
         setUser(userData);
         setToken(token);
         setAuthCookies(token);
@@ -136,7 +137,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = useCallback(async () => {
     clearAuthData();
     router.push("/login");
-  }, [router]);
+  }, [router, clearAuthData]);
+
 
   useEffect(() => {
     if (isLoading) return;

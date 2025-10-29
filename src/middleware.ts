@@ -1,15 +1,11 @@
 import { NextResponse, type NextRequest } from 'next/server';
 
-const PUBLIC_ROUTES = ['/login', '/signUp', '/recuperar-senha'];
 const PRIVATE_ROUTE_PREFIXES = ['/backoffice', '/empresarial'];
 
 const LOGIN_REDIRECT = '/login';
-const AUTHENTICATED_REDIRECT = '/backoffice';
 
 export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
-
-  const isPublic = PUBLIC_ROUTES.some((route) => pathname.startsWith(route));
   const isPrivate = PRIVATE_ROUTE_PREFIXES.some((prefix) =>
     pathname.startsWith(prefix)
   );
@@ -25,12 +21,7 @@ export function middleware(req: NextRequest) {
     return NextResponse.redirect(redirectUrl);
   }
 
-  // Usuário autenticado tentando acessar rota pública
-  if (token && isPublic) {
-    const redirectUrl = req.nextUrl.clone();
-    redirectUrl.pathname = AUTHENTICATED_REDIRECT;
-    return NextResponse.redirect(redirectUrl);
-  }
+  // Não redirecionamos mais usuários autenticados de rotas públicas
 
   return NextResponse.next();
 }
