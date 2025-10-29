@@ -329,24 +329,6 @@ export default function MensagemDetailPage({
           <span className="text-sm sm:text-base">Voltar para mensagens</span>
         </Button>
 
-        {/* <div className="flex gap-2">
-          <Button
-            onClick={() => onSelectDetail(id)}
-            variant="outline"
-            className="flex items-center gap-2"
-          >
-            <Forward className="h-4 w-4" />
-            <span className="hidden sm:inline">Encaminhar</span>
-          </Button>
-          <Button
-            variant="outline"
-            className="flex items-center gap-2 text-red-500"
-            onClick={handleDelete}
-          >
-            <Trash2 className="h-4 w-4" />
-            <span className="hidden sm:inline">Excluir</span>
-          </Button>
-        </div> */}
       </div>
 
       <PageTitle
@@ -354,7 +336,7 @@ export default function MensagemDetailPage({
         description={`Conversa com ${firstMessage.sender}`}
       />
 
-      <div className="mt-4 sm:mt-6 max-w-4xl mx-auto px-4">
+      <div className="mt-4 sm:mt-6 max-w-7xl mx-auto px-4">
         {conversation.map((message, index) => (
           <div
             key={message.id}
@@ -427,7 +409,7 @@ export default function MensagemDetailPage({
           </div>
         ))}
 
-        <div className="mt-4 sm:mt-6 max-w-4xl mx-auto">
+        <div className="mt-4 sm:mt-6 max-w-7xl mx-auto">
           <h3 className="text-base sm:text-lg font-medium mb-2 sm:mb-3">
             Sua resposta
           </h3>
