@@ -7,7 +7,7 @@ import { NotificationsProvider } from "@/contexts/notifications-context";
 import { UnreadMessagesProvider } from "@/contexts/unread-messages-context";
 import { ConnectionProvider } from "@/contexts/connection-context";
 import { Suspense } from "react";
-import { Toaster } from "sonner";
+import { Toaster } from "@/components/ui/toaster";
 
 const inter = Inter({ subsets: ["latin"] });
 

@@ -39,6 +39,7 @@ export function TopMenu({
   const {
     unreadCount: notificationsCount,
     markAllAsRead: markAllNotificationsAsRead,
+    setNotificationClickHandler,
   } = useNotificationsContext();
   const { unreadCount: messagesCount, markAllMessagesAsRead } =
     useUnreadMessages();
@@ -154,6 +155,13 @@ export function TopMenu({
       searchInputRef.current.focus();
     }
   }, [showSearch]);
+
+  // Configurar handler para clique no toast de notificações
+  useEffect(() => {
+    setNotificationClickHandler(() => {
+      onMenuClick("Notificacoes");
+    });
+  }, [setNotificationClickHandler, onMenuClick]);
 
   return (
     <div

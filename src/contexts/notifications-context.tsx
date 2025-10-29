@@ -11,6 +11,7 @@ interface NotificationsContextType {
   fetchNotifications: () => Promise<void>;
   markAsRead: (notificationId: string) => Promise<void>;
   markAllAsRead: () => Promise<void>;
+  setNotificationClickHandler: (handler: () => void) => void;
 }
 
 const NotificationsContext = createContext<

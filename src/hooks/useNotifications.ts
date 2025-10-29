@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useUserProfile } from "@/hooks/useUserProfile";
+import { useToast } from "@/components/ui/use-toast";
 
 export interface Notification {
   id: string;
@@ -28,6 +29,9 @@ export function useNotifications() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { profile } = useUserProfile();
+  const { toast } = useToast();
+  const previousNotificationIds = useRef<Set<string>>(new Set());
+  const onNotificationClick = useRef<(() => void) | null>(null);
 
   const fetchNotifications = useCallback(async () => {
     if (!profile?.user?.id) {
@@ -62,9 +66,32 @@ export function useNotifications() {
       }
 
       const data: NotificationsResponse = await response.json();
-      setNotifications(data.results || []);
+      const newNotifications = data.results || [];
       
-      const unread = data.results?.filter(notification => !notification.lida).length || 0;
+      // Detectar novas notificações
+      const currentNotificationIds = new Set(newNotifications.map(n => n.id));
+      const newNotificationIds = [...currentNotificationIds].filter(id => !previousNotificationIds.current.has(id));
+      
+      // Mostrar toast para novas notificações
+      if (newNotificationIds.length > 0 && previousNotificationIds.current.size > 0) {
+        const newNotificationsToShow = newNotifications.filter(n => newNotificationIds.includes(n.id));
+        
+        newNotificationsToShow.forEach(notification => {
+          toast({
+            title: "Nova Notificação",
+            description: notification.titulo,
+            duration: 5000,
+            onClick: onNotificationClick.current || undefined,
+          });
+        });
+      }
+      
+      // Atualizar referência dos IDs
+      previousNotificationIds.current = currentNotificationIds;
+      
+      setNotifications(newNotifications);
+      
+      const unread = newNotifications.filter(notification => !notification.lida).length || 0;
       setUnreadCount(unread);
     } catch (err) {
       console.error("Erro ao buscar notificações:", err);
@@ -130,6 +157,11 @@ export function useNotifications() {
     };
   }, [fetchNotifications]);
 
+  // Função para configurar callback de clique no toast
+  const setNotificationClickHandler = useCallback((handler: () => void) => {
+    onNotificationClick.current = handler;
+  }, []);
+
   return {
     notifications,
     unreadCount,
@@ -138,5 +170,6 @@ export function useNotifications() {
     fetchNotifications,
     markAsRead,
     markAllAsRead,
+    setNotificationClickHandler,
   };
 }
