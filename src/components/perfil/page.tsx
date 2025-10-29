@@ -75,7 +75,6 @@ export function PerfilPage() {
   useEffect(() => {
     if (profile) {
       console.log("🔍 DEBUG - Perfil carregado:", profile);
-      console.log("🔍 DEBUG - imagem_id:", profile.user?.imagem_id);
       console.log(
         "🔍 DEBUG - NEXT_PUBLIC_API_BASE_URL_IMAGE:",
         process.env.NEXT_PUBLIC_API_BASE_URL_IMAGE
