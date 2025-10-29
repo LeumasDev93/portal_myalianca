@@ -220,6 +220,16 @@ export default function DashboardEmpresarial({
 
   return (
     <div className="p-4 w-full">
+      <h1 className="text-2xl font-bold text-[#002256] mb-6">Dashboard</h1>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-8">
+        <div>
+          <StatisticsApiCard onNavigate={onNavigate} />
+        </div>
+        <div>
+          <FinanceCard onNavigate={onNavigate} />
+        </div>
+      </div>
+
       <div className="mt-8">
         <h2 className="text-xl font-bold text-[#002856] mb-4">Acesso Rápido</h2>
 
@@ -270,16 +280,6 @@ export default function DashboardEmpresarial({
             ))}
           </div>
         )}
-      </div>
-
-      <h1 className="text-2xl font-bold text-[#002256] mb-6">Dashboard</h1>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-8">
-        <div>
-          <StatisticsApiCard onNavigate={onNavigate} />
-        </div>
-        <div>
-          <FinanceCard onNavigate={onNavigate} />
-        </div>
       </div>
 
       {/* Seção de Menus do Portal */}
