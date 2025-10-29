@@ -192,7 +192,7 @@ const Page = () => {
     const menuFromUrl = searchParams?.get("menu");
     
     if (menuFromUrl) {
-      // Se há menu na URL, usa ele
+      // Se há menu na URL, usa ele e preserva todos os outros parâmetros
       setCurrentPage(menuFromUrl);
     } else {
       // Se não há menu na URL, define o padrão baseado no tipo de usuário
@@ -202,7 +202,7 @@ const Page = () => {
       
       setCurrentPage(defaultMenu);
       
-      // Sempre adiciona o parâmetro menu na URL
+      // Adiciona apenas o parâmetro menu, preservando todos os outros parâmetros existentes
       const params = new URLSearchParams(searchParams?.toString());
       params.set("menu", defaultMenu);
       const qs = params.toString();
