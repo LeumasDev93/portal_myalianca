@@ -99,7 +99,7 @@ export function useNotifications() {
     } finally {
       setIsLoading(false);
     }
-  }, [profile?.user?.id]);
+  }, [profile?.user?.id, toast]);
 
   const markAsRead = useCallback(async (notificationId: string) => {
     try {
