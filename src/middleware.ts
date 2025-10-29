@@ -7,6 +7,13 @@ const LOGIN_REDIRECT = '/login';
 export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
   
+  // Intercepta POST para /backoffice e redireciona para a API de callback
+  if (pathname.startsWith('/backoffice') && req.method === 'POST') {
+    const rewriteUrl = req.nextUrl.clone();
+    rewriteUrl.pathname = '/api/backoffice/payment-callback';
+    return NextResponse.rewrite(rewriteUrl);
+  }
+  
   // Pula middleware para rotas que não precisam de autenticação
   if (
     pathname.startsWith('/api/payment/callback') ||
