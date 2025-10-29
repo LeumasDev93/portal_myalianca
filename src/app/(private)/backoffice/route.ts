@@ -2,7 +2,24 @@ import { NextRequest, NextResponse } from 'next/server';
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
+    let body: Record<string, any> = {};
+    const contentType = request.headers.get('content-type') || '';
+
+    if (contentType.includes('application/x-www-form-urlencoded') || contentType.includes('multipart/form-data')) {
+      const form = await request.formData();
+      form.forEach((value, key) => {
+        body[key] = typeof value === 'string' ? value : '';
+      });
+    } else if (contentType.includes('application/json')) {
+      body = await request.json();
+    } else {
+      // Tenta JSON como fallback
+      try {
+        body = await request.json();
+      } catch {
+        body = {};
+      }
+    }
     
     console.log('[PAYMENT CALLBACK] Recebido callback POST do SISP (via /backoffice):', body);
 
@@ -36,7 +53,7 @@ export async function POST(request: NextRequest) {
     // Redireciona para a página de recibos com todos os parâmetros
     const redirectUrl = new URL('/backoffice', request.url);
     redirectUrl.searchParams.set('menu', 'recibo');
-    redirectUrl.searchParams.set('payment_status', status || 'unknown');
+    redirectUrl.searchParams.set('payment_status', (status || 'unknown').toString());
     redirectUrl.searchParams.set('reference', reference || '');
     redirectUrl.searchParams.set('merchantSession', merchantSession || '');
     redirectUrl.searchParams.set('merchantRef', merchantRef || '');
