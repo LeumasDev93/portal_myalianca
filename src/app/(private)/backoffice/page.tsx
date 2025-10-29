@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { FaSearch, FaSpinner } from "react-icons/fa";
 import { MobileMenu } from "@/components/Layout/MobileMenu";
 import { Menu, MenuItem } from "@/components/Layout/Menu";
@@ -187,13 +187,29 @@ const Page = () => {
     setIsClient(true);
   }, []);
 
+  // Ref para rastrear a última URL processada e evitar loops
+  const lastProcessedUrlRef = useRef<string>("");
+
   // Define a página padrão baseada no tipo de usuário ou restaura da URL
   useEffect(() => {
     const menuFromUrl = searchParams?.get("menu");
+    const currentUrlString = searchParams?.toString() || "";
+    
+    // Evita processar a mesma URL múltiplas vezes
+    if (lastProcessedUrlRef.current === currentUrlString) {
+      return;
+    }
     
     if (menuFromUrl) {
-      // Se há menu na URL, usa ele e preserva todos os outros parâmetros
+      // Se há menu na URL, usa ele e preserva explicitamente toda a URL
       setCurrentPage(menuFromUrl);
+      
+      // Garante que a URL completa seja preservada no reload
+      // Preserva todos os parâmetros da URL atual
+      const params = new URLSearchParams(searchParams?.toString());
+      const qs = params.toString();
+      router.replace(`?${qs}`, { scroll: false });
+      lastProcessedUrlRef.current = currentUrlString;
     } else {
       // Se não há menu na URL, define o padrão baseado no tipo de usuário
       const defaultMenu = profile?.user?.tipo_utilizador === "Company" 
@@ -207,6 +223,7 @@ const Page = () => {
       params.set("menu", defaultMenu);
       const qs = params.toString();
       router.replace(`?${qs}`, { scroll: false });
+      lastProcessedUrlRef.current = qs;
     }
   }, [profile?.user?.tipo_utilizador, searchParams, router]);
 
