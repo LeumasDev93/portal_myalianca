@@ -8,7 +8,7 @@ import React, {
   useCallback,
   ReactNode,
 } from "react";
-import { useUserProfile } from "@/hooks/useUserProfile ";
+import { useUserProfile } from "@/hooks/useUserProfile";
 
 interface UnreadMessagesContextType {
   unreadCount: number;
@@ -177,6 +177,15 @@ export function UnreadMessagesProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (profile?.user?.id) {
       fetchUnreadCount();
+      
+      // Atualiza mensagens não lidas a cada 60 segundos
+      const interval = setInterval(() => {
+        fetchUnreadCount();
+      }, 60000); // 60 segundos
+
+      return () => {
+        clearInterval(interval);
+      };
     }
   }, [fetchUnreadCount, profile?.user?.id]);
 

@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect, useCallback } from "react";
-import { useUserProfile } from "@/hooks/useUserProfile ";
+import { useUserProfile } from "@/hooks/useUserProfile";
 
 export interface Notification {
   id: string;
@@ -119,6 +119,15 @@ export function useNotifications() {
 
   useEffect(() => {
     fetchNotifications();
+    
+    // Atualiza notificações a cada 60 segundos
+    const interval = setInterval(() => {
+      fetchNotifications();
+    }, 60000); // 60 segundos
+
+    return () => {
+      clearInterval(interval);
+    };
   }, [fetchNotifications]);
 
   return {

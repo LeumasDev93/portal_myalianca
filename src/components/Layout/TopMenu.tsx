@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import { useUserProfile } from "@/hooks/useUserProfile ";
+import { useUserProfile } from "@/hooks/useUserProfile";
 import { useNotificationsContext } from "@/contexts/notifications-context";
 import { useUnreadMessages } from "@/contexts/unread-messages-context";
 import { Avatar, AvatarFallback, AvatarImage } from "@radix-ui/react-avatar";
