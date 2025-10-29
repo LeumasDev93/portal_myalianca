@@ -38,7 +38,14 @@ export async function GET(request: NextRequest) {
     redirectUrl.searchParams.set('message', message || '');
     redirectUrl.searchParams.set('timestamp', timestamp || '');
     
-    return NextResponse.redirect(redirectUrl);
+    const res = NextResponse.redirect(redirectUrl);
+    res.cookies.set('postpay', '1', {
+      path: '/',
+      maxAge: 10,
+      sameSite: 'none',
+      secure: true,
+    });
+    return res;
   } catch (error) {
     console.error('[PAYMENT CALLBACK] Erro no callback:', error);
     
@@ -47,7 +54,14 @@ export async function GET(request: NextRequest) {
     redirectUrl.searchParams.set('menu', 'recibo');
     redirectUrl.searchParams.set('payment_status', 'error');
     
-    return NextResponse.redirect(redirectUrl);
+    const res = NextResponse.redirect(redirectUrl);
+    res.cookies.set('postpay', '1', {
+      path: '/',
+      maxAge: 10,
+      sameSite: 'none',
+      secure: true,
+    });
+    return res;
   }
 }
 

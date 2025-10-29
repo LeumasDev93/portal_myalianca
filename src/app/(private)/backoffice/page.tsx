@@ -235,8 +235,11 @@ const Page = () => {
   }, [isClient, profile?.user?.tipo_utilizador, searchParams, router]);
 
   // Exibe toast/pop com resultado do pagamento vindo via callback e limpa apenas esses parâmetros
+  const paymentHandledRef = useRef(false);
+
   useEffect(() => {
     if (!isClient) return;
+    if (paymentHandledRef.current) return;
     const params = new URLSearchParams(window.location.search);
     // SISP pode enviar como payment_status ou status
     const statusParam = params.get("payment_status") || params.get("status");
@@ -295,6 +298,11 @@ const Page = () => {
       }
     }
     if (changed) {
+      paymentHandledRef.current = true;
+      // Remove cookie 'postpay' (não mais necessário após entrada na página)
+      try {
+        document.cookie = 'postpay=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT';
+      } catch {}
       const qs = params.toString();
       router.replace(qs ? `?${qs}` : "?menu=recibo", { scroll: false });
     }

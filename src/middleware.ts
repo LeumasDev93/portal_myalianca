@@ -39,6 +39,11 @@ export function middleware(req: NextRequest) {
   // Se não há token mas está acessando rota privada, redireciona para login
   // MAS apenas se não vier de um callback de pagamento
   if (isPrivate && !token) {
+    // Permite uma passagem pós-pagamento com cookie curto
+    const postpay = req.cookies.get('postpay')?.value;
+    if (postpay === '1') {
+      return NextResponse.next();
+    }
     // Verifica se há parâmetros de callback de pagamento (não redireciona se vier do SISP)
     const isPaymentCallback = req.nextUrl.searchParams.has('payment_status') || 
                              req.nextUrl.searchParams.has('reference') ||
