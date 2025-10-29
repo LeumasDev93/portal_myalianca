@@ -187,45 +187,50 @@ const Page = () => {
     setIsClient(true);
   }, []);
 
-  // Ref para rastrear a última URL processada e evitar loops
-  const lastProcessedUrlRef = useRef<string>("");
-
   // Define a página padrão baseada no tipo de usuário ou restaura da URL
   useEffect(() => {
-    const menuFromUrl = searchParams?.get("menu");
-    const currentUrlString = searchParams?.toString() || "";
+    // Só processa quando está no cliente
+    if (!isClient) return;
     
-    // Evita processar a mesma URL múltiplas vezes
-    if (lastProcessedUrlRef.current === currentUrlString) {
-      return;
-    }
+    const menuFromUrl = searchParams?.get("menu");
     
     if (menuFromUrl) {
-      // Se há menu na URL, usa ele e preserva explicitamente toda a URL
+      // Se há menu na URL, usa ele - NÃO altera a URL de forma alguma
       setCurrentPage(menuFromUrl);
-      
-      // Garante que a URL completa seja preservada no reload
-      // Preserva todos os parâmetros da URL atual
-      const params = new URLSearchParams(searchParams?.toString());
-      const qs = params.toString();
-      router.replace(`?${qs}`, { scroll: false });
-      lastProcessedUrlRef.current = currentUrlString;
+      // Next.js preserva automaticamente os parâmetros da URL no reload
     } else {
       // Se não há menu na URL, define o padrão baseado no tipo de usuário
-      const defaultMenu = profile?.user?.tipo_utilizador === "Company" 
+      // Só faz isso se o profile já estiver carregado
+      if (!profile?.user?.tipo_utilizador) return;
+
+      // Fallback: tentar restaurar do sessionStorage caso o menu tenha sido salvo no clique
+      try {
+        const lastMenu = sessionStorage.getItem("lastMenu");
+        if (lastMenu) {
+          setCurrentPage(lastMenu);
+          const params = new URLSearchParams(searchParams?.toString());
+          params.set("menu", lastMenu);
+          const qs = params.toString();
+          router.replace(`?${qs}`, { scroll: false });
+          return;
+        }
+      } catch (_err) {
+        // silencioso
+      }
+      
+      const defaultMenu = profile.user.tipo_utilizador === "Company" 
         ? "dashboardEmpresarial" 
         : "Historico";
       
       setCurrentPage(defaultMenu);
       
-      // Adiciona apenas o parâmetro menu, preservando todos os outros parâmetros existentes
+      // Adiciona o parâmetro menu na URL, preservando outros parâmetros
       const params = new URLSearchParams(searchParams?.toString());
       params.set("menu", defaultMenu);
       const qs = params.toString();
       router.replace(`?${qs}`, { scroll: false });
-      lastProcessedUrlRef.current = qs;
     }
-  }, [profile?.user?.tipo_utilizador, searchParams, router]);
+  }, [isClient, profile?.user?.tipo_utilizador, searchParams, router]);
 
   useEffect(() => {
     const handleResize = () => {
@@ -249,6 +254,13 @@ const Page = () => {
     console.log("handleMenuClick - menuPage:", menuPage, "params:", params);
     setIsLoading(true);
     setCurrentPage(menuPage);
+
+    // Persistir escolha do menu para fallback em reloads
+    try {
+      sessionStorage.setItem("lastMenu", menuPage);
+    } catch (_e) {
+      // silencioso
+    }
 
     // Atualiza URL param centralmente em qualquer navegação
     try {
