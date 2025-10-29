@@ -6,6 +6,22 @@ const LOGIN_REDIRECT = '/login';
 
 export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
+  
+  // Pula middleware para rotas que não precisam de autenticação
+  if (
+    pathname.startsWith('/api/payment/callback') ||
+    pathname.startsWith('/api/') ||
+    pathname.startsWith('/_next/') ||
+    pathname.startsWith('/favicon.ico') ||
+    pathname.startsWith('/sitemap.xml') ||
+    pathname.startsWith('/robots.txt') ||
+    pathname.includes('.') ||
+    pathname === '/login' ||
+    pathname === '/'
+  ) {
+    return NextResponse.next();
+  }
+  
   const isPrivate = PRIVATE_ROUTE_PREFIXES.some((prefix) =>
     pathname.startsWith(prefix)
   );
@@ -13,11 +29,30 @@ export function middleware(req: NextRequest) {
   // Verifica se o token existe no cookie (definido no client com `document.cookie`)
   const token = req.cookies.get('token')?.value;
 
-  // Usuário não autenticado tentando acessar rota privada
+  // Se não há token mas está acessando rota privada, redireciona para login
+  // MAS apenas se não vier de um callback de pagamento
   if (isPrivate && !token) {
+    // Verifica se há parâmetros de callback de pagamento (não redireciona se vier do SISP)
+    const isPaymentCallback = req.nextUrl.searchParams.has('payment_status') || 
+                             req.nextUrl.searchParams.has('reference') ||
+                             req.nextUrl.searchParams.has('sessionId');
+    
+    if (isPaymentCallback) {
+      // Permite acesso mesmo sem token se vier do callback de pagamento
+      // O cliente vai restaurar a sessão do cookie
+      return NextResponse.next();
+    }
+
     const redirectUrl = req.nextUrl.clone();
     redirectUrl.pathname = LOGIN_REDIRECT;
     redirectUrl.searchParams.set('from', pathname);
+    
+    // Preserva parâmetros de menu se existirem
+    const menu = req.nextUrl.searchParams.get('menu');
+    if (menu) {
+      redirectUrl.searchParams.set('menu', menu);
+    }
+    
     return NextResponse.redirect(redirectUrl);
   }
 

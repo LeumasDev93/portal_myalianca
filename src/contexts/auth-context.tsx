@@ -49,9 +49,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const searchParams = useSearchParams();
 
   const setAuthCookies = (token: string) => {
-    // Cookie de sessão (sem max-age) → é removido ao fechar o navegador
-    document.cookie = `token=${token}; path=/; SameSite=Lax`;
-  };
+    // Cookie de sessão sem max-age. 
+    // SameSite=Lax para funcionar em redirects same-site (padrão)
+    // Se precisar de cross-site, usar SameSite=None; Secure (requer HTTPS)
+    const isSecure = typeof window !== 'undefined' && window.location.protocol === 'https:';
+    const sameSite = isSecure ? 'SameSite=None; Secure' : 'SameSite=Lax';
+    document.cookie = `token=${token}; path=/; ${sameSite}`;
+  }; 
 
   const clearAuthCookies = () => {
     document.cookie = "token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
@@ -78,7 +82,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setToken(authToken);
           setAuthCookies(authToken);
         } else {
-          clearAuthCookies();
+          // Fallback: usuário pode estar logado em outra aba (cookie presente) mas sem sessionStorage nesta aba
+          const cookies = typeof document !== "undefined" ? document.cookie : "";
+          const tokenFromCookie = cookies
+            .split(";")
+            .map((c) => c.trim())
+            .find((c) => c.startsWith("token="))
+            ?.split("=")[1];
+
+          if (tokenFromCookie) {
+            try {
+              const res = await fetch("/api/profile", { credentials: "include" });
+              if (res.ok) {
+                const profile = await res.json();
+                sessionStorage.setItem("user", JSON.stringify(profile));
+                sessionStorage.setItem("token", tokenFromCookie);
+                setUser(profile);
+                setToken(tokenFromCookie);
+                setAuthCookies(tokenFromCookie);
+              } else {
+                clearAuthCookies();
+              }
+            } catch {
+              clearAuthCookies();
+            }
+          } else {
+            clearAuthCookies();
+          }
         }
       } catch (err) {
         console.error("Auth initialization error:", err);
