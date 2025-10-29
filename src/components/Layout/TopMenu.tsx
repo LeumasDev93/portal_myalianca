@@ -28,10 +28,8 @@ export interface TopMenuProps {
 
 export function TopMenu({
   currentPage,
-  searchQuery,
   isMobile,
   onMenuClick,
-  onSearchChange,
   showSidebar = true, // Default para manter compatibilidade
   onLogout,
 }: TopMenuProps) {
@@ -50,6 +48,7 @@ export function TopMenu({
 
   const { logout } = useAuth();
   const searchInputRef = useRef<HTMLInputElement>(null);
+
 
   // Função para navegação condicional baseada no tipo de usuário
   const handleLogoClick = () => {

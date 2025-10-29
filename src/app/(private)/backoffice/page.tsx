@@ -52,6 +52,7 @@ import DashboardEmpresarial from "@/components/dashboardEmpresarial/page";
 import { BackToDashboardButton } from "@/components/ui/BackToDashboardButton";
 import PageGestaoSOAT from "@/components/gestaoSOAT/page";
 import { BackToTopButton } from "@/components/ui/BackToTopButton";
+import { useRouter, useSearchParams } from "next/navigation";
 
 const Page = () => {
   const { profile } = useUserProfile();
@@ -82,6 +83,8 @@ const Page = () => {
 
   const { logout, user } = useAuth();
   const { countdown } = useAutoLogout(logout);
+  const searchParams = useSearchParams();
+  const router = useRouter();
 
   useEffect(() => {
     setIsLoading(true);
@@ -184,14 +187,28 @@ const Page = () => {
     setIsClient(true);
   }, []);
 
-  // Define a página padrão baseada no tipo de usuário
+  // Define a página padrão baseada no tipo de usuário ou restaura da URL
   useEffect(() => {
-    if (profile?.user?.tipo_utilizador === "Company") {
-      setCurrentPage("dashboardEmpresarial");
+    const menuFromUrl = searchParams?.get("menu");
+    
+    if (menuFromUrl) {
+      // Se há menu na URL, usa ele
+      setCurrentPage(menuFromUrl);
     } else {
-      setCurrentPage("Historico");
+      // Se não há menu na URL, define o padrão baseado no tipo de usuário
+      const defaultMenu = profile?.user?.tipo_utilizador === "Company" 
+        ? "dashboardEmpresarial" 
+        : "Historico";
+      
+      setCurrentPage(defaultMenu);
+      
+      // Sempre adiciona o parâmetro menu na URL
+      const params = new URLSearchParams(searchParams?.toString());
+      params.set("menu", defaultMenu);
+      const qs = params.toString();
+      router.replace(`?${qs}`, { scroll: false });
     }
-  }, [profile?.user?.tipo_utilizador]);
+  }, [profile?.user?.tipo_utilizador, searchParams, router]);
 
   useEffect(() => {
     const handleResize = () => {
@@ -215,6 +232,16 @@ const Page = () => {
     console.log("handleMenuClick - menuPage:", menuPage, "params:", params);
     setIsLoading(true);
     setCurrentPage(menuPage);
+
+    // Atualiza URL param centralmente em qualquer navegação
+    try {
+      const urlParams = new URLSearchParams(searchParams?.toString());
+      urlParams.set("menu", menuPage);
+      const qs = urlParams.toString();
+      router.replace(`?${qs}`, { scroll: false });
+    } catch (_e) {
+      // silencioso
+    }
 
     // Armazenar parâmetros de filtro se fornecidos
     if (params) {

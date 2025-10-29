@@ -135,6 +135,9 @@ export const MobileMenu = ({ menuItems, onMenuClick }: MobileMenuProps) => {
                 <li key={index}>
                   <button
                     onClick={() => {
+                      if (menu.path) {
+                        onMenuClick(menu.path);
+                      }
                       menu.onClick?.();
                       setMenuOpen(false);
                     }}

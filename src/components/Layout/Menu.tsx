@@ -23,7 +23,6 @@ type MenuProps = {
 export function Menu({ onMenuClick, menuItems, activePath }: MenuProps) {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [hoveredItem, setHoveredItem] = useState<number | null>(null);
-
   const mainItems = menuItems.filter((item) => item.title !== "Sair");
   const logoutItem = menuItems.find((item) => item.title === "Sair");
 
