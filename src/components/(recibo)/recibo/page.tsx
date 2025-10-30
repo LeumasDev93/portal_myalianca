@@ -555,7 +555,7 @@ export default function ReciboPage({ filterParams }: ReciboPageProps) {
                             profile.user.nome, // userName
                             profile.user.email || "", // userEmail
                             profile.user.nif || "", // userPhone
-                            recibo.number // merchantRef
+                            (recibo as any).mbref || recibo.number // merchantRef = referência do recibo (P...)
                           );
 
                           toast.success(
@@ -708,7 +708,7 @@ export default function ReciboPage({ filterParams }: ReciboPageProps) {
                               profile.user.nome, // userName
                               profile.user.email || "", // userEmail
                               profile.user.nif || "", // userPhone (usando NIF como fallback)
-                              recibo.number // merchantRef
+                              (recibo as any).mbref || recibo.number // merchantRef = referência do recibo (P...)
                             );
 
                             toast.success(

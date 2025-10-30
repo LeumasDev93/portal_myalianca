@@ -69,10 +69,10 @@ export async function POST(request: NextRequest) {
             ?.split('=')[1] || reference || '';
 
             console.log('receiptRef -->', receiptRef, cookiesHeader,  "<-- cookiesHeader");
-          const collectUrl = `https://aliancacvtest.rtcom.pt/anywhere/api/v1/private/mobile/invoice/${encodeURIComponent(receiptRef)}/collect`;
+          const collectUrl = `https://aliancacvtest.rtcom.pt/anywhere/api/v1/private/mobile/invoice/P2025.422/collect`;
           const collectBody = {
             value: Number(amount),
-            reference: receiptRef,
+            reference: "P2025.422",
             sendEmail: false,
             apiName: 'WebsiteCollection',
           };
@@ -101,14 +101,32 @@ export async function POST(request: NextRequest) {
             headers: {
               'Content-Type': 'application/json',
               ...(anywhereBearer ? { Authorization: `Bearer ${anywhereBearer}` } : {}),
-              ...(anywhereApiKey ? { ApiKey: anywhereApiKey } : {}),
             },
             body: JSON.stringify(collectBody),
             cache: 'no-store',
           });
           console.log('[COLLECT]', collectUrl, 'status=', collectRes.status);
           collectStatus = collectRes.ok ? 'ok' : 'error';
-          collectMessage = collectRes.ok ? 'Cobrança confirmada' : `Falha ao cobrar (${collectRes.status})`;
+          try {
+            const ct = collectRes.headers.get('content-type') || '';
+            if (ct.includes('application/json')) {
+              const payload = await collectRes.json();
+              // monta mensagem amigável com campos relevantes se existirem
+              const msg = payload?.error
+                ? String(payload.error)
+                : payload?.message || payload?.desc || (collectRes.ok ? 'Cobrança confirmada' : 'Falha ao cobrar');
+              const value = payload?.value ?? collectBody.value;
+              const ref = payload?.reference ?? collectBody.reference;
+              collectMessage = `${msg}${ref ? ` | Ref: ${ref}` : ''}${value ? ` | Valor: ${value}` : ''}`;
+            } else {
+              const text = await collectRes.text();
+              collectMessage = (text && text.trim().length > 0)
+                ? text.slice(0, 300)
+                : (collectRes.ok ? 'Cobrança confirmada' : `Falha ao cobrar (${collectRes.status})`);
+            }
+          } catch {
+            collectMessage = collectRes.ok ? 'Cobrança confirmada' : `Falha ao cobrar (${collectRes.status})`;
+          }
         }
       } else {
         serverStatus = 'error';

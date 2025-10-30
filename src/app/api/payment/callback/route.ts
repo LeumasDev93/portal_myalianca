@@ -92,8 +92,6 @@ export async function GET(request: NextRequest) {
     let collectMessage = '';
     try {
       const gatewayToken = request.cookies.get('pay_token')?.value || '';
-      console.log('[PAYMENT CALLBACK][GET] Validar HMAC - payload:', hmacPayload);
-      console.log('[PAYMENT CALLBACK][GET] Validar HMAC - Authorization Bearer presente?:', !!gatewayToken);
       const attempt = await tryValidateHmac({ reference: hmacPayload.reference, fingerprint: hmacPayload.hmacFingerprint, accessToken: gatewayToken });
       if (!attempt.ok) {
         console.error('[PAYMENT CALLBACK][GET] validar-hmac falhou:', attempt.status, attempt.text);
@@ -101,8 +99,8 @@ export async function GET(request: NextRequest) {
       if (attempt.ok) {
         serverStatus = 'ok';
         serverMessage = 'HMAC válido';
-        if (merchantRef && amount) {
-          const receiptRef = reciboRefFromQuery || request.cookies.get('recibo_ref')?.value || (reference || '');
+        if (amount) {
+          const receiptRef = request.cookies.get('recibo_ref')?.value;
           const collectUrl = `https://aliancacvtest.rtcom.pt/anywhere/api/v1/private/mobile/invoice/${receiptRef}/collect`;
           const collectBody = {
             value: Number(amount),
@@ -110,12 +108,12 @@ export async function GET(request: NextRequest) {
             sendEmail: false,
             apiName: 'WebsiteCollection',
           };
-          const anywhereBearer = awtFromQuery || request.cookies.get('anywhere_token')?.value || request.cookies.get('token')?.value || '';
+          const anywhereBearer = request.cookies.get('anywhere_token')?.value;
           const collectRes = await fetch(collectUrl, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
-              ...(anywhereBearer ? { Authorization: `Bearer ${anywhereBearer}` } : {}),
+              Authorization: `Bearer ${anywhereBearer}`,
             },
             body: JSON.stringify(collectBody),
             cache: 'no-store',
@@ -199,10 +197,6 @@ export async function POST(request: NextRequest) {
       }
     }
     
-    console.log('[PAYMENT CALLBACK] Recebido callback POST do SISP:', body);
-    try { console.log('[PAYMENT CALLBACK][POST][DEBUG] rawBody:', JSON.stringify(body)); } catch {}
-
-    // Extrai os dados do callback do SISP
     const {
       reference,
       amount,
@@ -239,16 +233,12 @@ export async function POST(request: NextRequest) {
             apiName: 'WebsiteCollection',
           };
           
-          const anywhereBearerPost = awtBody || request.cookies.get('anywhere_token')?.value || request.cookies.get('token')?.value || '';
-          const anywhereApiKeyPost = process.env.ANYWHERE_API_KEY || process.env.NEXT_PUBLIC_API_KEY || '';
+          const anywhereBearerPost = request.cookies.get('anywhere_token')?.value;
           const collectRes = await fetch(collectUrl, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
               ...(anywhereBearerPost ? { Authorization: `Bearer ${anywhereBearerPost}` } : {}),
-              ...(anywhereApiKeyPost ? { ApiKey: anywhereApiKeyPost } : {}),
-              'X-Client-Id': GATEWAY_CLIENT_ID,
-              'clientId': GATEWAY_CLIENT_ID,
             },
             body: JSON.stringify(collectBody),
             cache: 'no-store',
