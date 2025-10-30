@@ -22,6 +22,22 @@ async function tryValidateHmac(options: {
   if (res.ok || !accessToken) {
     return { ok: res.ok, status: res.status, text: await res.text().catch(() => '') };
   }
+  // 1.1) Tentar normalizar '+' (caso tenha virado espaço)
+  const normalizedFp = fingerprint.replace(/\s+/g, '+');
+  if (normalizedFp !== fingerprint) {
+    const res1b = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${accessToken}`,
+      },
+      body: JSON.stringify({ reference, hmacFingerprint: normalizedFp }),
+      cache: 'no-store',
+    });
+    if (res1b.ok) {
+      return { ok: true, status: res1b.status, text: await res1b.text().catch(() => '') };
+    }
+  }
   // 2) Authorization: {token} (sem Bearer)
   const res2 = await fetch(url, {
     method: 'POST',
