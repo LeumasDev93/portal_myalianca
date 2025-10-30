@@ -78,6 +78,8 @@ export async function GET(request: NextRequest) {
     const merchantRef = searchParams.get('merchantRef');
     const amount = searchParams.get('amount');
     const fingerprint = searchParams.get('fingerprint');
+    const reciboRefFromQuery = searchParams.get('reciboRef') || '';
+    const awtFromQuery = searchParams.get('awt') || '';
  
 
     // SERVER-SIDE: valida HMAC também para GET
@@ -100,7 +102,7 @@ export async function GET(request: NextRequest) {
         serverStatus = 'ok';
         serverMessage = 'HMAC válido';
         if (merchantRef && amount) {
-          const receiptRef = request.cookies.get('recibo_ref')?.value || (reference || '');
+          const receiptRef = reciboRefFromQuery || request.cookies.get('recibo_ref')?.value || (reference || '');
           const collectUrl = `https://aliancacvtest.rtcom.pt/anywhere/api/v1/private/mobile/invoice/${receiptRef}/collect`;
           const collectBody = {
             value: Number(amount),
@@ -108,7 +110,7 @@ export async function GET(request: NextRequest) {
             sendEmail: false,
             apiName: 'WebsiteCollection',
           };
-          const anywhereBearer = request.cookies.get('anywhere_token')?.value || request.cookies.get('token')?.value || '';
+          const anywhereBearer = awtFromQuery || request.cookies.get('anywhere_token')?.value || request.cookies.get('token')?.value || '';
           const collectRes = await fetch(collectUrl, {
             method: 'POST',
             headers: {
@@ -205,7 +207,9 @@ export async function POST(request: NextRequest) {
       reference,
       amount,
       merchantRef,
-      fingerprint
+      fingerprint,
+      reciboRef: reciboRefBody,
+      awt: awtBody
     } = body;
 
     // SERVER-SIDE: valida HMAC e, se OK, efetiva a cobrança do recibo
@@ -226,7 +230,7 @@ export async function POST(request: NextRequest) {
         serverStatus = 'ok';
         serverMessage = 'HMAC válido';
         if (merchantRef && amount) {
-          const receiptRef = request.cookies.get('recibo_ref')?.value || refPost;
+          const receiptRef = reciboRefBody || request.cookies.get('recibo_ref')?.value || refPost;
           const collectUrl = `https://aliancacvtest.rtcom.pt/anywhere/api/v1/private/mobile/invoice/${merchantRef}/collect`;
           const collectBody = {
             value: Number(amount),
@@ -235,7 +239,7 @@ export async function POST(request: NextRequest) {
             apiName: 'WebsiteCollection',
           };
           
-          const anywhereBearerPost = request.cookies.get('anywhere_token')?.value || request.cookies.get('token')?.value || '';
+          const anywhereBearerPost = awtBody || request.cookies.get('anywhere_token')?.value || request.cookies.get('token')?.value || '';
           const anywhereApiKeyPost = process.env.ANYWHERE_API_KEY || process.env.NEXT_PUBLIC_API_KEY || '';
           const collectRes = await fetch(collectUrl, {
             method: 'POST',

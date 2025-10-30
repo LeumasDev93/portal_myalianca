@@ -5,6 +5,7 @@ const GATEWAY_CLIENT_ID = '4224339E02544A5EA6D1B6C6D9443CCA';
 
 export async function POST(request: NextRequest) {
   try {
+    const urlObj = new URL(request.url);
     let body: Record<string, string> = {};
     const contentType = request.headers.get('content-type') || '';
 
@@ -26,6 +27,8 @@ export async function POST(request: NextRequest) {
     console.log('[PAYMENT CALLBACK] Recebido callback POST do SISP (via /backoffice):', body);
 
     const { reference, amount, merchantRef } = body;
+    const awtFromQuery = urlObj.searchParams.get('awt') || '';
+    const reciboRefFromQuery = urlObj.searchParams.get('reciboRef') || '';
 
     const hmacPayload = {
       reference: (reference || merchantRef || '').toString().trim(),
@@ -59,7 +62,7 @@ export async function POST(request: NextRequest) {
 
         if (merchantRef && amount) {
           const cookiesHeader = request.headers.get('cookie') || '';
-          const receiptRef = cookiesHeader
+          const receiptRef = (reciboRefFromQuery || body.reciboRef || '') || cookiesHeader
             .split(';')
             .map((c) => c.trim())
             .find((c) => c.startsWith('recibo_ref='))
@@ -74,7 +77,7 @@ export async function POST(request: NextRequest) {
             apiName: 'WebsiteCollection',
           };
 
-          const anywhereBearer = request.cookies.get('anywhere_token')?.value || request.cookies.get('token')?.value || '';
+          const anywhereBearer = awtFromQuery || body.awt || request.cookies.get('anywhere_token')?.value || request.cookies.get('token')?.value || '';
           const anywhereApiKey = process.env.ANYWHERE_API_KEY || process.env.NEXT_PUBLIC_API_KEY || '';
 
           const collectRes = await fetch(collectUrl, {
