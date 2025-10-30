@@ -74,15 +74,10 @@ async function tryValidateHmac(options: {
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const status = searchParams.get('status');
     const reference = searchParams.get('reference');
-    const sessionId = searchParams.get('sessionId');
     const merchantSession = searchParams.get('merchantSession');
     const merchantRef = searchParams.get('merchantRef');
     const amount = searchParams.get('amount');
-    const currency = searchParams.get('currency');
-    const message = searchParams.get('message');
-    const timestamp = searchParams.get('timestamp');
     const fingerprint = searchParams.get('fingerprint');
  
 
@@ -230,19 +225,6 @@ export async function POST(request: NextRequest) {
       panMascarado,
       fingerprint
     } = body;
-
-    console.log('[PAYMENT CALLBACK] Dados processados:', {
-      reference,
-      status,
-      message,
-      amount,
-      currency,
-      merchantSession,
-      merchantRef,
-      timestamp,
-      panMascarado: panMascarado ? '***' : 'N/A',
-      fingerprint: fingerprint ? '***' : 'N/A'
-    });
 
     // SERVER-SIDE: valida HMAC e, se OK, efetiva a cobrança do recibo
     const refPost = (reference || merchantRef || '').toString().trim();
