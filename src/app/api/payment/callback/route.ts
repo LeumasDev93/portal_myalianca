@@ -1,7 +1,4 @@
-import { useSessionCheckToken } from '@/hooks/useSessionToken';
-import { NextRequest, NextResponse } from 'next/server';  
-
-const { token  } = useSessionCheckToken();
+import { NextRequest, NextResponse } from 'next/server';
 
 const GATEWAY_BASE_URL = 'https://pay.dev.aliancaseguros.cv';
 const GATEWAY_CLIENT_ID = '4224339E02544A5EA6D1B6C6D9443CCA';
@@ -117,11 +114,21 @@ export async function GET(request: NextRequest) {
             sendEmail: false,
             apiName: 'WebsiteCollection',
           };
+          const anywhereBearer = (await (async () => {
+            try {
+              const base = new URL(request.url).origin;
+              const s = await fetch(`${base}/api/auth/session`, { headers: { cookie: request.headers.get('cookie') || '' }, cache: 'no-store' });
+              if (s.ok) { const d = await s.json(); return d?.user?.accessToken || ''; }
+            } catch {}
+            return '';
+          })());
+          const anywhereApiKey = process.env.ANYWHERE_API_KEY || process.env.NEXT_PUBLIC_API_KEY || '';
           const collectRes = await fetch(collectUrl, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
-              ...(token ? { Authorization: `Bearer ${token}` } : {}),
+              ...(anywhereBearer ? { Authorization: `Bearer ${anywhereBearer}` } : {}),
+              ...(anywhereApiKey ? { ApiKey: anywhereApiKey } : {}),
               'X-Client-Id': GATEWAY_CLIENT_ID,
               'clientId': GATEWAY_CLIENT_ID,
             },
@@ -264,11 +271,21 @@ export async function POST(request: NextRequest) {
             apiName: 'WebsiteCollection',
           };
           
-         const collectRes = await fetch(collectUrl, {
+          const anywhereBearerPost = (await (async () => {
+            try {
+              const base = new URL(request.url).origin;
+              const s = await fetch(`${base}/api/auth/session`, { headers: { cookie: request.headers.get('cookie') || '' }, cache: 'no-store' });
+              if (s.ok) { const d = await s.json(); return d?.user?.accessToken || ''; }
+            } catch {}
+            return '';
+          })());
+          const anywhereApiKeyPost = process.env.ANYWHERE_API_KEY || process.env.NEXT_PUBLIC_API_KEY || '';
+          const collectRes = await fetch(collectUrl, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
-              ...(token ? { Authorization: `Bearer ${token}` } : {}),
+              ...(anywhereBearerPost ? { Authorization: `Bearer ${anywhereBearerPost}` } : {}),
+              ...(anywhereApiKeyPost ? { ApiKey: anywhereApiKeyPost } : {}),
               'X-Client-Id': GATEWAY_CLIENT_ID,
               'clientId': GATEWAY_CLIENT_ID,
             },
