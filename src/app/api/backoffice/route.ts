@@ -110,7 +110,7 @@ export async function POST(request: NextRequest) {
         }
       } else {
         serverStatus = 'error';
-        serverMessage = `Validação HMAC falhou (${validateRes.status})`;
+        serverMessage = 'Validação HMAC falhou';
       }
     } catch {
       serverStatus = 'error';
