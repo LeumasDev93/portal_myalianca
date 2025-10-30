@@ -65,7 +65,7 @@ export async function POST(request: NextRequest) {
             .find((c) => c.startsWith('recibo_ref='))
             ?.split('=')[1] || reference || '';
 
-          const collectUrl = `https://aliancacvtest.rtcom.pt/anywhere/api/v1/private/mobile/invoice/${merchantRef}/collect`;
+          const collectUrl = `https://aliancacvtest.rtcom.pt/anywhere/api/v1/private/mobile/invoice/${encodeURIComponent(receiptRef)}/collect`;
           const collectBody = {
             value: Number(amount),
             reference: receiptRef,
@@ -82,8 +82,6 @@ export async function POST(request: NextRequest) {
               'Content-Type': 'application/json',
               ...(anywhereBearer ? { Authorization: `Bearer ${anywhereBearer}` } : {}),
               ...(anywhereApiKey ? { ApiKey: anywhereApiKey } : {}),
-              'X-Client-Id': GATEWAY_CLIENT_ID,
-              'clientId': GATEWAY_CLIENT_ID,
             },
             body: JSON.stringify(collectBody),
             cache: 'no-store',

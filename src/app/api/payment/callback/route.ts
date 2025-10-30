@@ -114,8 +114,6 @@ export async function GET(request: NextRequest) {
             headers: {
               'Content-Type': 'application/json',
               ...(anywhereBearer ? { Authorization: `Bearer ${anywhereBearer}` } : {}),
-              'X-Client-Id': GATEWAY_CLIENT_ID,
-              'clientId': GATEWAY_CLIENT_ID,
             },
             body: JSON.stringify(collectBody),
             cache: 'no-store',
@@ -136,7 +134,7 @@ export async function GET(request: NextRequest) {
     const redirectUrl = new URL('/backoffice', request.url);
     redirectUrl.searchParams.set('menu', 'recibo');
     redirectUrl.searchParams.set('server_status', serverStatus);
-    redirectUrl.searchParams.set('server_message', serverMessage);
+    if (serverStatus !== 'ok') redirectUrl.searchParams.set('server_message', serverMessage);
     redirectUrl.searchParams.set('collect_status', collectStatus);
     if (collectMessage) redirectUrl.searchParams.set('collect_message', collectMessage);
     redirectUrl.searchParams.set('merchantRef', merchantRef || '');
