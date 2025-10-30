@@ -20,7 +20,6 @@ interface PaymentIntentRequest {
 
 export async function POST(req: NextRequest) {
   try {
-    console.log("[PAYMENT API] ========== INICIANDO CREATE INTENT ==========");
     
     // Pega token do header Authorization
     const authHeader = req.headers.get("Authorization");
@@ -35,28 +34,11 @@ export async function POST(req: NextRequest) {
     }
 
     const accessToken = authHeader.replace("Bearer ", "");
-    console.log("[PAYMENT API] Token extraído:", accessToken.substring(0, 50) + "...");
     
     const paymentData: PaymentIntentRequest = await req.json();
-    console.log("[PAYMENT API] Dados recebidos do cliente:", JSON.stringify(paymentData, null, 2));
-
-    console.log("[PAYMENT API] Fazendo chamada para:", `${PAYMENT_BASE_URL}/api/v1/pagamentos/intencao/compras`);
-    console.log("[PAYMENT API] Headers:", {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${accessToken.substring(0, 30)}...`,
-    });
-    console.log("[PAYMENT API] Body:", JSON.stringify(paymentData, null, 2));
+    
 
     const requestBody = JSON.stringify(paymentData);
-    console.log("[PAYMENT API] 📤 REQUEST COMPLETO:");
-    console.log("[PAYMENT API] URL:", `${PAYMENT_BASE_URL}/api/v1/pagamentos/intencao/compras`);
-    console.log("[PAYMENT API] Method: POST");
-    console.log("[PAYMENT API] Headers:", {
-      "Content-Type": "application/json",
-      "Authorization": `Bearer ${accessToken.substring(0, 30)}...`,
-      "X-Client-Id": CLIENT_ID,
-    });
-    console.log("[PAYMENT API] Body (string):", requestBody);
 
     const response = await fetch(
       `${PAYMENT_BASE_URL}/api/v1/pagamentos/intencao/compras`,
@@ -70,11 +52,6 @@ export async function POST(req: NextRequest) {
         body: requestBody,
       }
     );
-
-    console.log("[PAYMENT API] 📥 RESPOSTA:");
-    console.log("[PAYMENT API] Status:", response.status);
-    console.log("[PAYMENT API] Status Text:", response.statusText);
-    console.log("[PAYMENT API] Headers:", Object.fromEntries(response.headers.entries()));
 
     if (!response.ok) {
       let errorText = "";
@@ -92,8 +69,6 @@ export async function POST(req: NextRequest) {
         errorText = "Não foi possível ler resposta de erro";
       }
       
-      console.error("[PAYMENT API] ❌ Erro HTTP:", response.status);
-      console.error("[PAYMENT API] ❌ Resposta completa:", errorText);
       
       return NextResponse.json(
         { 
@@ -107,13 +82,10 @@ export async function POST(req: NextRequest) {
 
     // Verifica o tipo de conteúdo da resposta
     const contentType = response.headers.get("content-type");
-    console.log("[PAYMENT API] Content-Type:", contentType);
 
     if (contentType?.includes("text/html")) {
       // A API retornou HTML (página de checkout do SISP)
       const htmlText = await response.text();
-      console.log("[PAYMENT API] ⚠️ Resposta em HTML detectada");
-      console.log("[PAYMENT API] HTML length:", htmlText.length);
       
       // Extrai informações do HTML
       const merchantRefMatch = htmlText.match(/name="merchantRef"\s+value="([^"]+)"/);
@@ -138,15 +110,6 @@ export async function POST(req: NextRequest) {
       const amount = amountMatch ? parseFloat(amountMatch[1]) : paymentData.amount;
       const timestamp = timestampMatch ? timestampMatch[1] : new Date().toISOString();
 
-      console.log("[PAYMENT API] Dados extraídos do HTML:");
-      console.log("[PAYMENT API] - merchantRef:", merchantRef);
-      console.log("[PAYMENT API] - merchantSession:", merchantSession);
-      console.log("[PAYMENT API] - amount:", amount);
-      console.log("[PAYMENT API] - timestamp:", timestamp);
-      console.log("[PAYMENT API] - checkoutUuid:", checkoutUuid);
-      console.log("[PAYMENT API] - sessionIdUuid:", sessionIdUuid);
-      console.log("[PAYMENT API] - urlResponse completa:", urlResponse);
-
       // Retorna resposta padronizada
       const responseData = {
         amount: amount,
@@ -161,21 +124,15 @@ export async function POST(req: NextRequest) {
         htmlCheckout: htmlText, // Inclui HTML completo caso seja necessário
       };
 
-      console.log("[PAYMENT API] ✅ Intenção criada (HTML processado)!");
-      console.log("[PAYMENT API] Resposta formatada:", JSON.stringify(responseData, null, 2));
-
+      
       return NextResponse.json(responseData);
     } else {
       // Resposta JSON normal
       const responseData = await response.json();
-      console.log("[PAYMENT API] ✅ Intenção criada com sucesso!");
-      console.log("[PAYMENT API] Resposta completa:", JSON.stringify(responseData, null, 2));
-
+     
       return NextResponse.json(responseData);
     }
   } catch (error) {
-    console.error("[PAYMENT API] ❌ EXCEPTION ao criar intenção:", error);
-    console.error("[PAYMENT API] Stack:", error instanceof Error ? error.stack : "N/A");
     const errorMessage = error instanceof Error ? error.message : "Erro ao criar intenção de pagamento";
     return NextResponse.json(
       { error: errorMessage },
