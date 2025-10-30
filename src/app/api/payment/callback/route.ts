@@ -9,6 +9,7 @@ async function tryValidateHmac(options: {
   const url = 'https://pay.dev.aliancaseguros.cv/api/v1/pagamentos/validar-hmac';
   const payload = { reference, hmacFingerprint: fingerprint };
   console.log('[HMAC] ->', payload);
+  // 1) Authorization: Bearer {token}
   const res = await fetch(url, {
     method: 'POST',
     headers: {
@@ -18,7 +19,33 @@ async function tryValidateHmac(options: {
     body: JSON.stringify(payload),
     cache: 'no-store',
   });
-  return { ok: res.ok, status: res.status, text: await res.text().catch(() => '') };
+  if (res.ok || !accessToken) {
+    return { ok: res.ok, status: res.status, text: await res.text().catch(() => '') };
+  }
+  // 2) Authorization: {token} (sem Bearer)
+  const res2 = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: accessToken,
+    },
+    body: JSON.stringify(payload),
+    cache: 'no-store',
+  });
+  if (res2.ok) {
+    return { ok: true, status: res2.status, text: await res2.text().catch(() => '') };
+  }
+  // 3) accessToken no cabeçalho dedicado
+  const res3 = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      accessToken: accessToken,
+    } as Record<string, string>,
+    body: JSON.stringify(payload),
+    cache: 'no-store',
+  });
+  return { ok: res3.ok, status: res3.status, text: await res3.text().catch(() => '') };
 }
 
 export async function GET(request: NextRequest) {
