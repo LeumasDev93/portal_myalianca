@@ -38,7 +38,7 @@ export async function GET(request: NextRequest) {
     redirectUrl.searchParams.set('message', message || '');
     redirectUrl.searchParams.set('timestamp', timestamp || '');
     
-    const res = NextResponse.redirect(redirectUrl);
+    const res = NextResponse.redirect(redirectUrl, 303);
     res.cookies.set('postpay', '1', {
       path: '/',
       maxAge: 10,
@@ -144,6 +144,7 @@ export async function POST(request: NextRequest) {
     redirectUrl.searchParams.set('menu', 'recibo');
     redirectUrl.searchParams.set('payment_status', 'error');
     
-    return NextResponse.redirect(redirectUrl);
+    return NextResponse.redirect(redirectUrl, 303);
+    return NextResponse.redirect(redirectUrl, 303);
   }
 }

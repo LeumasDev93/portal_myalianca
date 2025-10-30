@@ -62,7 +62,7 @@ export async function POST(request: NextRequest) {
     redirectUrl.searchParams.set('message', message || '');
     redirectUrl.searchParams.set('timestamp', timestamp || '');
     
-    const res = NextResponse.redirect(redirectUrl);
+    const res = NextResponse.redirect(redirectUrl, 303);
     // Permite 1 passagem sem token após pagamento para evitar loop (10s)
     res.cookies.set('postpay', '1', {
       path: '/',
@@ -79,7 +79,7 @@ export async function POST(request: NextRequest) {
     redirectUrl.searchParams.set('menu', 'recibo');
     redirectUrl.searchParams.set('payment_status', 'error');
     
-    const res = NextResponse.redirect(redirectUrl);
+    const res = NextResponse.redirect(redirectUrl, 303);
     res.cookies.set('postpay', '1', {
       path: '/',
       maxAge: 10,
