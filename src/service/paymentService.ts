@@ -132,7 +132,7 @@ export async function processPaymentForModal(
     console.log("[PAYMENT] ==================== PROCESSO DE PAGAMENTO (MODAL) ====================");
     console.log("[PAYMENT] Dados de entrada:", { amount, userName, userEmail, userPhone, reciboRef });
 
-    // Usa a referência do recibo (P...) como merchantRef (máx. 15 chars para SISP)
+    // Usa a referência do recibo (P...) como merchantRef (SISP aceita até 15 chars)
     const sanitizedRef = reciboRef.replace(/[^a-zA-Z0-9\.\-]/g, "");
     const merchantRef = sanitizedRef.substring(0, 15);
     // Gera merchantSession único com máximo 15 caracteres
