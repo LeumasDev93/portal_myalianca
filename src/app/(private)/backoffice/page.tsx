@@ -299,10 +299,14 @@ const Page = () => {
     }
     if (changed) {
       paymentHandledRef.current = true;
-      // NÃO limpar o cookie 'postpay' aqui para não bloquear a próxima navegação
-      // Deixe a middleware permitir a próxima passagem; limparemos o cookie após autenticar
+      // Evita navegação do Next.js; apenas atualiza a barra de endereços
       const qs = params.toString();
-      router.replace(qs ? `?${qs}` : "?menu=recibo", { scroll: false });
+      const newUrl = qs ? `?${qs}` : "?menu=recibo";
+      try {
+        window.history.replaceState(null, "", newUrl);
+      } catch {
+        router.replace(newUrl, { scroll: false });
+      }
     }
   }, [isClient, router, searchParams, toast]);
 

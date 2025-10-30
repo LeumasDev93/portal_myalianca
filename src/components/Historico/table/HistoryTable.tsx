@@ -10,7 +10,7 @@ import { useUserProfile } from "@/hooks/useUserProfile ";
 import { tableMappeData } from "@/lib/tableMappe";
 import { getFirstAndLastName } from "@/lib/utils";
 import { useReciboActivity } from "@/lib/activityExamples";
-import { processPayment } from "@/service/paymentService";
+import { processPaymentForModal } from "@/service/paymentService";
 import { toast } from "sonner";
 import React, { useEffect, useState } from "react";
 import {
@@ -281,15 +281,14 @@ const HistoryTable = ({
     }));
 
     try {
-      await processPayment(
-        recibo.value, // amount
-        profile.user.nome, // userName
-        profile.user.email || "", // userEmail
-        profile.user.nif || "", // userPhone
-        invoiceNumber // merchantRef
+      const { checkoutUrl } = await processPaymentForModal(
+        recibo.value,
+        profile.user.nome,
+        profile.user.email || "",
+        profile.user.nif || "",
+        invoiceNumber
       );
-
-      toast.success("Checkout aberto! Conclua o pagamento na nova aba.");
+      window.location.assign(checkoutUrl);
     } catch (error) {
       console.error("Erro ao processar pagamento:", error);
       toast.error("Erro ao processar pagamento. Tente novamente.");
