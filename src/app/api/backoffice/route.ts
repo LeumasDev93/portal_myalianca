@@ -77,7 +77,23 @@ export async function POST(request: NextRequest) {
             apiName: 'WebsiteCollection',
           };
 
-          const anywhereBearer = awtFromQuery || body.awt || request.cookies.get('anywhere_token')?.value || request.cookies.get('token')?.value || '';
+          // Prioridade: awt (query/body) -> sessão NextAuth -> cookies
+          let anywhereBearer = awtFromQuery || (body as any).awt || '';
+          if (!anywhereBearer) {
+            try {
+              const sess = await fetch(new URL('/api/auth/session', request.url), {
+                headers: { cookie: request.headers.get('cookie') || '' },
+                cache: 'no-store',
+              });
+              if (sess.ok) {
+                const data = await sess.json();
+                anywhereBearer = data?.user?.accessToken || '';
+              }
+            } catch {}
+          }
+          if (!anywhereBearer) {
+            anywhereBearer = request.cookies.get('anywhere_token')?.value || request.cookies.get('token')?.value || '';
+          }
           const anywhereApiKey = process.env.ANYWHERE_API_KEY || process.env.NEXT_PUBLIC_API_KEY || '';
 
           const collectRes = await fetch(collectUrl, {
