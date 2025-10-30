@@ -60,9 +60,13 @@ export async function POST(request: NextRequest) {
     let collectStatus = 'skipped';
     let collectMessage = '';
     try {
+      const gatewayToken = request.cookies.get('pay_token')?.value || '';
       const validateRes = await fetch('https://pay.dev.aliancaseguros.cv/api/v1/pagamentos/validar-hmac', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(gatewayToken ? { Authorization: `Bearer ${gatewayToken}` } : {}),
+        },
         body: JSON.stringify(hmacPayload),
         cache: 'no-store',
       });
@@ -114,6 +118,13 @@ export async function POST(request: NextRequest) {
     res.cookies.set('postpay', '1', {
       path: '/',
       maxAge: 10,
+      sameSite: 'none',
+      secure: true,
+    });
+    // Limpa o gateway token curto após uso
+    res.cookies.set('pay_token', '', {
+      path: '/',
+      maxAge: 0,
       sameSite: 'none',
       secure: true,
     });

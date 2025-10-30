@@ -151,6 +151,11 @@ export async function processPaymentForModal(
     // PASSO 1: Obter token de acesso (sempre novo para evitar expiração)
     console.log("[PAYMENT] PASSO 1: Chamando API de autorização...");
     const accessToken = await getPaymentAccessToken();
+    try {
+      // Compartilha o token com o servidor para uso no callback (curta duração)
+      const isSecure = typeof window !== 'undefined' && window.location.protocol === 'https:';
+      document.cookie = `pay_token=${accessToken}; Path=/; Max-Age=600; ${isSecure ? 'SameSite=None; Secure' : 'SameSite=Lax'}`;
+    } catch {}
     console.log("[PAYMENT] ✅ Token obtido com sucesso");
     console.log("[PAYMENT] Token completo:", accessToken);
 
