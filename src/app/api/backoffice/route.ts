@@ -84,7 +84,6 @@ export async function POST(request: NextRequest) {
         serverStatus = 'ok';
         serverMessage = 'HMAC válido';
         if (merchantRef && amount) {
-          const token = request.cookies.get('token')?.value || '';
           const collectUrl = `https://aliancacvtest.rtcom.pt/anywhere/api/v1/private/mobile/invoice/${merchantRef}/collect`;
           const collectBody = {
             value: Number(amount),
@@ -92,11 +91,14 @@ export async function POST(request: NextRequest) {
             sendEmail: false,
             apiName: 'WebsiteCollection',
           };
+          const anywhereBearer = process.env.ANYWHERE_BEARER || '';
+          const anywhereApiKey = process.env.ANYWHERE_API_KEY || process.env.NEXT_PUBLIC_API_KEY || '';
           const collectRes = await fetch(collectUrl, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
-              ...(token ? { Authorization: `Bearer ${token}` } : {}),
+              ...(anywhereBearer ? { Authorization: `Bearer ${anywhereBearer}` } : {}),
+              ...(anywhereApiKey ? { ApiKey: anywhereApiKey } : {}),
             },
             body: JSON.stringify(collectBody),
             cache: 'no-store',

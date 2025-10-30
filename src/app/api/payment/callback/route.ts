@@ -119,7 +119,6 @@ export async function GET(request: NextRequest) {
         serverStatus = 'ok';
         serverMessage = 'HMAC válido';
         if (merchantRef && amount) {
-          const token = request.cookies.get('token')?.value || '';
           const collectUrl = `https://aliancacvtest.rtcom.pt/anywhere/api/v1/private/mobile/invoice/${merchantRef}/collect`;
           const collectBody = {
             value: Number(amount),
@@ -129,12 +128,15 @@ export async function GET(request: NextRequest) {
           };
           console.log('[PAYMENT CALLBACK][GET] Collect URL:', collectUrl);
           console.log('[PAYMENT CALLBACK][GET] Collect body:', collectBody);
-          console.log('[PAYMENT CALLBACK][GET] Collect Authorization presente?:', !!token);
+          const anywhereBearer = process.env.ANYWHERE_BEARER || '';
+          const anywhereApiKey = process.env.ANYWHERE_API_KEY || process.env.NEXT_PUBLIC_API_KEY || '';
+          console.log('[PAYMENT CALLBACK][GET] Collect Anywhere Bearer presente?:', !!anywhereBearer);
           const collectRes = await fetch(collectUrl, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
-              ...(token ? { Authorization: `Bearer ${token}` } : {}),
+              ...(anywhereBearer ? { Authorization: `Bearer ${anywhereBearer}` } : {}),
+              ...(anywhereApiKey ? { ApiKey: anywhereApiKey } : {}),
             },
             body: JSON.stringify(collectBody),
             cache: 'no-store',
@@ -269,7 +271,6 @@ export async function POST(request: NextRequest) {
         serverStatus = 'ok';
         serverMessage = 'HMAC válido';
         if (merchantRef && amount) {
-          const token = request.cookies.get('token')?.value || '';
           const collectUrl = `https://aliancacvtest.rtcom.pt/anywhere/api/v1/private/mobile/invoice/${merchantRef}/collect`;
           const collectBody = {
             value: Number(amount),
@@ -279,12 +280,15 @@ export async function POST(request: NextRequest) {
           };
           console.log('[PAYMENT CALLBACK][POST] Collect URL:', collectUrl);
           console.log('[PAYMENT CALLBACK][POST] Collect body:', collectBody);
-          console.log('[PAYMENT CALLBACK][POST] Collect Authorization presente?:', !!token);
+          const anywhereBearer = process.env.ANYWHERE_BEARER || '';
+          const anywhereApiKey = process.env.ANYWHERE_API_KEY || process.env.NEXT_PUBLIC_API_KEY || '';
+          console.log('[PAYMENT CALLBACK][POST] Collect Anywhere Bearer presente?:', !!anywhereBearer);
           const collectRes = await fetch(collectUrl, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
-              ...(token ? { Authorization: `Bearer ${token}` } : {}),
+              ...(anywhereBearer ? { Authorization: `Bearer ${anywhereBearer}` } : {}),
+              ...(anywhereApiKey ? { ApiKey: anywhereApiKey } : {}),
             },
             body: JSON.stringify(collectBody),
             cache: 'no-store',
