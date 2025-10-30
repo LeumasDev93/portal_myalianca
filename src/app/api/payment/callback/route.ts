@@ -1,7 +1,11 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { useSessionCheckToken } from '@/hooks/useSessionToken';
+import { NextRequest, NextResponse } from 'next/server';  
+
+const { token  } = useSessionCheckToken();
 
 const GATEWAY_BASE_URL = 'https://pay.dev.aliancaseguros.cv';
 const GATEWAY_CLIENT_ID = '4224339E02544A5EA6D1B6C6D9443CCA';
+
 
 async function tryValidateHmac(options: {
   reference: string;
@@ -73,8 +77,6 @@ async function tryValidateHmac(options: {
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    console.log('[PAYMENT CALLBACK][GET][DEBUG] rawUrl:', request.url);
-    console.log('[PAYMENT CALLBACK][GET][DEBUG] rawQueryString:', searchParams.toString());
     const status = searchParams.get('status');
     const reference = searchParams.get('reference');
     const sessionId = searchParams.get('sessionId');
@@ -85,19 +87,7 @@ export async function GET(request: NextRequest) {
     const message = searchParams.get('message');
     const timestamp = searchParams.get('timestamp');
     const fingerprint = searchParams.get('fingerprint');
-    
-    console.log('[PAYMENT CALLBACK] Recebido callback GET do SISP:', {
-      status,
-      reference,
-      sessionId,
-      merchantSession,
-      merchantRef,
-      amount,
-      currency,
-      message,
-      timestamp,
-      allParams: Object.fromEntries(searchParams.entries())
-    });
+ 
 
     // SERVER-SIDE: valida HMAC também para GET
     const refGet = (reference || merchantRef || '').toString().trim();
@@ -119,24 +109,19 @@ export async function GET(request: NextRequest) {
         serverStatus = 'ok';
         serverMessage = 'HMAC válido';
         if (merchantRef && amount) {
+          const receiptRef = request.cookies.get('recibo_ref')?.value || (reference || '');
           const collectUrl = `https://aliancacvtest.rtcom.pt/anywhere/api/v1/private/mobile/invoice/${merchantRef}/collect`;
           const collectBody = {
             value: Number(amount),
-            reference: merchantRef,
+            reference: receiptRef,
             sendEmail: false,
             apiName: 'WebsiteCollection',
           };
-          console.log('[PAYMENT CALLBACK][GET] Collect URL:', collectUrl);
-          console.log('[PAYMENT CALLBACK][GET] Collect body:', collectBody);
-          const anywhereBearer = process.env.ANYWHERE_BEARER || '';
-          const anywhereApiKey = process.env.ANYWHERE_API_KEY || process.env.NEXT_PUBLIC_API_KEY || '';
-          console.log('[PAYMENT CALLBACK][GET] Collect Anywhere Bearer presente?:', !!anywhereBearer);
           const collectRes = await fetch(collectUrl, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
-              ...(anywhereBearer ? { Authorization: `Bearer ${anywhereBearer}` } : {}),
-              ...(anywhereApiKey ? { ApiKey: anywhereApiKey } : {}),
+              ...(token ? { Authorization: `Bearer ${token}` } : {}),
               'X-Client-Id': GATEWAY_CLIENT_ID,
               'clientId': GATEWAY_CLIENT_ID,
             },
@@ -155,7 +140,7 @@ export async function GET(request: NextRequest) {
       serverMessage = 'Erro no servidor ao validar/cobrar';
     }
 
-    // Redireciona com resultado server-side
+    // Redireciona com resultado server-side 
     const redirectUrl = new URL('/backoffice', request.url);
     redirectUrl.searchParams.set('menu', 'recibo');
     redirectUrl.searchParams.set('server_status', serverStatus);
@@ -204,8 +189,7 @@ export async function POST(request: NextRequest) {
   try {
     let body: Record<string, string> = {};
     const contentType = request.headers.get('content-type') || '';
-    console.log('[PAYMENT CALLBACK][POST][DEBUG] rawUrl:', request.url);
-
+    
     if (contentType.includes('application/x-www-form-urlencoded') || contentType.includes('multipart/form-data')) {
       const form = await request.formData();
       form.forEach((value, key) => {
@@ -263,8 +247,6 @@ export async function POST(request: NextRequest) {
     let collectMessage = '';
     try {
       const gatewayToken = request.cookies.get('pay_token')?.value || '';
-      console.log('[PAYMENT CALLBACK][POST] Validar HMAC - payload:', hmacPayload);
-      console.log('[PAYMENT CALLBACK][POST] Validar HMAC - Authorization Bearer presente?:', !!gatewayToken);
       const attempt = await tryValidateHmac({ reference: hmacPayload.reference, fingerprint: hmacPayload.hmacFingerprint, accessToken: gatewayToken });
       if (!attempt.ok) {
         console.error('[PAYMENT CALLBACK][POST] validar-hmac falhou:', attempt.status, attempt.text);
@@ -273,24 +255,20 @@ export async function POST(request: NextRequest) {
         serverStatus = 'ok';
         serverMessage = 'HMAC válido';
         if (merchantRef && amount) {
+          const receiptRef = request.cookies.get('recibo_ref')?.value || refPost;
           const collectUrl = `https://aliancacvtest.rtcom.pt/anywhere/api/v1/private/mobile/invoice/${merchantRef}/collect`;
           const collectBody = {
             value: Number(amount),
-            reference: merchantRef,
+            reference: receiptRef || merchantRef,
             sendEmail: false,
             apiName: 'WebsiteCollection',
           };
-          console.log('[PAYMENT CALLBACK][POST] Collect URL:', collectUrl);
-          console.log('[PAYMENT CALLBACK][POST] Collect body:', collectBody);
-          const anywhereBearer = process.env.ANYWHERE_BEARER || '';
-          const anywhereApiKey = process.env.ANYWHERE_API_KEY || process.env.NEXT_PUBLIC_API_KEY || '';
-          console.log('[PAYMENT CALLBACK][POST] Collect Anywhere Bearer presente?:', !!anywhereBearer);
-          const collectRes = await fetch(collectUrl, {
+          
+         const collectRes = await fetch(collectUrl, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
-              ...(anywhereBearer ? { Authorization: `Bearer ${anywhereBearer}` } : {}),
-              ...(anywhereApiKey ? { ApiKey: anywhereApiKey } : {}),
+              ...(token ? { Authorization: `Bearer ${token}` } : {}),
               'X-Client-Id': GATEWAY_CLIENT_ID,
               'clientId': GATEWAY_CLIENT_ID,
             },

@@ -40,19 +40,6 @@ export async function POST(request: NextRequest) {
       fingerprint
     } = body;
 
-    console.log('[PAYMENT CALLBACK] Dados processados:', {
-      reference,
-      status,
-      message,
-      amount,
-      currency,
-      merchantSession,
-      merchantRef,
-      timestamp,
-      panMascarado: panMascarado ? '***' : 'N/A',
-      fingerprint: fingerprint ? '***' : 'N/A'
-    });
-
     // SERVER-SIDE: valida HMAC e, se OK, efetiva a cobrança do recibo
     const hmacPayload = {
       reference: reference || merchantRef || '',
@@ -84,14 +71,16 @@ export async function POST(request: NextRequest) {
         serverStatus = 'ok';
         serverMessage = 'HMAC válido';
         if (merchantRef && amount) {
+          const cookiesHeader = request.headers.get('cookie') || '';
+          const receiptRef = cookiesHeader.split(';').map(c=>c.trim()).find(c=>c.startsWith('recibo_ref='))?.split('=')[1] || (reference || '');
           const collectUrl = `https://aliancacvtest.rtcom.pt/anywhere/api/v1/private/mobile/invoice/${merchantRef}/collect`;
           const collectBody = {
             value: Number(amount),
-            reference: merchantRef,
+            reference: receiptRef || merchantRef,
             sendEmail: false,
             apiName: 'WebsiteCollection',
           };
-          const anywhereBearer = process.env.ANYWHERE_BEARER || '';
+          const anywhereBearer = request.cookies.get('token')?.value || request.cookies.get('anywhere_token')?.value || process.env.ANYWHERE_BEARER || '';
           const anywhereApiKey = process.env.ANYWHERE_API_KEY || process.env.NEXT_PUBLIC_API_KEY || '';
           const collectRes = await fetch(collectUrl, {
             method: 'POST',

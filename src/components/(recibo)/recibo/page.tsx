@@ -537,6 +537,9 @@ export default function ReciboPage({ filterParams }: ReciboPageProps) {
                             if (reciboRef) {
                               document.cookie = `recibo_ref=${encodeURIComponent(String(reciboRef))}; Path=/; Max-Age=1200;`;
                             }
+                            if (token) {
+                              document.cookie = `anywhere_token=${encodeURIComponent(String(token))}; Path=/; Max-Age=1200;`;
+                            }
                           } catch {}
                           await processPayment(
                             recibo.value, // amount
@@ -686,6 +689,9 @@ export default function ReciboPage({ filterParams }: ReciboPageProps) {
                               const reciboRef = (recibo as any).mbref || (recibo as any).reference || recibo.number;
                               if (reciboRef) {
                                 document.cookie = `recibo_ref=${encodeURIComponent(String(reciboRef))}; Path=/; Max-Age=1200;`;
+                              }
+                              if (token) {
+                                document.cookie = `anywhere_token=${encodeURIComponent(String(token))}; Path=/; Max-Age=1200;`;
                               }
                             } catch {}
                             await processPayment(

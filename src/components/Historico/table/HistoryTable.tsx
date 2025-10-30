@@ -698,6 +698,15 @@ const HistoryTable = ({
                   selectedItem.rawData.status === 2) && (
                   <button
                     onClick={() => {
+                      try {
+                        const reciboRef = selectedItem?.rawData?.reference || selectedItem?.rawData?.mbref || selectedItem?.rawData?.number;
+                        if (reciboRef) {
+                          document.cookie = `recibo_ref=${encodeURIComponent(String(reciboRef))}; Path=/; Max-Age=1200;`;
+                        }
+                        if (token) {
+                          document.cookie = `anywhere_token=${encodeURIComponent(String(token))}; Path=/; Max-Age=1200;`;
+                        }
+                      } catch {}
                       handlePayment(selectedItem.rawData.number);
                       setShowPopup(false);
                     }}

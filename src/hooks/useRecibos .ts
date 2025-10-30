@@ -27,6 +27,7 @@ export const useRecibos = (initialFilters?: Record<string, string>) => {
     const { profile } = useUserProfile();
     const nifUser = profile?.user?.nif;
 
+    console.log('token de anywhere', token);
     // Busca os recibos da API
     useEffect(() => {
         if (!token || !nifUser) {
