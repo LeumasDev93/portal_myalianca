@@ -128,18 +128,19 @@ export async function processPaymentForModal(
     console.log("[PAYMENT] ==================== PROCESSO DE PAGAMENTO (MODAL) ====================");
     console.log("[PAYMENT] Dados de entrada:", { amount, userName, userEmail, userPhone, reciboNumber });
 
-    // Gera merchantRef e merchantSession únicos com máximo 15 caracteres
+    // Usa o número do recibo como merchantRef (máx. 15 chars)
+    const sanitizedInvoice = reciboNumber.replace(/[^a-zA-Z0-9\.\-]/g, "");
+    const merchantRef = sanitizedInvoice.substring(0, 15);
+    // Gera merchantSession único com máximo 15 caracteres
     const timestamp = Date.now();
-    const timestampStr = timestamp.toString().slice(-8); // Últimos 8 dígitos do timestamp
-    const randomStr = Math.random().toString(36).substring(2, 8).toUpperCase(); // 6 caracteres aleatórios
-    
-    // Formato: R/S + 8 dígitos + 6 caracteres = 15 caracteres
-    const merchantRef = `R${timestampStr}${randomStr}`.substring(0, 15);
+    const timestampStr = timestamp.toString().slice(-8);
+    const randomStr = Math.random().toString(36).substring(2, 8).toUpperCase();
     const merchantSession = `S${timestampStr}${randomStr}`.substring(0, 15);
     
     console.log("[PAYMENT] MerchantRef gerado:", merchantRef, `(${merchantRef.length} chars)`);
     console.log("[PAYMENT] MerchantSession gerado:", merchantSession, `(${merchantSession.length} chars)`);
     console.log("[PAYMENT] Recibo original (para referência):", reciboNumber);
+    console.log("[PAYMENT] merchantRef (mapeado para recibo):", merchantRef);
     
     // Validação de comprimento
     if (merchantRef.length > 15 || merchantSession.length > 15) {

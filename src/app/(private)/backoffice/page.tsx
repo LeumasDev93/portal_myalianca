@@ -234,61 +234,48 @@ const Page = () => {
     }
   }, [isClient, profile?.user?.tipo_utilizador, searchParams, router]);
 
-  // Exibe toast/pop com resultado do pagamento vindo via callback e limpa apenas esses parâmetros
+  // Exibe toast apenas para resultado SERVER-SIDE (validação/cobrança) e limpa parâmetros
   const paymentHandledRef = useRef(false);
 
   useEffect(() => {
     if (!isClient) return;
     if (paymentHandledRef.current) return;
     const params = new URLSearchParams(window.location.search);
-    // SISP pode enviar como payment_status ou status
-    const statusParam = params.get("payment_status") || params.get("status");
-    if (!statusParam) return;
-
-    const status = statusParam.toUpperCase();
-    const reference = params.get("reference") || params.get("merchantRef") || "";
-    const message = params.get("message") || (status === "PAGO" ? "Pagamento processado com sucesso" : "");
-    const amount = params.get("amount") || "";
-    const currency = params.get("currency") || "";
-    const merchantSession = params.get("merchantSession") || "";
-    const timestamp = params.get("timestamp") || "";
-
-    const isSuccess = ["PAGO", "SUCCESS", "COMPLETED"].includes(status);
-    const isError = ["ERRO", "ERROR", "FAILED", "CANCELLED"].includes(status);
-
-    const title = isSuccess
-      ? "Pagamento concluído"
-      : isError
-      ? "Pagamento não concluído"
-      : "Pagamento em processamento";
-
-    const descriptionLines = [
-      reference && `Referência: ${reference}`,
-      amount && currency && `Valor: ${amount} ${currency}`,
-      merchantSession && `Sessão: ${merchantSession}`,
-      timestamp && `Data: ${timestamp}`,
-      message && `Mensagem: ${message}`,
-    ].filter(Boolean) as string[];
-
-    toast({
-      title,
-      description: descriptionLines.join("\n"),
-      variant: isError ? "destructive" : isSuccess ? "default" : "default",
-    });
+    // Exibir toast apenas se houver resultado do servidor
+    const serverStatus = params.get("server_status");
+    const serverMessage = params.get("server_message");
+    const collectStatus = params.get("collect_status");
+    const collectMessage = params.get("collect_message");
+    if (serverStatus || collectStatus) {
+      const isOk = (serverStatus === "ok") && (collectStatus ? collectStatus === "ok" : true);
+      const title = isOk ? "Pagamento confirmado" : "Validação/Cobrança falhou";
+      const lines = [serverMessage, collectMessage].filter(Boolean) as string[];
+      toast({
+        title,
+        description: lines.join("\n"),
+        variant: isOk ? "default" : "destructive",
+      });
+    }
 
     // Limpa apenas os parâmetros de pagamento da URL, preservando menu e demais filtros
     const paymentKeys = [
+      // params do callback SISP (limpar silenciosamente)
       "payment_status",
       "status",
       "reference",
       "merchantSession",
-      "merchantRef",
-      "amount",
       "currency",
       "message",
       "timestamp",
       "panMascarado",
       "fingerprint",
+      // params de resultado server-side (após exibição)
+      "server_status",
+      "server_message",
+      "collect_status",
+      "collect_message",
+      "amount",
+      "merchantRef",
     ];
     let changed = false;
     for (const key of paymentKeys) {
