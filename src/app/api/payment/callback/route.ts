@@ -28,9 +28,13 @@ export async function GET(request: NextRequest) {
     });
 
     // SERVER-SIDE: valida HMAC também para GET
+    const decodedRef = (reference || merchantRef || '').toString().trim();
+    const decodedFp = (() => {
+      try { return decodeURIComponent((fingerprint || '').toString()); } catch { return (fingerprint || '').toString(); }
+    })();
     const hmacPayload = {
-      reference: reference || merchantRef || '',
-      hmacFingerprint: (fingerprint || '').toString(),
+      reference: decodedRef,
+      hmacFingerprint: decodedFp,
     };
     let serverStatus = 'error';
     let serverMessage = 'Falha na validação HMAC';
@@ -174,9 +178,12 @@ export async function POST(request: NextRequest) {
     });
 
     // SERVER-SIDE: valida HMAC e, se OK, efetiva a cobrança do recibo
+    const decodedRefPost = (reference || merchantRef || '').toString().trim();
+    const rawFpPost = (body.hmacFingerprint || fingerprint || '').toString();
+    const decodedFpPost = (() => { try { return decodeURIComponent(rawFpPost); } catch { return rawFpPost; } })();
     const hmacPayload = {
-      reference: reference || merchantRef || '',
-      hmacFingerprint: (body.hmacFingerprint || fingerprint || '').toString(),
+      reference: decodedRefPost,
+      hmacFingerprint: decodedFpPost,
     };
     let serverStatus = 'error';
     let serverMessage = 'Falha na validação HMAC';
