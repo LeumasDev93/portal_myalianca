@@ -127,7 +127,15 @@ export async function POST(request: NextRequest) {
     redirectUrl.searchParams.set('message', message || '');
     redirectUrl.searchParams.set('timestamp', timestamp || '');
     
-    return NextResponse.redirect(redirectUrl);
+    const res = NextResponse.redirect(redirectUrl);
+    // Garante 1 passagem sem token após pagamento
+    res.cookies.set('postpay', '1', {
+      path: '/',
+      maxAge: 10,
+      sameSite: 'none',
+      secure: true,
+    });
+    return res;
   } catch (error) {
     console.error('[PAYMENT CALLBACK] Erro no callback POST:', error);
     

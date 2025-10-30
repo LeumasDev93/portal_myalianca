@@ -47,12 +47,20 @@ export function middleware(req: NextRequest) {
     // Verifica se há parâmetros de callback de pagamento (não redireciona se vier do SISP)
     const isPaymentCallback = req.nextUrl.searchParams.has('payment_status') || 
                              req.nextUrl.searchParams.has('reference') ||
-                             req.nextUrl.searchParams.has('sessionId');
+                             req.nextUrl.searchParams.has('sessionId') ||
+                             req.nextUrl.searchParams.has('merchantSession') ||
+                             req.nextUrl.searchParams.has('merchantRef');
     
     if (isPaymentCallback) {
-      // Permite acesso mesmo sem token se vier do callback de pagamento
-      // O cliente vai restaurar a sessão do cookie
-      return NextResponse.next();
+      // Seta cookie postpay aqui também como fallback e permite a passagem
+      const res = NextResponse.next();
+      res.cookies.set('postpay', '1', {
+        path: '/',
+        maxAge: 10,
+        sameSite: 'none',
+        secure: true,
+      });
+      return res;
     }
 
     const redirectUrl = req.nextUrl.clone();
