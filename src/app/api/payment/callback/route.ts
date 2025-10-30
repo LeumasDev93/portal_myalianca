@@ -125,7 +125,7 @@ export async function POST(request: NextRequest) {
     let collectStatus = 'skipped';
     let collectMessage = '';
     try {
-      const validateRes = await fetch('https://aliancacvtest.rtcom.pt/api/v1/pagamentos/validar-hmac', {
+      const validateRes = await fetch('https://pay.dev.aliancaseguros.cv/api/v1/pagamentos/validar-hmac', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(hmacPayload),
