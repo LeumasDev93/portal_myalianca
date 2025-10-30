@@ -48,11 +48,17 @@ export async function GET(request: NextRequest) {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Accept': 'application/json',
           ...(gatewayToken ? { Authorization: `Bearer ${gatewayToken}` } : {}),
+          ...(gatewayToken ? { 'X-Access-Token': gatewayToken } : {}),
         },
         body: JSON.stringify(hmacPayload),
         cache: 'no-store',
       });
+      if (!validateRes.ok) {
+        const txt = await validateRes.text().catch(() => '');
+        console.error('[PAYMENT CALLBACK][GET] validar-hmac falhou:', validateRes.status, txt);
+      }
       if (validateRes.ok) {
         serverStatus = 'ok';
         serverMessage = 'HMAC válido';
@@ -197,11 +203,17 @@ export async function POST(request: NextRequest) {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Accept': 'application/json',
           ...(gatewayToken ? { Authorization: `Bearer ${gatewayToken}` } : {}),
+          ...(gatewayToken ? { 'X-Access-Token': gatewayToken } : {}),
         },
         body: JSON.stringify(hmacPayload),
         cache: 'no-store',
       });
+      if (!validateRes.ok) {
+        const txt = await validateRes.text().catch(() => '');
+        console.error('[PAYMENT CALLBACK][POST] validar-hmac falhou:', validateRes.status, txt);
+      }
       if (validateRes.ok) {
         serverStatus = 'ok';
         serverMessage = 'HMAC válido';
