@@ -99,6 +99,8 @@ export async function POST(request: NextRequest) {
               'Content-Type': 'application/json',
               ...(anywhereBearer ? { Authorization: `Bearer ${anywhereBearer}` } : {}),
               ...(anywhereApiKey ? { ApiKey: anywhereApiKey } : {}),
+              'X-Client-Id': GATEWAY_CLIENT_ID,
+              'clientId': GATEWAY_CLIENT_ID,
             },
             body: JSON.stringify(collectBody),
             cache: 'no-store',
