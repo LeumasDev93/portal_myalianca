@@ -532,6 +532,12 @@ export default function ReciboPage({ filterParams }: ReciboPageProps) {
                         }));
 
                         try {
+                          try {
+                            const reciboRef = (recibo as any).mbref || (recibo as any).reference || recibo.number;
+                            if (reciboRef) {
+                              document.cookie = `recibo_ref=${encodeURIComponent(String(reciboRef))}; Path=/; Max-Age=1200;`;
+                            }
+                          } catch {}
                           await processPayment(
                             recibo.value, // amount
                             profile.user.nome, // userName
@@ -676,6 +682,12 @@ export default function ReciboPage({ filterParams }: ReciboPageProps) {
                           }));
 
                           try {
+                            try {
+                              const reciboRef = (recibo as any).mbref || (recibo as any).reference || recibo.number;
+                              if (reciboRef) {
+                                document.cookie = `recibo_ref=${encodeURIComponent(String(reciboRef))}; Path=/; Max-Age=1200;`;
+                              }
+                            } catch {}
                             await processPayment(
                               recibo.value, // amount
                               profile.user.nome, // userName
