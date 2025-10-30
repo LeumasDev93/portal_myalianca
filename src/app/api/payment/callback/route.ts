@@ -28,13 +28,11 @@ export async function GET(request: NextRequest) {
     });
 
     // SERVER-SIDE: valida HMAC também para GET
-    const decodedRef = (reference || merchantRef || '').toString().trim();
-    const decodedFp = (() => {
-      try { return decodeURIComponent((fingerprint || '').toString()); } catch { return (fingerprint || '').toString(); }
-    })();
+    const refGet = (reference || merchantRef || '').toString().trim();
+    const fpGet = (fingerprint || '').toString(); // mantém como veio (base64)
     const hmacPayload = {
-      reference: decodedRef,
-      hmacFingerprint: decodedFp,
+      reference: refGet,
+      hmacFingerprint: fpGet,
     };
     let serverStatus = 'error';
     let serverMessage = 'Falha na validação HMAC';
@@ -52,7 +50,7 @@ export async function GET(request: NextRequest) {
           ...(gatewayToken ? { Authorization: `Bearer ${gatewayToken}` } : {}),
           ...(gatewayToken ? { 'X-Access-Token': gatewayToken } : {}),
         },
-        body: JSON.stringify(hmacPayload),
+        body: JSON.stringify({ ...hmacPayload, accessToken: gatewayToken }),
         cache: 'no-store',
       });
       if (!validateRes.ok) {
@@ -184,12 +182,11 @@ export async function POST(request: NextRequest) {
     });
 
     // SERVER-SIDE: valida HMAC e, se OK, efetiva a cobrança do recibo
-    const decodedRefPost = (reference || merchantRef || '').toString().trim();
-    const rawFpPost = (body.hmacFingerprint || fingerprint || '').toString();
-    const decodedFpPost = (() => { try { return decodeURIComponent(rawFpPost); } catch { return rawFpPost; } })();
+    const refPost = (reference || merchantRef || '').toString().trim();
+    const fpPost = (body.hmacFingerprint || fingerprint || '').toString(); // mantém como veio
     const hmacPayload = {
-      reference: decodedRefPost,
-      hmacFingerprint: decodedFpPost,
+      reference: refPost,
+      hmacFingerprint: fpPost,
     };
     let serverStatus = 'error';
     let serverMessage = 'Falha na validação HMAC';
@@ -207,7 +204,7 @@ export async function POST(request: NextRequest) {
           ...(gatewayToken ? { Authorization: `Bearer ${gatewayToken}` } : {}),
           ...(gatewayToken ? { 'X-Access-Token': gatewayToken } : {}),
         },
-        body: JSON.stringify(hmacPayload),
+        body: JSON.stringify({ ...hmacPayload, accessToken: gatewayToken }),
         cache: 'no-store',
       });
       if (!validateRes.ok) {
