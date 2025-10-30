@@ -1,5 +1,26 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+async function tryValidateHmac(options: {
+  reference: string;
+  fingerprint: string;
+  accessToken?: string;
+}): Promise<{ ok: boolean; status: number; text: string }> {
+  const { reference, fingerprint, accessToken } = options;
+  const url = 'https://pay.dev.aliancaseguros.cv/api/v1/pagamentos/validar-hmac';
+  const payload = { reference, hmacFingerprint: fingerprint };
+  console.log('[HMAC] ->', payload);
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+    },
+    body: JSON.stringify(payload),
+    cache: 'no-store',
+  });
+  return { ok: res.ok, status: res.status, text: await res.text().catch(() => '') };
+}
+
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
@@ -30,10 +51,7 @@ export async function GET(request: NextRequest) {
     // SERVER-SIDE: valida HMAC também para GET
     const refGet = (reference || merchantRef || '').toString().trim();
     const fpGet = (fingerprint || '').toString(); // mantém como veio (base64)
-    const hmacPayload = {
-      reference: refGet,
-      hmacFingerprint: fpGet,
-    };
+    const hmacPayload = { reference: refGet, hmacFingerprint: fpGet };
     let serverStatus = 'error';
     let serverMessage = 'Falha na validação HMAC';
     let collectStatus = 'skipped';
@@ -42,22 +60,11 @@ export async function GET(request: NextRequest) {
       const gatewayToken = request.cookies.get('pay_token')?.value || '';
       console.log('[PAYMENT CALLBACK][GET] Validar HMAC - payload:', hmacPayload);
       console.log('[PAYMENT CALLBACK][GET] Validar HMAC - Authorization Bearer presente?:', !!gatewayToken);
-      const validateRes = await fetch('https://pay.dev.aliancaseguros.cv/api/v1/pagamentos/validar-hmac', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-          ...(gatewayToken ? { Authorization: `Bearer ${gatewayToken}` } : {}),
-          ...(gatewayToken ? { 'X-Access-Token': gatewayToken } : {}),
-        },
-        body: JSON.stringify({ ...hmacPayload, accessToken: gatewayToken }),
-        cache: 'no-store',
-      });
-      if (!validateRes.ok) {
-        const txt = await validateRes.text().catch(() => '');
-        console.error('[PAYMENT CALLBACK][GET] validar-hmac falhou:', validateRes.status, txt);
+      const attempt = await tryValidateHmac({ reference: hmacPayload.reference, fingerprint: hmacPayload.hmacFingerprint, accessToken: gatewayToken });
+      if (!attempt.ok) {
+        console.error('[PAYMENT CALLBACK][GET] validar-hmac falhou:', attempt.status, attempt.text);
       }
-      if (validateRes.ok) {
+      if (attempt.ok) {
         serverStatus = 'ok';
         serverMessage = 'HMAC válido';
         if (merchantRef && amount) {
@@ -86,7 +93,7 @@ export async function GET(request: NextRequest) {
         }
       } else {
         serverStatus = 'error';
-        serverMessage = `Validação HMAC falhou (${validateRes.status})`;
+        serverMessage = `Validação HMAC falhou`;
       }
     } catch {
       serverStatus = 'error';
@@ -184,10 +191,7 @@ export async function POST(request: NextRequest) {
     // SERVER-SIDE: valida HMAC e, se OK, efetiva a cobrança do recibo
     const refPost = (reference || merchantRef || '').toString().trim();
     const fpPost = (body.hmacFingerprint || fingerprint || '').toString(); // mantém como veio
-    const hmacPayload = {
-      reference: refPost,
-      hmacFingerprint: fpPost,
-    };
+    const hmacPayload = { reference: refPost, hmacFingerprint: fpPost };
     let serverStatus = 'error';
     let serverMessage = 'Falha na validação HMAC';
     let collectStatus = 'skipped';
@@ -196,22 +200,11 @@ export async function POST(request: NextRequest) {
       const gatewayToken = request.cookies.get('pay_token')?.value || '';
       console.log('[PAYMENT CALLBACK][POST] Validar HMAC - payload:', hmacPayload);
       console.log('[PAYMENT CALLBACK][POST] Validar HMAC - Authorization Bearer presente?:', !!gatewayToken);
-      const validateRes = await fetch('https://pay.dev.aliancaseguros.cv/api/v1/pagamentos/validar-hmac', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-          ...(gatewayToken ? { Authorization: `Bearer ${gatewayToken}` } : {}),
-          ...(gatewayToken ? { 'X-Access-Token': gatewayToken } : {}),
-        },
-        body: JSON.stringify({ ...hmacPayload, accessToken: gatewayToken }),
-        cache: 'no-store',
-      });
-      if (!validateRes.ok) {
-        const txt = await validateRes.text().catch(() => '');
-        console.error('[PAYMENT CALLBACK][POST] validar-hmac falhou:', validateRes.status, txt);
+      const attempt = await tryValidateHmac({ reference: hmacPayload.reference, fingerprint: hmacPayload.hmacFingerprint, accessToken: gatewayToken });
+      if (!attempt.ok) {
+        console.error('[PAYMENT CALLBACK][POST] validar-hmac falhou:', attempt.status, attempt.text);
       }
-      if (validateRes.ok) {
+      if (attempt.ok) {
         serverStatus = 'ok';
         serverMessage = 'HMAC válido';
         if (merchantRef && amount) {
@@ -240,7 +233,7 @@ export async function POST(request: NextRequest) {
         }
       } else {
         serverStatus = 'error';
-        serverMessage = `Validação HMAC falhou (${validateRes.status})`;
+        serverMessage = `Validação HMAC falhou`;
       }
     } catch {
       serverStatus = 'error';
