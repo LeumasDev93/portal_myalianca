@@ -65,6 +65,7 @@ export async function POST(request: NextRequest) {
             .find((c) => c.startsWith('recibo_ref='))
             ?.split('=')[1] || reference || '';
 
+            console.log('receiptRef -->', receiptRef, cookiesHeader,  "<-- cookiesHeader");
           const collectUrl = `https://aliancacvtest.rtcom.pt/anywhere/api/v1/private/mobile/invoice/${encodeURIComponent(receiptRef)}/collect`;
           const collectBody = {
             value: Number(amount),
@@ -86,6 +87,7 @@ export async function POST(request: NextRequest) {
             body: JSON.stringify(collectBody),
             cache: 'no-store',
           });
+          console.log('[COLLECT]', collectUrl, 'status=', collectRes.status);
           collectStatus = collectRes.ok ? 'ok' : 'error';
           collectMessage = collectRes.ok ? 'Cobrança confirmada' : `Falha ao cobrar (${collectRes.status})`;
         }
