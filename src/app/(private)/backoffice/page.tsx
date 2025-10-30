@@ -299,14 +299,21 @@ const Page = () => {
     }
     if (changed) {
       paymentHandledRef.current = true;
-      // Remove cookie 'postpay' (não mais necessário após entrada na página)
-      try {
-        document.cookie = 'postpay=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT';
-      } catch {}
+      // NÃO limpar o cookie 'postpay' aqui para não bloquear a próxima navegação
+      // Deixe a middleware permitir a próxima passagem; limparemos o cookie após autenticar
       const qs = params.toString();
       router.replace(qs ? `?${qs}` : "?menu=recibo", { scroll: false });
     }
   }, [isClient, router, searchParams, toast]);
+
+  // Limpa o cookie 'postpay' apenas quando o usuário já está autenticado
+  useEffect(() => {
+    if (!isClient) return;
+    if (!user) return;
+    try {
+      document.cookie = 'postpay=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT';
+    } catch {}
+  }, [isClient, user]);
 
   useEffect(() => {
     const handleResize = () => {
