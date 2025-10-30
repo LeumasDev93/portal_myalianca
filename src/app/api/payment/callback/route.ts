@@ -75,7 +75,6 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const reference = searchParams.get('reference');
-    const merchantSession = searchParams.get('merchantSession');
     const merchantRef = searchParams.get('merchantRef');
     const amount = searchParams.get('amount');
     const fingerprint = searchParams.get('fingerprint');
@@ -117,13 +116,11 @@ export async function GET(request: NextRequest) {
             } catch {}
             return '';
           })());
-          const anywhereApiKey = process.env.ANYWHERE_API_KEY || process.env.NEXT_PUBLIC_API_KEY || '';
           const collectRes = await fetch(collectUrl, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
               ...(anywhereBearer ? { Authorization: `Bearer ${anywhereBearer}` } : {}),
-              ...(anywhereApiKey ? { ApiKey: anywhereApiKey } : {}),
               'X-Client-Id': GATEWAY_CLIENT_ID,
               'clientId': GATEWAY_CLIENT_ID,
             },
@@ -215,14 +212,8 @@ export async function POST(request: NextRequest) {
     // Extrai os dados do callback do SISP
     const {
       reference,
-      status,
-      message,
       amount,
-      currency,
-      merchantSession,
       merchantRef,
-      timestamp,
-      panMascarado,
       fingerprint
     } = body;
 
