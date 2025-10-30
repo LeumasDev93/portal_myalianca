@@ -70,18 +70,22 @@ export async function createPaymentIntent(
     });
 
     if (!response.ok) {
-      // Tenta pegar detalhes do erro
-      let errorDetails = "";
-      try {
-        const errorData = await response.json();
-        errorDetails = JSON.stringify(errorData, null, 2);
-        console.error("[PAYMENT] Detalhes do erro da API:", errorDetails);
-      } catch {
-        errorDetails = await response.text();
-        console.error("[PAYMENT] Erro (text):", errorDetails);
+      const ct = response.headers.get("content-type") || "";
+      if (ct.includes("application/json")) {
+        let parsed: unknown = null;
+        try { parsed = await response.json(); } catch {}
+        const brief = parsed && typeof parsed === 'object' && Object.keys(parsed as Record<string, unknown>).length > 0
+          ? JSON.stringify(parsed)
+          : `status=${response.status}`;
+        console.warn("[PAYMENT] Falha ao criar intenção:", brief);
+      } else if (ct.includes("text/plain")) {
+        const text = await response.text();
+        console.warn("[PAYMENT] Falha (texto):", text.slice(0, 200));
+      } else {
+        // HTML ou desconhecido: não despejar no console
+        console.warn("[PAYMENT] Falha ao criar intenção (provável HTML)", `status=${response.status}`);
       }
-      
-      throw new Error(`Erro ao criar intenção de pagamento: ${response.status} - ${errorDetails}`);
+      throw new Error(`Erro ao criar intenção de pagamento: ${response.status}`);
     }
 
     const responseData: PaymentIntentResponse = await response.json();
@@ -122,15 +126,15 @@ export async function processPaymentForModal(
   userName: string,
   userEmail: string,
   userPhone: string,
-  reciboNumber: string // Número do recibo (para referência)
+  reciboRef: string // Referência do recibo (P...)
 ): Promise<{ checkoutUrl: string; reference: string; sessionId: string }> {
   
     console.log("[PAYMENT] ==================== PROCESSO DE PAGAMENTO (MODAL) ====================");
-    console.log("[PAYMENT] Dados de entrada:", { amount, userName, userEmail, userPhone, reciboNumber });
+    console.log("[PAYMENT] Dados de entrada:", { amount, userName, userEmail, userPhone, reciboRef });
 
-    // Usa o número do recibo como merchantRef (máx. 15 chars)
-    const sanitizedInvoice = reciboNumber.replace(/[^a-zA-Z0-9\.\-]/g, "");
-    const merchantRef = sanitizedInvoice.substring(0, 15);
+    // Usa a referência do recibo (P...) como merchantRef (máx. 15 chars para SISP)
+    const sanitizedRef = reciboRef.replace(/[^a-zA-Z0-9\.\-]/g, "");
+    const merchantRef = sanitizedRef.substring(0, 15);
     // Gera merchantSession único com máximo 15 caracteres
     const timestamp = Date.now();
     const timestampStr = timestamp.toString().slice(-8);
@@ -139,7 +143,7 @@ export async function processPaymentForModal(
     
     console.log("[PAYMENT] MerchantRef gerado:", merchantRef, `(${merchantRef.length} chars)`);
     console.log("[PAYMENT] MerchantSession gerado:", merchantSession, `(${merchantSession.length} chars)`);
-    console.log("[PAYMENT] Recibo original (para referência):", reciboNumber);
+    console.log("[PAYMENT] Recibo (referência P...):", reciboRef);
     console.log("[PAYMENT] merchantRef (mapeado para recibo):", merchantRef);
     
     // Validação de comprimento
@@ -186,7 +190,7 @@ export async function processPaymentForModal(
     console.log("[PAYMENT] Reference (Checkout UUID):", paymentIntent.reference);
     console.log("[PAYMENT] SessionId:", paymentIntent.sessionId);
     console.log("[PAYMENT] MerchantRef (Recibo):", paymentIntent.merchantRef);
-    console.log("[PAYMENT] Recibo original:", reciboNumber);
+    console.log("[PAYMENT] Recibo (referência P...):", reciboRef);
     
     const checkoutUrl = getCheckoutUrl(paymentIntent.reference, paymentIntent.sessionId);
     console.log("[PAYMENT] ✅ URL do checkout gerada com sucesso!");
@@ -206,11 +210,11 @@ export async function processPayment(
   userName: string,
   userEmail: string,
   userPhone: string,
-  reciboNumber: string // Número do recibo (para referência)
+  reciboRef: string // Referência do recibo (P...)
 ): Promise<void> {
   try {
     console.log("[PAYMENT] ==================== PROCESSO DE PAGAMENTO ====================");
-    console.log("[PAYMENT] Dados de entrada:", { amount, userName, userEmail, userPhone, reciboNumber });
+    console.log("[PAYMENT] Dados de entrada:", { amount, userName, userEmail, userPhone, reciboRef });
 
     // Gera merchantRef e merchantSession únicos com máximo 15 caracteres
     const timestamp = Date.now();
@@ -218,12 +222,13 @@ export async function processPayment(
     const randomStr = Math.random().toString(36).substring(2, 8).toUpperCase(); // 6 caracteres aleatórios
     
     // Formato: R/S + 8 dígitos + 6 caracteres = 15 caracteres
-    const merchantRef = `R${timestampStr}${randomStr}`.substring(0, 15);
+    // merchantRef deve ser a referência do recibo (P...)
+    const merchantRef = reciboRef.substring(0, 15);
     const merchantSession = `S${timestampStr}${randomStr}`.substring(0, 15);
     
     console.log("[PAYMENT] MerchantRef gerado:", merchantRef, `(${merchantRef.length} chars)`);
     console.log("[PAYMENT] MerchantSession gerado:", merchantSession, `(${merchantSession.length} chars)`);
-    console.log("[PAYMENT] Recibo original (para referência):", reciboNumber);
+    console.log("[PAYMENT] Recibo (referência P...):", reciboRef);
     
     // Validação de comprimento
     if (merchantRef.length > 15 || merchantSession.length > 15) {
@@ -264,7 +269,7 @@ export async function processPayment(
     console.log("[PAYMENT] Reference (Checkout UUID):", paymentIntent.reference);
     console.log("[PAYMENT] SessionId:", paymentIntent.sessionId);
     console.log("[PAYMENT] MerchantRef (Recibo):", paymentIntent.merchantRef);
-    console.log("[PAYMENT] Recibo original:", reciboNumber);
+    console.log("[PAYMENT] Recibo (referência P...):", reciboRef);
     
     openCheckout(paymentIntent.reference, paymentIntent.sessionId);
     console.log("[PAYMENT] ✅ Checkout aberto com sucesso!");
