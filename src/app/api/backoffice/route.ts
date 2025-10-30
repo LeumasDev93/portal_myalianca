@@ -52,7 +52,7 @@ export async function POST(request: NextRequest) {
 
     // SERVER-SIDE: valida HMAC e, se OK, efetiva a cobrança do recibo
     const hmacPayload = {
-      reference: reference,
+      reference: reference || merchantRef || '',
       hmacFingerprint: (body.hmacFingerprint || body.fingerprint || '').toString(),
     };
     let serverStatus = 'error';

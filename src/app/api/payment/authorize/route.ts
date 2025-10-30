@@ -43,7 +43,15 @@ export async function POST() {
 
     console.log("[PAYMENT API] ✅ Token gerado com sucesso");
     console.log("[PAYMENT API] accessToken:", data.accessToken);
-    return NextResponse.json({ accessToken: data.accessToken });
+    const res = NextResponse.json({ accessToken: data.accessToken });
+    // Define cookie curto para reuso server-side (validação HMAC)
+    res.cookies.set('pay_token', data.accessToken, {
+      path: '/',
+      maxAge: 600,
+      sameSite: 'none',
+      secure: true,
+    });
+    return res;
   } catch (error) {
     console.error("[PAYMENT API] Erro na autorização:", error);
     const errorMessage = error instanceof Error ? error.message : "Erro ao obter token de pagamento";
