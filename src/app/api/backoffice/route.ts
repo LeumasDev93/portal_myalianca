@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+const GATEWAY_BASE_URL = 'https://pay.dev.aliancaseguros.cv';
+const GATEWAY_CLIENT_ID = '4224339E02544A5EA6D1B6C6D9443CCA';
+
 export async function POST(request: NextRequest) {
   try {
     let body: Record<string, string> = {};
@@ -61,11 +64,12 @@ export async function POST(request: NextRequest) {
     let collectMessage = '';
     try {
       const gatewayToken = request.cookies.get('pay_token')?.value || '';
-      const validateRes = await fetch('https://pay.dev.aliancaseguros.cv/api/v1/pagamentos/validar-hmac', {
+      const validateRes = await fetch(`${GATEWAY_BASE_URL}/api/v1/pagamentos/validar-hmac`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
+          'X-Client-Id': GATEWAY_CLIENT_ID,
           ...(gatewayToken ? { Authorization: `Bearer ${gatewayToken}` } : {}),
           ...(gatewayToken ? { 'X-Access-Token': gatewayToken } : {}),
         },
