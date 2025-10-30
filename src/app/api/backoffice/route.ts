@@ -3,21 +3,6 @@ import { NextRequest, NextResponse } from 'next/server';
 const GATEWAY_BASE_URL = 'https://pay.dev.aliancaseguros.cv';
 const GATEWAY_CLIENT_ID = '4224339E02544A5EA6D1B6C6D9443CCA';
 
-async function getAnywhereTokenFromSession(req: NextRequest): Promise<string | null> {
-  try {
-    const base = new URL(req.url).origin;
-    const res = await fetch(`${base}/api/auth/session`, {
-      headers: { cookie: req.headers.get('cookie') || '' },
-      cache: 'no-store',
-    });
-    if (!res.ok) return null;
-    const data = await res.json();
-    return data?.user?.accessToken || null;
-  } catch {
-    return null;
-  }
-}
-
 export async function POST(request: NextRequest) {
   try {
     let body: Record<string, string> = {};
@@ -88,7 +73,7 @@ export async function POST(request: NextRequest) {
             apiName: 'WebsiteCollection',
           };
 
-          const anywhereBearer = (await getAnywhereTokenFromSession(request)) || '';
+          const anywhereBearer = request.cookies.get('anywhere_token')?.value || request.cookies.get('token')?.value || '';
           const anywhereApiKey = process.env.ANYWHERE_API_KEY || process.env.NEXT_PUBLIC_API_KEY || '';
 
           const collectRes = await fetch(collectUrl, {

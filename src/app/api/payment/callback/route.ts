@@ -101,21 +101,14 @@ export async function GET(request: NextRequest) {
         serverMessage = 'HMAC válido';
         if (merchantRef && amount) {
           const receiptRef = request.cookies.get('recibo_ref')?.value || (reference || '');
-          const collectUrl = `https://aliancacvtest.rtcom.pt/anywhere/api/v1/private/mobile/invoice/${merchantRef}/collect`;
+          const collectUrl = `https://aliancacvtest.rtcom.pt/anywhere/api/v1/private/mobile/invoice/${receiptRef}/collect`;
           const collectBody = {
             value: Number(amount),
             reference: receiptRef,
             sendEmail: false,
             apiName: 'WebsiteCollection',
           };
-          const anywhereBearer = (await (async () => {
-            try {
-              const base = new URL(request.url).origin;
-              const s = await fetch(`${base}/api/auth/session`, { headers: { cookie: request.headers.get('cookie') || '' }, cache: 'no-store' });
-              if (s.ok) { const d = await s.json(); return d?.user?.accessToken || ''; }
-            } catch {}
-            return '';
-          })());
+          const anywhereBearer = request.cookies.get('anywhere_token')?.value || request.cookies.get('token')?.value || '';
           const collectRes = await fetch(collectUrl, {
             method: 'POST',
             headers: {
@@ -244,14 +237,7 @@ export async function POST(request: NextRequest) {
             apiName: 'WebsiteCollection',
           };
           
-          const anywhereBearerPost = (await (async () => {
-            try {
-              const base = new URL(request.url).origin;
-              const s = await fetch(`${base}/api/auth/session`, { headers: { cookie: request.headers.get('cookie') || '' }, cache: 'no-store' });
-              if (s.ok) { const d = await s.json(); return d?.user?.accessToken || ''; }
-            } catch {}
-            return '';
-          })());
+          const anywhereBearerPost = request.cookies.get('anywhere_token')?.value || request.cookies.get('token')?.value || '';
           const anywhereApiKeyPost = process.env.ANYWHERE_API_KEY || process.env.NEXT_PUBLIC_API_KEY || '';
           const collectRes = await fetch(collectUrl, {
             method: 'POST',

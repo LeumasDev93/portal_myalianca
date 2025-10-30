@@ -21,10 +21,8 @@ export const useSessionCheckToken = () => {
         !session.user?.accessToken ||
         tokenExpiry <= currentTime
       ) {
-        console.warn("Sem sessão ou token expirado — tentando renovar...");
 
         const result = await signIn("credentials", { redirect: false });
-        console.log("Resultado do signIn:", result);
 
         if (result?.error) {
           throw new Error("Falha ao renovar o token.");

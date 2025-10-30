@@ -218,6 +218,15 @@ export default function ReciboPage({ filterParams }: ReciboPageProps) {
         }));
 
         try {
+          try {
+            const reciboRef = (recibos.find((r) => r.number === invoiceNumber) as any)?.mbref || invoiceNumber;
+            if (reciboRef) {
+              document.cookie = `recibo_ref=${encodeURIComponent(String(reciboRef))}; Path=/; Max-Age=1200;`;
+            }
+            if (token) {
+              document.cookie = `anywhere_token=${encodeURIComponent(String(token))}; Path=/; Max-Age=1200;`;
+            }
+          } catch {}
           await processPayment(
             recibo.value, // amount
             profile.user.nome, // userName

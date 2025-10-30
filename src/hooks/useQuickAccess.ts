@@ -28,10 +28,8 @@ export function useQuickAccess() {
   const { profile } = useUserProfile();
 
   const fetchQuickAccess = async () => {
-    console.log("Fetching quick access for user:", profile?.user?.id);
     
     if (!profile?.user?.id) {
-      console.log("No user ID available");
       setIsLoading(false);
       return;
     }
