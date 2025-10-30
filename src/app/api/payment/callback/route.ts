@@ -1,12 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+const GATEWAY_BASE_URL = 'https://pay.dev.aliancaseguros.cv';
+const GATEWAY_CLIENT_ID = '4224339E02544A5EA6D1B6C6D9443CCA';
+
 async function tryValidateHmac(options: {
   reference: string;
   fingerprint: string;
   accessToken?: string;
 }): Promise<{ ok: boolean; status: number; text: string }> {
   const { reference, fingerprint, accessToken } = options;
-  const url = 'https://pay.dev.aliancaseguros.cv/api/v1/pagamentos/validar-hmac';
+  const url = `${GATEWAY_BASE_URL}/api/v1/pagamentos/validar-hmac`;
   const payload = { reference, hmacFingerprint: fingerprint };
   console.log('[HMAC] ->', payload);
   // 1) Authorization: Bearer {token}
@@ -14,6 +17,7 @@ async function tryValidateHmac(options: {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
+      'X-Client-Id': GATEWAY_CLIENT_ID,
       ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
     },
     body: JSON.stringify(payload),
@@ -43,6 +47,7 @@ async function tryValidateHmac(options: {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
+      'X-Client-Id': GATEWAY_CLIENT_ID,
       Authorization: accessToken,
     },
     body: JSON.stringify(payload),
@@ -56,6 +61,7 @@ async function tryValidateHmac(options: {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
+      'X-Client-Id': GATEWAY_CLIENT_ID,
       accessToken: accessToken,
     } as Record<string, string>,
     body: JSON.stringify(payload),
