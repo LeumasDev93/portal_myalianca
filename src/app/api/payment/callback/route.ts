@@ -38,6 +38,8 @@ export async function GET(request: NextRequest) {
     let collectMessage = '';
     try {
       const gatewayToken = request.cookies.get('pay_token')?.value || '';
+      console.log('[PAYMENT CALLBACK][GET] Validar HMAC - payload:', hmacPayload);
+      console.log('[PAYMENT CALLBACK][GET] Validar HMAC - Authorization Bearer presente?:', !!gatewayToken);
       const validateRes = await fetch('https://pay.dev.aliancaseguros.cv/api/v1/pagamentos/validar-hmac', {
         method: 'POST',
         headers: {
@@ -59,6 +61,9 @@ export async function GET(request: NextRequest) {
             sendEmail: false,
             apiName: 'WebsiteCollection',
           };
+          console.log('[PAYMENT CALLBACK][GET] Collect URL:', collectUrl);
+          console.log('[PAYMENT CALLBACK][GET] Collect body:', collectBody);
+          console.log('[PAYMENT CALLBACK][GET] Collect Authorization presente?:', !!token);
           const collectRes = await fetch(collectUrl, {
             method: 'POST',
             headers: {
@@ -179,6 +184,8 @@ export async function POST(request: NextRequest) {
     let collectMessage = '';
     try {
       const gatewayToken = request.cookies.get('pay_token')?.value || '';
+      console.log('[PAYMENT CALLBACK][POST] Validar HMAC - payload:', hmacPayload);
+      console.log('[PAYMENT CALLBACK][POST] Validar HMAC - Authorization Bearer presente?:', !!gatewayToken);
       const validateRes = await fetch('https://pay.dev.aliancaseguros.cv/api/v1/pagamentos/validar-hmac', {
         method: 'POST',
         headers: {
@@ -200,6 +207,9 @@ export async function POST(request: NextRequest) {
             sendEmail: false,
             apiName: 'WebsiteCollection',
           };
+          console.log('[PAYMENT CALLBACK][POST] Collect URL:', collectUrl);
+          console.log('[PAYMENT CALLBACK][POST] Collect body:', collectBody);
+          console.log('[PAYMENT CALLBACK][POST] Collect Authorization presente?:', !!token);
           const collectRes = await fetch(collectUrl, {
             method: 'POST',
             headers: {
