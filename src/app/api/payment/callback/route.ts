@@ -73,6 +73,8 @@ async function tryValidateHmac(options: {
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
+    console.log('[PAYMENT CALLBACK][GET][DEBUG] rawUrl:', request.url);
+    console.log('[PAYMENT CALLBACK][GET][DEBUG] rawQueryString:', searchParams.toString());
     const status = searchParams.get('status');
     const reference = searchParams.get('reference');
     const sessionId = searchParams.get('sessionId');
@@ -158,6 +160,13 @@ export async function GET(request: NextRequest) {
     if (collectMessage) redirectUrl.searchParams.set('collect_message', collectMessage);
     redirectUrl.searchParams.set('merchantRef', merchantRef || '');
     redirectUrl.searchParams.set('amount', (amount || '').toString());
+    // Em caso de erro, devolve os dados usados para HMAC via query string (debug)
+    if (serverStatus !== 'ok') {
+      try {
+        redirectUrl.searchParams.set('debug_ref', (reference || merchantRef || ''));
+        redirectUrl.searchParams.set('debug_fp', (fingerprint || ''));
+      } catch {}
+    }
 
     const res = NextResponse.redirect(redirectUrl, 303);
     res.cookies.set('postpay', '1', {
@@ -191,6 +200,7 @@ export async function POST(request: NextRequest) {
   try {
     let body: Record<string, string> = {};
     const contentType = request.headers.get('content-type') || '';
+    console.log('[PAYMENT CALLBACK][POST][DEBUG] rawUrl:', request.url);
 
     if (contentType.includes('application/x-www-form-urlencoded') || contentType.includes('multipart/form-data')) {
       const form = await request.formData();
@@ -198,7 +208,8 @@ export async function POST(request: NextRequest) {
         body[key] = typeof value === 'string' ? value : '';
       });
     } else if (contentType.includes('application/json')) {
-      body = await request.json();
+      const json = await request.json();
+      body = json as Record<string, string>;
     } else {
       // Tenta JSON como fallback
       try {
@@ -209,6 +220,7 @@ export async function POST(request: NextRequest) {
     }
     
     console.log('[PAYMENT CALLBACK] Recebido callback POST do SISP:', body);
+    try { console.log('[PAYMENT CALLBACK][POST][DEBUG] rawBody:', JSON.stringify(body)); } catch {}
 
     // Extrai os dados do callback do SISP
     const {
@@ -298,6 +310,13 @@ export async function POST(request: NextRequest) {
     if (collectMessage) redirectUrl.searchParams.set('collect_message', collectMessage);
     redirectUrl.searchParams.set('merchantRef', merchantRef || '');
     redirectUrl.searchParams.set('amount', amount?.toString() || '');
+    // Em caso de erro, devolve os dados usados para HMAC via query string (debug)
+    if (serverStatus !== 'ok') {
+      try {
+        redirectUrl.searchParams.set('debug_ref', (refPost));
+        redirectUrl.searchParams.set('debug_fp', (fpPost));
+      } catch {}
+    }
 
     const res = NextResponse.redirect(redirectUrl, 303);
     res.cookies.set('postpay', '1', {
