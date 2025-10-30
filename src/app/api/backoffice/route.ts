@@ -77,24 +77,32 @@ export async function POST(request: NextRequest) {
             apiName: 'WebsiteCollection',
           };
 
-          // Prioridade: awt (query/body) -> sessão NextAuth -> cookies
-          let anywhereBearer = awtFromQuery || (body as any).awt || '';
-          if (!anywhereBearer) {
-            try {
-              const sess = await fetch(new URL('/api/auth/session', request.url), {
-                headers: { cookie: request.headers.get('cookie') || '' },
-                cache: 'no-store',
-              });
-              if (sess.ok) {
-                const data = await sess.json();
-                anywhereBearer = data?.user?.accessToken || '';
+          // Prioridade: sessão NextAuth -> awt (query/body). NÃO usar pay_token/anywhere_token cookies
+          let anywhereBearer = '';
+          let tokenSource = 'none';
+          try {
+            const sess = await fetch(new URL('/api/auth/session', request.url), {
+              headers: { cookie: request.headers.get('cookie') || '' },
+              cache: 'no-store',
+            });
+            if (sess.ok) {
+              const data = await sess.json();
+              if (data?.user?.accessToken) {
+                anywhereBearer = data.user.accessToken as string;
+                tokenSource = 'session';
               }
-            } catch {}
+            }
+          } catch {}
+          if (!anywhereBearer && (awtFromQuery || (body as any).awt)) {
+            anywhereBearer = (awtFromQuery || (body as any).awt) as string;
+            tokenSource = 'awt';
           }
+          console.log('[COLLECT TOKEN]', tokenSource, anywhereBearer ? String(anywhereBearer).slice(0, 8) : 'MISSING');
           if (!anywhereBearer) {
-            anywhereBearer = request.cookies.get('anywhere_token')?.value || request.cookies.get('token')?.value || '';
+            collectStatus = 'error';
+            collectMessage = 'Token de sessão ausente para cobrança';
+            throw new Error('MISSING_ANYWHERE_TOKEN');
           }
-          const anywhereApiKey = process.env.ANYWHERE_API_KEY || process.env.NEXT_PUBLIC_API_KEY || '';
 
           const collectRes = await fetch(collectUrl, {
             method: 'POST',
