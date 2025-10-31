@@ -251,13 +251,13 @@ export default function LoginPage() {
           />
         </div>
 
-        <div className="relative z-10 flex flex-col items-end justify-between w-full h-full p-8 text-white">
-          <div className="bg-white/10 p-4 rounded-lg backdrop-blur-sm">
+        <div className="relative z-10 flex flex-col justify-between w-full h-full p-8 text-white">
+          <div className="bg-white/10 p-4 rounded-lg backdrop-blur-sm self-end">
             <h1 className="text-4xl font-bold">MYALIANÇA</h1>
             <p className="text-xl mt-2">Descomplicar É Ter MyAliança</p>
           </div>
 
-          <div className="bg-white/90 p-6 rounded-lg backdrop-blur-sm text-blue-900">
+          <div className="bg-white/90 p-6 rounded-lg backdrop-blur-sm text-blue-900 self-start">
             <h2 className="text-xl font-semibold mb-4 ">Serviços:</h2>
             <ul className="space-y-3">
               {[
