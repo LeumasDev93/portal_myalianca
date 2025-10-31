@@ -78,9 +78,6 @@ export async function GET(request: NextRequest) {
     const merchantRef = searchParams.get('merchantRef');
     const amount = searchParams.get('amount');
     const fingerprint = searchParams.get('fingerprint');
-    const reciboRefFromQuery = searchParams.get('reciboRef') || '';
-    const awtFromQuery = searchParams.get('awt') || '';
- 
 
     // SERVER-SIDE: valida HMAC também para GET
     const refGet = (reference || merchantRef || '').toString().trim();
