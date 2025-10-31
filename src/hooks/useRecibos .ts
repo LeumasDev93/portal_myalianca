@@ -1,13 +1,14 @@
 import { useState, useEffect } from 'react';
 import { useSessionCheckToken } from './useSessionToken';
-import { useUserProfile } from './useUserProfile ';
 import { ReciboData } from '@/types/typesData';
+import { useUserProfile } from './useUserProfile';
 
 interface RecibosState {
     recibos: ReciboData[];
     isLoading: boolean;
     error: string | null;
 }
+
 
 export const useRecibos = (initialFilters?: Record<string, string>) => {
     // Estado único para evitar múltiplos re-renders

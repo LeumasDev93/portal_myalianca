@@ -1,6 +1,6 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import { useState, useEffect } from 'react';
-import { useUserProfile } from './useUserProfile ';
+import { useUserProfile } from './useUserProfile';
 
 interface QuickAccessItem {
   id: string;

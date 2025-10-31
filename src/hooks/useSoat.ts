@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect, useCallback } from 'react';
 import { SoatData, SoatApiResponse } from '@/types/typesData';
-import { useUserProfile } from './useUserProfile ';
+import { useUserProfile } from './useUserProfile';
 
 export const useSoat = () => {
   const [soatData, setSoatData] = useState<SoatData[]>([]);

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useSessionCheckToken } from './useSessionToken';
-import { useUserProfile } from './useUserProfile ';
+import { useUserProfile } from './useUserProfile';
 import { SinistroData } from '@/types/typesData';
 
 interface SinistrosState {

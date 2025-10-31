@@ -1,8 +1,8 @@
 // hooks/useApolices.ts
 import { useState, useEffect } from 'react';
 import { useSessionCheckToken } from './useSessionToken';
-import { useUserProfile } from './useUserProfile ';
 import { ApoliceData } from '@/types/typesData';
+import { useUserProfile } from './useUserProfile';
 
 interface ApolicesState {
     apolices: ApoliceData[];
