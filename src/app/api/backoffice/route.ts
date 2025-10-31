@@ -78,7 +78,7 @@ export async function POST(request: NextRequest) {
           };
 
           // Prioridade: sessão NextAuth -> awt (query/body). NÃO usar pay_token/anywhere_token cookies
-          let anywhereBearer = '';
+          let anywhereBearer: string = '';
           let tokenSource = 'none';
           try {
             const sess = await fetch(new URL('/api/auth/session', request.url), {
@@ -93,8 +93,8 @@ export async function POST(request: NextRequest) {
               }
             }
           } catch {}
-          if (!anywhereBearer && (awtFromQuery || (body as any).awt)) {
-            anywhereBearer = (awtFromQuery || (body as any).awt) as string;
+          if (!anywhereBearer && (awtFromQuery || body['awt'])) {
+            anywhereBearer = (awtFromQuery || body['awt']) as string;
             tokenSource = 'awt';
           }
           console.log('[COLLECT TOKEN]', tokenSource, anywhereBearer ? String(anywhereBearer).slice(0, 8) : 'MISSING');

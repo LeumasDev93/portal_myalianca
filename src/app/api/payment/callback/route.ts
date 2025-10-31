@@ -203,7 +203,6 @@ export async function POST(request: NextRequest) {
       merchantRef,
       fingerprint,
       reciboRef: reciboRefBody,
-      awt: awtBody
     } = body;
 
     // SERVER-SIDE: valida HMAC e, se OK, efetiva a cobrança do recibo
