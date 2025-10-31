@@ -36,7 +36,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useUserProfile } from "@/hooks/useUserProfile ";
+import { useUserProfile } from "@/hooks/useUserProfile";
 import { LoadingContainer } from "@/components/ui/loading-container";
 
 type ViewMode = "grid" | "list";

@@ -46,7 +46,7 @@ import ReactDOM from "react-dom/client";
 import { MdPayment } from "react-icons/md";
 import { toast } from "sonner";
 import { useReciboActivity } from "@/lib/activityExamples";
-import { useUserProfile } from "@/hooks/useUserProfile ";
+import { useUserProfile } from "@/hooks/useUserProfile";
 import { processPayment } from "@/service/paymentService";
 
 type ViewMode = "grid" | "list";

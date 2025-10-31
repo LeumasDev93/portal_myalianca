@@ -16,7 +16,7 @@ import {
   SelectValue,
 } from "../../ui/select";
 import { Button } from "../../ui/button";
-import { useUserProfile } from "@/hooks/useUserProfile ";
+import { useUserProfile } from "@/hooks/useUserProfile";
 import { IoMdClose } from "react-icons/io";
 import { ModalDetails } from "./ModalDetalhes";
 import { getSimulationDetails } from "@/service/getSimulationDetails";

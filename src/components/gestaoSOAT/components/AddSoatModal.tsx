@@ -3,7 +3,7 @@ import { useState } from "react";
 import { FaSpinner, FaUpload } from "react-icons/fa";
 import { addSoat } from "@/service/addSoatService";
 import { AlertTriangle } from "lucide-react";
-import { useUserProfile } from "@/hooks/useUserProfile ";
+import { useUserProfile } from "@/hooks/useUserProfile";
 
 interface ModalData {
   periodo: string;

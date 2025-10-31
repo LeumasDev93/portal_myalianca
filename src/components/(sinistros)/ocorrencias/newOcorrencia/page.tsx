@@ -36,7 +36,7 @@ import { Separator } from "@/components/ui/separator";
 import Image from "next/image";
 import { useSessionCheckToken } from "@/hooks/useSessionToken";
 import { Toaster } from "@/components/ui/toaster";
-import { useUserProfile } from "@/hooks/useUserProfile ";
+import { useUserProfile } from "@/hooks/useUserProfile";
 import { useOcorrenciaActivity } from "@/lib/activityExamples";
 
 interface Apolice {

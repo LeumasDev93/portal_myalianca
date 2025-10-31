@@ -23,7 +23,7 @@ import { IoMdPin } from "react-icons/io";
 import SimulationScreen from "../../../components/Simulation/page";
 import { AiFillFileExclamation } from "react-icons/ai";
 import { useAuth } from "@/contexts/auth-context";
-import { useUserProfile } from "@/hooks/useUserProfile ";
+import { useUserProfile } from "@/hooks/useUserProfile";
 import { Footer } from "@/components/Layout/Footer";
 import Historico from "../../../components/Historico/page";
 import { getSession, signIn } from "next-auth/react";
@@ -57,6 +57,8 @@ import { useToast } from "@/components/ui/use-toast";
 
 const Page = () => {
   const { profile } = useUserProfile();
+
+  console.log('profile -->', profile);
   const [isLoading, setIsLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState("Historico");
   const [isMobile, setIsMobile] = useState(false);

@@ -9,7 +9,7 @@ import { X } from "lucide-react";
 import { IconType } from "react-icons";
 import { MdEmail } from "react-icons/md";
 import { IoNotifications } from "react-icons/io5";
-import { useUserProfile } from "@/hooks/useUserProfile ";
+import { useUserProfile } from "@/hooks/useUserProfile";
 import { useNotificationsContext } from "@/contexts/notifications-context";
 import { useUnreadMessages } from "@/contexts/unread-messages-context";
 

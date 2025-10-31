@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef, useCallback } from "react";
 import { fetchVehicleBrands } from "@/service/marcaService";
 import { fetchVehicleModels } from "@/service/modeloService";
 import Select from "react-select";
-import { useUserProfile } from "@/hooks/useUserProfile ";
+import { useUserProfile } from "@/hooks/useUserProfile";
 
 const tipoUtilizadorOptions = [
   { value: "1", label: "Taxi" },

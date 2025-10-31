@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 
 import { useToast } from "@/components/ui/use-toast";
-import { useUserProfile } from "@/hooks/useUserProfile ";
+import { useUserProfile } from "@/hooks/useUserProfile";
 import { useActivities } from "@/hooks/useActivities";
 import { Loader2, X } from "lucide-react";
 import {

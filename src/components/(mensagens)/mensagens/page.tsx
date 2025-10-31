@@ -44,7 +44,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 import { useUnreadCount } from "@/hooks/useUnreadCount";
-import { useUserProfile } from "@/hooks/useUserProfile ";
+import { useUserProfile } from "@/hooks/useUserProfile";
 import { useUnreadMessages } from "@/contexts/unread-messages-context";
 import { sendMessage } from "@/service/sendMessage";
 import { useMessageActivity } from "@/lib/activityExamples";

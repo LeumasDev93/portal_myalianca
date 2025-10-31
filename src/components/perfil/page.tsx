@@ -28,7 +28,7 @@ import {
   User,
 } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
-import { useUserProfile } from "@/hooks/useUserProfile ";
+import { useUserProfile } from "@/hooks/useUserProfile";
 import { useAuth } from "@/contexts/auth-context";
 import { LoadingContainer } from "@/components/ui/loading-container";
 import { useProfileActivity } from "@/lib/activityExamples";

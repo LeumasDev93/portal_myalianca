@@ -17,7 +17,7 @@ import {
 import { MessageAttachment } from "@/components/ui/message-attachment";
 import { toast } from "@/components/ui/use-toast";
 import { useRouter } from "next/navigation";
-import { useUserProfile } from "@/hooks/useUserProfile ";
+import { useUserProfile } from "@/hooks/useUserProfile";
 import { useUnreadMessages } from "@/contexts/unread-messages-context";
 import { LoadingContainer } from "@/components/ui/loading-container";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";

@@ -6,7 +6,7 @@ import { useApolices } from "@/hooks/useApolices";
 import { useRecibos } from "@/hooks/useRecibos ";
 import { useSessionCheckToken } from "@/hooks/useSessionToken";
 import { useSinistros } from "@/hooks/useSinistros";
-import { useUserProfile } from "@/hooks/useUserProfile ";
+import { useUserProfile } from "@/hooks/useUserProfile";
 import { tableMappeData } from "@/lib/tableMappe";
 import { getFirstAndLastName } from "@/lib/utils";
 import { useReciboActivity } from "@/lib/activityExamples";

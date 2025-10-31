@@ -30,7 +30,7 @@ import { FaSpinner } from "react-icons/fa";
 import { Separator } from "@radix-ui/react-separator";
 import { MdCarCrash } from "react-icons/md";
 import { LoadingContainer } from "@/components/ui/loading-container";
-import { useUserProfile } from "@/hooks/useUserProfile ";
+import { useUserProfile } from "@/hooks/useUserProfile";
 import {
   formatCurrency,
   formatDate,
