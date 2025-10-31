@@ -41,7 +41,7 @@ export function useUserProfile(initialData?: UserProfile) {
       // chaves possíveis onde o app possa ter salvo o usuário
       const keysToTry = ["user", "profile", "userProfile"];
       for (const key of keysToTry) {
-        const raw = localStorage.getItem(key);
+        const raw = localStorage.getItem(key) ?? sessionStorage.getItem(key);
         if (!raw) continue;
         try {
           const parsed = JSON.parse(raw) as unknown;
