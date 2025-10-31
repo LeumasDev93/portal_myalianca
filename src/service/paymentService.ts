@@ -37,6 +37,7 @@ interface PaymentIntentRequest {
   merchantSession: string;
   phoneCode: string;
   phoneNumber: string;
+  orderReference?: string;
 }
 
 interface PaymentIntentResponse {
@@ -122,7 +123,8 @@ export async function processPaymentForModal(
   userName: string,
   userEmail: string,
   userPhone: string,
-  reciboNumber: string // Número do recibo (para referência)
+  reciboNumber: string, // Número do recibo (para referência)
+  orderReference?: string // Referência do recibo (ex: P2025.458)
 ): Promise<{ checkoutUrl: string; reference: string; sessionId: string }> {
   
     console.log("[PAYMENT] ==================== PROCESSO DE PAGAMENTO (MODAL) ====================");
@@ -174,6 +176,7 @@ export async function processPaymentForModal(
       merchantSession: merchantSession, // Gerado único
       phoneCode: "238",
       phoneNumber: userPhone.replace(/[^0-9]/g, ""), // Remove formatação
+      ...(orderReference && { orderReference }), // Referência do recibo se fornecida
     };
     console.log("[PAYMENT] Dados que serão enviados:", JSON.stringify(paymentData, null, 2));
     console.log("[PAYMENT] Token que será usado:", accessToken.substring(0, 50) + "...");
@@ -206,7 +209,8 @@ export async function processPayment(
   userName: string,
   userEmail: string,
   userPhone: string,
-  reciboNumber: string // Número do recibo (para referência)
+  reciboNumber: string, // Número do recibo (para referência)
+  orderReference?: string // Referência do recibo (ex: P2025.458)
 ): Promise<void> {
   try {
     console.log("[PAYMENT] ==================== PROCESSO DE PAGAMENTO ====================");
@@ -252,6 +256,7 @@ export async function processPayment(
       merchantSession: merchantSession, // Gerado único
       phoneCode: "238",
       phoneNumber: userPhone.replace(/[^0-9]/g, ""), // Remove formatação
+      ...(orderReference && { orderReference }), // Referência do recibo se fornecida
     };
     console.log("[PAYMENT] Dados que serão enviados:", JSON.stringify(paymentData, null, 2));
     console.log("[PAYMENT] Token que será usado:", accessToken.substring(0, 50) + "...");

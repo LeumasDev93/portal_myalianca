@@ -286,7 +286,8 @@ const HistoryTable = ({
         profile.user.nome,
         profile.user.email || "",
         profile.user.nif || "",
-        invoiceNumber
+        invoiceNumber,
+        recibo.mbref // Referência do recibo (ex: P2025.458)
       );
       window.location.assign(checkoutUrl);
     } catch (error) {

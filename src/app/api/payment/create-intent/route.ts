@@ -16,6 +16,7 @@ interface PaymentIntentRequest {
   merchantSession: string;
   phoneCode: string;
   phoneNumber: string;
+  orderReference?: string;
 }
 
 export async function POST(req: NextRequest) {

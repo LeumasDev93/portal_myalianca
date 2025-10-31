@@ -227,12 +227,14 @@ export default function ReciboPage({ filterParams }: ReciboPageProps) {
               document.cookie = `anywhere_token=${encodeURIComponent(String(token))}; Path=/; Max-Age=1200;`;
             }
           } catch {}
+          const reciboRef = recibo.mbref || invoiceNumber;
           await processPayment(
             recibo.value, // amount
             profile.user.nome, // userName
             profile.user.email || "", // userEmail
             profile.user.nif || "", // userPhone
-            invoiceNumber // merchantRef
+            invoiceNumber, // merchantRef
+            reciboRef // orderReference
           );
 
           toast.success("Checkout aberto! Conclua o pagamento na nova aba.");
@@ -550,12 +552,14 @@ export default function ReciboPage({ filterParams }: ReciboPageProps) {
                               document.cookie = `anywhere_token=${encodeURIComponent(String(token))}; Path=/; Max-Age=1200;`;
                             }
                           } catch {}
+                          const reciboRef = (recibo as any).mbref || (recibo as any).reference || recibo.number;
                           await processPayment(
                             recibo.value, // amount
                             profile.user.nome, // userName
                             profile.user.email || "", // userEmail
                             profile.user.nif || "", // userPhone
-                            (recibo as any).mbref || recibo.number // merchantRef = referência do recibo (P...)
+                            recibo.number, // merchantRef
+                            reciboRef // orderReference = referência do recibo (P...)
                           );
 
                           toast.success(
@@ -703,12 +707,14 @@ export default function ReciboPage({ filterParams }: ReciboPageProps) {
                                 document.cookie = `anywhere_token=${encodeURIComponent(String(token))}; Path=/; Max-Age=1200;`;
                               }
                             } catch {}
+                            const reciboRef = (recibo as any).mbref || (recibo as any).reference || recibo.number;
                             await processPayment(
                               recibo.value, // amount
                               profile.user.nome, // userName
                               profile.user.email || "", // userEmail
                               profile.user.nif || "", // userPhone (usando NIF como fallback)
-                              (recibo as any).mbref || recibo.number // merchantRef = referência do recibo (P...)
+                              recibo.number, // merchantRef
+                              reciboRef // orderReference = referência do recibo (P...)
                             );
 
                             toast.success(
