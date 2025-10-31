@@ -242,6 +242,19 @@ export async function POST(request: NextRequest) {
             body: JSON.stringify(collectBody),
             cache: 'no-store',
           });
+          try {
+            const contentType = collectRes.headers.get('content-type') || '';
+            let respBody: unknown = null;
+            if (contentType.includes('application/json')) {
+              respBody = await collectRes.json();
+            } else {
+              const text = await collectRes.text();
+              respBody = text.length > 300 ? text.slice(0, 300) : text;
+            }
+            console.log('[COLLECT][callback][POST]', collectUrl, 'status=', collectRes.status, 'body=', respBody);
+          } catch {
+            console.log('[COLLECT][callback][POST]', collectUrl, 'status=', collectRes.status, '(no body)');
+          }
           collectStatus = collectRes.ok ? 'ok' : 'error';
           collectMessage = collectRes.ok ? 'Cobrança confirmada' : `Falha ao cobrar (${collectRes.status})`;
         }
