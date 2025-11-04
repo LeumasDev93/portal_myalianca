@@ -64,6 +64,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const clearAuthData = useCallback(() => {
     sessionStorage.removeItem("user");
     sessionStorage.removeItem("token");
+    // Limpar TODO o localStorage, não importa o que tenha
+    localStorage.clear();
     setUser(null);
     setToken(null);
     clearAuthCookies();
