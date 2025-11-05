@@ -52,7 +52,7 @@ export function TopMenu({
 
   // Função para navegação condicional baseada no tipo de usuário
   const handleLogoClick = () => {
-    if (profile?.user?.tipo_utilizador === "Company") {
+    if (profile?.user?.tipo_cliente === "Company") {
       onMenuClick("dashboardEmpresarial");
     } else {
       onMenuClick("Historico");

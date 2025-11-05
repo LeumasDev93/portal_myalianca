@@ -3,7 +3,9 @@
 
 import { useState, FormEvent, useEffect } from "react";
 import { useAuth } from "@/contexts/auth-context";
-import Logo from "@/assets/alianca.png";
+import Logo from "@/assets/logo_fundo_branco.png";
+import LogoMobile from "@/assets/AlincaSeguros.png";
+import LogoForm from "@/assets/alianca.png";
 import {
   AlertCircle,
   ArrowRight,
@@ -238,51 +240,61 @@ export default function LoginPage() {
 
   // console.log(useAuth());
   return (
-    <div className="flex h-screen flex-col md:flex-row bg-gray-50">
-      {/* Banner Side */}
-      <div className="hidden md:flex md:w-1/2 relative bg-gradient-to-br from-blue-800 to-blue-600">
-        <div className="absolute h-full inset-0 opacity-90">
-          <Image
-            src={ImageCapa}
-            alt="Insurance portal"
-            fill
-            className="object-cover"
-            priority
-          />
-        </div>
+    <div className="relative h-screen w-full bg-gradient-to-br from-blue-900 to-red-800 overflow-hidden">
+      {/* Logo e Texto - Mobile no centro da página */}
+      <div className="lg:hidden absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10 text-center px-4">
+        <Image src={Logo} alt="Logo" width={200} height={80} className="w-44 md:w-56 h-auto mx-auto mb-4 md:mb-6" />
+        <h1 className="text-3xl md:text-4xl font-bold text-white mb-2 md:mb-3">MYALIANÇA</h1>
+        <p className="text-base md:text-lg text-white/90">Descomplicar É Ter MyAliança</p>
+      </div>
 
-        <div className="relative z-10 flex flex-col justify-between w-full h-full p-8 text-white">
-          <div className="bg-white/10 p-4 rounded-lg backdrop-blur-sm self-end">
-            <h1 className="text-4xl font-bold">MYALIANÇA</h1>
-            <p className="text-xl mt-2">Descomplicar É Ter MyAliança</p>
-          </div>
+      {/* Logo - Apenas no Desktop, no canto superior esquerdo */}
+      <div className="hidden lg:block absolute top-6 left-6 z-30">
+        <Image src={Logo} alt="Logo" width={100} height={100} className="w-44 h-16" />
+      </div>
 
-          <div className="bg-white/90 p-6 rounded-lg backdrop-blur-sm text-blue-900 self-start">
-            <h2 className="text-xl font-semibold mb-4 ">Serviços:</h2>
-            <ul className="space-y-3">
-              {[
-                "Gerenciamento de apólices",
-                "Acompanhamento de sinistros",
-                "Pagamentos online",
-                "Atendimento personalizado",
-              ].map((benefit) => (
-                <li key={benefit} className="flex items-center gap-2">
-                  <CheckCircle2 className="h-5 w-5 " />
-                  <span>{benefit}</span>
-                </li>
-              ))}
-            </ul>
+      {/* Banner Semi-Transparente no Centro - Largura Full */}
+      <div className="hidden lg:block absolute top-1/2 left-0 right-0 -translate-y-1/2 z-10">
+        <div className="bg-white/10 backdrop-blur-md py-8 lg:py-10 xl:py-12 2xl:py-14 px-6 lg:px-8 xl:px-10 2xl:px-12">
+          <div className="max-w-2xl lg:max-w-3xl xl:max-w-4xl 2xl:max-w-5xl mx-auto text-left text-white">
+            <h1 className="text-3xl lg:text-4xl xl:text-5xl 2xl:text-6xl font-bold mb-2 lg:mb-3 xl:mb-4">MYALIANÇA</h1>
+            <p className="text-base lg:text-lg xl:text-xl 2xl:text-2xl">Descomplicar É Ter MyAliança</p>
           </div>
         </div>
       </div>
 
-      {/* Login Form */}
-      <div className="flex-1 flex flex-col items-center justify-center p-4">
-        <Image src={Logo} alt="Logo" width={100} height={100} />
-        <div className="w-full sm:max-w-sm xl:max-w-md  transition-all duration-300 mt-10">
+      {/* Serviços na Parte Inferior Esquerda - Oculto no Mobile e Tablet */}
+      <div className="hidden lg:block absolute bottom-8 left-8 lg:left-16 z-10 max-w-sm">
+        <div className="bg-white/10 backdrop-blur-md rounded-lg p-4 lg:p-5 xl:p-6 text-white space-y-2 lg:space-y-2.5 xl:space-y-3">
+          {[
+            "Gerenciamento de apólices",
+            "Acompanhamento de sinistros",
+            "Pagamentos online",
+            "Atendimento personalizado",
+          ].map((benefit) => (
+            <div key={benefit} className="flex items-center gap-2.5 lg:gap-3">
+              <CheckCircle2 className="h-4 lg:h-4 xl:h-5 w-4 lg:w-4 xl:w-5 text-white flex-shrink-0" />
+              <span className="text-xs lg:text-sm xl:text-base">{benefit}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Formulário de Login - Mobile fixo no bottom, Desktop/Tablet à direita */}
+      <div className="fixed bottom-0 left-0 right-0 md:absolute md:left-1/2 md:top-1/2 lg:left-auto lg:right-48 md:-translate-x-1/2 lg:translate-x-0 md:-translate-y-1/2 z-20 w-full md:max-w-sm lg:max-w-md md:px-6 lg:px-0">
+        <div className="bg-gray-100 rounded-t-3xl md:rounded-2xl shadow-2xl p-6 md:p-6 lg:p-7 xl:p-6 2xl:p-8 max-h-[75vh] md:max-h-[85vh] lg:max-h-[90vh] 2xl:max-h-[100vh] overflow-y-auto">
+          {/* Barra de indicação - Apenas Mobile */}
+          <div className="md:hidden w-12 h-1.5 bg-gray-400 rounded-full mx-auto mb-4"></div>
+          
+          <div className="w-full transition-all duration-300">
+          {/* Logo acima do formulário */}
+          <div className="hidden lg:flex justify-center mb-3 md:mb-4 lg:mb-5 xl:mb-4 2xl:mb-6 w-20 h-16 mx-auto">
+            <Image src={LogoForm} alt="Aliança Seguros" width={100} height={100} className="w-full h-full" />
+          </div>
+
           {/* Cabeçalho com animação sutil */}
-          <div className="mb-8 text-center transform transition-transform duration-300 hover:scale-[1.01]">
-            <h1 className="text-lg xl:text-xl font-bold text-gray-900 mb-2 bg-gradient-to-r from-blue-600 to-blue-800 bg-clip-text">
+          <div className="mb-3 md:mb-5 lg:mb-6 xl:mb-5 2xl:mb-7 w-full max-w-sm mx-auto text-center transform transition-transform duration-300 hover:scale-[1.01]">
+            <h1 className="text-sm md:text-base lg:text-lg xl:text-xl font-bold text-gray-900 mb-2 bg-gradient-to-r from-blue-600 to-blue-800 bg-clip-text w-full max-w-xs mx-auto leading-tight">
               {isLoginForm
                 ? "FAÇA LOGIN NA SUA ÁREA DE CLIENTE"
                 : step === "email"
@@ -291,7 +303,7 @@ export default function LoginPage() {
                 ? "VALIDAR CÓDIGO"
                 : "REDEFINIR SENHA"}
             </h1>
-            <div className="w-20 h-1 bg-gradient-to-r from-blue-400 to-blue-600 mx-auto rounded-full"></div>
+            <div className="w-12 md:w-16 lg:w-20 h-0.5 md:h-1 bg-gradient-to-r from-blue-400 to-blue-600 mx-auto rounded-full"></div>
           </div>
 
           {/* Mensagem de erro com animação */}
@@ -305,7 +317,7 @@ export default function LoginPage() {
           )}
 
           {isLoginForm ? (
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-3 md:space-y-4 lg:space-y-5 xl:space-y-4 2xl:space-y-6">
               {/* Input de Email/NIF com efeito flutuante */}
               <div className="relative group">
                 <input
@@ -315,7 +327,7 @@ export default function LoginPage() {
                   onChange={(e) => setUsername(e.target.value)}
                   required
                   minLength={8}
-                  className="block w-full px-4 py-3 text-sm bg-white border border-gray-200 rounded-lg transition-all duration-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent peer"
+                  className="block w-full px-3 md:px-4 py-2.5 md:py-3 text-sm bg-white border border-gray-200 rounded-lg transition-all duration-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent peer"
                   placeholder=" "
                 />
                 <label
@@ -338,7 +350,7 @@ export default function LoginPage() {
                   onChange={(e) => setPassword(e.target.value)}
                   required
                   minLength={8}
-                  className="block w-full px-4 py-3 text-sm bg-white border border-gray-200 rounded-lg transition-all duration-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent peer"
+                  className="block w-full px-3 md:px-4 py-2.5 md:py-3 text-sm bg-white border border-gray-200 rounded-lg transition-all duration-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent peer"
                   placeholder=" "
                 />
                 <label
@@ -379,7 +391,7 @@ export default function LoginPage() {
               <button
                 type="submit"
                 disabled={isLoading}
-                className={`w-full py-3 px-4 inline-flex justify-center items-center gap-2 rounded-lg font-medium text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 ${
+                className={`w-full py-2.5 md:py-3 px-4 inline-flex justify-center items-center gap-2 rounded-lg font-medium text-sm md:text-base text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 ${
                   isLoading
                     ? "bg-blue-400 cursor-not-allowed"
                     : "bg-gradient-to-r from-blue-600 cursor-pointer to-blue-700 hover:from-blue-700 hover:to-blue-800 shadow-md hover:shadow-lg"
@@ -408,7 +420,7 @@ export default function LoginPage() {
                   ? handleValidateOtp
                   : handleResetPassword
               }
-              className="space-y-4"
+              className="space-y-3 md:space-y-4 lg:space-y-5 xl:space-y-4 2xl:space-y-6"
             >
               <div className="text-center transform transition-transform duration-300 hover:scale-[1.01]">
                 <p className="mt-2 text-sm text-gray-600">
@@ -435,7 +447,7 @@ export default function LoginPage() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
-                    className="block w-full px-4 py-3 text-sm bg-white border border-gray-200 rounded-lg transition-all duration-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent peer"
+                    className="block w-full px-3 md:px-4 py-2.5 md:py-3 text-sm bg-white border border-gray-200 rounded-lg transition-all duration-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent peer"
                     disabled={isLoading}
                   />
                   <label className="absolute text-sm text-gray-500 duration-300 transform -translate-y-4 scale-75 top-3 left-4 z-10 origin-[0] bg-white px-1 peer-focus:px-1 peer-focus:text-blue-600 peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-4">
@@ -455,7 +467,7 @@ export default function LoginPage() {
                     value={otp}
                     onChange={(e) => setOtp(e.target.value)}
                     required
-                    className="block w-full px-4 py-3 text-sm bg-white border border-gray-200 rounded-lg transition-all duration-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent peer"
+                    className="block w-full px-3 md:px-4 py-2.5 md:py-3 text-sm bg-white border border-gray-200 rounded-lg transition-all duration-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent peer"
                     disabled={isLoading}
                   />
                   <label className="absolute text-sm text-gray-500 duration-300 transform -translate-y-4 scale-75 top-3 left-4 z-10 origin-[0] bg-white px-1 peer-focus:px-1 peer-focus:text-blue-600 peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-4">
@@ -475,7 +487,7 @@ export default function LoginPage() {
                     value={new_password}
                     onChange={(e) => setNewPassword(e.target.value)}
                     required
-                    className="block w-full px-4 py-3 text-sm bg-white border border-gray-200 rounded-lg transition-all duration-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent peer"
+                    className="block w-full px-3 md:px-4 py-2.5 md:py-3 text-sm bg-white border border-gray-200 rounded-lg transition-all duration-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent peer"
                     disabled={isLoading}
                   />
                   <label className="absolute text-sm text-gray-500 duration-300 transform -translate-y-4 scale-75 top-3 left-4 z-10 origin-[0] bg-white px-1 peer-focus:px-1 peer-focus:text-blue-600 peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-4">
@@ -510,7 +522,7 @@ export default function LoginPage() {
               <button
                 type="submit"
                 disabled={isloading}
-                className={`w-full py-3 px-4 inline-flex justify-center items-center gap-2 rounded-lg font-medium text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 ${
+                className={`w-full py-2.5 md:py-3 px-4 inline-flex justify-center items-center gap-2 rounded-lg font-medium text-sm md:text-base text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 ${
                   isloading
                     ? "bg-blue-400 cursor-not-allowed"
                     : "bg-gradient-to-r cursor-pointer from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 shadow-md hover:shadow-lg"
@@ -534,7 +546,7 @@ export default function LoginPage() {
 
           {/* Botão de voltar para login */}
           {!isLoginForm && (
-            <div className="mt-6 text-center">
+            <div className="mt-5 md:mt-6 xl:mt-5 2xl:mt-7 text-center">
               <button
                 type="button"
                 onClick={() => setIsLoginForm(true)}
@@ -545,6 +557,7 @@ export default function LoginPage() {
               </button>
             </div>
           )}
+          </div>
         </div>
       </div>
     </div>

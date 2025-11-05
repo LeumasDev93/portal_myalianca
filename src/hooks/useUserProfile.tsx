@@ -19,6 +19,7 @@ interface UserProfile {
     criado_em: string;
     imagem_id: string;
     tipo_utilizador: string;
+    tipo_cliente: string;
   };
   session_id: string | null;
 }
@@ -98,6 +99,7 @@ export function useUserProfile(initialData?: UserProfile) {
                   criado_em: String(u['criado_em'] ?? ''),
                   imagem_id: String(u['imagem_id'] ?? ''),
                   tipo_utilizador: String(u['tipo_utilizador'] ?? ''),
+                  tipo_cliente: String(u['tipo_cliente'] ?? ''),
                 },
                 session_id: null,
               };

@@ -25,7 +25,7 @@ export const BottomNavigation = ({
   onNavigate,
 }: BottomNavigationProps) => {
   const { profile } = useUserProfile();
-  const isCompany = profile?.user?.tipo_utilizador === "Company";
+  const isCompany = profile?.user?.tipo_cliente === "Company";
 
   const navItems: BottomNavItem[] = [
     {

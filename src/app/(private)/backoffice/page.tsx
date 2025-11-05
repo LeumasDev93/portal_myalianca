@@ -60,7 +60,9 @@ const Page = () => {
 
   console.log('profile -->', profile);
   const [isLoading, setIsLoading] = useState(false);
-  const [currentPage, setCurrentPage] = useState("Historico");
+  // Define a página padrão baseada no tipo_cliente
+  const defaultPage = profile?.user?.tipo_cliente === 'Company' ? 'DashboardEmpresarial' : 'Historico';
+  const [currentPage, setCurrentPage] = useState(defaultPage);
   const [isMobile, setIsMobile] = useState(false);
   const [isClient, setIsClient] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -100,6 +102,31 @@ const Page = () => {
     return () => clearTimeout(timer);
   }, []);
 
+  // Atualiza a página padrão quando o profile for carregado
+  useEffect(() => {
+    if (profile?.user?.tipo_cliente) {
+      const newDefaultPage = profile.user.tipo_cliente === 'Company' ? 'DashboardEmpresarial' : 'Historico';
+      setCurrentPage(newDefaultPage);
+    }
+  }, [profile?.user?.tipo_cliente]);
+
+  // Protege páginas exclusivas de Company
+  useEffect(() => {
+    if (profile?.user?.tipo_cliente !== 'Company') {
+      // Se não for Company e tentar acessar páginas restritas, redireciona
+      if (currentPage === 'dashboardEmpresarial' || currentPage === 'gestaoSOAT' || currentPage === 'DashboardEmpresarial') {
+        setCurrentPage('Historico');
+        router.push('/backoffice?page=Historico');
+        toast({
+          title: "Acesso Negado",
+          description: "Esta página é exclusiva para empresas.",
+          variant: "destructive",
+        });
+      }
+    }
+  }, [currentPage, profile?.user?.tipo_cliente, router, toast]);
+
+  console.log('profile?.user?.tipo_cliente -->', profile?.user?.tipo_cliente);
   // Filtra os menus baseado no tipo de cliente
   const getFilteredMenus = () => {
     const baseMenus: MenuItem[] = [
@@ -162,7 +189,7 @@ const Page = () => {
     ];
 
     // Adiciona menus específicos para usuários Company
-    if (profile?.user?.tipo_utilizador === "Company") {
+    if (profile?.user?.tipo_cliente === "Company") {
       // Dashboard Empresarial
       baseMenus.splice(1, 0, {
         title: "Dashboard Empresarial",
@@ -199,30 +226,54 @@ const Page = () => {
     const menuFromUrl = searchParams?.get("menu");
     
     if (menuFromUrl) {
-      // Se há menu na URL, usa ele - NÃO altera a URL de forma alguma
-      setCurrentPage(menuFromUrl);
-      // Next.js preserva automaticamente os parâmetros da URL no reload
+      // Verifica se o usuário tem permissão para acessar a página da URL
+      if (profile?.user?.tipo_cliente !== 'Company' && 
+          (menuFromUrl === 'dashboardEmpresarial' || menuFromUrl === 'gestaoSOAT' || menuFromUrl === 'DashboardEmpresarial')) {
+        // Redireciona para Historico se não tiver permissão
+        const defaultMenu = "Historico";
+        setCurrentPage(defaultMenu);
+        const params = new URLSearchParams(searchParams?.toString());
+        params.set("menu", defaultMenu);
+        const qs = params.toString();
+        router.replace(`?${qs}`, { scroll: false });
+        toast({
+          title: "Acesso Negado",
+          description: "Esta página é exclusiva para empresas.",
+          variant: "destructive",
+        });
+      } else {
+        // Se há menu na URL, usa ele - NÃO altera a URL de forma alguma
+        setCurrentPage(menuFromUrl);
+        // Next.js preserva automaticamente os parâmetros da URL no reload
+      }
     } else {
       // Se não há menu na URL, define o padrão baseado no tipo de usuário
       // Só faz isso se o profile já estiver carregado
-      if (!profile?.user?.tipo_utilizador) return;
+      if (!profile?.user?.tipo_cliente) return;
 
       // Fallback: tentar restaurar do sessionStorage caso o menu tenha sido salvo no clique
       try {
         const lastMenu = sessionStorage.getItem("lastMenu");
         if (lastMenu) {
-          setCurrentPage(lastMenu);
-          const params = new URLSearchParams(searchParams?.toString());
-          params.set("menu", lastMenu);
-          const qs = params.toString();
-          router.replace(`?${qs}`, { scroll: false });
-          return;
+          // Verifica permissão antes de restaurar
+          if (profile?.user?.tipo_cliente !== 'Company' && 
+              (lastMenu === 'dashboardEmpresarial' || lastMenu === 'gestaoSOAT' || lastMenu === 'DashboardEmpresarial')) {
+            // Limpa o sessionStorage e usa o menu padrão
+            sessionStorage.removeItem("lastMenu");
+          } else {
+            setCurrentPage(lastMenu);
+            const params = new URLSearchParams(searchParams?.toString());
+            params.set("menu", lastMenu);
+            const qs = params.toString();
+            router.replace(`?${qs}`, { scroll: false });
+            return;
+          }
         }
       } catch (_err) {
         // silencioso
       }
       
-      const defaultMenu = profile.user.tipo_utilizador === "Company" 
+      const defaultMenu = profile.user.tipo_cliente === "Company" 
         ? "dashboardEmpresarial" 
         : "Historico";
       
@@ -234,7 +285,7 @@ const Page = () => {
       const qs = params.toString();
       router.replace(`?${qs}`, { scroll: false });
     }
-  }, [isClient, profile?.user?.tipo_utilizador, searchParams, router]);
+  }, [isClient, profile?.user?.tipo_cliente, searchParams, router]);
 
   // Exibe toast apenas para resultado SERVER-SIDE (validação/cobrança) e limpa parâmetros
   const paymentHandledRef = useRef(false);
@@ -328,6 +379,19 @@ const Page = () => {
     params?: Record<string, string>
   ) => {
     console.log("handleMenuClick - menuPage:", menuPage, "params:", params);
+    
+    // Verifica permissão para páginas exclusivas de Company
+    if (profile?.user?.tipo_cliente !== 'Company') {
+      if (menuPage === 'dashboardEmpresarial' || menuPage === 'gestaoSOAT' || menuPage === 'DashboardEmpresarial') {
+        toast({
+          title: "Acesso Negado",
+          description: "Esta página é exclusiva para empresas.",
+          variant: "destructive",
+        });
+        return; // Bloqueia a navegação
+      }
+    }
+    
     setIsLoading(true);
     setCurrentPage(menuPage);
 
@@ -396,7 +460,7 @@ const Page = () => {
         isMobile={isMobile}
         onMenuClick={handleMenuClick}
         onSearchChange={handleSearchChange}
-        showSidebar={profile?.user?.tipo_utilizador !== "Company"}
+        showSidebar={profile?.user?.tipo_cliente !== "Company"}
         onLogout={logout}
       />
 
@@ -425,7 +489,7 @@ const Page = () => {
           </>
         )}
 
-        {!isMobile && profile?.user?.tipo_utilizador !== "Company" && (
+        {!isMobile && profile?.user?.tipo_cliente !== "Company" && (
           <div className="fixed left-0 top-16 h-[calc(100vh-4rem)] w-16 xl:w-64">
             <Menu
               onMenuClick={handleMenuClick}
@@ -439,18 +503,18 @@ const Page = () => {
             currentPage === "Simulation"
               ? isMobile
                 ? "-mt-4 pb-20" // Simulation no mobile com padding bottom
-                : profile?.user?.tipo_utilizador === "Company"
+                : profile?.user?.tipo_cliente === "Company"
                 ? "-mt-4" // Simulation no desktop sem sidebar (cliente empresarial)
                 : "ml-12 md:ml-12 xl:ml-60 -mt-4 xl:-mt-2 " // Simulation no desktop com sidebar
               : isMobile
               ? "pb-20" // outras páginas no mobile com padding bottom
-              : profile?.user?.tipo_utilizador === "Company"
+              : profile?.user?.tipo_cliente === "Company"
               ? "" // outras páginas no desktop sem sidebar (cliente empresarial)
               : "ml-16 xl:ml-64" // outras páginas no desktop com sidebar
           }`}
         >
           {/* Botão de Voltar para Dashboard Empresarial - só para Company */}
-          {profile?.user?.tipo_utilizador === "Company" &&
+          {profile?.user?.tipo_cliente === "Company" &&
             currentPage !== "dashboardEmpresarial" && (
               <BackToDashboardButton
                 onClick={() => handleMenuClick("dashboardEmpresarial")}
@@ -541,9 +605,9 @@ const Page = () => {
                   />
                 )}
                 {currentPage === "Simulation" && <SimulationScreen />}{" "}
-                {currentPage === "gestaoSOAT" && <PageGestaoSOAT />}
+                {currentPage === "gestaoSOAT" && profile?.user?.tipo_cliente === "Company" && <PageGestaoSOAT />}
                 {currentPage === "Notificacoes" && <NotificationsPage />}
-                {currentPage === "dashboardEmpresarial" && (
+                {currentPage === "dashboardEmpresarial" && profile?.user?.tipo_cliente === "Company" && (
                   <DashboardEmpresarial onNavigate={handleMenuClick} />
                 )}
                 {currentPage === "recibo" && (

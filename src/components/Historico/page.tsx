@@ -92,7 +92,7 @@ export default function Historico({
     const filteredQuickAccessItems = quickAccessItems.filter((item) => {
       // Se o usuário não for "Company", esconder o card "Gestão de SOAT"
       if (
-        profile?.user?.tipo_utilizador !== "Company" &&
+        profile?.user?.tipo_cliente !== "Company" &&
         item.link === "gestaoSOAT"
       ) {
         return false;

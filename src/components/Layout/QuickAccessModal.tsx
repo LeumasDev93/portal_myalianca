@@ -178,7 +178,7 @@ export function QuickAccessModal({
 
   const availableMenus = AVAILABLE_MENUS.filter((menu) => {
     if (menu.onlyForCompany) {
-      return profile?.user?.tipo_utilizador === "Company";
+      return profile?.user?.tipo_cliente === "Company";
     }
     return true;
   }).map((menu) => ({
