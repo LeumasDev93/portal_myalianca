@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+// Configuração de revalidação estática a cada 60 segundos
+export const revalidate = 60;
+
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
@@ -30,6 +33,7 @@ export async function GET(request: NextRequest) {
         'Content-Type': 'application/json',
         'ApiKey': apiKey,
       },
+      next: { revalidate: 60 }, // Cache por 60 segundos
     });
 
     if (!response.ok) {
@@ -41,7 +45,13 @@ export async function GET(request: NextRequest) {
     }
 
     const data = await response.json();
-    return NextResponse.json(data);
+    
+    // Retorna com headers de cache
+    return NextResponse.json(data, {
+      headers: {
+        'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=120',
+      },
+    });
   } catch (error) {
     console.error('Erro ao buscar dados do dashboard:', error);
     return NextResponse.json(
