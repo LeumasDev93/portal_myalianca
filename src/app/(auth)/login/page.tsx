@@ -245,7 +245,7 @@ export default function LoginPage() {
       <div className="lg:hidden absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10 text-center px-4">
         <Image src={Logo} alt="Logo" width={200} height={80} className="w-44 md:w-56 h-auto mx-auto mb-4 md:mb-6" />
         <h1 className="text-3xl md:text-4xl font-bold text-white mb-2 md:mb-3">MYALIANÇA</h1>
-        <p className="text-base md:text-lg text-white/90">Descomplicar É Ter MyAliança</p>
+        <p className="text-base md:text-lg text-white/90">descomplicar é ter <span className="font-bold">MyAliança</span></p>
       </div>
 
       {/* Logo - Apenas no Desktop, no canto superior esquerdo */}
@@ -258,7 +258,7 @@ export default function LoginPage() {
         <div className="bg-white/10 backdrop-blur-md py-8 lg:py-10 xl:py-12 2xl:py-14 px-6 lg:px-8 xl:px-10 2xl:px-12">
           <div className="max-w-2xl lg:max-w-3xl xl:max-w-4xl 2xl:max-w-5xl mx-auto text-left text-white">
             <h1 className="text-3xl lg:text-4xl xl:text-5xl 2xl:text-6xl font-bold mb-2 lg:mb-3 xl:mb-4">MYALIANÇA</h1>
-            <p className="text-base lg:text-lg xl:text-xl 2xl:text-2xl">Descomplicar É Ter MyAliança</p>
+            <p className="text-base lg:text-lg xl:text-xl 2xl:text-2xl">descomplicar é ter <span className="font-bold">MyAliança</span></p>
           </div>
         </div>
       </div>

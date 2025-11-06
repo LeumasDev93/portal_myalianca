@@ -236,14 +236,14 @@ export default function ApolicePage({ onSelectDetail }: ApolicePageProps) {
                     </div>
                   </div>
                   <div className="flex justify-between">
-                    <div className="flex items-center gap-4">
+                    {/* <div className="flex items-center gap-4">
                       <div className="bg-gray-200  p-2 rounded-full ">
                         <FaRegCalendar className="size-3 sm:size-4 xl:size-5 text-[#002256]" />
                       </div>
                       <h3 className="text-sm font-medium text-[#002256]">
                         Data Vencimento
                       </h3>
-                    </div>
+                    </div> */}
                     <div className="flex items-center gap-2">
                       <h3 className="text-sm font-medium text-[#002256]">
                         {formatDate(apolice.endDate)}
@@ -256,7 +256,7 @@ export default function ApolicePage({ onSelectDetail }: ApolicePageProps) {
                         <FaDollarSign className="size-3 sm:size-4 xl:size-5 text-[#002256]" />
                       </div>
                       <h3 className="text-sm font-medium text-[#002256]">
-                        valor
+                        Prêmio Anual
                       </h3>
                     </div>
                     <div className="flex flex-col items-center">

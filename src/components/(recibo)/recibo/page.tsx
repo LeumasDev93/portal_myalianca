@@ -597,10 +597,7 @@ export default function ReciboPage({ filterParams }: ReciboPageProps) {
                     </h3>
                   </div>
                   <div className="flex justify-between">
-                    <h3 className="text-sm font-medium text-[#002256]">
-                      Referência:
-                    </h3>
-
+                    
                     <h3 className="text-sm font-medium text-[#002256]">
                       {recibo.mbref}
                     </h3>
@@ -690,9 +687,6 @@ export default function ReciboPage({ filterParams }: ReciboPageProps) {
                     </h3>
                   </div>
                   <div className="flex items-start gap-2">
-                    <h3 className="text-sm font-medium text-[#002256]">
-                      Referência:
-                    </h3>
                     <h3 className="text-sm font-medium text-[#002256]">
                       {recibo.mbref}
                     </h3>

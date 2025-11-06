@@ -372,7 +372,7 @@ export default function ApoliceDetailPage({
                         </div>
                         <div className="flex items-center gap-2 md:justify-end">
                           <h3 className="text-sm font-medium text-[#002256]">
-                            {formatDate(apolice.endDate)}
+                            {formatDate(apolice.invoices.find((inv) => inv.status === 2)?.to || apolice.invoices[0]?.to)}
                           </h3>
                         </div>
                       </div>
