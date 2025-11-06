@@ -101,7 +101,7 @@ export default function AgenciasPage() {
           {/* Área do Mapa */}
           {selectedAgencia && (
             <div className="lg:col-span-8 xl:col-span-9 h-[400px] sm:h-[500px] lg:h-[calc(100vh-200px)] lg:sticky lg:top-4">
-              <div className="h-full bg-white shadow-lg lg:shadow-xl flex flex-col">
+              <div className="h-full bg-white shadow-lg lg:shadow-xl flex flex-col rounded-lg overflow-hidden border border-gray-200">
                 {/* Header do Mapa */}
                 <div className="flex items-start justify-between p-3 sm:p-4 md:p-6 border-b bg-white">
                   <div className="flex-1">
