@@ -489,10 +489,13 @@ export default function PageGestaoSOAT() {
           <p className="text-xs md:text-sm text-gray-600">
             Todas as listas mensais de SOAT dos trabalhadores
           </p>
+          <p className="text-[10px] text-gray-400 mt-1 lg:hidden">
+            ← Deslize para ver mais →
+          </p>
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[800px]">
+        <div className="overflow-x-auto overflow-y-visible w-full">
+          <table className="w-full min-w-[950px]">
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-2 md:px-4 lg:px-6 py-2 md:py-3 text-left text-[10px] md:text-xs font-medium text-gray-500 uppercase tracking-wider">
