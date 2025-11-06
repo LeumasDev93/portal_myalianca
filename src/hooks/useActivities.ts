@@ -26,7 +26,7 @@ export const useActivities = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const { profile } = useUserProfile();
 
-  const ITEMS_PER_PAGE = 10;
+  const ITEMS_PER_PAGE = 5;
 
   // Buscar todas as atividades do usuário
   const fetchActivities = useCallback(async () => {
