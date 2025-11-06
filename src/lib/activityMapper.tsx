@@ -254,5 +254,24 @@ export const getActivityDisplay = (action: string): ActivityDisplay => {
 
 export const formatActivityDate = (dateString: string): string => {
   const date = new Date(dateString);
-  return date.toLocaleDateString("pt-BR");
+  const dateFormatted = date.toLocaleDateString("pt-BR");
+  const timeFormatted = date.toLocaleTimeString("pt-BR", { 
+    hour: '2-digit', 
+    minute: '2-digit' 
+  });
+  return `${dateFormatted} ${timeFormatted}`;
+};
+
+export const formatActivityDateTime = (dateString: string): { date: string; time: string } => {
+  const date = new Date(dateString);
+  const dateFormatted = date.toLocaleDateString("pt-BR", {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric'
+  });
+  const timeFormatted = date.toLocaleTimeString("pt-BR", { 
+    hour: '2-digit', 
+    minute: '2-digit' 
+  });
+  return { date: dateFormatted, time: timeFormatted };
 };

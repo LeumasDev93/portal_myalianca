@@ -3,7 +3,7 @@
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { useActivities } from "@/hooks/useActivities";
-import { getActivityDisplay, formatActivityDate } from "@/lib/activityMapper";
+import { getActivityDisplay, formatActivityDateTime } from "@/lib/activityMapper";
 import { Loader2, RefreshCw, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "../ui/button";
 import { Badge } from "../ui/badge";
@@ -112,6 +112,7 @@ const AtivitysLastCard = () => {
           ) : (
             activities.map((activity, index) => {
               const display = getActivityDisplay(activity.action);
+              const { date, time } = formatActivityDateTime(activity.created_at);
 
               return (
                 <div
@@ -139,8 +140,11 @@ const AtivitysLastCard = () => {
                   </div>
 
                   <div className="text-right flex-shrink-0 ml-2 sm:ml-3">
-                    <p className="text-[10px] sm:text-xs md:text-sm text-gray-500 whitespace-nowrap">
-                      {formatActivityDate(activity.created_at)}
+                    <p className="text-[10px] sm:text-xs text-gray-600 font-medium whitespace-nowrap">
+                      {date}
+                    </p>
+                    <p className="text-[9px] sm:text-[10px] text-gray-500 whitespace-nowrap mt-0.5">
+                      {time}
                     </p>
                   </div>
                 </div>
