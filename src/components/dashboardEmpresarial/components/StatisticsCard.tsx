@@ -47,7 +47,7 @@ export function StatisticsCard({ statistics }: StatisticsCardProps) {
   };
 
   return (
-    <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 lg:gap-6">
+    <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-2 md:gap-3 lg:gap-6">
       {statistics.map((stat, index) => {
         const colors = getColorClasses(stat.color);
         const IconComponent = stat.icon;
@@ -55,22 +55,22 @@ export function StatisticsCard({ statistics }: StatisticsCardProps) {
         return (
           <div
             key={index}
-            className={`bg-white p-3 md:p-4 lg:p-6 rounded-lg shadow-md border border-gray-200 ${colors.bg}`}
+            className={`bg-white p-2 md:p-3 lg:p-6 rounded-lg shadow-md border border-gray-200 ${colors.bg}`}
           >
-            <div className="flex items-center justify-between mb-2 md:mb-2 lg:mb-4">
-              <h3 className="text-[10px] md:text-xs lg:text-sm font-medium text-gray-600 uppercase tracking-tight md:tracking-wide">
+            <div className="flex items-center justify-between mb-1.5 md:mb-2 lg:mb-4">
+              <h3 className="text-[9px] md:text-[10px] lg:text-sm font-medium text-gray-600 uppercase tracking-tighter md:tracking-tight lg:tracking-wide leading-tight">
                 {stat.title}
               </h3>
-              <div className={`p-1 md:p-1.5 lg:p-2 rounded-full ${colors.icon}`}>
-                <IconComponent className="w-3 h-3 md:w-3.5 md:h-3.5 lg:w-4 lg:h-4" />
+              <div className={`p-1 md:p-1 lg:p-2 rounded-full ${colors.icon}`}>
+                <IconComponent className="w-3 h-3 md:w-3 md:h-3 lg:w-4 lg:h-4" />
               </div>
             </div>
 
-            <div className="space-y-1 md:space-y-1.5 lg:space-y-2">
-              <p className={`text-sm md:text-base lg:text-lg xl:text-xl font-bold ${colors.text}`}>
+            <div className="space-y-0.5 md:space-y-1 lg:space-y-2">
+              <p className={`text-xs md:text-sm lg:text-lg xl:text-xl font-bold ${colors.text}`}>
                 {stat.amount}
               </p>
-              <p className="text-[10px] md:text-xs lg:text-sm text-gray-500">{stat.description}</p>
+              <p className="text-[9px] md:text-[10px] lg:text-sm text-gray-500 leading-tight">{stat.description}</p>
             </div>
           </div>
         );
