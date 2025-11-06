@@ -14,24 +14,20 @@ export function useProducts(): UseProductsReturn {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const apiUrl = `${process.env.NEXT_PUBLIC_API_BASE_URL_SIMULATOR}/simulador/1.0.0/products`;
-  const apiToken = process.env.API_SECRET_TOKEN;
-
   const fetchProducts = async () => {
     try {
       setLoading(true);
       setError(null);
 
-      const response = await fetch(apiUrl, {
+      const response = await fetch('/api/products', {
         headers: {
-          Authorization: `Bearer ${apiToken}`,
-          ApiKey: process.env.NEXT_PUBLIC_API_KEY || "",
           "Content-Type": "application/json",
         },
       });
 
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        const errorData = await response.json();
+        throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
       }
 
       const data: ApiResponse<Product[]> = await response.json();
