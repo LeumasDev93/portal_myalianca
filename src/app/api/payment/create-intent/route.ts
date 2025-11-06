@@ -24,7 +24,6 @@ export async function POST(req: NextRequest) {
     
     // Pega token do header Authorization
     const authHeader = req.headers.get("Authorization");
-    console.log("[PAYMENT API] Auth header recebido:", authHeader ? "SIM" : "NÃO");
     
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
       return NextResponse.json(
@@ -61,7 +60,6 @@ export async function POST(req: NextRequest) {
         const contentType = response.headers.get("content-type");
         if (contentType?.includes("application/json")) {
           const errorJson = await response.json();
-          console.error("[PAYMENT API] Erro JSON da API externa:", errorJson);
           
           // Extrai mensagem amigável do erro
           errorMessage = errorJson.message || errorJson.error || errorJson.detail || errorMessage;
@@ -161,7 +159,6 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(responseData);
     }
   } catch (error) {
-    console.error("[PAYMENT API] ❌ Exceção ao processar pagamento:", error);
     const errorMessage = error instanceof Error ? error.message : "Erro interno ao processar pagamento";
     return NextResponse.json(
       { 
