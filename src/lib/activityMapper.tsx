@@ -248,11 +248,24 @@ export const getActivityDisplay = (action: string): ActivityDisplay => {
     return activityMap[action];
   }
 
-  // Se a action começa com "Adicionado" ou "Removido", extrai o nome do menu
-  if (action.startsWith("ADICIONADO ") || action.startsWith("REMOVIDO ")) {
-    const menuName = action.replace(/^(ADICIONADO|REMOVIDO) /, "");
+  // Se a action termina com "ADICIONADO" ou "REMOVIDO", extrai o nome do menu
+  const isAdicionado = action.endsWith(" ADICIONADO");
+  const isRemovido = action.endsWith(" REMOVIDO");
+  
+  if (isAdicionado || isRemovido) {
+    const menuName = action.replace(/ (ADICIONADO|REMOVIDO)$/, "");
     if (activityMap[menuName]) {
-      return activityMap[menuName];
+      const menuConfig = activityMap[menuName];
+      // Se for REMOVIDO, mantém o ícone mas usa fundo cinza
+      if (isRemovido) {
+        return {
+          icon: menuConfig.icon,
+          color: "text-gray-600",
+          bgColor: "bg-gray-500",
+        };
+      }
+      // Se for ADICIONADO, usa as cores originais do menu
+      return menuConfig;
     }
   }
 
