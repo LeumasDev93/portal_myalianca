@@ -28,6 +28,17 @@ import {
   FaSearch,
   FaFilter,
 } from "react-icons/fa";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import { formatCurrency } from "@/lib/utils";
 import { FaTriangleExclamation } from "react-icons/fa6";
 import { HiDotsVertical } from "react-icons/hi";
 import { IoReceiptSharp, IoShieldCheckmarkSharp } from "react-icons/io5";
@@ -65,6 +76,12 @@ const HistoryTable = ({
 
   const [loadingStates, setLoadingStates] = useState<ReciboLoadingState>({});
   const [loadingPayment, setLoadingPayment] = useState<ReciboLoadingState>({});
+  const [confirmDialog, setConfirmDialog] = useState<{
+    open: boolean;
+    type: 'view' | 'download' | 'payment' | null;
+    reciboNumber: string;
+    reciboData?: any;
+  }>({ open: false, type: null, reciboNumber: '' });
   const { token } = useSessionCheckToken();
   const { profile } = useUserProfile();
 
@@ -81,11 +98,29 @@ const HistoryTable = ({
   const [loadingView, setLoadingView] = useState<ReciboLoadingState>({});
   const { registerReciboDownloadActivity } = useReciboActivity();
 
+  const openConfirmDialog = (type: 'view' | 'download' | 'payment', reciboNumber: string, reciboData?: any) => {
+    setConfirmDialog({ open: true, type, reciboNumber, reciboData });
+    setShowPopup(false);
+  };
+
+  const handleConfirmedAction = async () => {
+    const { type, reciboNumber, reciboData } = confirmDialog;
+    
+    if (type === 'view') {
+      visualizarPDF(reciboNumber, token!, reciboData?.status);
+    } else if (type === 'download') {
+      handleDownload(reciboNumber);
+    } else if (type === 'payment' && reciboData) {
+      handlePayment(reciboNumber);
+    }
+  };
+
   const visualizarPDF = async (
     invoiceNumber: string,
     token: string,
     reciboStatus?: number
   ) => {
+    setConfirmDialog({ open: false, type: null, reciboNumber: '' });
     setLoadingView((prev) => ({ ...prev, [invoiceNumber]: true }));
     const response = await fetch(
       `/api/anywhere/api/v1/private/mobile/invoice/${invoiceNumber}/print/receipt`,
@@ -263,6 +298,7 @@ const HistoryTable = ({
     // Implementação para renovar apólice
   };
   const handlePayment = async (invoiceNumber: string) => {
+    setConfirmDialog({ open: false, type: null, reciboNumber: '' });
     if (!profile?.user) {
       toast.error("Dados do usuário não disponíveis");
       return;
@@ -302,6 +338,7 @@ const HistoryTable = ({
   };
 
   const handleDownload = async (invoiceNumber: string) => {
+    setConfirmDialog({ open: false, type: null, reciboNumber: '' });
     setLoadingStates((prev) => ({ ...prev, [invoiceNumber]: true }));
 
     try {
@@ -708,8 +745,7 @@ const HistoryTable = ({
                           document.cookie = `anywhere_token=${encodeURIComponent(String(token))}; Path=/; Max-Age=1200;`;
                         }
                       } catch {}
-                      handlePayment(selectedItem.rawData.number);
-                      setShowPopup(false);
+                      openConfirmDialog('payment', selectedItem.rawData.number, selectedItem.rawData);
                     }}
                     className="w-full cursor-pointer text-left px-3 py-3 text-xs sm:text-sm md:text-base text-gray-700 hover:text-gray-800 hover:bg-gray-100 flex items-center gap-3 rounded-md mx-1"
                   >
@@ -720,12 +756,7 @@ const HistoryTable = ({
 
               <button
                 onClick={() => {
-                  visualizarPDF(
-                    selectedItem.rawData.number,
-                    token!,
-                    selectedItem.rawData.status
-                  );
-                  setShowPopup(false);
+                  openConfirmDialog('view', selectedItem.rawData.number, selectedItem.rawData);
                 }}
                 className="w-full cursor-pointer text-left px-3 py-3 text-xs sm:text-sm md:text-base text-gray-700 hover:text-gray-800 hover:bg-gray-100 flex items-center gap-3 rounded-md mx-1"
               >
@@ -737,8 +768,7 @@ const HistoryTable = ({
                 selectedItem.rawData.status === 5 && (
                   <button
                     onClick={() => {
-                      handleDownload(selectedItem.rawData.number);
-                      setShowPopup(false);
+                      openConfirmDialog('download', selectedItem.rawData.number, selectedItem.rawData);
                     }}
                     className="w-full cursor-pointer text-left px-3 py-3 text-xs sm:text-sm md:text-base text-gray-700 hover:text-gray-800 hover:bg-gray-100 flex items-center gap-3 rounded-md mx-1"
                   >
@@ -754,6 +784,70 @@ const HistoryTable = ({
       {showPopup && (
         <div className="fixed inset-0 z-[9998]" onClick={closePopup} />
       )}
+
+      {/* Dialog de Confirmação */}
+      <Dialog open={confirmDialog.open} onOpenChange={(open) => setConfirmDialog({ ...confirmDialog, open })}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-bold text-gray-900">
+              {confirmDialog.type === 'view' && 'Visualizar Recibo'}
+              {confirmDialog.type === 'download' && 'Baixar Recibo'}
+              {confirmDialog.type === 'payment' && 'Confirmar Pagamento'}
+            </DialogTitle>
+            <DialogDescription className="text-gray-600">
+              {confirmDialog.type === 'view' && (
+                <>Tem certeza que deseja visualizar o recibo <span className="font-semibold text-gray-900">{confirmDialog.reciboNumber}</span>?</>
+              )}
+              {confirmDialog.type === 'download' && (
+                <>Tem certeza que deseja baixar o recibo <span className="font-semibold text-gray-900">{confirmDialog.reciboNumber}</span>?</>
+              )}
+              {confirmDialog.type === 'payment' && (
+                <>Tem certeza que deseja pagar o recibo <span className="font-semibold text-gray-900">{confirmDialog.reciboNumber}</span> no valor de <span className="font-semibold text-green-600">{confirmDialog.reciboData ? formatCurrency(confirmDialog.reciboData.value) : ''}</span>?</>
+              )}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex gap-3 sm:gap-3">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setConfirmDialog({ open: false, type: null, reciboNumber: '' })}
+              disabled={loadingView[confirmDialog.reciboNumber] || loadingStates[confirmDialog.reciboNumber] || loadingPayment[confirmDialog.reciboNumber]}
+              className="flex-1"
+            >
+              Cancelar
+            </Button>
+            <Button
+              type="button"
+              onClick={handleConfirmedAction}
+              disabled={loadingView[confirmDialog.reciboNumber] || loadingStates[confirmDialog.reciboNumber] || loadingPayment[confirmDialog.reciboNumber]}
+              className={`flex-1 ${
+                confirmDialog.type === 'payment' 
+                  ? 'bg-green-600 hover:bg-green-700' 
+                  : confirmDialog.type === 'download'
+                  ? 'bg-[#002256] hover:bg-[#002256]/90'
+                  : 'bg-blue-600 hover:bg-blue-700'
+              } text-white`}
+            >
+              {(loadingView[confirmDialog.reciboNumber] || loadingStates[confirmDialog.reciboNumber] || loadingPayment[confirmDialog.reciboNumber]) ? (
+                <>
+                  <LoadingSpinner size="sm" />
+                  <span className="ml-2">
+                    {confirmDialog.type === 'view' && 'Visualizando...'}
+                    {confirmDialog.type === 'download' && 'Baixando...'}
+                    {confirmDialog.type === 'payment' && 'Processando...'}
+                  </span>
+                </>
+              ) : (
+                <>
+                  {confirmDialog.type === 'view' && 'Visualizar'}
+                  {confirmDialog.type === 'download' && 'Baixar'}
+                  {confirmDialog.type === 'payment' && 'Pagar'}
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

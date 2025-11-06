@@ -601,7 +601,7 @@ export default function ReciboPage({ filterParams }: ReciboPageProps) {
                       onClick={() => openConfirmDialog('payment', recibo.number, recibo)}
                       disabled={loadingPayment[recibo.number]}
                       size="sm"
-                      className="flex-1 text-xs md:text-sm py-2 bg-green-600 hover:bg-green-700 text-white disabled:opacity-50"
+                      className="flex-1 text-xs md:text-sm py-2 bg-blue-500 hover:bg-blue-700 text-white disabled:opacity-50"
                     >
                       {loadingPayment[recibo.number] ? (
                         <LoadingSpinner size="sm" />
@@ -709,7 +709,7 @@ export default function ReciboPage({ filterParams }: ReciboPageProps) {
                         onClick={() => openConfirmDialog('payment', recibo.number, recibo)}
                         disabled={loadingPayment[recibo.number]}
                         size="sm"
-                        className="flex-1 md:flex-none text-xs md:text-sm py-2 bg-green-600 hover:bg-green-700 text-white disabled:opacity-50"
+                        className="flex-1 md:flex-none text-xs md:text-sm py-2 bg-blue-500 hover:bg-blue-700 text-white disabled:opacity-50"
                       >
                         {loadingPayment[recibo.number] ? (
                           <LoadingSpinner size="sm" />
@@ -764,6 +764,7 @@ export default function ReciboPage({ filterParams }: ReciboPageProps) {
               type="button"
               variant="outline"
               onClick={() => setConfirmDialog({ open: false, type: null, reciboNumber: '' })}
+              disabled={loadingView[confirmDialog.reciboNumber] || loadingStates[confirmDialog.reciboNumber] || loadingPayment[confirmDialog.reciboNumber]}
               className="flex-1"
             >
               Cancelar
@@ -771,6 +772,7 @@ export default function ReciboPage({ filterParams }: ReciboPageProps) {
             <Button
               type="button"
               onClick={handleConfirmedAction}
+              disabled={loadingView[confirmDialog.reciboNumber] || loadingStates[confirmDialog.reciboNumber] || loadingPayment[confirmDialog.reciboNumber]}
               className={`flex-1 ${
                 confirmDialog.type === 'payment' 
                   ? 'bg-green-600 hover:bg-green-700' 
@@ -779,9 +781,22 @@ export default function ReciboPage({ filterParams }: ReciboPageProps) {
                   : 'bg-blue-600 hover:bg-blue-700'
               } text-white`}
             >
-              {confirmDialog.type === 'view' && 'Visualizar'}
-              {confirmDialog.type === 'download' && 'Baixar'}
-              {confirmDialog.type === 'payment' && 'Pagar'}
+              {(loadingView[confirmDialog.reciboNumber] || loadingStates[confirmDialog.reciboNumber] || loadingPayment[confirmDialog.reciboNumber]) ? (
+                <>
+                  <LoadingSpinner size="sm" />
+                  <span className="ml-2">
+                    {confirmDialog.type === 'view' && 'Visualizando...'}
+                    {confirmDialog.type === 'download' && 'Baixando...'}
+                    {confirmDialog.type === 'payment' && 'Processando...'}
+                  </span>
+                </>
+              ) : (
+                <>
+                  {confirmDialog.type === 'view' && 'Visualizar'}
+                  {confirmDialog.type === 'download' && 'Baixar'}
+                  {confirmDialog.type === 'payment' && 'Pagar'}
+                </>
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -111,9 +111,9 @@ export const getStatusReciverColors = (status: number) => {
     case 2:
       return "bg-orange-300 text-orange-800";
     case 5:
-      return "bg-blue-300 text-blue-800";
+      return "bg-green-600 text-white";
     case 8:
-      return "bg-green-300 text-green-800";
+      return "bg-blue-300 text-blue-800";
     case 9:
       return "bg-red-300 text-red-800";
     default:
