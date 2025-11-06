@@ -131,7 +131,7 @@ const Page = () => {
   const getFilteredMenus = () => {
     const baseMenus: MenuItem[] = [
       {
-        title: "Histórico",
+        title: "Início",
         path: "Historico",
         icon: IoGrid,
         hoverIcon: <IoGrid />,

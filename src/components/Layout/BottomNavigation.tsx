@@ -29,7 +29,7 @@ export const BottomNavigation = ({
 
   const navItems: BottomNavItem[] = [
     {
-      title: isCompany ? "Dashboard" : "Histórico",
+      title: isCompany ? "Dashboard" : "Início",
       key: isCompany ? "dashboardEmpresarial" : "Historico",
       icon: isCompany ? IoBusinessSharp : IoGrid,
       onClick: () =>

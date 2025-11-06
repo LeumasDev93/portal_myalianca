@@ -14,7 +14,7 @@ export function BackToDashboardButton({
   // Função para obter nome amigável da página
   const getPageDisplayName = (page: string) => {
     const pageNames: Record<string, string> = {
-      Historico: "Histórico",
+      Historico: "Início",
       apolice: "Apólice",
       apoliceDetails: "Detalhes da Apólice",
       sinistro: "Sinistros",

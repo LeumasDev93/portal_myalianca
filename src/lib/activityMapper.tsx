@@ -191,7 +191,7 @@ export const getActivityDisplay = (action: string): ActivityDisplay => {
     },
 
     // Menus de Acesso Rápido - Específicos por nome
-    "Histórico": {
+    "Início": {
       icon: <IoGrid className={iconSize} />,
       color: "text-blue-600",
       bgColor: "bg-blue-500",

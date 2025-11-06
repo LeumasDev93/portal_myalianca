@@ -44,7 +44,7 @@ export default function DashboardEmpresarial({
       path: "gestaoSOAT",
     },
     {
-      title: "Histórico",
+      title: "Início",
       description: "Visualize apólices, sinistros e recibos",
       icon: IoGrid,
       path: "Historico",

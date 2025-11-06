@@ -90,7 +90,7 @@ export function TopMenu({
   // Mapeia os nomes das páginas para exibição mais amigável
   const getPageTitle = () => {
     const pageTitles: Record<string, string> = {
-      Historico: "Histórico",
+      Historico: "Início",
       apolice: "Apólice",
       apoliceDetails: "Detalhes da Apólice",
       sinistro: "Sinistros",

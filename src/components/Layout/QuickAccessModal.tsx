@@ -45,7 +45,7 @@ const AVAILABLE_MENUS = [
     onlyForCompany: true,
   },
   {
-    nome: "Histórico",
+    nome: "Início",
     titulo: "Visualize seu histórico completo",
     descricao:
       "Acesse todo o histórico de transações, atividades e movimentações da sua conta de forma organizada e detalhada.",
