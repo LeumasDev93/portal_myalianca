@@ -285,7 +285,7 @@ const Page = () => {
       const qs = params.toString();
       router.replace(`?${qs}`, { scroll: false });
     }
-  }, [isClient, profile?.user?.tipo_cliente, searchParams, router]);
+  }, [isClient, profile?.user?.tipo_cliente, searchParams, router, toast]);
 
   // Exibe toast apenas para resultado SERVER-SIDE (validação/cobrança) e limpa parâmetros
   const paymentHandledRef = useRef(false);

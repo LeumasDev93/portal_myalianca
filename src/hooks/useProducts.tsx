@@ -1,4 +1,3 @@
-/* eslint-disable react-hooks/exhaustive-deps */
 import { ApiResponse, Product } from "@/types/typesData";
 import { useEffect, useState } from "react";
 

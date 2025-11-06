@@ -1,9 +1,9 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 
 // Configuração de revalidação estática a cada 60 segundos
 export const revalidate = 60;
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     const apiUrl = `${process.env.NEXT_PUBLIC_API_BASE_URL_SIMULATOR}/simulador/1.0.0/products`;
     const apiToken = process.env.API_SECRET_TOKEN;
