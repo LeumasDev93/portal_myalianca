@@ -38,35 +38,24 @@ export function useQuickAccess() {
       setIsLoading(true);
       setError(null);
 
-      const apiKey = process.env.NEXT_PUBLIC_API_KEY;
-      const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL_DEFAULT;
-
-      if (!apiKey || !apiBaseUrl) {
-        throw new Error("Configuração da API incompleta");
-      }
-
-             const response = await fetch(
-         `${apiBaseUrl}/quick-access/1.0.0/user/${profile.user.id}`,
-         {
-           method: "GET",
-           headers: {
-             "Content-Type": "application/json",
-             "ApiKey": apiKey,
-           },
-         }
-       );
+      const response = await fetch(`/api/quick-access?userId=${encodeURIComponent(profile.user.id)}`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || "Erro ao buscar acesso rápido");
+        throw new Error(errorData.error || "Erro ao buscar acesso rápido");
       }
 
-             const data = await response.json();
-       console.log("API Response:", data);
-       
-       // A API retorna {info: {...}, results: [...]}
-       const items = data.results || [];
-       setQuickAccessItems(Array.isArray(items) ? items : []);
+      const data = await response.json();
+      console.log("API Response:", data);
+      
+      // A API retorna {info: {...}, results: [...]}
+      const items = data.results || [];
+      setQuickAccessItems(Array.isArray(items) ? items : []);
     } catch (err) {
       console.error("Erro ao buscar acesso rápido:", err);
       setError(err instanceof Error ? err.message : "Erro desconhecido");

@@ -26,13 +26,12 @@ export function StatisticsApiCard({ onNavigate }: StatisticsApiCardProps) {
   if (isLoading) {
     return (
       <div className="bg-white rounded-lg shadow-md p-6">
-        <h2 className="text-xl font-bold text-[#002256] mb-6">Estatísticas</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {[1, 2].map((i) => (
             <div key={i} className="bg-gray-100 p-4 rounded-lg animate-pulse">
               <div className="h-4 bg-gray-300 rounded w-24 mb-2"></div>
-              <div className="h-8 bg-gray-300 rounded w-16 mb-2"></div>
-              <div className="h-4 bg-gray-300 rounded w-20"></div>
+              <div className="h-8 bg-gray-300 rounded w-24 mb-2"></div>
+              <div className="h-4 bg-gray-300 rounded w-24"></div>
             </div>
           ))}
         </div>

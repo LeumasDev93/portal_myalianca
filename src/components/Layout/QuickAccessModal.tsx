@@ -207,13 +207,6 @@ export function QuickAccessModal({
     setIsLoading(true);
 
     try {
-      const apiKey = process.env.NEXT_PUBLIC_API_KEY;
-      const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL_DEFAULT;
-
-      if (!apiKey || !apiBaseUrl) {
-        throw new Error("Configuração da API incompleta");
-      }
-
       const requestData = {
         nome: String(menu.nome || ""),
         titulo: String(menu.titulo || ""),
@@ -229,35 +222,10 @@ export function QuickAccessModal({
         order_number: Number(menu.order_number || 1),
       };
 
-      const requiredFields = [
-        "nome",
-        "titulo",
-        "icone",
-        "link",
-        "descricao_botao",
-        "user_id",
-        "border_color",
-        "icon_color",
-        "bg_color",
-        "text_color",
-        "bg_botton_color",
-        "order_number",
-      ];
-
-      const missingFields = requiredFields.filter(
-        (field) => !requestData[field as keyof typeof requestData]
-      );
-      if (missingFields.length > 0) {
-        console.error("Campos faltando:", missingFields);
-      }
-
-      console.log("Dados sendo enviados:", requestData);
-
-      const response = await fetch(`${apiBaseUrl}/quick-access/1.0.0`, {
+      const response = await fetch('/api/quick-access', {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          ApiKey: apiKey,
         },
         body: JSON.stringify(requestData),
       });
@@ -266,7 +234,7 @@ export function QuickAccessModal({
         const errorData = await response.json();
         console.error("Erro na resposta:", errorData);
         throw new Error(
-          errorData.message || "Erro ao adicionar ao acesso rápido"
+          errorData.error || "Erro ao adicionar ao acesso rápido"
         );
       }
 

@@ -74,24 +74,16 @@ const QuickAccessCard: React.FC<QuickAccessCardProps> = ({
     setIsDeleting(true);
 
     try {
-      const apiKey = process.env.NEXT_PUBLIC_API_KEY;
-      const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL_DEFAULT;
-
-      if (!apiKey || !apiBaseUrl) {
-        throw new Error("Configuração da API incompleta");
-      }
-
-      const response = await fetch(`${apiBaseUrl}/quick-access/1.0.0/${id}`, {
+      const response = await fetch(`/api/quick-access/${id}`, {
         method: "DELETE",
         headers: {
           "Content-Type": "application/json",
-          ApiKey: apiKey,
         },
       });
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || "Erro ao deletar acesso rápido");
+        throw new Error(errorData.error || "Erro ao deletar acesso rápido");
       }
 
       // Chama o callback para atualizar a lista

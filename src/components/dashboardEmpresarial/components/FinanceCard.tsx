@@ -31,13 +31,13 @@ export function FinanceCard({ onNavigate }: FinanceCardProps) {
 
   if (isLoading) {
     return (
-      <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="bg-white rounded-lg shadow-md p-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {[1, 2].map((i) => (
-            <div key={i} className="bg-gray-100 p-6 rounded-lg animate-pulse">
-              <div className="h-4 bg-gray-300 rounded w-20 mb-4"></div>
-              <div className="h-6 bg-gray-300 rounded w-16 mb-2"></div>
-              <div className="h-8 bg-gray-300 rounded w-24"></div>
+            <div key={i} className="bg-gray-100 p-4 rounded-lg animate-pulse">
+              <div className="h-4 bg-gray-300 rounded w-24 mb-2"></div>
+              <div className="h-8 bg-gray-300 rounded w-24 mb-2"></div>
+              <div className="h-4 bg-gray-300 rounded w-24"></div>
             </div>
           ))}
         </div>
