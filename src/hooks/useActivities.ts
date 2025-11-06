@@ -1,5 +1,5 @@
 /* eslint-disable react-hooks/exhaustive-deps */
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useUserProfile } from './useUserProfile';
 
 export interface Activity {
@@ -30,7 +30,7 @@ export const useActivities = () => {
   const ITEMS_PER_PAGE = 10;
 
   // Buscar todas as atividades do usuário
-  const fetchActivities = async () => {
+  const fetchActivities = useCallback(async () => {
     if (!profile?.user?.id) {
       setError('Usuário não autenticado');
       setAllActivities([]); // Garantir que é sempre um array
@@ -72,7 +72,7 @@ export const useActivities = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [profile?.user?.id]);
 
   // Calcular atividades da página atual
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
@@ -123,15 +123,22 @@ export const useActivities = () => {
     }
   };
 
-  // Buscar atividades quando o componente montar
+  // Buscar atividades quando o componente montar e atualizar periodicamente
   useEffect(() => {
     if (profile?.user?.id) {
       fetchActivities();
+      
+      // Atualiza automaticamente a cada 60 segundos
+      const interval = setInterval(() => {
+        fetchActivities();
+      }, 60000); // 60 segundos
+      
+      return () => clearInterval(interval);
     } else {
       // Se não há profile, garantir que activities é um array vazio
       setAllActivities([]);
     }
-  }, [profile?.user?.id]);
+  }, [profile?.user?.id, fetchActivities]);
 
   return {
     activities: Array.isArray(activities) ? activities : [], // Garantir que sempre retorna array

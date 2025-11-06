@@ -24,7 +24,7 @@ export async function GET(request: NextRequest) {
     }
 
     const response = await fetch(
-      `${apiBaseUrl}/user/activity/1.0.0/user/${userId}/last?limit=5`,
+      `${apiBaseUrl}/user/activity/1.0.0/user/${userId}/last?limit=20`,
       {
         method: 'GET',
         headers: {
@@ -48,7 +48,7 @@ export async function GET(request: NextRequest) {
     // Retorna com headers de cache
     return NextResponse.json(data, {
       headers: {
-        'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=120',
+        'Cache-Control': 'public, s-maxage=10, stale-while-revalidate=20',
       },
     });
   } catch (error) {
