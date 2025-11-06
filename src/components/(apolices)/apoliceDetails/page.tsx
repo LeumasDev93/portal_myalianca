@@ -46,6 +46,14 @@ import { FaTriangleExclamation } from "react-icons/fa6";
 import { LoadingContainer } from "@/components/ui/loading-container";
 import { ReciboPDFModal } from "@/components/(recibo)/ModalRecibo";
 import { useToast } from "@/components/ui/use-toast";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 type ApoliceDetailPageProps = {
   id: string;
@@ -76,6 +84,15 @@ export default function ApoliceDetailPage({
   const [cobertura, setCobertura] = useState<InsurancePolicy[]>([]);
   const [sinistros, setSinistros] = useState<SinistroData[]>([]);
   const [expandedItems, setExpandedItems] = useState<boolean[]>([]);
+  const [confirmDialog, setConfirmDialog] = useState<{
+    open: boolean;
+    type: 'view' | 'download' | null;
+    reciboNumber: string;
+  }>({
+    open: false,
+    type: null,
+    reciboNumber: '',
+  });
 
   const toggleExpand = (index: number) => {
     setExpandedItems((prev) => {
@@ -215,6 +232,26 @@ export default function ApoliceDetailPage({
     } finally {
       setLoadingStates((prev) => ({ ...prev, [invoiceNumber]: false }));
     }
+  };
+
+  const openConfirmDialog = (type: 'view' | 'download', reciboNumber: string) => {
+    setConfirmDialog({
+      open: true,
+      type,
+      reciboNumber,
+    });
+  };
+
+  const handleConfirmedAction = async () => {
+    const { type, reciboNumber } = confirmDialog;
+    
+    if (type === 'view') {
+      await visualizarPDF(reciboNumber);
+    } else if (type === 'download') {
+      await handleDownload(reciboNumber);
+    }
+    
+    setConfirmDialog({ open: false, type: null, reciboNumber: '' });
   };
 
   const visualizarPDF = async (invoiceNumber: string) => {
@@ -617,21 +654,21 @@ export default function ApoliceDetailPage({
                           </div>
                           <div className="flex gap-2 md:gap-3 items-start md:items-end">
                             <Button
-                              onClick={() => visualizarPDF(item.number)}
+                              onClick={() => openConfirmDialog('view', item.number)}
                               disabled={loadingView[item.number]}
-                              className="bg-blue-600 hover:bg-blue-700 px-3 md:px-4 py-2 text-xs md:text-sm text-white"
+                              className="bg-white hover:bg-gray-50 border-2 border-[#002256] text-[#002256] hover:text-[#002256]/70 px-3 md:px-4 py-2 text-xs md:text-sm"
                             >
                               {loadingView[item.number] ? (
                                 <FaSpinner className="animate-spin" />
                               ) : (
                                 <>
-                                  <FaEye className="size-3 md:size-4 xl:size-5 text-white" />
+                                  <FaEye className="size-3 md:size-4 xl:size-5" />
                                   <span>Ver</span>
                                 </>
                               )}
                             </Button>
                             <Button
-                              onClick={() => handleDownload(item.number)}
+                              onClick={() => openConfirmDialog('download', item.number)}
                               disabled={loadingStates[item.number]}
                               className="bg-[#002256] hover:bg-[#002256]/50 px-3 md:px-4 py-2 text-xs md:text-sm text-white"
                             >
@@ -710,6 +747,46 @@ export default function ApoliceDetailPage({
           </Card>
         </div>
       ))}
+
+      {/* Dialog de Confirmação */}
+      <Dialog open={confirmDialog.open} onOpenChange={(open) => !open && setConfirmDialog({ open: false, type: null, reciboNumber: '' })}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>
+              {confirmDialog.type === 'view' ? 'Visualizar Recibo' : 'Baixar Recibo'}
+            </DialogTitle>
+            <DialogDescription>
+              {confirmDialog.type === 'view' 
+                ? `Deseja visualizar o recibo ${confirmDialog.reciboNumber}?`
+                : `Deseja baixar o recibo ${confirmDialog.reciboNumber}?`
+              }
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex flex-col sm:flex-row gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setConfirmDialog({ open: false, type: null, reciboNumber: '' })}
+              className="w-full sm:w-auto"
+            >
+              Cancelar
+            </Button>
+            <Button
+              onClick={handleConfirmedAction}
+              disabled={loadingView[confirmDialog.reciboNumber] || loadingStates[confirmDialog.reciboNumber]}
+              className={`w-full sm:w-auto ${
+                confirmDialog.type === 'view' 
+                  ? 'bg-blue-600 hover:bg-blue-700' 
+                  : 'bg-[#002256] hover:bg-[#002256]/90'
+              }`}
+            >
+              {(loadingView[confirmDialog.reciboNumber] || loadingStates[confirmDialog.reciboNumber]) && (
+                <FaSpinner className="animate-spin mr-2" />
+              )}
+              {confirmDialog.type === 'view' ? 'Visualizar' : 'Baixar'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
