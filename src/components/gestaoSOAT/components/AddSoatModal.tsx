@@ -211,30 +211,30 @@ export default function AddSoatModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-lg shadow-xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
-        <div className="p-6">
-          <h2 className="text-xl font-bold text-[#002256] mb-2">
+    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-2 md:p-4">
+      <div className="bg-white rounded-lg shadow-xl max-w-lg w-full max-h-[95vh] md:max-h-[90vh] overflow-y-auto">
+        <div className="p-3 md:p-4 lg:p-6">
+          <h2 className="text-base md:text-lg lg:text-xl font-bold text-[#002256] mb-1 md:mb-2">
             Adicionar Nova Lista de SOAT
           </h2>
-          <p className="text-sm text-gray-600 mb-6">
+          <p className="text-xs md:text-sm text-gray-600 mb-3 md:mb-4 lg:mb-6">
             Crie uma nova lista de SOAT para um mês específico. Os dados serão
             importados do Excel configurado no backend.
           </p>
           {error && (
-            <div className="flex items-center justify-center space-x-2 bg-red-50 border border-red-200 rounded-lg py-2 px-4 mb-4">
-              <AlertTriangle color="#B7021C" size={20} />
-              <p className="text-red-500">{error}</p>
+            <div className="flex items-center justify-center space-x-2 bg-red-50 border border-red-200 rounded-lg py-2 px-3 md:px-4 mb-3 md:mb-4">
+              <AlertTriangle color="#B7021C" size={16} className="md:w-5 md:h-5" />
+              <p className="text-xs md:text-sm text-red-500">{error}</p>
             </div>
           )}
           {/* Período */}
-          <div className="mb-6">
-            <label className="block text-sm font-medium text-gray-700 mb-3">
+          <div className="mb-3 md:mb-4 lg:mb-6">
+            <label className="block text-xs md:text-sm font-medium text-gray-700 mb-2 md:mb-3">
               Período <span className="text-red-500">*</span>
             </label>
 
-            <div className="space-y-3">
-              <label className="flex items-center space-x-3 cursor-pointer">
+            <div className="space-y-2 md:space-y-3">
+              <label className="flex items-start md:items-center space-x-2 md:space-x-3 cursor-pointer">
                 <input
                   type="radio"
                   name="periodo"
@@ -243,22 +243,22 @@ export default function AddSoatModal({
                   onChange={(e) =>
                     setModalData({ ...modalData, periodo: e.target.value })
                   }
-                  className="w-4 h-4 text-[#002256] border-gray-300 focus:ring-[#002256]"
+                  className="w-3.5 h-3.5 md:w-4 md:h-4 text-[#002256] border-gray-300 focus:ring-[#002256] mt-0.5 md:mt-0"
                 />
                 <div>
-                  <div className="flex items-center space-x-2">
-                    <span className="text-blue-600">📅</span>
-                    <span className="font-medium text-gray-900">
+                  <div className="flex items-center space-x-1.5 md:space-x-2">
+                    <span className="text-sm md:text-base">📅</span>
+                    <span className="font-medium text-gray-900 text-xs md:text-sm">
                       Mês Específico
                     </span>
                   </div>
-                  <p className="text-sm text-gray-500 ml-6">
+                  <p className="text-[10px] md:text-xs lg:text-sm text-gray-500 ml-5 md:ml-6">
                     Criar lista para um único mês
                   </p>
                 </div>
               </label>
 
-              <label className="flex items-center space-x-3 cursor-pointer">
+              <label className="flex items-start md:items-center space-x-2 md:space-x-3 cursor-pointer">
                 <input
                   type="radio"
                   name="periodo"
@@ -267,16 +267,16 @@ export default function AddSoatModal({
                   onChange={(e) =>
                     setModalData({ ...modalData, periodo: e.target.value })
                   }
-                  className="w-4 h-4 text-[#002256] border-gray-300 focus:ring-[#002256]"
+                  className="w-3.5 h-3.5 md:w-4 md:h-4 text-[#002256] border-gray-300 focus:ring-[#002256] mt-0.5 md:mt-0"
                 />
                 <div>
-                  <div className="flex items-center space-x-2">
-                    <span className="text-green-600">📊</span>
-                    <span className="font-medium text-gray-900">
+                  <div className="flex items-center space-x-1.5 md:space-x-2">
+                    <span className="text-sm md:text-base">📊</span>
+                    <span className="font-medium text-gray-900 text-xs md:text-sm">
                       Intervalo de Meses
                     </span>
                   </div>
-                  <p className="text-sm text-gray-500 ml-6">
+                  <p className="text-[10px] md:text-xs lg:text-sm text-gray-500 ml-5 md:ml-6">
                     Criar listas para múltiplos meses consecutivos
                   </p>
                 </div>
@@ -285,19 +285,19 @@ export default function AddSoatModal({
           </div>
 
           {/* Mês/Ano */}
-          <div className="mb-6">
-            <label className="block text-sm font-medium text-gray-700 mb-3">
+          <div className="mb-3 md:mb-4 lg:mb-6">
+            <label className="block text-xs md:text-sm font-medium text-gray-700 mb-2 md:mb-3">
               Mês/Ano <span className="text-red-500">*</span>
             </label>
 
             {modalData.periodo === "especifico" ? (
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-2 md:gap-3 lg:gap-4">
                 <select
                   value={modalData.mes}
                   onChange={(e) =>
                     setModalData({ ...modalData, mes: e.target.value })
                   }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#002256] focus:border-transparent"
+                  className="w-full px-2 py-1.5 md:px-3 md:py-2 text-xs md:text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#002256] focus:border-transparent"
                 >
                   <option value="">Selecione o mês</option>
                   <option value="01">Janeiro</option>
@@ -318,7 +318,7 @@ export default function AddSoatModal({
                   onChange={(e) =>
                     setModalData({ ...modalData, ano: e.target.value })
                   }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#002256] focus:border-transparent"
+                  className="w-full px-2 py-1.5 md:px-3 md:py-2 text-xs md:text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#002256] focus:border-transparent"
                 >
                   <option value="">Selecione o ano</option>
                   <option value="2024">2024</option>
@@ -327,8 +327,8 @@ export default function AddSoatModal({
                 </select>
               </div>
             ) : (
-              <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2 md:space-y-3 lg:space-y-4">
+                <div className="grid grid-cols-2 gap-2 md:gap-3 lg:gap-4">
                   <select
                     value={modalData.mesInicio}
                     onChange={(e) =>
@@ -337,7 +337,7 @@ export default function AddSoatModal({
                         mesInicio: e.target.value,
                       })
                     }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#002256] focus:border-transparent"
+                    className="w-full px-2 py-1.5 md:px-3 md:py-2 text-xs md:text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#002256] focus:border-transparent"
                   >
                     <option value="">Mês início</option>
                     <option value="01">Janeiro</option>
@@ -361,7 +361,7 @@ export default function AddSoatModal({
                         anoInicio: e.target.value,
                       })
                     }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#002256] focus:border-transparent"
+                    className="w-full px-2 py-1.5 md:px-3 md:py-2 text-xs md:text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#002256] focus:border-transparent"
                   >
                     <option value="">Ano início</option>
                     <option value="2024">2024</option>
@@ -369,13 +369,13 @@ export default function AddSoatModal({
                     <option value="2026">2026</option>
                   </select>
                 </div>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-2 gap-2 md:gap-3 lg:gap-4">
                   <select
                     value={modalData.mesFim}
                     onChange={(e) =>
                       setModalData({ ...modalData, mesFim: e.target.value })
                     }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#002256] focus:border-transparent"
+                    className="w-full px-2 py-1.5 md:px-3 md:py-2 text-xs md:text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#002256] focus:border-transparent"
                   >
                     <option value="">Mês fim</option>
                     <option value="01">Janeiro</option>
@@ -396,7 +396,7 @@ export default function AddSoatModal({
                     onChange={(e) =>
                       setModalData({ ...modalData, anoFim: e.target.value })
                     }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#002256] focus:border-transparent"
+                    className="w-full px-2 py-1.5 md:px-3 md:py-2 text-xs md:text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#002256] focus:border-transparent"
                   >
                     <option value="">Ano fim</option>
                     <option value="2024">2024</option>
@@ -408,13 +408,13 @@ export default function AddSoatModal({
             )}
           </div>
           {selectedFile && (
-            <div className="text-sm text-gray-600 pb-4">
+            <div className="text-xs md:text-sm text-gray-600 pb-2 md:pb-3 lg:pb-4">
               Arquivo selecionado:{" "}
               <span className="font-medium">{selectedFile.name}</span>
             </div>
           )}
           {/* Botões */}
-          <div className="flex justify-between space-x-3">
+          <div className="flex flex-col sm:flex-row justify-between gap-2 sm:gap-0 sm:space-x-2 md:space-x-3">
             <div className="flex flex-col gap-2">
               <input
                 type="file"
@@ -425,26 +425,26 @@ export default function AddSoatModal({
               />
               <label
                 htmlFor="file-upload"
-                className="px-4 py-2 bg-[#002256] text-white rounded-lg hover:bg-[#002256]/90 transition-colors flex items-center gap-2 cursor-pointer"
+                className="px-3 py-1.5 md:px-4 md:py-2 text-xs md:text-sm bg-[#002256] text-white rounded-lg hover:bg-[#002256]/90 transition-colors flex items-center justify-center gap-1.5 md:gap-2 cursor-pointer"
               >
-                <FaUpload />
+                <FaUpload className="w-3 h-3 md:w-4 md:h-4" />
                 Importar Lista
               </label>
             </div>
             <div className="flex items-center gap-2">
               <button
                 onClick={handleClose}
-                className="px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                className="px-3 py-1.5 md:px-4 md:py-2 text-xs md:text-sm text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors flex-1 sm:flex-none"
               >
                 Cancelar
               </button>
               <button
                 onClick={handleCreate}
                 disabled={!isFormValid() || loading || uploadLoading}
-                className="px-4 py-2 bg-[#B7021C] text-white rounded-lg hover:bg-[#B7021C]/90 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
+                className="px-3 py-1.5 md:px-4 md:py-2 text-xs md:text-sm bg-[#B7021C] text-white rounded-lg hover:bg-[#B7021C]/90 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-1.5 md:gap-2 flex-1 sm:flex-none"
               >
                 {(loading || uploadLoading) && (
-                  <FaSpinner className="w-4 h-4 animate-spin" />
+                  <FaSpinner className="w-3 h-3 md:w-4 md:h-4 animate-spin" />
                 )}
                 {uploadLoading
                   ? "Importando..."
