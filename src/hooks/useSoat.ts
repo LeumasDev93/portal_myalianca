@@ -14,7 +14,6 @@ export const useSoat = () => {
 
   const fetchSoatData = useCallback(async () => {
     if (!userId || userId.trim() === '') {
-      console.log('userId não disponível:', userId);
       setLoading(false);
       return;
     }
@@ -23,34 +22,20 @@ export const useSoat = () => {
       setLoading(true);
       setError(null);
       
-      console.log('Buscando dados SOAT para userId:', userId);
-      
-      // Usar a URL base do .env.local
-      const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL_DEFAULT || 'https://api.aliancaseguros.cv';
-      const url = `/soat/1.0.0?user_id=${userId}`;
-      const fullUrl = `${baseUrl}${url}`;
-      
-      console.log('URL completa:', fullUrl);
-      
-      const apiKey = process.env.NEXT_PUBLIC_API_KEY || '';
-      console.log('API Key sendo usado:', apiKey ? `${apiKey.substring(0, 20)}...` : 'Não encontrado');
-      
-      // Fazer a requisição diretamente com fetch
-      const response = await fetch(fullUrl, {
+      // Chamar API route do servidor
+      const response = await fetch(`/api/soat?userId=${encodeURIComponent(userId)}`, {
         method: 'GET',
         headers: {
-          'apikey': apiKey,
           'Content-Type': 'application/json'
         }
       });
 
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        const errorData = await response.json();
+        throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
       }
 
       const data: SoatApiResponse = await response.json();
-      
-      console.log('Resposta da API SOAT:', data);
       
       if (data.info.status === 200) {
         const sortedData = data.results.sort((a: any, b: any) => {
