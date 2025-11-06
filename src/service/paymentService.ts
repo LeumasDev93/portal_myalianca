@@ -15,10 +15,8 @@ export async function getPaymentAccessToken(): Promise<string> {
       let errorMessage = "Erro ao obter autorização de pagamento";
       try {
         const errorData = await response.json();
-        console.error("[PAYMENT] Erro ao obter token:", errorData);
         errorMessage = errorData.message || errorData.error || errorMessage;
       } catch {
-        console.error("[PAYMENT] Erro ao obter token (status):", response.status);
       }
       throw new Error(errorMessage);
     }
@@ -35,7 +33,6 @@ export async function getPaymentAccessToken(): Promise<string> {
 
     return data.accessToken;
   } catch (error) {
-    console.error("Erro na autorização de pagamento:", error);
     throw error;
   }
 }
@@ -91,20 +88,11 @@ export async function createPaymentIntent(
       let errorMessage = "";
       try {
         const errorData = await response.json();
-        console.error("[PAYMENT] Detalhes do erro da API:", errorData);
-        console.error("[PAYMENT] Mensagem extraída:", errorData.message);
-        
         // Extrai mensagem de erro amigável
         errorMessage = errorData.message || errorData.error || errorData.detail || "Erro ao processar pagamento";
-        console.error("[PAYMENT] Mensagem final que será lançada:", errorMessage);
       } catch {
-        const errorText = await response.text();
-        console.error("[PAYMENT] Erro (text):", errorText);
         errorMessage = "Erro ao processar pagamento";
       }
-      
-      // Lança erro com mensagem clara
-      console.error("[PAYMENT] ⚠️ Lançando erro com mensagem:", errorMessage);
       const error = new Error(errorMessage) as PaymentError;
       error.status = response.status;
       throw error;
@@ -113,7 +101,6 @@ export async function createPaymentIntent(
     const responseData: PaymentIntentResponse = await response.json();
     return responseData;
   } catch (error) {
-    console.error("Erro ao criar intenção de pagamento:", error);
     throw error;
   }
 }
@@ -123,21 +110,16 @@ export async function createPaymentIntent(
  */
 export function getCheckoutUrl(reference: string, sessionId: string): string {
   const checkoutUrl = `https://pay.dev.aliancaseguros.cv/pagamento/checkout/${reference}?sessionId=${sessionId}`;
-  console.log("[PAYMENT] 🌐 URL de checkout gerada:");
-  console.log("[PAYMENT] Reference:", reference);
-  console.log("[PAYMENT] SessionId:", sessionId);
-  console.log("[PAYMENT] URL completa:", checkoutUrl);
   
   return checkoutUrl;
 }
 
 /**
- * Abre página de checkout em nova aba (método antigo)
+ * Abre página de checkout na mesma aba
  */
 export function openCheckout(reference: string, sessionId: string): void {
   const checkoutUrl = getCheckoutUrl(reference, sessionId);
-  window.open(checkoutUrl, "_blank");
-  console.log("[PAYMENT] ✅ Nova aba aberta");
+  window.location.assign(checkoutUrl);
 }
 
 /**
@@ -152,9 +134,6 @@ export async function processPaymentForModal(
   orderReference?: string // Referência do recibo (ex: P2025.458)
 ): Promise<{ checkoutUrl: string; reference: string; sessionId: string }> {
   try {
-    console.log("[PAYMENT] ==================== PROCESSO DE PAGAMENTO (MODAL) ====================");
-    console.log("[PAYMENT] Dados de entrada:", { amount, userName, userEmail, userPhone, reciboNumber });
-
     // Usa o número do recibo como merchantRef (máx. 15 chars)
     const sanitizedInvoice = reciboNumber.replace(/[^a-zA-Z0-9\.\-]/g, "");
     const merchantRef = sanitizedInvoice.substring(0, 15);

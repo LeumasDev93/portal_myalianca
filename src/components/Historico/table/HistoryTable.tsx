@@ -77,7 +77,6 @@ const HistoryTable = ({
 
   const [loadingStates, setLoadingStates] = useState<ReciboLoadingState>({});
   const [loadingPayment, setLoadingPayment] = useState<ReciboLoadingState>({});
-  const [popupLoadingAction, setPopupLoadingAction] = useState<string | null>(null);
   const [confirmDialog, setConfirmDialog] = useState<{
     open: boolean;
     type: 'view' | 'download' | 'payment' | null;
@@ -118,24 +117,11 @@ const HistoryTable = ({
     }
   };
 
-  const handlePopupAction = async (action: string, callback: () => Promise<void>) => {
-    setPopupLoadingAction(action);
-    try {
-      await callback();
-      setShowPopup(false);
-      setPopupLoadingAction(null);
-    } catch (error) {
-      setPopupLoadingAction(null);
-      // Erro já foi tratado no callback
-    }
-  };
-
   const visualizarPDF = async (
     invoiceNumber: string,
     token: string,
     reciboStatus?: number
   ) => {
-    setConfirmDialog({ open: false, type: null, reciboNumber: '' });
     setLoadingView((prev) => ({ ...prev, [invoiceNumber]: true }));
     
     try {
@@ -191,15 +177,17 @@ const HistoryTable = ({
           onDownload={handleDownloadInModal}
         />
       );
+      
+      setConfirmDialog({ open: false, type: null, reciboNumber: '' });
     } catch (error: any) {
       console.error("Erro ao visualizar PDF:", error);
       const errorMessage = error?.message || "Erro desconhecido ao visualizar recibo";
+      setConfirmDialog({ open: false, type: null, reciboNumber: '' });
       showToast({
         title: errorMessage,
         description: `Recibo: ${invoiceNumber}`,
         variant: "destructive",
       });
-      throw error; // Re-lança o erro para o handlePopupAction saber que houve erro
     } finally {
       setLoadingView((prev) => ({ ...prev, [invoiceNumber]: false }));
     }
@@ -325,12 +313,12 @@ const HistoryTable = ({
     // Implementação para renovar apólice
   };
   const handlePayment = async (invoiceNumber: string) => {
-    setConfirmDialog({ open: false, type: null, reciboNumber: '' });
     if (!profile?.user) {
       showToast({
         title: "Dados do usuário não disponíveis",
         variant: "destructive",
       });
+      setConfirmDialog({ open: false, type: null, reciboNumber: '' });
       return;
     }
 
@@ -341,6 +329,7 @@ const HistoryTable = ({
         title: "Recibo não encontrado",
         variant: "destructive",
       });
+      setConfirmDialog({ open: false, type: null, reciboNumber: '' });
       return;
     }
 
@@ -359,6 +348,7 @@ const HistoryTable = ({
         recibo.mbref // Referência do recibo (ex: P2025.458)
       );
       
+      setConfirmDialog({ open: false, type: null, reciboNumber: '' });
       showToast({
         title: "Checkout aberto! Conclua o pagamento na nova aba.",
         variant: "default",
@@ -373,12 +363,12 @@ const HistoryTable = ({
       const errorMessage = error?.message || error?.response?.data?.message || "Erro ao processar pagamento. Tente novamente.";
       console.error("❌ [HISTORICO] Mensagem final para toast:", errorMessage);
       
+      setConfirmDialog({ open: false, type: null, reciboNumber: '' });
       showToast({
         title: errorMessage,
         description: `Recibo: ${invoiceNumber}`,
         variant: "destructive",
       });
-      throw error; // Re-lança o erro para o handlePopupAction saber que houve erro
     } finally {
       setLoadingPayment((prev) => ({
         ...prev,
@@ -388,7 +378,6 @@ const HistoryTable = ({
   };
 
   const handleDownload = async (invoiceNumber: string) => {
-    setConfirmDialog({ open: false, type: null, reciboNumber: '' });
     setLoadingStates((prev) => ({ ...prev, [invoiceNumber]: true }));
 
     try {
@@ -428,15 +417,21 @@ const HistoryTable = ({
         console.error("Erro ao registrar atividade de download:", error);
         // Não interrompe o fluxo se falhar ao registrar atividade
       }
+      
+      setConfirmDialog({ open: false, type: null, reciboNumber: '' });
+      showToast({
+        title: `Recibo ${invoiceNumber} baixado com sucesso!`,
+        variant: "default",
+      });
     } catch (error: any) {
       console.error("Erro ao baixar PDF:", error);
       const errorMessage = error?.message || "Erro desconhecido ao baixar recibo";
+      setConfirmDialog({ open: false, type: null, reciboNumber: '' });
       showToast({
         title: errorMessage,
         description: `Recibo: ${invoiceNumber}`,
         variant: "destructive",
       });
-      throw error; // Re-lança o erro para o handlePopupAction saber que houve erro
     } finally {
       setLoadingStates((prev) => ({ ...prev, [invoiceNumber]: false }));
     }
@@ -793,65 +788,44 @@ const HistoryTable = ({
                   selectedItem.rawData.status === 2) && (
               <button
                 onClick={() => {
-                  handlePopupAction('payment', async () => {
-                    try {
-                      const reciboRef = selectedItem?.rawData?.reference || selectedItem?.rawData?.mbref || selectedItem?.rawData?.number;
-                      if (reciboRef) {
-                        document.cookie = `recibo_ref=${encodeURIComponent(String(reciboRef))}; Path=/; Max-Age=1200;`;
-                      }
-                      if (token) {
-                        document.cookie = `anywhere_token=${encodeURIComponent(String(token))}; Path=/; Max-Age=1200;`;
-                      }
-                    } catch {}
-                    await handlePayment(selectedItem.rawData.number);
-                  });
+                  try {
+                    const reciboRef = selectedItem?.rawData?.reference || selectedItem?.rawData?.mbref || selectedItem?.rawData?.number;
+                    if (reciboRef) {
+                      document.cookie = `recibo_ref=${encodeURIComponent(String(reciboRef))}; Path=/; Max-Age=1200;`;
+                    }
+                    if (token) {
+                      document.cookie = `anywhere_token=${encodeURIComponent(String(token))}; Path=/; Max-Age=1200;`;
+                    }
+                  } catch {}
+                  openConfirmDialog('payment', selectedItem.rawData.number, selectedItem.rawData);
                 }}
-                disabled={popupLoadingAction !== null}
-                className="w-full cursor-pointer text-left px-3 py-3 text-xs sm:text-sm md:text-base text-gray-700 hover:text-gray-800 hover:bg-gray-100 flex items-center gap-3 rounded-md mx-1 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full cursor-pointer text-left px-3 py-3 text-xs sm:text-sm md:text-base text-gray-700 hover:text-gray-800 hover:bg-gray-100 flex items-center gap-3 rounded-md mx-1"
               >
-                {popupLoadingAction === 'payment' ? (
-                  <LoadingSpinner size="sm" />
-                ) : (
-                  <MdOutlinePayment className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
-                )}
-                <span className="flex-1">{popupLoadingAction === 'payment' ? 'Processando...' : 'Pagar Agora'}</span>
+                <MdOutlinePayment className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
+                <span className="flex-1">Pagar Agora</span>
               </button>
                 )}
 
               <button
                 onClick={() => {
-                  handlePopupAction('view', async () => {
-                    await visualizarPDF(selectedItem.rawData.number, token!, selectedItem.rawData.status);
-                  });
+                  openConfirmDialog('view', selectedItem.rawData.number, selectedItem.rawData);
                 }}
-                disabled={popupLoadingAction !== null}
-                className="w-full cursor-pointer text-left px-3 py-3 text-xs sm:text-sm md:text-base text-gray-700 hover:text-gray-800 hover:bg-gray-100 flex items-center gap-3 rounded-md mx-1 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full cursor-pointer text-left px-3 py-3 text-xs sm:text-sm md:text-base text-gray-700 hover:text-gray-800 hover:bg-gray-100 flex items-center gap-3 rounded-md mx-1"
               >
-                {popupLoadingAction === 'view' ? (
-                  <LoadingSpinner size="sm" />
-                ) : (
-                  <FaEye className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
-                )}
-                <span className="flex-1">{popupLoadingAction === 'view' ? 'Visualizando...' : 'Ver detalhes'}</span>
+                <FaEye className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
+                <span className="flex-1">Ver detalhes</span>
               </button>
               {/* Botão Download - apenas para status 5 (Cobrado) */}
               {selectedItem?.rawData?.status &&
                 selectedItem.rawData.status === 5 && (
                   <button
                     onClick={() => {
-                      handlePopupAction('download', async () => {
-                        await handleDownload(selectedItem.rawData.number);
-                      });
+                      openConfirmDialog('download', selectedItem.rawData.number, selectedItem.rawData);
                     }}
-                    disabled={popupLoadingAction !== null}
-                    className="w-full cursor-pointer text-left px-3 py-3 text-xs sm:text-sm md:text-base text-gray-700 hover:text-gray-800 hover:bg-gray-100 flex items-center gap-3 rounded-md mx-1 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full cursor-pointer text-left px-3 py-3 text-xs sm:text-sm md:text-base text-gray-700 hover:text-gray-800 hover:bg-gray-100 flex items-center gap-3 rounded-md mx-1"
                   >
-                    {popupLoadingAction === 'download' ? (
-                      <LoadingSpinner size="sm" />
-                    ) : (
-                      <FaFileDownload className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
-                    )}
-                    <span className="flex-1">{popupLoadingAction === 'download' ? 'Baixando...' : 'Baixar Recibo'}</span>
+                    <FaFileDownload className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
+                    <span className="flex-1">Baixar Recibo</span>
                   </button>
                 )}
             </>
