@@ -11,6 +11,14 @@ import {
   CardTitle,
   CardFooter,
 } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import CopiableNumber from "@/components/ui/copiableNumber";
 import { LoadingContainer } from "@/components/ui/loading-container";
 import {
@@ -70,6 +78,12 @@ export default function ReciboPage({ filterParams }: ReciboPageProps) {
   const [loadingPayment, setLoadingPayment] = useState<ReciboLoadingState>({}); // Loading para pagamento
   const [downloadStatus, setDownloadStatus] = useState<DownloadStatus>({});
   const [viewMode, setViewMode] = useState<ViewMode>("list");
+  const [confirmDialog, setConfirmDialog] = useState<{
+    open: boolean;
+    type: 'view' | 'download' | 'payment' | null;
+    reciboNumber: string;
+    reciboData?: any;
+  }>({ open: false, type: null, reciboNumber: '' });
   const { token } = useSessionCheckToken();
   const { registerReciboDownloadActivity } = useReciboActivity();
   const { profile } = useUserProfile(); // Dados do usuário
@@ -89,7 +103,59 @@ export default function ReciboPage({ filterParams }: ReciboPageProps) {
     resetFilters,
   } = useRecibos(filterParams);
 
+  const openConfirmDialog = (type: 'view' | 'download' | 'payment', reciboNumber: string, reciboData?: any) => {
+    setConfirmDialog({ open: true, type, reciboNumber, reciboData });
+  };
+
+  const handleConfirmedAction = async () => {
+    const { type, reciboNumber, reciboData } = confirmDialog;
+    
+    if (type === 'view') {
+      visualizarPDF(reciboNumber, reciboData?.status);
+    } else if (type === 'download') {
+      handleDownload(reciboNumber);
+    } else if (type === 'payment' && reciboData && profile?.user) {
+      setConfirmDialog({ open: false, type: null, reciboNumber: '' });
+      setLoadingPayment((prev) => ({
+        ...prev,
+        [reciboNumber]: true,
+      }));
+
+      try {
+        try {
+          const reciboRef = reciboData.mbref || reciboData.reference || reciboNumber;
+          if (reciboRef) {
+            document.cookie = `recibo_ref=${encodeURIComponent(String(reciboRef))}; Path=/; Max-Age=1200;`;
+          }
+          if (token) {
+            document.cookie = `anywhere_token=${encodeURIComponent(String(token))}; Path=/; Max-Age=1200;`;
+          }
+        } catch {}
+        const reciboRef = reciboData.mbref || reciboData.reference || reciboNumber;
+        await processPayment(
+          reciboData.value,
+          profile.user.nome,
+          profile.user.email || "",
+          profile.user.nif || "",
+          reciboNumber,
+          reciboRef
+        );
+
+        toast.success("Checkout aberto! Conclua o pagamento na nova aba.");
+      } catch (error) {
+        console.error("Erro ao processar pagamento:", error);
+        toast.error("Erro ao processar pagamento. Tente novamente.");
+      } finally {
+        setLoadingPayment((prev) => ({
+          ...prev,
+          [reciboNumber]: false,
+        }));
+      }
+    }
+  };
+
   const handleDownload = async (invoiceNumber: string) => {
+    setConfirmDialog({ open: false, type: null, reciboNumber: '' });
     setLoadingStates((prev) => ({ ...prev, [invoiceNumber]: true }));
     setDownloadStatus((prev) => ({ ...prev, [invoiceNumber]: "downloading" }));
 
@@ -165,6 +231,7 @@ export default function ReciboPage({ filterParams }: ReciboPageProps) {
     invoiceNumber: string,
     reciboStatus?: number
   ) => {
+    setConfirmDialog({ open: false, type: null, reciboNumber: '' });
     setLoadingView((prev) => ({ ...prev, [invoiceNumber]: true }));
 
     try {
@@ -516,7 +583,7 @@ export default function ReciboPage({ filterParams }: ReciboPageProps) {
                 </div>
                 <div className="flex gap-2 w-full">
                   <Button
-                    onClick={() => visualizarPDF(recibo.number, recibo.status)}
+                    onClick={() => openConfirmDialog('view', recibo.number, recibo)}
                     disabled={loadingView[recibo.number]}
                     variant="outline"
                     size="sm"
@@ -531,52 +598,7 @@ export default function ReciboPage({ filterParams }: ReciboPageProps) {
                   </Button>
                   {shouldShowPaymentButton(recibo.status) && (
                     <Button
-                      onClick={async () => {
-                        if (!profile?.user) {
-                          toast.error("Dados do usuário não disponíveis");
-                          return;
-                        }
-
-                        setLoadingPayment((prev) => ({
-                          ...prev,
-                          [recibo.number]: true,
-                        }));
-
-                        try {
-                          try {
-                            const reciboRef = (recibo as any).mbref || (recibo as any).reference || recibo.number;
-                            if (reciboRef) {
-                              document.cookie = `recibo_ref=${encodeURIComponent(String(reciboRef))}; Path=/; Max-Age=1200;`;
-                            }
-                            if (token) {
-                              document.cookie = `anywhere_token=${encodeURIComponent(String(token))}; Path=/; Max-Age=1200;`;
-                            }
-                          } catch {}
-                          const reciboRef = (recibo as any).mbref || (recibo as any).reference || recibo.number;
-                          await processPayment(
-                            recibo.value, // amount
-                            profile.user.nome, // userName
-                            profile.user.email || "", // userEmail
-                            profile.user.nif || "", // userPhone
-                            recibo.number, // merchantRef
-                            reciboRef // orderReference = referência do recibo (P...)
-                          );
-
-                          toast.success(
-                            "Checkout aberto! Conclua o pagamento na nova aba."
-                          );
-                        } catch (error) {
-                          console.error("Erro ao processar pagamento:", error);
-                          toast.error(
-                            "Erro ao processar pagamento. Tente novamente."
-                          );
-                        } finally {
-                          setLoadingPayment((prev) => ({
-                            ...prev,
-                            [recibo.number]: false,
-                          }));
-                        }
-                      }}
+                      onClick={() => openConfirmDialog('payment', recibo.number, recibo)}
                       disabled={loadingPayment[recibo.number]}
                       size="sm"
                       className="flex-1 text-xs md:text-sm py-2 bg-green-600 hover:bg-green-700 text-white disabled:opacity-50"
@@ -591,7 +613,7 @@ export default function ReciboPage({ filterParams }: ReciboPageProps) {
                   )}
                   {shouldShowDownloadButton(recibo.status) && (
                     <Button
-                      onClick={() => handleDownload(recibo.number)}
+                      onClick={() => openConfirmDialog('download', recibo.number, recibo)}
                       disabled={loadingStates[recibo.number]}
                       variant={getDownloadButtonVariant(recibo.number)}
                       size="sm"
@@ -669,9 +691,7 @@ export default function ReciboPage({ filterParams }: ReciboPageProps) {
                   </span>
                   <div className="flex gap-2 w-full md:w-auto">
                     <Button
-                      onClick={() =>
-                        visualizarPDF(recibo.number, recibo.status)
-                      }
+                      onClick={() => openConfirmDialog('view', recibo.number, recibo)}
                       disabled={loadingView[recibo.number]}
                       variant="outline"
                       size="sm"
@@ -686,55 +706,7 @@ export default function ReciboPage({ filterParams }: ReciboPageProps) {
                     </Button>
                     {shouldShowPaymentButton(recibo.status) && (
                       <Button
-                        onClick={async () => {
-                          if (!profile?.user) {
-                            toast.error("Dados do usuário não disponíveis");
-                            return;
-                          }
-
-                          setLoadingPayment((prev) => ({
-                            ...prev,
-                            [recibo.number]: true,
-                          }));
-
-                          try {
-                            try {
-                              const reciboRef = (recibo as any).mbref || (recibo as any).reference || recibo.number;
-                              if (reciboRef) {
-                                document.cookie = `recibo_ref=${encodeURIComponent(String(reciboRef))}; Path=/; Max-Age=1200;`;
-                              }
-                              if (token) {
-                                document.cookie = `anywhere_token=${encodeURIComponent(String(token))}; Path=/; Max-Age=1200;`;
-                              }
-                            } catch {}
-                            const reciboRef = (recibo as any).mbref || (recibo as any).reference || recibo.number;
-                            await processPayment(
-                              recibo.value, // amount
-                              profile.user.nome, // userName
-                              profile.user.email || "", // userEmail
-                              profile.user.nif || "", // userPhone (usando NIF como fallback)
-                              recibo.number, // merchantRef
-                              reciboRef // orderReference = referência do recibo (P...)
-                            );
-
-                            toast.success(
-                              "Checkout aberto! Conclua o pagamento na nova aba."
-                            );
-                          } catch (error) {
-                            console.error(
-                              "Erro ao processar pagamento:",
-                              error
-                            );
-                            toast.error(
-                              "Erro ao processar pagamento. Tente novamente."
-                            );
-                          } finally {
-                            setLoadingPayment((prev) => ({
-                              ...prev,
-                              [recibo.number]: false,
-                            }));
-                          }
-                        }}
+                        onClick={() => openConfirmDialog('payment', recibo.number, recibo)}
                         disabled={loadingPayment[recibo.number]}
                         size="sm"
                         className="flex-1 md:flex-none text-xs md:text-sm py-2 bg-green-600 hover:bg-green-700 text-white disabled:opacity-50"
@@ -749,7 +721,7 @@ export default function ReciboPage({ filterParams }: ReciboPageProps) {
                     )}
                     {shouldShowDownloadButton(recibo.status) && (
                       <Button
-                        onClick={() => handleDownload(recibo.number)}
+                        onClick={() => openConfirmDialog('download', recibo.number, recibo)}
                         disabled={loadingStates[recibo.number]}
                         variant={getDownloadButtonVariant(recibo.number)}
                         size="sm"
@@ -765,6 +737,55 @@ export default function ReciboPage({ filterParams }: ReciboPageProps) {
           ))}
         </div>
       )}
+
+      {/* Dialog de Confirmação */}
+      <Dialog open={confirmDialog.open} onOpenChange={(open) => setConfirmDialog({ ...confirmDialog, open })}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-bold text-gray-900">
+              {confirmDialog.type === 'view' && 'Visualizar Recibo'}
+              {confirmDialog.type === 'download' && 'Baixar Recibo'}
+              {confirmDialog.type === 'payment' && 'Confirmar Pagamento'}
+            </DialogTitle>
+            <DialogDescription className="text-gray-600">
+              {confirmDialog.type === 'view' && (
+                <>Tem certeza que deseja visualizar o recibo <span className="font-semibold text-gray-900">{confirmDialog.reciboNumber}</span>?</>
+              )}
+              {confirmDialog.type === 'download' && (
+                <>Tem certeza que deseja baixar o recibo <span className="font-semibold text-gray-900">{confirmDialog.reciboNumber}</span>?</>
+              )}
+              {confirmDialog.type === 'payment' && (
+                <>Tem certeza que deseja pagar o recibo <span className="font-semibold text-gray-900">{confirmDialog.reciboNumber}</span> no valor de <span className="font-semibold text-green-600">{confirmDialog.reciboData ? formatCurrency(confirmDialog.reciboData.value) : ''}</span>?</>
+              )}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex gap-3 sm:gap-3">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setConfirmDialog({ open: false, type: null, reciboNumber: '' })}
+              className="flex-1"
+            >
+              Cancelar
+            </Button>
+            <Button
+              type="button"
+              onClick={handleConfirmedAction}
+              className={`flex-1 ${
+                confirmDialog.type === 'payment' 
+                  ? 'bg-green-600 hover:bg-green-700' 
+                  : confirmDialog.type === 'download'
+                  ? 'bg-[#002256] hover:bg-[#002256]/90'
+                  : 'bg-blue-600 hover:bg-blue-700'
+              } text-white`}
+            >
+              {confirmDialog.type === 'view' && 'Visualizar'}
+              {confirmDialog.type === 'download' && 'Baixar'}
+              {confirmDialog.type === 'payment' && 'Pagar'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
