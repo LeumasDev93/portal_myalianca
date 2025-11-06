@@ -90,8 +90,8 @@ export default function PageGestaoSOAT() {
     return new Intl.NumberFormat("pt-CV", {
       style: "currency",
       currency: "CVE",
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
     }).format(numericValue);
   };
 
@@ -451,23 +451,23 @@ export default function PageGestaoSOAT() {
               </button>
             )}
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-shrink-0">
             <button
               onClick={handleDownloadTemplate}
               disabled={downloadTemplateLoading}
-              className="px-3 py-2 md:px-4 md:py-2 lg:px-6 lg:py-3 text-xs md:text-sm lg:text-base rounded-lg font-medium flex items-center gap-1 md:gap-2 transition-colors bg-[#002256] hover:bg-[#002256]/90 text-white disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-2 py-2 md:px-3 md:py-2 lg:px-6 lg:py-3 text-xs md:text-sm lg:text-base rounded-lg font-medium flex items-center gap-1 md:gap-2 transition-colors bg-[#002256] hover:bg-[#002256]/90 text-white disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
             >
               {downloadTemplateLoading ? (
                 <FaSpinner className="animate-spin w-3 h-3 md:w-4 md:h-4" />
               ) : (
                 <FaDownload className="w-3 h-3 md:w-4 md:h-4" />
               )}
-              <span className="hidden sm:inline">{downloadTemplateLoading ? "Baixando..." : "Baixar Template"}</span>
-              <span className="sm:hidden">Template</span>
+              <span className="hidden md:inline">{downloadTemplateLoading ? "Baixando..." : "Baixar Template"}</span>
+              <span className="md:hidden">Template</span>
             </button>
             <button
               onClick={handleCreateSOATClick}
-              className="px-3 py-2 md:px-4 md:py-2 lg:px-6 lg:py-3 text-xs md:text-sm lg:text-base rounded-lg font-medium flex items-center gap-1 md:gap-2 transition-colors bg-[#B7021C] hover:bg-[#B7021C]/90 text-white"
+              className="px-2 py-2 md:px-3 md:py-2 lg:px-6 lg:py-3 text-xs md:text-sm lg:text-base rounded-lg font-medium flex items-center gap-1 md:gap-2 transition-colors bg-[#B7021C] hover:bg-[#B7021C]/90 text-white whitespace-nowrap"
               title={
                 hasPendingSoat
                   ? "Existe um SOAT pendente. Finalize-o antes de criar um novo."
@@ -475,8 +475,8 @@ export default function PageGestaoSOAT() {
               }
             >
               <FaPlus className="w-3 h-3 md:w-4 md:h-4" />
-              <span className="hidden sm:inline">Adicionar SOAT</span>
-              <span className="sm:hidden">Novo</span>
+              <span className="hidden md:inline">Adicionar SOAT</span>
+              <span className="md:hidden">Novo</span>
             </button>
           </div>
         </div>
@@ -494,8 +494,8 @@ export default function PageGestaoSOAT() {
           </p>
         </div>
 
-        <div className="overflow-x-auto overflow-y-visible w-full">
-          <table className="w-full min-w-[950px]">
+        <div className="overflow-x-auto overflow-y-visible w-full" style={{ WebkitOverflowScrolling: 'touch' }}>
+          <table className="w-full min-w-[700px]">
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-2 md:px-4 lg:px-6 py-2 md:py-3 text-left text-[10px] md:text-xs font-medium text-gray-500 uppercase tracking-wider">
