@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+// Configuração de revalidação estática a cada 60 segundos
+export const revalidate = 60;
+
 export async function GET(request: NextRequest) {
   try {
     const apiUrl = `${process.env.NEXT_PUBLIC_API_BASE_URL_SIMULATOR}/simulador/1.0.0/products`;
@@ -19,6 +22,7 @@ export async function GET(request: NextRequest) {
         'ApiKey': apiKey,
         'Content-Type': 'application/json',
       },
+      next: { revalidate: 60 }, // Cache por 60 segundos
     });
 
     if (!response.ok) {
@@ -29,7 +33,13 @@ export async function GET(request: NextRequest) {
     }
 
     const data = await response.json();
-    return NextResponse.json(data);
+    
+    // Retorna com headers de cache
+    return NextResponse.json(data, {
+      headers: {
+        'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=120',
+      },
+    });
   } catch (error) {
     console.error('Erro ao buscar produtos:', error);
     return NextResponse.json(
