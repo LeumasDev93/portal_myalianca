@@ -8,13 +8,25 @@ export async function getPaymentAccessToken(): Promise<string> {
     });
 
     if (!response.ok) {
-      throw new Error(`Erro ao obter token: ${response.status}`);
+      let errorMessage = "Erro ao obter autorização de pagamento";
+      try {
+        const errorData = await response.json();
+        console.error("[PAYMENT] Erro ao obter token:", errorData);
+        errorMessage = errorData.message || errorData.error || errorMessage;
+      } catch {
+        console.error("[PAYMENT] Erro ao obter token (status):", response.status);
+      }
+      throw new Error(errorMessage);
     }
 
     const data = await response.json();
 
     if (data.error) {
       throw new Error(data.error);
+    }
+
+    if (!data.accessToken) {
+      throw new Error("Token de acesso não foi retornado");
     }
 
     return data.accessToken;
@@ -72,17 +84,23 @@ export async function createPaymentIntent(
 
     if (!response.ok) {
       // Tenta pegar detalhes do erro
-      let errorDetails = "";
+      let errorMessage = "";
       try {
         const errorData = await response.json();
-        errorDetails = JSON.stringify(errorData, null, 2);
-        console.error("[PAYMENT] Detalhes do erro da API:", errorDetails);
+        console.error("[PAYMENT] Detalhes do erro da API:", errorData);
+        
+        // Extrai mensagem de erro amigável
+        errorMessage = errorData.message || errorData.error || errorData.detail || "Erro ao processar pagamento";
       } catch {
-        errorDetails = await response.text();
-        console.error("[PAYMENT] Erro (text):", errorDetails);
+        const errorText = await response.text();
+        console.error("[PAYMENT] Erro (text):", errorText);
+        errorMessage = "Erro ao processar pagamento";
       }
       
-      throw new Error(`Erro ao criar intenção de pagamento: ${response.status} - ${errorDetails}`);
+      // Lança erro com mensagem clara
+      const error = new Error(errorMessage);
+      (error as any).status = response.status;
+      throw error;
     }
 
     const responseData: PaymentIntentResponse = await response.json();
@@ -126,7 +144,7 @@ export async function processPaymentForModal(
   reciboNumber: string, // Número do recibo (para referência)
   orderReference?: string // Referência do recibo (ex: P2025.458)
 ): Promise<{ checkoutUrl: string; reference: string; sessionId: string }> {
-  
+  try {
     console.log("[PAYMENT] ==================== PROCESSO DE PAGAMENTO (MODAL) ====================");
     console.log("[PAYMENT] Dados de entrada:", { amount, userName, userEmail, userPhone, reciboNumber });
 
@@ -147,7 +165,7 @@ export async function processPaymentForModal(
     // Validação de comprimento
     if (merchantRef.length > 15 || merchantSession.length > 15) {
       console.error("[PAYMENT] ⚠️ ERRO: merchantRef ou merchantSession excede 15 caracteres!");
-      throw new Error("MerchantRef ou MerchantSession excede limite de 15 caracteres");
+      throw new Error("Referência do recibo excede limite permitido");
     }
 
     // PASSO 1: Obter token de acesso (sempre novo para evitar expiração)
@@ -199,6 +217,10 @@ export async function processPaymentForModal(
       reference: paymentIntent.reference,
       sessionId: paymentIntent.sessionId
     };
+  } catch (error) {
+    console.error("[PAYMENT] ❌ Erro no processamento de pagamento:", error);
+    throw error;
+  }
 }
 
 /**
@@ -232,7 +254,7 @@ export async function processPayment(
     // Validação de comprimento
     if (merchantRef.length > 15 || merchantSession.length > 15) {
       console.error("[PAYMENT] ⚠️ ERRO: merchantRef ou merchantSession excede 15 caracteres!");
-      throw new Error("MerchantRef ou MerchantSession excede limite de 15 caracteres");
+      throw new Error("Referência do recibo excede limite permitido");
     }
 
     // PASSO 1: Obter token de acesso (sempre novo para evitar expiração)
