@@ -55,27 +55,39 @@ export async function POST(req: NextRequest) {
     );
 
     if (!response.ok) {
-      let errorText = "";
-      let errorJson = null;
+      let errorMessage = "Erro ao processar pagamento";
+      let errorDetails = "";
       
       try {
         const contentType = response.headers.get("content-type");
         if (contentType?.includes("application/json")) {
-          errorJson = await response.json();
-          errorText = JSON.stringify(errorJson, null, 2);
+          const errorJson = await response.json();
+          console.error("[PAYMENT API] Erro JSON da API externa:", errorJson);
+          
+          // Extrai mensagem amigável do erro
+          errorMessage = errorJson.message || errorJson.error || errorJson.detail || errorMessage;
+          errorDetails = JSON.stringify(errorJson, null, 2);
         } else {
-          errorText = await response.text();
+          errorDetails = await response.text();
+          console.error("[PAYMENT API] Erro texto da API externa:", errorDetails);
         }
-      } catch {
-        errorText = "Não foi possível ler resposta de erro";
+      } catch (e) {
+        console.error("[PAYMENT API] Erro ao processar resposta de erro:", e);
+        errorMessage = "Erro ao processar resposta do servidor de pagamento";
       }
       
+      console.error("[PAYMENT API] ❌ Erro ao criar intenção:", {
+        status: response.status,
+        message: errorMessage,
+        details: errorDetails
+      });
       
       return NextResponse.json(
         { 
-          error: `Erro ao criar intenção de pagamento: ${response.status}`, 
-          details: errorText,
-          errorJson: errorJson 
+          message: errorMessage,
+          error: errorMessage, // Mantém para compatibilidade
+          status: response.status,
+          details: errorDetails
         },
         { status: response.status }
       );
@@ -134,9 +146,13 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(responseData);
     }
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : "Erro ao criar intenção de pagamento";
+    console.error("[PAYMENT API] ❌ Exceção ao processar pagamento:", error);
+    const errorMessage = error instanceof Error ? error.message : "Erro interno ao processar pagamento";
     return NextResponse.json(
-      { error: errorMessage },
+      { 
+        message: errorMessage,
+        error: errorMessage, // Mantém para compatibilidade
+      },
       { status: 500 }
     );
   }

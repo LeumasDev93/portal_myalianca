@@ -25,10 +25,27 @@ export async function POST() {
     console.log("[PAYMENT API] Status da resposta:", response.status);
 
     if (!response.ok) {
-      const errorText = await response.text();
-      console.error("[PAYMENT API] ❌ Erro na autorização:", response.status, errorText);
+      let errorMessage = "Erro ao obter autorização de pagamento";
+      try {
+        const contentType = response.headers.get("content-type");
+        if (contentType?.includes("application/json")) {
+          const errorJson = await response.json();
+          console.error("[PAYMENT API] ❌ Erro JSON na autorização:", errorJson);
+          errorMessage = errorJson.message || errorJson.error || errorMessage;
+        } else {
+          const errorText = await response.text();
+          console.error("[PAYMENT API] ❌ Erro texto na autorização:", errorText);
+        }
+      } catch (e) {
+        console.error("[PAYMENT API] Erro ao processar resposta de erro:", e);
+      }
+      
       return NextResponse.json(
-        { error: `Erro ao obter token: ${response.status}` },
+        { 
+          message: errorMessage,
+          error: errorMessage, // Mantém para compatibilidade
+          status: response.status
+        },
         { status: response.status }
       );
     }
@@ -38,7 +55,11 @@ export async function POST() {
 
     if (data.error) {
       console.error("[PAYMENT API] ❌ Erro retornado pela API:", data.error);
-      return NextResponse.json({ error: data.error }, { status: 400 });
+      const errorMessage = typeof data.error === 'string' ? data.error : "Erro ao obter token de pagamento";
+      return NextResponse.json({ 
+        message: errorMessage,
+        error: errorMessage 
+      }, { status: 400 });
     }
 
     console.log("[PAYMENT API] ✅ Token gerado com sucesso");
@@ -53,10 +74,13 @@ export async function POST() {
     });
     return res;
   } catch (error) {
-    console.error("[PAYMENT API] Erro na autorização:", error);
-    const errorMessage = error instanceof Error ? error.message : "Erro ao obter token de pagamento";
+    console.error("[PAYMENT API] ❌ Exceção na autorização:", error);
+    const errorMessage = error instanceof Error ? error.message : "Erro interno ao obter token de pagamento";
     return NextResponse.json(
-      { error: errorMessage },
+      { 
+        message: errorMessage,
+        error: errorMessage, // Mantém para compatibilidade
+      },
       { status: 500 }
     );
   }
