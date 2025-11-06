@@ -143,8 +143,15 @@ export default function ReciboPage({ filterParams }: ReciboPageProps) {
 
         toast.success("Checkout aberto! Conclua o pagamento na nova aba.");
       } catch (error: any) {
-        console.error("Erro ao processar pagamento:", error);
+        console.error("❌ [COMPONENTE] Erro capturado:", error);
+        console.error("❌ [COMPONENTE] error.message:", error?.message);
+        console.error("❌ [COMPONENTE] error.response:", error?.response);
+        console.error("❌ [COMPONENTE] typeof error:", typeof error);
+        console.error("❌ [COMPONENTE] Object.keys(error):", Object.keys(error || {}));
+        
         const errorMessage = error?.message || error?.response?.data?.message || "Erro ao processar pagamento. Tente novamente.";
+        console.error("❌ [COMPONENTE] Mensagem final para toast:", errorMessage);
+        
         toast.error(errorMessage, {
           description: `Recibo: ${reciboNumber}`,
           duration: 5000,
@@ -315,8 +322,13 @@ export default function ReciboPage({ filterParams }: ReciboPageProps) {
           toast.success("Checkout aberto! Conclua o pagamento na nova aba.");
           closeModal();
         } catch (error: any) {
-          console.error("Erro ao processar pagamento:", error);
+          console.error("❌ [MODAL] Erro capturado:", error);
+          console.error("❌ [MODAL] error.message:", error?.message);
+          console.error("❌ [MODAL] typeof error:", typeof error);
+          
           const errorMessage = error?.message || error?.response?.data?.message || "Erro ao processar pagamento. Tente novamente.";
+          console.error("❌ [MODAL] Mensagem final para toast:", errorMessage);
+          
           toast.error(errorMessage, {
             description: `Recibo: ${invoiceNumber}`,
             duration: 5000,
