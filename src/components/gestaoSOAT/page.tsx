@@ -425,14 +425,14 @@ export default function PageGestaoSOAT() {
       )}
 
       {/* Cards de Estatísticas */}
-      <div className="mb-8">
+      <div className="mb-4 md:mb-6 lg:mb-8">
         <StatisticsCard statistics={soatStats} />
       </div>
 
       {/* Seção Buscar */}
-      <div className="mb-6">
-        <h2 className="text-base md:text-lg font-semibold text-[#002256]">Buscar</h2>
-        <div className="flex flex-col sm:flex-row gap-2 justify-between">
+      <div className="mb-4 md:mb-5 lg:mb-6">
+        <h2 className="text-sm md:text-base lg:text-lg font-semibold text-[#002256] mb-2 md:mb-3">Buscar</h2>
+        <div className="flex flex-col sm:flex-row gap-2 md:gap-3 justify-between">
           <div className="sm:w-1/2 w-full relative">
             <input
               type="text"
@@ -451,30 +451,30 @@ export default function PageGestaoSOAT() {
               </button>
             )}
           </div>
-          <div className="flex gap-2 flex-shrink-0">
+          <div className="flex gap-2 md:gap-3 flex-shrink-0">
             <button
               onClick={handleDownloadTemplate}
               disabled={downloadTemplateLoading}
-              className="px-2 py-2 md:px-3 md:py-2 lg:px-6 lg:py-3 text-xs md:text-sm lg:text-base rounded-lg font-medium flex items-center gap-1 md:gap-2 transition-colors bg-[#002256] hover:bg-[#002256]/90 text-white disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+              className="px-3 py-2 md:px-4 md:py-2.5 lg:px-6 lg:py-3 text-xs md:text-sm lg:text-base rounded-lg font-medium flex items-center justify-center gap-1.5 md:gap-2 transition-colors bg-[#002256] hover:bg-[#002256]/90 text-white disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
             >
               {downloadTemplateLoading ? (
-                <FaSpinner className="animate-spin w-3 h-3 md:w-4 md:h-4" />
+                <FaSpinner className="animate-spin w-3.5 h-3.5 md:w-4 md:h-4" />
               ) : (
-                <FaDownload className="w-3 h-3 md:w-4 md:h-4" />
+                <FaDownload className="w-3.5 h-3.5 md:w-4 md:h-4" />
               )}
               <span className="hidden md:inline">{downloadTemplateLoading ? "Baixando..." : "Baixar Template"}</span>
               <span className="md:hidden">Template</span>
             </button>
             <button
               onClick={handleCreateSOATClick}
-              className="px-2 py-2 md:px-3 md:py-2 lg:px-6 lg:py-3 text-xs md:text-sm lg:text-base rounded-lg font-medium flex items-center gap-1 md:gap-2 transition-colors bg-[#B7021C] hover:bg-[#B7021C]/90 text-white whitespace-nowrap"
+              className="px-3 py-2 md:px-4 md:py-2.5 lg:px-6 lg:py-3 text-xs md:text-sm lg:text-base rounded-lg font-medium flex items-center justify-center gap-1.5 md:gap-2 transition-colors bg-[#B7021C] hover:bg-[#B7021C]/90 text-white whitespace-nowrap"
               title={
                 hasPendingSoat
                   ? "Existe um SOAT pendente. Finalize-o antes de criar um novo."
                   : "Adicionar novo SOAT"
               }
             >
-              <FaPlus className="w-3 h-3 md:w-4 md:h-4" />
+              <FaPlus className="w-3.5 h-3.5 md:w-4 md:h-4" />
               <span className="hidden md:inline">Adicionar SOAT</span>
               <span className="md:hidden">Novo</span>
             </button>
