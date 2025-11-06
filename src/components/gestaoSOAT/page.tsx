@@ -397,12 +397,12 @@ export default function PageGestaoSOAT() {
   };
 
   return (
-    <div className="p-4 w-full mt-6">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-[#002256] mb-2">
+    <div className="p-3 md:p-4 w-full mt-4 md:mt-6">
+      <div className="mb-4 md:mb-6">
+        <h1 className="text-lg md:text-xl lg:text-2xl font-bold text-[#002256] mb-2">
           Gestão de SOAT
         </h1>
-        <p className="text-sm text-[#002856]">
+        <p className="text-xs md:text-sm text-[#002856]">
           Gerencie o Seguro Obrigatório de Acidentes de Trânsito dos
           trabalhadores da empresa
         </p>
@@ -431,7 +431,7 @@ export default function PageGestaoSOAT() {
 
       {/* Seção Buscar */}
       <div className="mb-6">
-        <h2 className="text-lg font-semibold text-[#002256]">Buscar</h2>
+        <h2 className="text-base md:text-lg font-semibold text-[#002256]">Buscar</h2>
         <div className="flex flex-col sm:flex-row gap-2 justify-between">
           <div className="sm:w-1/2 w-full relative">
             <input
@@ -439,42 +439,44 @@ export default function PageGestaoSOAT() {
               placeholder="Buscar por mês ou nome do arquivo..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-10 py-3 border border-gray-300 rounded-lg focus:outline-none text-sm sm:text-base"
+              className="w-full pl-8 md:pl-10 pr-8 md:pr-10 py-2 md:py-3 border border-gray-300 rounded-lg focus:outline-none text-xs md:text-sm lg:text-base"
             />
-            <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+            <FaSearch className="absolute left-2 md:left-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-sm md:text-base" />
             {searchQuery && (
               <button
                 onClick={() => setSearchQuery("")}
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                className="absolute right-2 md:right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 text-sm md:text-base"
               >
                 ✕
               </button>
             )}
           </div>
-          <div className="flex  gap-2">
+          <div className="flex gap-2">
             <button
               onClick={handleDownloadTemplate}
               disabled={downloadTemplateLoading}
-              className="sm:px-6 sm:py-3 px-4 py-2 text-sm sm:text-base rounded-lg font-medium flex items-center gap-2 transition-colors bg-[#002256] hover:bg-[#002256]/90 text-white disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-3 py-2 md:px-4 md:py-2 lg:px-6 lg:py-3 text-xs md:text-sm lg:text-base rounded-lg font-medium flex items-center gap-1 md:gap-2 transition-colors bg-[#002256] hover:bg-[#002256]/90 text-white disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {downloadTemplateLoading ? (
-                <FaSpinner className="animate-spin" />
+                <FaSpinner className="animate-spin w-3 h-3 md:w-4 md:h-4" />
               ) : (
-                <FaDownload />
+                <FaDownload className="w-3 h-3 md:w-4 md:h-4" />
               )}
-              {downloadTemplateLoading ? "Baixando..." : "Baixar Template"}
+              <span className="hidden sm:inline">{downloadTemplateLoading ? "Baixando..." : "Baixar Template"}</span>
+              <span className="sm:hidden">Template</span>
             </button>
             <button
               onClick={handleCreateSOATClick}
-              className={`sm:px-6 sm:py-3 px-4 py-2 text-sm sm:text-base rounded-lg font-medium flex items-center gap-2 transition-colors bg-[#B7021C] hover:bg-[#B7021C]/90 text-white`}
+              className="px-3 py-2 md:px-4 md:py-2 lg:px-6 lg:py-3 text-xs md:text-sm lg:text-base rounded-lg font-medium flex items-center gap-1 md:gap-2 transition-colors bg-[#B7021C] hover:bg-[#B7021C]/90 text-white"
               title={
                 hasPendingSoat
                   ? "Existe um SOAT pendente. Finalize-o antes de criar um novo."
                   : "Adicionar novo SOAT"
               }
             >
-              <FaPlus className="w-4 h-4" />
-              Adicionar SOAT
+              <FaPlus className="w-3 h-3 md:w-4 md:h-4" />
+              <span className="hidden sm:inline">Adicionar SOAT</span>
+              <span className="sm:hidden">Novo</span>
             </button>
           </div>
         </div>
@@ -482,36 +484,36 @@ export default function PageGestaoSOAT() {
 
       {/* Tabela de Listas de SOAT */}
       <div className="bg-white rounded-lg shadow-md overflow-hidden">
-        <div className="px-6 py-4 border-b border-gray-200">
-          <h3 className="text-lg font-bold text-[#002256]">Listas de SOAT</h3>
-          <p className="text-sm text-gray-600">
+        <div className="px-3 md:px-4 lg:px-6 py-3 md:py-4 border-b border-gray-200">
+          <h3 className="text-base md:text-lg font-bold text-[#002256]">Listas de SOAT</h3>
+          <p className="text-xs md:text-sm text-gray-600">
             Todas as listas mensais de SOAT dos trabalhadores
           </p>
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full">
+          <table className="w-full min-w-[800px]">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Mês Referência
+                <th className="px-2 md:px-4 lg:px-6 py-2 md:py-3 text-left text-[10px] md:text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Mês Ref.
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Nome do Arquivo
+                <th className="px-2 md:px-4 lg:px-6 py-2 md:py-3 text-left text-[10px] md:text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Arquivo
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Data Criação
+                <th className="px-2 md:px-4 lg:px-6 py-2 md:py-3 text-left text-[10px] md:text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Data
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Total Trabalhadores
+                <th className="px-2 md:px-4 lg:px-6 py-2 md:py-3 text-left text-[10px] md:text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Trabalhadores
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Valor Total
+                <th className="px-2 md:px-4 lg:px-6 py-2 md:py-3 text-left text-[10px] md:text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Valor
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-2 md:px-4 lg:px-6 py-2 md:py-3 text-left text-[10px] md:text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Estado
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-2 md:px-4 lg:px-6 py-2 md:py-3 text-left text-[10px] md:text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Ações
                 </th>
               </tr>
@@ -582,66 +584,66 @@ export default function PageGestaoSOAT() {
               ) : (
                 soatsPagination.paginatedData.map((lista) => (
                   <tr key={lista.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-red-600 font-medium">
+                    <td className="px-2 md:px-4 lg:px-6 py-2 md:py-3 lg:py-4 whitespace-nowrap text-xs md:text-sm text-red-600 font-medium">
                       {lista.mes_referente}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-red-600">
+                    <td className="px-2 md:px-4 lg:px-6 py-2 md:py-3 lg:py-4 whitespace-nowrap text-xs md:text-sm text-red-600">
                       {lista.nome_ficheiro}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    <td className="px-2 md:px-4 lg:px-6 py-2 md:py-3 lg:py-4 whitespace-nowrap text-xs md:text-sm text-gray-900">
                       {new Date(lista.data_criacao).toLocaleDateString("pt-BR")}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    <td className="px-2 md:px-4 lg:px-6 py-2 md:py-3 lg:py-4 whitespace-nowrap text-xs md:text-sm text-gray-900">
                       {lista.total_colaborador}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    <td className="px-2 md:px-4 lg:px-6 py-2 md:py-3 lg:py-4 whitespace-nowrap text-xs md:text-sm text-gray-900">
                       {formatCurrency(lista.valor_total)}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    <td className="px-2 md:px-4 lg:px-6 py-2 md:py-3 lg:py-4 whitespace-nowrap">
                       <div className="flex items-center">
                         {lista.situacao === "Enviado" ? (
                           <>
-                            <span className="text-green-600 text-sm mr-2">
+                            <span className="text-green-600 text-xs md:text-sm mr-1 md:mr-2">
                               ✓
                             </span>
-                            <span className="text-green-600 text-sm">
+                            <span className="text-green-600 text-xs md:text-sm">
                               Enviado
                             </span>
                           </>
                         ) : (
-                          <span className="text-gray-600 text-sm">
+                          <span className="text-gray-600 text-xs md:text-sm">
                             {lista.situacao}
                           </span>
                         )}
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      <div className="flex space-x-2">
+                    <td className="px-2 md:px-4 lg:px-6 py-2 md:py-3 lg:py-4 whitespace-nowrap text-xs md:text-sm text-gray-500">
+                      <div className="flex space-x-1 md:space-x-2">
                         <button
                           onClick={() => handleViewDetails(lista.id)}
-                          className="bg-blue-50 border border-blue-200 flex  items-center justify-center text-blue-600 hover:text-blue-800 p-2 cursor-pointer rounded"
+                          className="bg-blue-50 border border-blue-200 flex items-center justify-center text-blue-600 hover:text-blue-800 p-1.5 md:p-2 cursor-pointer rounded"
                         >
-                          <FaEye className="w-4 h-4" />
+                          <FaEye className="w-3 h-3 md:w-4 md:h-4" />
                         </button>
                         {lista.situacao !== "Enviado" && (
                           <>
                             <button
                               onClick={() => handleSendSoat(lista)}
-                              className="bg-blue-50 border border-blue-200 flex items-center justify-center text-blue-600 hover:text-blue-800 p-2 cursor-pointer rounded"
+                              className="bg-blue-50 border border-blue-200 flex items-center justify-center text-blue-600 hover:text-blue-800 p-1.5 md:p-2 cursor-pointer rounded"
                               title="Enviar SOAT"
                             >
-                              <FaPaperPlane className="w-4 h-4" />
+                              <FaPaperPlane className="w-3 h-3 md:w-4 md:h-4" />
                             </button>
                             <button
-                              className="bg-red-50 border border-red-200 flex  items-center justify-center text-red-600 hover:text-red-800 p-2 rounded cursor-pointer"
+                              className="bg-red-50 border border-red-200 flex items-center justify-center text-red-600 hover:text-red-800 p-1.5 md:p-2 rounded cursor-pointer"
                               onClick={() => handleRemoveSoat(lista)}
                             >
-                              <FaTrash className="w-4 h-4" />
+                              <FaTrash className="w-3 h-3 md:w-4 md:h-4" />
                             </button>
                           </>
                         )}
                         <button
-                          className="bg-green-50 border border-green-200 flex  items-center justify-center text-green-600 hover:text-green-800 p-2 rounded cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                          className="bg-green-50 border border-green-200 flex items-center justify-center text-green-600 hover:text-green-800 p-1.5 md:p-2 rounded cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                           onClick={() =>
                             handleDownloadSoat(
                               lista.id,
@@ -652,9 +654,9 @@ export default function PageGestaoSOAT() {
                           title="Baixar SOAT"
                         >
                           {rowDownloadLoading === lista.id ? (
-                            <FaSpinner className="w-4 h-4 animate-spin" />
+                            <FaSpinner className="w-3 h-3 md:w-4 md:h-4 animate-spin" />
                           ) : (
-                            <FaDownload className="w-4 h-4" />
+                            <FaDownload className="w-3 h-3 md:w-4 md:h-4" />
                           )}
                         </button>
                       </div>
