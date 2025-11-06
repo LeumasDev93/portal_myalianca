@@ -69,7 +69,31 @@ export async function POST(req: NextRequest) {
           errorDetails = JSON.stringify(errorJson, null, 2);
         } else {
           errorDetails = await response.text();
-          console.error("[PAYMENT API] Erro texto da API externa:", errorDetails);
+          console.error("[PAYMENT API] Erro texto/HTML da API externa (primeiros 500 chars):", errorDetails.substring(0, 500));
+          
+          // Se for HTML, tenta extrair a mensagem de erro
+          if (errorDetails.includes('<!DOCTYPE html>') || errorDetails.includes('<html')) {
+            // Tenta extrair texto do elemento .error-message ou .error-title
+            const messageMatch = errorDetails.match(/<p class="error-message">([^<]+)<\/p>/);
+            const titleMatch = errorDetails.match(/<h1 class="error-title">([^<]+)<\/h1>/);
+            
+            if (messageMatch && messageMatch[1]) {
+              errorMessage = messageMatch[1].trim();
+            } else if (titleMatch && titleMatch[1]) {
+              errorMessage = titleMatch[1].trim();
+            } else {
+              // Mapeia códigos de erro HTTP para mensagens amigáveis
+              if (response.status === 500) {
+                errorMessage = "Servidor de pagamento temporariamente indisponível";
+              } else if (response.status === 401) {
+                errorMessage = "Sessão de pagamento expirou. Tente novamente";
+              } else if (response.status === 400) {
+                errorMessage = "Dados de pagamento inválidos";
+              } else {
+                errorMessage = `Erro no servidor de pagamento (${response.status})`;
+              }
+            }
+          }
         }
       } catch (e) {
         console.error("[PAYMENT API] Erro ao processar resposta de erro:", e);
@@ -79,7 +103,7 @@ export async function POST(req: NextRequest) {
       console.error("[PAYMENT API] ❌ Erro ao criar intenção:", {
         status: response.status,
         message: errorMessage,
-        details: errorDetails
+        details: errorDetails.substring(0, 200) + "..."
       });
       
       return NextResponse.json(
@@ -87,7 +111,6 @@ export async function POST(req: NextRequest) {
           message: errorMessage,
           error: errorMessage, // Mantém para compatibilidade
           status: response.status,
-          details: errorDetails
         },
         { status: response.status }
       );

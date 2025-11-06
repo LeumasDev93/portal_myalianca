@@ -88,9 +88,11 @@ export async function createPaymentIntent(
       try {
         const errorData = await response.json();
         console.error("[PAYMENT] Detalhes do erro da API:", errorData);
+        console.error("[PAYMENT] Mensagem extraída:", errorData.message);
         
         // Extrai mensagem de erro amigável
         errorMessage = errorData.message || errorData.error || errorData.detail || "Erro ao processar pagamento";
+        console.error("[PAYMENT] Mensagem final que será lançada:", errorMessage);
       } catch {
         const errorText = await response.text();
         console.error("[PAYMENT] Erro (text):", errorText);
@@ -98,6 +100,7 @@ export async function createPaymentIntent(
       }
       
       // Lança erro com mensagem clara
+      console.error("[PAYMENT] ⚠️ Lançando erro com mensagem:", errorMessage);
       const error = new Error(errorMessage);
       (error as any).status = response.status;
       throw error;
