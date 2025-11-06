@@ -243,13 +243,25 @@ export const getActivityDisplay = (action: string): ActivityDisplay => {
     },
   };
 
-  return (
-    activityMap[action] || {
-      icon: <FaFileAlt className={iconSize} />,
-      color: "text-gray-600",
-      bgColor: "bg-gray-500",
+  // Verifica primeiro se existe mapeamento exato
+  if (activityMap[action]) {
+    return activityMap[action];
+  }
+
+  // Se a action começa com "Adicionado" ou "Removido", extrai o nome do menu
+  if (action.startsWith("Adicionado ") || action.startsWith("Removido ")) {
+    const menuName = action.replace(/^(Adicionado|Removido) /, "");
+    if (activityMap[menuName]) {
+      return activityMap[menuName];
     }
-  );
+  }
+
+  // Fallback padrão
+  return {
+    icon: <FaFileAlt className={iconSize} />,
+    color: "text-gray-600",
+    bgColor: "bg-gray-500",
+  };
 };
 
 export const formatActivityDate = (dateString: string): string => {
