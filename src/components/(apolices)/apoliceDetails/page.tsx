@@ -70,9 +70,7 @@ export default function ApoliceDetailPage({
   const [loadingStates, setLoadingStates] = useState<ReciboLoadingState>({});
   const [cobertura, setCobertura] = useState<InsurancePolicy[]>([]);
   const [sinistros, setSinistros] = useState<SinistroData[]>([]);
-  const [expandedItems, setExpandedItems] = useState<boolean[]>(
-    new Array(cobertura.length).fill(true)
-  );
+  const [expandedItems, setExpandedItems] = useState<boolean[]>([]);
 
   const toggleExpand = (index: number) => {
     setExpandedItems((prev) => {
@@ -81,6 +79,13 @@ export default function ApoliceDetailPage({
       return newState;
     });
   };
+
+  // Atualizar expandedItems quando cobertura mudar
+  useEffect(() => {
+    if (cobertura.length > 0) {
+      setExpandedItems(new Array(cobertura.length).fill(true));
+    }
+  }, [cobertura]);
 
   useEffect(() => {
     if (!token || !id) return;
