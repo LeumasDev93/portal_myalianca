@@ -4,6 +4,7 @@
 import { useState, useEffect } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import QuickAccessCard from "@/components/Layout/QuickAccessCard";
+import QuickAccessCardSkeleton from "@/components/Layout/QuickAccessCardSkeleton";
 import { useQuickAccess } from "@/hooks/useQuickAccess";
 import { useUserProfile } from "@/hooks/useUserProfile";
 import { FaMapMarkerAlt, FaExclamationTriangle } from "react-icons/fa";
@@ -38,7 +39,7 @@ export default function DashboardEmpresarial({
   const [cardsPerPage, setCardsPerPage] = useState(5);
   const [currentPage, setCurrentPage] = useState(0);
   const [isMobile, setIsMobile] = useState(false);
-  const { quickAccessItems, refetch } = useQuickAccess();
+  const { quickAccessItems, isLoading: isLoadingQuickAccess, refetch } = useQuickAccess();
   const { profile } = useUserProfile();
 
   // Dados dos menus do portal (exatos do sistema, mesma cor para todos)
@@ -247,9 +248,16 @@ export default function DashboardEmpresarial({
           <div className="overflow-hidden w-full py-10">
             <div className="flex justify-center">
               <div className="flex gap-4 items-center">
-                {pages[currentPage]?.map((item: any, index: number) => (
-                  <div key={index}>{renderCard(item)}</div>
-                ))}
+                {isLoadingQuickAccess ? (
+                  // Renderiza skeletons enquanto carrega
+                  Array.from({ length: cardsPerPage }).map((_, index) => (
+                    <QuickAccessCardSkeleton key={`skeleton-${index}`} />
+                  ))
+                ) : (
+                  pages[currentPage]?.map((item: any, index: number) => (
+                    <div key={index}>{renderCard(item)}</div>
+                  ))
+                )}
               </div>
             </div>
           </div>

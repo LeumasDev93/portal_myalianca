@@ -6,6 +6,7 @@ import { useState, useEffect } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
 import QuickAccessCard from "@/components/Layout/QuickAccessCard";
+import QuickAccessCardSkeleton from "@/components/Layout/QuickAccessCardSkeleton";
 import HistoryTable from "@/components/Historico/table/HistoryTable";
 import AtivitysLastCard from "@/components/Layout/AtivitysLastCard";
 import { useQuickAccess } from "@/hooks/useQuickAccess";
@@ -223,7 +224,14 @@ export default function Historico({
         <div className="overflow-hidden w-full py-10">
           <div className="flex justify-center">
             <div className="flex gap-4 items-center">
-              {pages[currentPage].map((item, index) => renderCard(item, index))}
+              {isLoadingQuickAccess ? (
+                // Renderiza skeletons enquanto carrega
+                Array.from({ length: cardsPerPage }).map((_, index) => (
+                  <QuickAccessCardSkeleton key={`skeleton-${index}`} />
+                ))
+              ) : (
+                pages[currentPage]?.map((item, index) => renderCard(item, index))
+              )}
             </div>
           </div>
         </div>
