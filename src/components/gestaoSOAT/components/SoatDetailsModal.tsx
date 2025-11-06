@@ -445,16 +445,16 @@ export default function SoatDetailsModal({
   }
 
   return (
-    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-      <div className="bg-gray-100 rounded-lg shadow-xl max-w-6xl w-full max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-2 md:p-4">
+      <div className="bg-gray-100 rounded-lg shadow-xl max-w-6xl w-full max-h-[95vh] md:max-h-[90vh] overflow-y-auto">
         {soatDetails ? (
           <div>
             {/* Header com informações do arquivo */}
-            <div className=" text-[#002256] p-6 rounded-t-lg">
+            <div className="text-[#002256] p-3 md:p-4 lg:p-6 rounded-t-lg">
               <div className="flex justify-between items-start">
                 <div>
-                  <div className="flex items-center gap-3 mb-2">
-                    <h2 className="text-2xl font-bold">
+                  <div className="flex items-center gap-2 md:gap-3 mb-2">
+                    <h2 className="text-base md:text-lg lg:text-2xl font-bold">
                       Colaboradores -{" "}
                       {soatDetails.mes_referente.replace("_", " de ")}
                     </h2>
@@ -465,16 +465,16 @@ export default function SoatDetailsModal({
                       </span>
                     )}
                   </div>
-                  <div className="flex items-center space-x-4 text-sm">
+                  <div className="flex items-center space-x-2 md:space-x-4 text-xs md:text-sm">
                     <span>Arquivo: {soatDetails.nome_ficheiro}</span>
                   </div>
-                  <div className="flex items-center space-x-4 text-sm">
+                  <div className="flex items-center space-x-2 md:space-x-4 text-xs md:text-sm">
                     <span>Período : {soatDetails.mes_referente}</span>
                   </div>
                 </div>
                 <button
                   onClick={onClose}
-                  className="text-[#002256] hover:text-[#002256]/70 text-2xl"
+                  className="text-[#002256] hover:text-[#002256]/70 text-xl md:text-2xl"
                 >
                   <X />
                 </button>
@@ -482,31 +482,31 @@ export default function SoatDetailsModal({
             </div>
 
             {/* Cards de estatísticas */}
-            <div className="p-6 bg-gray-50">
-              <div className="grid grid-cols-4 gap-4 mb-6">
-                <div className="bg-white rounded-lg p-4 text-center">
-                  <h2 className="text-sm text-left text-[#002256]">
+            <div className="p-3 md:p-4 lg:p-6 bg-gray-50">
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 md:gap-3 lg:gap-4 mb-4 md:mb-6">
+                <div className="bg-white rounded-lg p-2 md:p-3 lg:p-4 text-center">
+                  <h2 className="text-[10px] md:text-xs lg:text-sm text-left text-[#002256]">
                     {searchQuery
                       ? "Colaboradores Filtrados"
                       : "Total de Colaboradores"}
                   </h2>
-                  <div className="text-2xl text-left font-bold text-[#002256]">
+                  <div className="text-base md:text-lg lg:text-2xl text-left font-bold text-[#002256]">
                     {filteredContents.length}
                   </div>
                 </div>
-                <div className="bg-white rounded-lg p-4 text-center">
-                  <div className="text-sm text-left text-[#002256]">
+                <div className="bg-white rounded-lg p-2 md:p-3 lg:p-4 text-center">
+                  <div className="text-[10px] md:text-xs lg:text-sm text-left text-[#002256]">
                     Colaboradores Ativos
                   </div>
-                  <div className="text-2xl text-left font-bold text-green-600">
+                  <div className="text-base md:text-lg lg:text-2xl text-left font-bold text-green-600">
                     {filteredContents.length}
                   </div>
                 </div>
-                <div className="bg-white rounded-lg p-4 text-center">
-                  <div className="text-sm text-left text-[#002256]">
+                <div className="bg-white rounded-lg p-2 md:p-3 lg:p-4 text-center">
+                  <div className="text-[10px] md:text-xs lg:text-sm text-left text-[#002256]">
                     Valor Total
                   </div>
-                  <div className="text-xl text-left font-bold text-[#002256]">
+                  <div className="text-sm md:text-base lg:text-xl text-left font-bold text-[#002256]">
                     {formatCurrency(
                       filteredContents.reduce((total: number, content: any) => {
                         try {
@@ -519,11 +519,11 @@ export default function SoatDetailsModal({
                     )}
                   </div>
                 </div>
-                <div className="bg-white rounded-lg p-4 text-center">
-                  <div className="text-sm text-left text-[#002256]">
+                <div className="bg-white rounded-lg p-2 md:p-3 lg:p-4 text-center">
+                  <div className="text-[10px] md:text-xs lg:text-sm text-left text-[#002256]">
                     Data de Criação
                   </div>
-                  <div className="text-xl text-left font-semibold text-[#002256]">
+                  <div className="text-sm md:text-base lg:text-xl text-left font-semibold text-[#002256]">
                     {new Date(soatDetails.data_criacao).toLocaleDateString(
                       "pt-BR"
                     )}
@@ -532,17 +532,17 @@ export default function SoatDetailsModal({
               </div>
 
               {/* Barra de busca */}
-              <div className="mb-4 flex items-center justify-between">
-                <div className="relative w-1/2">
+              <div className="mb-3 md:mb-4 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-2">
+                <div className="relative w-full md:w-1/2">
                   <input
                     type="text"
-                    placeholder="Buscar Colaborador (nome, NIF, cargo, status)..."
+                    placeholder="Buscar Colaborador..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full pl-10 pr-12 py-2 border border-gray-300 rounded-lg focus:outline-none"
+                    className="w-full pl-8 md:pl-10 pr-8 md:pr-12 py-2 border border-gray-300 rounded-lg focus:outline-none text-xs md:text-sm"
                   />
                   <svg
-                    className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400"
+                    className="absolute left-2 md:left-3 top-1/2 transform -translate-y-1/2 w-3 h-3 md:w-4 md:h-4 text-gray-400"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -557,27 +557,30 @@ export default function SoatDetailsModal({
                   {searchQuery && (
                     <button
                       onClick={() => setSearchQuery("")}
-                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                      className="absolute right-2 md:right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
                     >
-                      <X className="w-4 h-4" />
+                      <X className="w-3 h-3 md:w-4 md:h-4" />
                     </button>
                   )}
                 </div>
                 {soatDetails?.situacao !== "Enviado" && (
                   <button
                     onClick={handleAddCollaborator}
-                    className="cursor-pointer bg-[#002256] text-white px-4 py-2 rounded-lg font-medium flex items-center gap-2 transition-colors hover:bg-[#002256]/90"
+                    className="cursor-pointer bg-[#002256] text-white px-3 py-2 md:px-4 md:py-2 rounded-lg font-medium flex items-center justify-center gap-1 md:gap-2 transition-colors hover:bg-[#002256]/90 text-xs md:text-sm whitespace-nowrap"
                   >
-                    <Plus /> Adicionar Colaborador
+                    <Plus className="w-3 h-3 md:w-4 md:h-4" /> 
+                    <span className="hidden sm:inline">Adicionar Colaborador</span>
+                    <span className="sm:hidden">Adicionar</span>
                   </button>
                 )}
               </div>
             </div>
 
             {/* Tabela de colaboradores */}
-            <div className="px-6 pb-6">
+            <div className="px-3 md:px-4 lg:px-6 pb-3 md:pb-4 lg:pb-6">
               <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
-                <table className="w-full">
+                <div className="overflow-x-auto">
+                  <table className="w-full min-w-[600px]">
                   <thead className="bg-gray-50">
                     <tr>
                       {/* Headers dinâmicos baseados nos fields */}
@@ -586,13 +589,13 @@ export default function SoatDetailsModal({
                         .map((field: any) => (
                           <th
                             key={field.id}
-                            className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                            className="px-2 md:px-4 lg:px-6 py-2 md:py-3 text-left text-[10px] md:text-xs font-medium text-gray-500 uppercase tracking-wider"
                           >
                             {field.label}
                           </th>
                         ))}
                       {soatDetails?.situacao !== "Enviado" && (
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th className="px-2 md:px-4 lg:px-6 py-2 md:py-3 text-left text-[10px] md:text-xs font-medium text-gray-500 uppercase tracking-wider">
                           Ações
                         </th>
                       )}
@@ -648,32 +651,32 @@ export default function SoatDetailsModal({
                                     return (
                                       <td
                                         key={field.id}
-                                        className="px-6 py-4 whitespace-nowrap text-sm text-gray-900"
+                                        className="px-2 md:px-4 lg:px-6 py-2 md:py-3 lg:py-4 whitespace-nowrap text-xs md:text-sm text-gray-900"
                                       >
                                         {displayValue}
                                       </td>
                                     );
                                   })}
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                <td className="px-2 md:px-4 lg:px-6 py-2 md:py-3 lg:py-4 whitespace-nowrap text-xs md:text-sm text-gray-500">
                                   {soatDetails?.situacao !== "Enviado" && (
-                                    <div className="flex space-x-2">
+                                    <div className="flex space-x-1 md:space-x-2">
                                       <button
                                         onClick={() =>
                                           handleEditCollaborator(content)
                                         }
-                                        className="bg-blue-50 border border-blue-200 flex  items-center justify-center p-2 text-blue-600  cursor-pointer hover:text-blue-800 rounded"
+                                        className="bg-blue-50 border border-blue-200 flex items-center justify-center p-1.5 md:p-2 text-blue-600 cursor-pointer hover:text-blue-800 rounded"
                                         title="Editar colaborador"
                                       >
-                                        <FaEdit className="w-4 h-4" />
+                                        <FaEdit className="w-3 h-3 md:w-4 md:h-4" />
                                       </button>
                                       <button
-                                        className="bg-red-50 border border-red-200 flex  items-center justify-center text-red-600  cursor-pointer hover:text-red-800 p-2 rounded"
+                                        className="bg-red-50 border border-red-200 flex items-center justify-center text-red-600 cursor-pointer hover:text-red-800 p-1.5 md:p-2 rounded"
                                         title="Excluir colaborador"
                                         onClick={() =>
                                           handleRemoveCollaborator(content)
                                         }
                                       >
-                                        <FaTrash className="w-4 h-4" />
+                                        <FaTrash className="w-3 h-3 md:w-4 md:h-4" />
                                       </button>
                                     </div>
                                   )}
@@ -687,7 +690,7 @@ export default function SoatDetailsModal({
                                   colSpan={
                                     soatDetails?.situacao === "Enviado" ? 4 : 5
                                   }
-                                  className="px-6 py-4 text-center text-sm text-red-600"
+                                  className="px-2 md:px-4 lg:px-6 py-2 md:py-3 lg:py-4 text-center text-xs md:text-sm text-red-600"
                                 >
                                   Erro ao processar dados do colaborador
                                 </td>
@@ -700,29 +703,30 @@ export default function SoatDetailsModal({
                       <tr>
                         <td
                           colSpan={soatDetails?.situacao === "Enviado" ? 4 : 5}
-                          className="px-6 py-8 text-center text-gray-500"
+                          className="px-2 md:px-4 lg:px-6 py-6 md:py-8 text-center text-gray-500"
                         >
                           {searchQuery ? (
                             <div>
-                              <p className="text-sm">
+                              <p className="text-xs md:text-sm">
                                 Nenhum colaborador encontrado para &quot;
                                 {searchQuery}&quot;
                               </p>
                               <button
                                 onClick={() => setSearchQuery("")}
-                                className="text-[#002256] hover:underline mt-2 text-sm"
+                                className="text-[#002256] hover:underline mt-2 text-xs md:text-sm"
                               >
                                 Limpar filtro
                               </button>
                             </div>
                           ) : (
-                            "Nenhum colaborador encontrado"
+                            <p className="text-xs md:text-sm">Nenhum colaborador encontrado</p>
                           )}
                         </td>
                       </tr>
                     )}
                   </tbody>
                 </table>
+                </div>
               </div>
             </div>
 
@@ -742,11 +746,11 @@ export default function SoatDetailsModal({
               />
             )}
             {/* Footer com botões */}
-            <div className="px-6 py-6">
-              <div className="flex justify-between items-center">
-                <div className="flex space-x-3">
+            <div className="px-3 md:px-4 lg:px-6 py-3 md:py-4 lg:py-6">
+              <div className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-2 sm:gap-0">
+                <div className="flex space-x-2 md:space-x-3">
                   <button
-                    className="bg-[#002256] hover:bg-[#002256]/80 disabled:bg-gray-400 disabled:cursor-not-allowed cursor-pointer text-white px-4 py-2 rounded-lg font-medium flex items-center gap-2 transition-colors"
+                    className="bg-[#002256] hover:bg-[#002256]/80 disabled:bg-gray-400 disabled:cursor-not-allowed cursor-pointer text-white px-3 py-2 md:px-4 md:py-2 rounded-lg font-medium flex items-center justify-center gap-1 md:gap-2 transition-colors text-xs md:text-sm"
                     onClick={() =>
                       handleDownloadSoat(
                         soatDetails.id,
@@ -758,12 +762,12 @@ export default function SoatDetailsModal({
                   >
                     {rowDownloadLoading === soatDetails.id ? (
                       <>
-                        <FaSpinner className="w-4 h-4 animate-spin" />
+                        <FaSpinner className="w-3 h-3 md:w-4 md:h-4 animate-spin" />
                         <span>Baixando...</span>
                       </>
                     ) : (
                       <>
-                        <FaDownload className="w-4 h-4" />
+                        <FaDownload className="w-3 h-3 md:w-4 md:h-4" />
                         <span>Baixar SOAT</span>
                       </>
                     )}
@@ -771,7 +775,7 @@ export default function SoatDetailsModal({
                 </div>
                 <button
                   onClick={onClose}
-                  className="bg-gray-400  cursor-pointer hover:bg-gray-500 text-white px-4 py-2 rounded-lg font-medium transition-colors"
+                  className="bg-gray-400 cursor-pointer hover:bg-gray-500 text-white px-3 py-2 md:px-4 md:py-2 rounded-lg font-medium transition-colors text-xs md:text-sm"
                 >
                   OK
                 </button>
