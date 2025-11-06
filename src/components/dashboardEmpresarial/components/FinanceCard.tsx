@@ -67,20 +67,20 @@ export function FinanceCard({ onNavigate }: FinanceCardProps) {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 h-full">
         {/* Card Pago */}
         <div
-          className="bg-green-50 border border-green-200 p-6 rounded-lg flex flex-col justify-between h-[150px] hover:bg-green-100 hover:scale-105 cursor-pointer transition-all duration-300"
+          className="bg-green-50 border border-green-200 p-3 md:p-4 lg:p-6 rounded-lg flex flex-col justify-between h-[120px] md:h-[140px] lg:h-[150px] hover:bg-green-100 hover:scale-105 cursor-pointer transition-all duration-300"
           onClick={handlePagoClick}
           title="Ver recibos pagos"
         >
           <div className="text-center">
-            <h3 className="text-sm font-medium text-gray-600 uppercase mb-4">
+            <h3 className="text-xs md:text-sm font-medium text-gray-600 uppercase mb-2 md:mb-3 lg:mb-4">
               Pago
             </h3>
-            <p className="text-sm text-gray-500 mb-4">
+            <p className="text-xs md:text-sm text-gray-500 mb-2 md:mb-3 lg:mb-4">
               {financeData?.pago?.moeda || "ECV"}
             </p>
           </div>
           <div className="text-center">
-            <p className="text-xl xl:text-2xl font-bold text-[#002256] mb-2">
+            <p className="text-base md:text-lg lg:text-xl xl:text-2xl font-bold text-[#002256] mb-1 md:mb-2">
               {financeData?.pago
                 ? formatValue(financeData.pago.valor, financeData.pago.moeda)
                 : "0 ECV"}
@@ -90,20 +90,20 @@ export function FinanceCard({ onNavigate }: FinanceCardProps) {
 
         {/* Card Em Cobrança */}
         <div
-          className="bg-orange-50 border border-orange-200 p-6 rounded-lg flex flex-col justify-between h-[150px] hover:bg-orange-100 hover:scale-105 cursor-pointer transition-all duration-300"
+          className="bg-orange-50 border border-orange-200 p-3 md:p-4 lg:p-6 rounded-lg flex flex-col justify-between h-[120px] md:h-[140px] lg:h-[150px] hover:bg-orange-100 hover:scale-105 cursor-pointer transition-all duration-300"
           onClick={handleEmCobrancaClick}
           title="Ver recibos em cobrança"
         >
           <div className="text-center">
-            <h3 className="text-sm font-medium text-gray-600 uppercase mb-4">
+            <h3 className="text-xs md:text-sm font-medium text-gray-600 uppercase mb-2 md:mb-3 lg:mb-4">
               Em Cobrança
             </h3>
-            <p className="text-sm text-gray-500 mb-4">
+            <p className="text-xs md:text-sm text-gray-500 mb-2 md:mb-3 lg:mb-4">
               {financeData?.emCobranca?.moeda || "ECV"}
             </p>
           </div>
           <div className="text-center">
-            <p className="text-xl xl:text-2xl font-bold text-[#002256] mb-2">
+            <p className="text-base md:text-lg lg:text-xl xl:text-2xl font-bold text-[#002256] mb-1 md:mb-2">
               {financeData?.emCobranca
                 ? formatValue(
                     Math.abs(financeData.emCobranca.valor),
