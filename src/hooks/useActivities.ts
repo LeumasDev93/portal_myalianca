@@ -27,14 +27,12 @@ export const useActivities = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const { profile } = useUserProfile();
 
-  const apiKey = process.env.NEXT_PUBLIC_API_KEY;
-  const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL_DEFAULT;
   const ITEMS_PER_PAGE = 10;
 
   // Buscar todas as atividades do usuário
   const fetchActivities = async () => {
-    if (!profile?.user?.id || !apiKey || !apiBaseUrl) {
-      setError('Configuração incompleta');
+    if (!profile?.user?.id) {
+      setError('Usuário não autenticado');
       setAllActivities([]); // Garantir que é sempre um array
       return;
     }
@@ -43,20 +41,16 @@ export const useActivities = () => {
     setError(null);
 
     try {
-      const response = await fetch(
-        `${apiBaseUrl}/user/activity/1.0.0/user/${profile.user.id}/last`,
-        {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-            'ApiKey': apiKey,
-          },
-        }
-      );
+      const response = await fetch(`/api/activities?userId=${encodeURIComponent(profile.user.id)}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || 'Erro ao buscar atividades');
+        throw new Error(errorData.error || 'Erro ao buscar atividades');
       }
 
       const data = await response.json();
@@ -96,30 +90,25 @@ export const useActivities = () => {
   // Registrar nova atividade
   const registerActivity = async (activityData: Omit<ActivityRequest, 'user_id'>) => {
     
-    if (!profile?.user?.id || !apiKey || !apiBaseUrl) {
-      throw new Error('Configuração incompleta');
+    if (!profile?.user?.id) {
+      throw new Error('Usuário não autenticado');
     }
 
-    const requestData: ActivityRequest = {
-      user_id: profile.user.id,
-      ...activityData,
-    };
-
     try {
-      
-      const response = await fetch(`${apiBaseUrl}/user/activity/1.0.0`, {
+      const response = await fetch('/api/activities', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'ApiKey': apiKey,
         },
-        body: JSON.stringify(requestData),
+        body: JSON.stringify({
+          userId: profile.user.id,
+          ...activityData,
+        }),
       });
-
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || 'Erro ao registrar atividade');
+        throw new Error(errorData.error || 'Erro ao registrar atividade');
       }
 
       const newActivity = await response.json();
