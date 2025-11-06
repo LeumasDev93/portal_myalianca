@@ -29,25 +29,28 @@ export default function AgenciasPage() {
   }
 
   return (
-    <div className="container p-3 sm:p-4 md:p-6">
-      <div className="mb-4 sm:mb-6 md:mb-8 mt-4 sm:mt-5 md:mt-6">
-        <h1 className="text-lg sm:text-xl lg:text-2xl xl:text-3xl font-bold mb-2 text-[#002256]">
-          Nossas Agências
-        </h1>
-        <p className="text-sm sm:text-base text-gray-600 mb-4 sm:mb-6">
-          Encontre a agência mais próxima de você para atendimento presencial.
-        </p>
+    <div className="w-full">
+      <div className="container p-3 sm:p-4 md:p-6 mb-4 sm:mb-6 md:mb-8">
+        <div className="mt-4 sm:mt-5 md:mt-6">
+          <h1 className="text-lg sm:text-xl lg:text-2xl xl:text-3xl font-bold mb-2 text-[#002256]">
+            Nossas Agências
+          </h1>
+          <p className="text-sm sm:text-base text-gray-600 mb-4 sm:mb-6">
+            Encontre a agência mais próxima de você para atendimento presencial.
+          </p>
+        </div>
       </div>
       {loading ? (
         <></>
       ) : error ? (
-        <p className="text-red-500">{error}</p>
+        <p className="text-red-500 container">{error}</p>
       ) : agencias.length === 0 ? (
         <LoadingContainer message="CARREGANDO AGÊNCIAS..." />
       ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
+        <div className={`grid grid-cols-1 ${selectedAgencia ? 'lg:grid-cols-12' : ''} gap-0`}>
           {/* Lista de Agências */}
-          <div className={`${selectedAgencia ? 'lg:col-span-1' : 'lg:col-span-3'} grid grid-cols-1 ${!selectedAgencia && 'md:grid-cols-2 lg:grid-cols-3'} gap-4 md:gap-6`}>
+          <div className={`${selectedAgencia ? 'lg:col-span-4 xl:col-span-3' : ''} ${selectedAgencia ? 'h-[calc(100vh-200px)] overflow-y-auto' : 'container'} p-3 sm:p-4 md:p-6`}>
+            <div className={`grid grid-cols-1 ${!selectedAgencia && 'md:grid-cols-2 lg:grid-cols-3'} gap-4 md:gap-6`}>
           {agencias.map((agencia) => (
             <Card key={agencia.id}>
               <CardHeader>
@@ -92,32 +95,34 @@ export default function AgenciasPage() {
               </CardContent>
             </Card>
           ))}
+            </div>
           </div>
 
           {/* Área do Mapa */}
           {selectedAgencia && (
-            <div className="lg:col-span-2 h-[400px] sm:h-[500px] lg:h-auto lg:sticky lg:top-4">
-              <Card className="h-full flex flex-col">
-                <CardHeader className="pb-3">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <CardTitle className="text-base sm:text-lg md:text-xl">
-                        {selectedAgencia.nome}
-                      </CardTitle>
-                      <p className="text-xs sm:text-sm text-gray-600 mt-1">
-                        {selectedAgencia.localizacao}
-                      </p>
-                    </div>
-                    <button
-                      onClick={() => setSelectedAgencia(null)}
-                      className="text-gray-500 hover:text-gray-700 transition-colors ml-2"
-                      title="Fechar mapa"
-                    >
-                      <X className="w-5 h-5" />
-                    </button>
+            <div className="lg:col-span-8 xl:col-span-9 h-[400px] sm:h-[500px] lg:h-[calc(100vh-200px)] lg:sticky lg:top-4">
+              <div className="h-full bg-white shadow-lg lg:shadow-xl flex flex-col">
+                {/* Header do Mapa */}
+                <div className="flex items-start justify-between p-3 sm:p-4 md:p-6 border-b bg-white">
+                  <div className="flex-1">
+                    <h2 className="text-base sm:text-lg md:text-xl lg:text-2xl font-bold text-[#002256]">
+                      {selectedAgencia.nome}
+                    </h2>
+                    <p className="text-xs sm:text-sm text-gray-600 mt-1">
+                      {selectedAgencia.localizacao}
+                    </p>
                   </div>
-                </CardHeader>
-                <CardContent className="flex-1 p-0 relative">
+                  <button
+                    onClick={() => setSelectedAgencia(null)}
+                    className="text-gray-500 hover:text-gray-700 transition-colors ml-2"
+                    title="Fechar mapa"
+                  >
+                    <X className="w-5 h-5 sm:w-6 sm:h-6" />
+                  </button>
+                </div>
+
+                {/* Iframe do Mapa */}
+                <div className="flex-1 relative">
                   <iframe
                     src={`https://www.google.com/maps?q=${selectedAgencia.latitude},${selectedAgencia.longitude}&hl=pt-PT&z=15&output=embed`}
                     className="w-full h-full border-0"
@@ -125,8 +130,10 @@ export default function AgenciasPage() {
                     loading="lazy"
                     referrerPolicy="no-referrer-when-downgrade"
                   />
-                </CardContent>
-                <div className="p-4 border-t bg-gray-50">
+                </div>
+
+                {/* Footer com botão Google Maps */}
+                <div className="p-3 sm:p-4 md:p-6 border-t bg-gray-50">
                   <div className="flex flex-col sm:flex-row gap-3 items-center justify-between">
                     <div className="text-xs sm:text-sm text-gray-600">
                       <p className="flex items-center gap-2">
@@ -145,7 +152,7 @@ export default function AgenciasPage() {
                     </a>
                   </div>
                 </div>
-              </Card>
+              </div>
             </div>
           )}
         </div>
