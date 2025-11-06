@@ -42,27 +42,20 @@ export function useNotifications() {
     try {
       setIsLoading(true);
       setError(null);
-      const apiKey = process.env.NEXT_PUBLIC_API_KEY;
-      const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL_DEFAULT;
-
-      if (!apiKey || !apiBaseUrl) {
-        throw new Error("Configuração da API incompleta");
-      }
 
       const response = await fetch(
-        `${apiBaseUrl}/notifications/1.0.0?user_id=${profile.user.id}`,
+        `/api/notifications?userId=${encodeURIComponent(profile.user.id)}`,
         {
           method: "GET",
           headers: {
             "Content-Type": "application/json",
-            ApiKey: apiKey,
           },
         }
       );
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || "Erro ao buscar notificações");
+        throw new Error(errorData.error || "Erro ao buscar notificações");
       }
 
       const data: NotificationsResponse = await response.json();
