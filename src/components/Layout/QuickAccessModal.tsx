@@ -244,7 +244,7 @@ export function QuickAccessModal({
       toast({
         title: "Sucesso!",
         description: `${menu.nome} foi adicionado ao seu acesso rápido.`,
-        className: "bg-green-50 border-green-200 text-green-900",
+        variant: "success",
       });
 
       // Registrar atividade

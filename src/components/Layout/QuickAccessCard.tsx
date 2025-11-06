@@ -92,7 +92,7 @@ const QuickAccessCard: React.FC<QuickAccessCardProps> = ({
       toast({
         title: "Sucesso!",
         description: "Acesso rápido removido com sucesso.",
-        className: "bg-green-50 border-green-200 text-green-900",
+        variant: "success",
       });
     } catch (error) {
       console.error("Erro ao deletar acesso rápido:", error);
