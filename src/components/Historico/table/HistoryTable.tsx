@@ -337,8 +337,15 @@ const HistoryTable = ({
       );
       window.location.assign(checkoutUrl);
     } catch (error: any) {
-      console.error("Erro ao processar pagamento:", error);
+      console.error("❌ [HISTORICO] Erro capturado:", error);
+      console.error("❌ [HISTORICO] error.message:", error?.message);
+      console.error("❌ [HISTORICO] error.response:", error?.response);
+      console.error("❌ [HISTORICO] typeof error:", typeof error);
+      console.error("❌ [HISTORICO] Object.keys(error):", Object.keys(error || {}));
+      
       const errorMessage = error?.message || error?.response?.data?.message || "Erro ao processar pagamento. Tente novamente.";
+      console.error("❌ [HISTORICO] Mensagem final para toast:", errorMessage);
+      
       toast.error(errorMessage, {
         description: `Recibo: ${invoiceNumber}`,
         duration: 5000,
