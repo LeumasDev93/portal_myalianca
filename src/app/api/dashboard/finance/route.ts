@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+// Rota dinâmica com cache - O next.revalidate no fetch cacheia por 60s
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
