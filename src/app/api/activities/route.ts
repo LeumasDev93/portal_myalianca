@@ -24,7 +24,7 @@ export async function GET(request: NextRequest) {
     }
 
     const response = await fetch(
-      `${apiBaseUrl}/user/activity/1.0.0/user/${userId}/last?limit=20`,
+      `${apiBaseUrl}/user/activity/1.0.0/user/${userId}/last?limit=10`,
       {
         method: 'GET',
         headers: {

@@ -17,7 +17,6 @@ import { useUserProfile } from "@/hooks/useUserProfile";
 import { useActivities } from "@/hooks/useActivities";
 import { Loader2, X } from "lucide-react";
 import {
-  IoGrid,
   IoShieldCheckmarkSharp,
   IoReceiptSharp,
 } from "react-icons/io5";

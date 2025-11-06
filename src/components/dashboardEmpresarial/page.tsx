@@ -14,7 +14,6 @@ import {
 import { FinanceCard } from "@/components/dashboardEmpresarial/components/FinanceCard";
 import { StatisticsApiCard } from "@/components/dashboardEmpresarial/components/StatisticsApiCard";
 import {
-  IoGrid,
   IoShieldCheckmarkSharp,
   IoReceiptSharp,
 } from "react-icons/io5";
