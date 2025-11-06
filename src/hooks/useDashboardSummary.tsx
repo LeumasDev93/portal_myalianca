@@ -31,28 +31,17 @@ export function useDashboardSummary() {
       setIsLoading(true);
       setError(null);
 
-      const apiKey = process.env.NEXT_PUBLIC_API_KEY;
-      const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL_DEFAULT;
-
-      if (!apiKey || !apiBaseUrl) {
-        throw new Error("Configuração da API incompleta");
-      }
-
-      const url = `${apiBaseUrl}/dashboard/1.0.0/summary?nif=${profile.user.nif}`;
-      console.log("📡 URL da requisição:", url);
-
-      const response = await fetch(url, {
+      const response = await fetch(`/api/dashboard/summary?nif=${encodeURIComponent(profile.user.nif)}`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
-          ApiKey: apiKey,
         },
       });
 
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(
-          errorData.message || "Erro ao buscar dados do dashboard"
+          errorData.error || "Erro ao buscar dados do dashboard"
         );
       }
 

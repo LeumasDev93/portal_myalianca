@@ -36,27 +36,17 @@ export function useFinanceSummary() {
       setIsLoading(true);
       setError(null);
 
-      const apiKey = process.env.NEXT_PUBLIC_API_KEY;
-      const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL_DEFAULT;
-
-      if (!apiKey || !apiBaseUrl) {
-        throw new Error("Configuração da API incompleta");
-      }
-
-      const url = `${apiBaseUrl}/dashboard/1.0.0/finance?nif=${profile.user.nif}`;
-
-      const response = await fetch(url, {
+      const response = await fetch(`/api/dashboard/finance?nif=${encodeURIComponent(profile.user.nif)}`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
-          ApiKey: apiKey,
         },
       });
 
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(
-          errorData.message || "Erro ao buscar dados financeiros"
+          errorData.error || "Erro ao buscar dados financeiros"
         );
       }
 
