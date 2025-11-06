@@ -14,6 +14,7 @@ import { TbTopologyStar3 } from "react-icons/tb";
 import { MdEmail } from "react-icons/md";
 import { QuickAccessModal } from "./QuickAccessModal";
 import { useToast } from "@/components/ui/use-toast";
+import { useActivities } from "@/hooks/useActivities";
 
 interface QuickAccessCardProps {
   nome?: string;
@@ -57,6 +58,7 @@ const QuickAccessCard: React.FC<QuickAccessCardProps> = ({
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const { toast } = useToast();
+  const { registerActivity } = useActivities();
 
   const handleCardClick = () => {
     if (isAddCard) {
@@ -88,6 +90,16 @@ const QuickAccessCard: React.FC<QuickAccessCardProps> = ({
 
       // Chama o callback para atualizar a lista
       onDelete();
+
+      // Registrar atividade
+      try {
+        await registerActivity({
+          action: nome,
+          description: `${nome} foi removido do acesso rápido`,
+        });
+      } catch (error) {
+        console.error("Erro ao registrar atividade:", error);
+      }
 
       toast({
         title: "Sucesso!",
