@@ -100,8 +100,8 @@ export default function AgenciasPage() {
 
           {/* Área do Mapa */}
           {selectedAgencia && (
-            <div className="lg:col-span-8 xl:col-span-9 h-[400px] sm:h-[500px] lg:h-auto p-3 sm:p-4 md:p-6 lg:pt-0 lg:pl-0">
-              <div className="h-full lg:h-auto bg-white shadow-lg lg:shadow-xl flex flex-col rounded-lg overflow-hidden border border-gray-200">
+            <div className="lg:col-span-8 xl:col-span-9 h-[400px] sm:h-[500px] lg:h-[calc(100vh-200px)] p-3 sm:p-4 md:p-6 lg:pt-0 lg:pl-0 lg:sticky lg:top-4">
+              <div className="h-full bg-white shadow-lg lg:shadow-xl flex flex-col rounded-lg overflow-hidden border border-gray-200">
                 {/* Header do Mapa */}
                 <div className="flex items-start justify-between p-3 sm:p-4 md:p-4 lg:p-6 border-b bg-white">
                   <div className="flex-1">
@@ -122,7 +122,7 @@ export default function AgenciasPage() {
                 </div>
 
                 {/* Iframe do Mapa */}
-                <div className="flex-1 relative min-h-[300px] lg:min-h-[500px]">
+                <div className="flex-1 relative">
                   <iframe
                     src={`https://www.google.com/maps?q=${selectedAgencia.latitude},${selectedAgencia.longitude}&hl=pt-PT&z=15&output=embed`}
                     className="w-full h-full border-0"
