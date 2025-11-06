@@ -608,7 +608,11 @@ const Page = () => {
                 {currentPage === "gestaoSOAT" && profile?.user?.tipo_cliente === "Company" && <PageGestaoSOAT />}
                 {currentPage === "Notificacoes" && <NotificationsPage />}
                 {currentPage === "dashboardEmpresarial" && profile?.user?.tipo_cliente === "Company" && (
-                  <DashboardEmpresarial onNavigate={handleMenuClick} />
+                  <DashboardEmpresarial 
+                    onNavigate={handleMenuClick}
+                    onSelectDetailApolice={handleSelectApoliceDetail}
+                    onSelectDetailSinistro={handleSelectSinistroDetail}
+                  />
                 )}
                 {currentPage === "recibo" && (
                   <ReciboPage

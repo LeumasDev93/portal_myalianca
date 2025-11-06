@@ -21,13 +21,20 @@ import {
 import { TbTopologyStar3 } from "react-icons/tb";
 import { AiFillFileExclamation } from "react-icons/ai";
 import { LuSquareKanban } from "react-icons/lu";
+import HistoryTable from "../Historico/table/HistoryTable";
+import { DashboardCharts } from "../Historico/Charts/DashboartdCharts";
+import AtivitysLastCard from "../Layout/AtivitysLastCard";
 
 type DashboardEmpresarialProps = {
   onNavigate?: (page: string, params?: Record<string, string>) => void;
+  onSelectDetailApolice?: (id: string, contractNumber: string) => void;
+  onSelectDetailSinistro?: (id: string) => void;
 };
 
 export default function DashboardEmpresarial({
   onNavigate,
+  onSelectDetailApolice,
+  onSelectDetailSinistro,
 }: DashboardEmpresarialProps) {
   const [cardsPerPage, setCardsPerPage] = useState(5);
   const [currentPage, setCurrentPage] = useState(0);
@@ -42,12 +49,6 @@ export default function DashboardEmpresarial({
       description: "Gerencie SOAT dos trabalhadores",
       icon: LuSquareKanban,
       path: "gestaoSOAT",
-    },
-    {
-      title: "Início",
-      description: "Visualize apólices, sinistros e recibos",
-      icon: IoGrid,
-      path: "Historico",
     },
     {
       title: "Apólice",
@@ -290,6 +291,31 @@ export default function DashboardEmpresarial({
 
         <MenuCard menus={portalMenus} onNavigate={onNavigate} />
       </div>
+
+      <div className="py-6">
+        <h1 className="text-xl font-bold text-[#002856]">Histórico</h1>
+        <div className="flex flex-col lg:flex-row gap-4">
+          <div
+            className="w-full lg:w-[65%] xl:w-[70%] overflow-auto"
+            style={{ minHeight: "400px", maxHeight: "650px" }}
+          >
+            <HistoryTable
+              onSelectDetailApolice={onSelectDetailApolice || (() => {})}
+              onSelectDetailSinistro={onSelectDetailSinistro || (() => {})}
+            />
+          </div>
+          <div
+            className="w-full lg:w-[35%] xl:w-[30%]"
+            style={{ minHeight: "400px", maxHeight: "650px" }}
+          >
+            <DashboardCharts />
+          </div>
+        </div>
+      </div>
+
+      <section className="flex flex-col md:flex-row gap-4">
+        <AtivitysLastCard />
+      </section>
     </div>
   );
 }

@@ -45,22 +45,6 @@ const AVAILABLE_MENUS = [
     onlyForCompany: true,
   },
   {
-    nome: "Início",
-    titulo: "Visualize seu histórico completo",
-    descricao:
-      "Acesse todo o histórico de transações, atividades e movimentações da sua conta de forma organizada e detalhada.",
-    icone: IoGrid,
-    iconName: "IoGrid",
-    link: "Historico",
-    descricao_botao: "Consultar Histórico",
-    border_color: "border-[#171133]",
-    icon_color: "text-[#274862]",
-    bg_color: "bg-gray-100 hover:bg-gray-200",
-    text_color: "text-[#274862]",
-    bg_botton_color: "bg-[#274862] hover:bg-#274862]/70",
-    order_number: 5,
-  },
-  {
     nome: "Apólice",
     titulo: "Gerencie suas apólices",
     descricao:

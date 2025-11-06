@@ -79,7 +79,6 @@ export default function Historico({
 
     // Lista de todos os menus disponíveis (baseado no QuickAccessModal)
     const allAvailableMenus = [
-      "Início",
       "Apólice",
       "Sinistros",
       "Recibos & Pagamentos",
