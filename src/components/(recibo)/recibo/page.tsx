@@ -142,9 +142,13 @@ export default function ReciboPage({ filterParams }: ReciboPageProps) {
         );
 
         toast.success("Checkout aberto! Conclua o pagamento na nova aba.");
-      } catch (error) {
+      } catch (error: any) {
         console.error("Erro ao processar pagamento:", error);
-        toast.error("Erro ao processar pagamento. Tente novamente.");
+        const errorMessage = error?.message || error?.response?.data?.message || "Erro ao processar pagamento. Tente novamente.";
+        toast.error(errorMessage, {
+          description: `Recibo: ${reciboNumber}`,
+          duration: 5000,
+        });
       } finally {
         setLoadingPayment((prev) => ({
           ...prev,
@@ -216,7 +220,11 @@ export default function ReciboPage({ filterParams }: ReciboPageProps) {
     } catch (error: any) {
       console.error("Erro ao baixar PDF:", error);
       setDownloadStatus((prev) => ({ ...prev, [invoiceNumber]: "error" }));
-      toast.error(`Erro ao baixar recibo ${invoiceNumber}: ${error.message}`);
+      const errorMessage = error?.message || "Erro desconhecido ao baixar recibo";
+      toast.error(errorMessage, {
+        description: `Recibo: ${invoiceNumber}`,
+        duration: 5000,
+      });
 
       // Reset status after 5 seconds
       setTimeout(() => {
@@ -306,9 +314,13 @@ export default function ReciboPage({ filterParams }: ReciboPageProps) {
 
           toast.success("Checkout aberto! Conclua o pagamento na nova aba.");
           closeModal();
-        } catch (error) {
+        } catch (error: any) {
           console.error("Erro ao processar pagamento:", error);
-          toast.error("Erro ao processar pagamento. Tente novamente.");
+          const errorMessage = error?.message || error?.response?.data?.message || "Erro ao processar pagamento. Tente novamente.";
+          toast.error(errorMessage, {
+            description: `Recibo: ${invoiceNumber}`,
+            duration: 5000,
+          });
         } finally {
           setLoadingPayment((prev) => ({
             ...prev,
@@ -334,9 +346,11 @@ export default function ReciboPage({ filterParams }: ReciboPageProps) {
       );
     } catch (error: any) {
       console.error("Erro ao visualizar PDF:", error);
-      toast.error(
-        `Erro ao visualizar recibo ${invoiceNumber}: ${error.message}`
-      );
+      const errorMessage = error?.message || "Erro desconhecido ao visualizar recibo";
+      toast.error(errorMessage, {
+        description: `Recibo: ${invoiceNumber}`,
+        duration: 5000,
+      });
     } finally {
       setLoadingView((prev) => ({ ...prev, [invoiceNumber]: false }));
     }

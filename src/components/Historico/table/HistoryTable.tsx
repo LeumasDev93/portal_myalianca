@@ -122,60 +122,70 @@ const HistoryTable = ({
   ) => {
     setConfirmDialog({ open: false, type: null, reciboNumber: '' });
     setLoadingView((prev) => ({ ...prev, [invoiceNumber]: true }));
-    const response = await fetch(
-      `/api/anywhere/api/v1/private/mobile/invoice/${invoiceNumber}/print/receipt`,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          Accept: "application/pdf",
-        },
+    
+    try {
+      const response = await fetch(
+        `/api/anywhere/api/v1/private/mobile/invoice/${invoiceNumber}/print/receipt`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            Accept: "application/pdf",
+          },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`Erro ${response.status}: ${response.statusText}`);
       }
-    );
 
-    if (!response.ok) {
+      const arrayBuffer = await response.arrayBuffer();
+      const blob = new Blob([arrayBuffer], { type: "application/pdf" });
+      const url = URL.createObjectURL(blob);
+
+      // Cria um container temporário
+      const container = document.createElement("div");
+      document.body.appendChild(container);
+
+      const root = ReactDOM.createRoot(container);
+
+      const closeModal = () => {
+        root.unmount(); // desmonta o componente
+        document.body.removeChild(container); // remove o DOM
+        URL.revokeObjectURL(url); // limpa a URL blob
+      };
+
+      const handlePaymentInModal = () => {
+        // Implementação para pagamento
+        console.log("Pagar recibo:", invoiceNumber);
+        closeModal();
+      };
+
+      const handleDownloadInModal = () => {
+        handleDownload(invoiceNumber);
+        closeModal();
+      };
+
+      // Renderiza o modal
+      root.render(
+        <ReciboPDFModal
+          pdfUrl={url}
+          onClose={closeModal}
+          reciboStatus={reciboStatus}
+          reciboNumber={invoiceNumber}
+          onPayment={handlePaymentInModal}
+          onDownload={handleDownloadInModal}
+        />
+      );
+    } catch (error: any) {
+      console.error("Erro ao visualizar PDF:", error);
+      const errorMessage = error?.message || "Erro desconhecido ao visualizar recibo";
+      toast.error(errorMessage, {
+        description: `Recibo: ${invoiceNumber}`,
+        duration: 5000,
+      });
+    } finally {
       setLoadingView((prev) => ({ ...prev, [invoiceNumber]: false }));
-      return;
     }
-
-    const arrayBuffer = await response.arrayBuffer();
-    const blob = new Blob([arrayBuffer], { type: "application/pdf" });
-    const url = URL.createObjectURL(blob);
-
-    // Cria um container temporário
-    const container = document.createElement("div");
-    document.body.appendChild(container);
-
-    const root = ReactDOM.createRoot(container);
-
-    const closeModal = () => {
-      root.unmount(); // desmonta o componente
-      document.body.removeChild(container); // remove o DOM
-      URL.revokeObjectURL(url); // limpa a URL blob
-    };
-
-    const handlePaymentInModal = () => {
-      // Implementação para pagamento
-      console.log("Pagar recibo:", invoiceNumber);
-      closeModal();
-    };
-
-    const handleDownloadInModal = () => {
-      handleDownload(invoiceNumber);
-      closeModal();
-    };
-
-    // Renderiza o modal
-    root.render(
-      <ReciboPDFModal
-        pdfUrl={url}
-        onClose={closeModal}
-        reciboStatus={reciboStatus}
-        reciboNumber={invoiceNumber}
-        onPayment={handlePaymentInModal}
-        onDownload={handleDownloadInModal}
-      />
-    );
-    setLoadingView((prev) => ({ ...prev, [invoiceNumber]: false }));
   };
 
   const tableConfigs = {
@@ -326,9 +336,13 @@ const HistoryTable = ({
         recibo.mbref // Referência do recibo (ex: P2025.458)
       );
       window.location.assign(checkoutUrl);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Erro ao processar pagamento:", error);
-      toast.error("Erro ao processar pagamento. Tente novamente.");
+      const errorMessage = error?.message || error?.response?.data?.message || "Erro ao processar pagamento. Tente novamente.";
+      toast.error(errorMessage, {
+        description: `Recibo: ${invoiceNumber}`,
+        duration: 5000,
+      });
     } finally {
       setLoadingPayment((prev) => ({
         ...prev,
@@ -380,6 +394,11 @@ const HistoryTable = ({
       }
     } catch (error: any) {
       console.error("Erro ao baixar PDF:", error);
+      const errorMessage = error?.message || "Erro desconhecido ao baixar recibo";
+      toast.error(errorMessage, {
+        description: `Recibo: ${invoiceNumber}`,
+        duration: 5000,
+      });
     } finally {
       setLoadingStates((prev) => ({ ...prev, [invoiceNumber]: false }));
     }
