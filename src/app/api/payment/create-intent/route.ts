@@ -27,7 +27,6 @@ export async function POST(req: NextRequest) {
     console.log("[PAYMENT API] Auth header recebido:", authHeader ? "SIM" : "NÃO");
     
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
-      console.error("[PAYMENT API] ❌ Token não fornecido ou inválido");
       return NextResponse.json(
         { error: "Token de autorização não fornecido" },
         { status: 401 }
@@ -94,7 +93,7 @@ export async function POST(req: NextRequest) {
             }
           }
         }
-      } catch (e) {
+      } catch {
         errorMessage = "Erro ao processar resposta do servidor de pagamento";
       }
       
