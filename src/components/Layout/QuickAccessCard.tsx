@@ -15,6 +15,15 @@ import { MdEmail } from "react-icons/md";
 import { QuickAccessModal } from "./QuickAccessModal";
 import { useToast } from "@/components/ui/use-toast";
 import { useActivities } from "@/hooks/useActivities";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 
 interface QuickAccessCardProps {
   nome?: string;
@@ -57,6 +66,7 @@ const QuickAccessCard: React.FC<QuickAccessCardProps> = ({
 }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const { toast } = useToast();
   const { registerActivity } = useActivities();
 
@@ -68,12 +78,16 @@ const QuickAccessCard: React.FC<QuickAccessCardProps> = ({
     }
   };
 
-  const handleDelete = async (e: React.MouseEvent) => {
+  const handleDelete = (e: React.MouseEvent) => {
     e.stopPropagation(); // Previne que o clique propague para o card
+    setShowDeleteConfirm(true);
+  };
 
+  const confirmDelete = async () => {
     if (!id || !onDelete) return;
 
     setIsDeleting(true);
+    setShowDeleteConfirm(false);
 
     try {
       const response = await fetch(`/api/quick-access/${id}`, {
@@ -95,7 +109,7 @@ const QuickAccessCard: React.FC<QuickAccessCardProps> = ({
       try {
         await registerActivity({
           action: `${nome} REMOVIDO`,
-          description: `${nome} do acesso rápido`,
+          description: `${nome} removido do acesso rápido`,
         });
       } catch (error) {
         console.error("Erro ao registrar atividade:", error);
@@ -241,6 +255,39 @@ const QuickAccessCard: React.FC<QuickAccessCardProps> = ({
         onItemAdded={onItemAdded}
         existingItems={existingItems}
       />
+
+      {/* Dialog de Confirmação de Remoção */}
+      <Dialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-bold text-gray-900">
+              Confirmar Remoção
+            </DialogTitle>
+            <DialogDescription className="text-gray-600">
+              Tem certeza que deseja remover <span className="font-semibold text-gray-900">{nome}</span> do acesso rápido?
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex gap-3 sm:gap-3">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setShowDeleteConfirm(false)}
+              disabled={isDeleting}
+              className="flex-1"
+            >
+              Cancelar
+            </Button>
+            <Button
+              type="button"
+              onClick={confirmDelete}
+              disabled={isDeleting}
+              className="flex-1 bg-red-600 hover:bg-red-700 text-white"
+            >
+              {isDeleting ? "Removendo..." : "Remover"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 };

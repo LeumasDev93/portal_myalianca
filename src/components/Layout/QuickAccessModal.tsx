@@ -5,6 +5,7 @@ import { LuSquareKanban } from "react-icons/lu";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -172,6 +173,7 @@ export function QuickAccessModal({
 }: QuickAccessModalProps) {
   const [selectedMenu, setSelectedMenu] = useState<string>("");
   const [isLoading, setIsLoading] = useState(false);
+  const [showAddConfirm, setShowAddConfirm] = useState(false);
   const { toast } = useToast();
   const { profile } = useUserProfile();
   const { registerActivity } = useActivities();
@@ -186,7 +188,7 @@ export function QuickAccessModal({
     isDisabled: existingItems.some((item) => item.nome === menu.nome),
   }));
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!selectedMenu) {
@@ -199,11 +201,14 @@ export function QuickAccessModal({
       return;
     }
 
+    setShowAddConfirm(true);
+  };
+
+  const confirmAdd = async () => {
     const menu = availableMenus.find((m) => m.nome === selectedMenu);
     if (!menu) return;
 
-    console.log("Menu selecionado:", menu);
-
+    setShowAddConfirm(false);
     setIsLoading(true);
 
     try {
@@ -251,7 +256,7 @@ export function QuickAccessModal({
       try {
         await registerActivity({
           action: `${menu.nome} ADICIONADO`,
-          description: `${menu.nome} ao acesso rápido`,
+          description: `${menu.nome} adicionado ao acesso rápido`,
         });
       } catch (error) {
         console.error("Erro ao registrar atividade:", error);
@@ -279,7 +284,8 @@ export function QuickAccessModal({
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <>
+      <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="w-[95vw] max-w-[700px] h-[90vh] max-h-[700px] sm:h-[500px] xl:h-[700px] flex flex-col text-[#002855] mx-auto p-4 sm:p-6">
         <DialogHeader className="flex-shrink-0">
           <DialogTitle className="flex items-center justify-between text-lg sm:text-xl">
@@ -381,6 +387,39 @@ export function QuickAccessModal({
           </div>
         </form>
       </DialogContent>
-    </Dialog>
+      </Dialog>
+
+      {/* Dialog de Confirmação de Adição */}
+      <Dialog open={showAddConfirm} onOpenChange={setShowAddConfirm}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-bold text-gray-900">
+              Confirmar Adição
+            </DialogTitle>
+            <DialogDescription className="text-gray-600">
+              Tem certeza que deseja adicionar <span className="font-semibold text-gray-900">{selectedMenu}</span> ao acesso rápido?
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex gap-3 justify-end mt-4">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setShowAddConfirm(false)}
+              disabled={isLoading}
+            >
+              Cancelar
+            </Button>
+            <Button
+              type="button"
+              onClick={confirmAdd}
+              disabled={isLoading}
+              className="bg-blue-600 hover:bg-blue-700 text-white"
+            >
+              {isLoading ? "Adicionando..." : "Adicionar"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
