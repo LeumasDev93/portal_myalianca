@@ -39,6 +39,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { formatCurrency } from "@/lib/utils";
+import { useToast } from "@/components/ui/use-toast";
 import { FaTriangleExclamation } from "react-icons/fa6";
 import { HiDotsVertical } from "react-icons/hi";
 import { IoReceiptSharp, IoShieldCheckmarkSharp } from "react-icons/io5";
@@ -84,6 +85,7 @@ const HistoryTable = ({
   }>({ open: false, type: null, reciboNumber: '' });
   const { token } = useSessionCheckToken();
   const { profile } = useUserProfile();
+  const { toast: showToast } = useToast();
 
   const { errorRecibo, filteredRecibos, isLoadingRecibos } = useRecibos();
 
@@ -179,9 +181,10 @@ const HistoryTable = ({
     } catch (error: any) {
       console.error("Erro ao visualizar PDF:", error);
       const errorMessage = error?.message || "Erro desconhecido ao visualizar recibo";
-      toast.error(errorMessage, {
+      showToast({
+        title: errorMessage,
         description: `Recibo: ${invoiceNumber}`,
-        duration: 5000,
+        variant: "destructive",
       });
     } finally {
       setLoadingView((prev) => ({ ...prev, [invoiceNumber]: false }));
@@ -310,14 +313,20 @@ const HistoryTable = ({
   const handlePayment = async (invoiceNumber: string) => {
     setConfirmDialog({ open: false, type: null, reciboNumber: '' });
     if (!profile?.user) {
-      toast.error("Dados do usuário não disponíveis");
+      showToast({
+        title: "Dados do usuário não disponíveis",
+        variant: "destructive",
+      });
       return;
     }
 
     // Buscar dados do recibo pelo número
     const recibo = filteredRecibos.find((r) => r.number === invoiceNumber);
     if (!recibo) {
-      toast.error("Recibo não encontrado");
+      showToast({
+        title: "Recibo não encontrado",
+        variant: "destructive",
+      });
       return;
     }
 
@@ -346,9 +355,10 @@ const HistoryTable = ({
       const errorMessage = error?.message || error?.response?.data?.message || "Erro ao processar pagamento. Tente novamente.";
       console.error("❌ [HISTORICO] Mensagem final para toast:", errorMessage);
       
-      toast.error(errorMessage, {
+      showToast({
+        title: errorMessage,
         description: `Recibo: ${invoiceNumber}`,
-        duration: 5000,
+        variant: "destructive",
       });
     } finally {
       setLoadingPayment((prev) => ({
@@ -402,9 +412,10 @@ const HistoryTable = ({
     } catch (error: any) {
       console.error("Erro ao baixar PDF:", error);
       const errorMessage = error?.message || "Erro desconhecido ao baixar recibo";
-      toast.error(errorMessage, {
+      showToast({
+        title: errorMessage,
         description: `Recibo: ${invoiceNumber}`,
-        duration: 5000,
+        variant: "destructive",
       });
     } finally {
       setLoadingStates((prev) => ({ ...prev, [invoiceNumber]: false }));

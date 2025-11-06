@@ -69,8 +69,7 @@ export async function POST(req: NextRequest) {
           errorDetails = JSON.stringify(errorJson, null, 2);
         } else {
           errorDetails = await response.text();
-          console.error("[PAYMENT API] Erro texto/HTML da API externa (primeiros 500 chars):", errorDetails.substring(0, 500));
-          
+       
           // Se for HTML, tenta extrair a mensagem de erro
           if (errorDetails.includes('<!DOCTYPE html>') || errorDetails.includes('<html')) {
             // Tenta extrair texto do elemento .error-message ou .error-title
@@ -96,15 +95,9 @@ export async function POST(req: NextRequest) {
           }
         }
       } catch (e) {
-        console.error("[PAYMENT API] Erro ao processar resposta de erro:", e);
         errorMessage = "Erro ao processar resposta do servidor de pagamento";
       }
       
-      console.error("[PAYMENT API] ❌ Erro ao criar intenção:", {
-        status: response.status,
-        message: errorMessage,
-        details: errorDetails.substring(0, 200) + "..."
-      });
       
       return NextResponse.json(
         { 

@@ -53,6 +53,7 @@ import { ReciboPDFModal } from "../ModalRecibo";
 import ReactDOM from "react-dom/client";
 import { MdPayment } from "react-icons/md";
 import { toast } from "sonner";
+import { useToast } from "@/components/ui/use-toast";
 import { useReciboActivity } from "@/lib/activityExamples";
 import { useUserProfile } from "@/hooks/useUserProfile";
 import { processPayment } from "@/service/paymentService";
@@ -87,6 +88,7 @@ export default function ReciboPage({ filterParams }: ReciboPageProps) {
   const { token } = useSessionCheckToken();
   const { registerReciboDownloadActivity } = useReciboActivity();
   const { profile } = useUserProfile(); // Dados do usuário
+  const { toast: showToast } = useToast();
 
   // Debug: verificar se os parâmetros estão chegando
   console.log("ReciboPage - filterParams:", filterParams);
@@ -152,9 +154,10 @@ export default function ReciboPage({ filterParams }: ReciboPageProps) {
         const errorMessage = error?.message || error?.response?.data?.message || "Erro ao processar pagamento. Tente novamente.";
         console.error("❌ [COMPONENTE] Mensagem final para toast:", errorMessage);
         
-        toast.error(errorMessage, {
+        showToast({
+          title: errorMessage,
           description: `Recibo: ${reciboNumber}`,
-          duration: 5000,
+          variant: "destructive",
         });
       } finally {
         setLoadingPayment((prev) => ({
@@ -329,9 +332,10 @@ export default function ReciboPage({ filterParams }: ReciboPageProps) {
           const errorMessage = error?.message || error?.response?.data?.message || "Erro ao processar pagamento. Tente novamente.";
           console.error("❌ [MODAL] Mensagem final para toast:", errorMessage);
           
-          toast.error(errorMessage, {
+          showToast({
+            title: errorMessage,
             description: `Recibo: ${invoiceNumber}`,
-            duration: 5000,
+            variant: "destructive",
           });
         } finally {
           setLoadingPayment((prev) => ({

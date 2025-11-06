@@ -1,3 +1,7 @@
+interface PaymentError extends Error {
+  status?: number;
+}
+
 /**
  * Obtém token de acesso para o gateway de pagamento (via API route)
  */
@@ -101,8 +105,8 @@ export async function createPaymentIntent(
       
       // Lança erro com mensagem clara
       console.error("[PAYMENT] ⚠️ Lançando erro com mensagem:", errorMessage);
-      const error = new Error(errorMessage);
-      (error as any).status = response.status;
+      const error = new Error(errorMessage) as PaymentError;
+      error.status = response.status;
       throw error;
     }
 
