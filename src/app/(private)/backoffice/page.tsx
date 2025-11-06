@@ -131,13 +131,6 @@ const Page = () => {
   const getFilteredMenus = () => {
     const baseMenus: MenuItem[] = [
       {
-        title: "Início",
-        path: "Historico",
-        icon: IoGrid,
-        hoverIcon: <IoGrid />,
-        onClick: () => handleMenuClick("Historico"),
-      },
-      {
         title: "Apólice",
         path: "apolice",
         icon: IoShieldCheckmarkSharp,
@@ -188,10 +181,10 @@ const Page = () => {
       },
     ];
 
-    // Adiciona menus específicos para usuários Company
+    // Adiciona menus específicos baseado no tipo de usuário
     if (profile?.user?.tipo_cliente === "Company") {
-      // Dashboard Empresarial
-      baseMenus.splice(1, 0, {
+      // Dashboard Empresarial no início
+      baseMenus.unshift({
         title: "Dashboard Empresarial",
         path: "dashboardEmpresarial",
         icon: IoBusinessSharp,
@@ -200,12 +193,21 @@ const Page = () => {
       });
 
       // Gestão de SOAT
-      baseMenus.splice(2, 0, {
+      baseMenus.splice(1, 0, {
         title: "Gestão de SOAT",
         path: "gestaoSOAT",
         icon: LuSquareKanban,
         hoverIcon: <LuSquareKanban />,
         onClick: () => handleMenuClick("gestaoSOAT"),
+      });
+    } else {
+      // Início apenas para usuários não-Company
+      baseMenus.unshift({
+        title: "Início",
+        path: "Historico",
+        icon: IoGrid,
+        hoverIcon: <IoGrid />,
+        onClick: () => handleMenuClick("Historico"),
       });
     }
 
