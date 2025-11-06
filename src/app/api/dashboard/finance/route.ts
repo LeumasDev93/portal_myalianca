@@ -1,8 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-// Configuração de revalidação estática a cada 60 segundos
-export const revalidate = 60;
-
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
