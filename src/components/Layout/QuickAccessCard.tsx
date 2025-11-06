@@ -94,7 +94,7 @@ const QuickAccessCard: React.FC<QuickAccessCardProps> = ({
       // Registrar atividade
       try {
         await registerActivity({
-          action: `Removido ${nome}`,
+          action: `${nome} REMOVIDO`,
           description: `${nome} do acesso rápido`,
         });
       } catch (error) {

@@ -249,8 +249,8 @@ export const getActivityDisplay = (action: string): ActivityDisplay => {
   }
 
   // Se a action começa com "Adicionado" ou "Removido", extrai o nome do menu
-  if (action.startsWith("Adicionado ") || action.startsWith("Removido ")) {
-    const menuName = action.replace(/^(Adicionado|Removido) /, "");
+  if (action.startsWith("ADICIONADO ") || action.startsWith("REMOVIDO ")) {
+    const menuName = action.replace(/^(ADICIONADO|REMOVIDO) /, "");
     if (activityMap[menuName]) {
       return activityMap[menuName];
     }
