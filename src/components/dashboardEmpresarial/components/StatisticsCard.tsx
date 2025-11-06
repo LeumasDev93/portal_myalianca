@@ -47,7 +47,7 @@ export function StatisticsCard({ statistics }: StatisticsCardProps) {
   };
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+    <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 lg:gap-6">
       {statistics.map((stat, index) => {
         const colors = getColorClasses(stat.color);
         const IconComponent = stat.icon;
@@ -55,22 +55,22 @@ export function StatisticsCard({ statistics }: StatisticsCardProps) {
         return (
           <div
             key={index}
-            className={`bg-white p-6 rounded-lg shadow-md border border-gray-200 ${colors.bg}`}
+            className={`bg-white p-3 md:p-4 lg:p-6 rounded-lg shadow-md border border-gray-200 ${colors.bg}`}
           >
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-sm font-medium text-gray-600 uppercase tracking-wide">
+            <div className="flex items-center justify-between mb-2 md:mb-3 lg:mb-4">
+              <h3 className="text-xs md:text-sm font-medium text-gray-600 uppercase tracking-wide">
                 {stat.title}
               </h3>
-              <div className={`p-2 rounded-full ${colors.icon}`}>
-                <IconComponent className="w-4 h-4" />
+              <div className={`p-1.5 md:p-2 rounded-full ${colors.icon}`}>
+                <IconComponent className="w-3 h-3 md:w-4 md:h-4" />
               </div>
             </div>
 
-            <div className="space-y-2">
-              <p className={`text-xl font-bold ${colors.text}`}>
+            <div className="space-y-1 md:space-y-2">
+              <p className={`text-base md:text-lg lg:text-xl font-bold ${colors.text}`}>
                 {stat.amount}
               </p>
-              <p className="text-sm text-gray-500">{stat.description}</p>
+              <p className="text-xs md:text-sm text-gray-500">{stat.description}</p>
             </div>
           </div>
         );
