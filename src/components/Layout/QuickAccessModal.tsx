@@ -250,7 +250,7 @@ export function QuickAccessModal({
       // Registrar atividade
       try {
         await registerActivity({
-          action: "ITEM_ADICIONADO",
+          action: menu.nome,
           description: `${menu.nome} foi adicionado ao acesso rápido`,
         });
       } catch (error) {
