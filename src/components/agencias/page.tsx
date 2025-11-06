@@ -30,7 +30,7 @@ export default function AgenciasPage() {
 
   return (
     <div className="w-full">
-      <div className="container p-3 sm:p-4 md:p-6 mb-2 sm:mb-3 md:mb-4">
+      <div className="px-3 sm:px-4 md:px-6 py-3 sm:py-4 md:py-6">
         <div className="mt-3 sm:mt-4 md:mt-5">
           <h1 className="text-lg sm:text-xl lg:text-2xl xl:text-3xl font-bold mb-1 sm:mb-1.5 md:mb-2 text-[#002256]">
             Nossas Agências
@@ -47,9 +47,9 @@ export default function AgenciasPage() {
       ) : agencias.length === 0 ? (
         <LoadingContainer message="CARREGANDO AGÊNCIAS..." />
       ) : (
-        <div className={`grid grid-cols-1 ${selectedAgencia ? 'lg:grid-cols-12' : ''} gap-0`}>
+        <div className={`grid grid-cols-1 ${selectedAgencia ? 'lg:grid-cols-12 lg:items-start' : ''} gap-0`}>
           {/* Lista de Agências */}
-          <div className={`${selectedAgencia ? 'lg:col-span-4 xl:col-span-3' : ''} ${selectedAgencia ? 'h-[calc(100vh-200px)] overflow-y-auto' : 'container'} p-3 sm:p-4 md:p-6`}>
+          <div className={`${selectedAgencia ? 'lg:col-span-4 xl:col-span-3' : 'container'} p-3 sm:p-4 md:p-6 lg:pt-0`}>
             <div className={`grid grid-cols-1 ${!selectedAgencia && 'md:grid-cols-2 lg:grid-cols-3'} gap-4 md:gap-6`}>
           {agencias.map((agencia) => (
             <Card key={agencia.id}>
@@ -100,10 +100,10 @@ export default function AgenciasPage() {
 
           {/* Área do Mapa */}
           {selectedAgencia && (
-            <div className="lg:col-span-8 xl:col-span-9 h-[400px] sm:h-[500px] lg:h-[calc(100vh-200px)] lg:sticky lg:top-4">
-              <div className="h-full bg-white shadow-lg lg:shadow-xl flex flex-col rounded-lg overflow-hidden border border-gray-200">
+            <div className="lg:col-span-8 xl:col-span-9 h-[400px] sm:h-[500px] lg:h-auto p-3 sm:p-4 md:p-6 lg:pt-0 lg:pl-0">
+              <div className="h-full lg:h-auto bg-white shadow-lg lg:shadow-xl flex flex-col rounded-lg overflow-hidden border border-gray-200">
                 {/* Header do Mapa */}
-                <div className="flex items-start justify-between p-3 sm:p-4 md:p-6 border-b bg-white">
+                <div className="flex items-start justify-between p-3 sm:p-4 md:p-4 lg:p-6 border-b bg-white">
                   <div className="flex-1">
                     <h2 className="text-base sm:text-lg md:text-xl lg:text-2xl font-bold text-[#002256]">
                       {selectedAgencia.nome}
@@ -122,7 +122,7 @@ export default function AgenciasPage() {
                 </div>
 
                 {/* Iframe do Mapa */}
-                <div className="flex-1 relative">
+                <div className="flex-1 relative min-h-[300px] lg:min-h-[500px]">
                   <iframe
                     src={`https://www.google.com/maps?q=${selectedAgencia.latitude},${selectedAgencia.longitude}&hl=pt-PT&z=15&output=embed`}
                     className="w-full h-full border-0"
