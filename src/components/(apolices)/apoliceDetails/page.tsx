@@ -361,21 +361,23 @@ export default function ApoliceDetailPage({
                           </h3>
                         </div>
                       </div>
-                      <div className="flex flex-col md:flex-row md:justify-between gap-2 md:gap-0">
-                        <div className="flex items-center gap-3 md:gap-4">
-                          <div className="bg-gray-200 p-2 rounded-full">
-                            <FaRegCalendar className="size-3 md:size-4 xl:size-5 text-[#002256]" />
+                      {apolice.invoices.find((inv) => inv.status === 2) && (
+                        <div className="flex flex-col md:flex-row md:justify-between gap-2 md:gap-0">
+                          <div className="flex items-center gap-3 md:gap-4">
+                            <div className="bg-gray-200 p-2 rounded-full">
+                              <FaRegCalendar className="size-3 md:size-4 xl:size-5 text-[#002256]" />
+                            </div>
+                            <h3 className="text-sm font-medium text-[#002256]">
+                              Data Vencimento
+                            </h3>
                           </div>
-                          <h3 className="text-sm font-medium text-[#002256]">
-                            Data Vencimento
-                          </h3>
+                          <div className="flex items-center gap-2 md:justify-end">
+                            <h3 className="text-sm font-medium text-[#002256]">
+                              {formatDate(apolice.invoices.find((inv) => inv.status === 2)?.to || null)}
+                            </h3>
+                          </div>
                         </div>
-                        <div className="flex items-center gap-2 md:justify-end">
-                          <h3 className="text-sm font-medium text-[#002256]">
-                            {formatDate(apolice.invoices.find((inv) => inv.status === 2)?.to || apolice.invoices[0]?.to)}
-                          </h3>
-                        </div>
-                      </div>
+                      )}
                       <div className="flex flex-col md:flex-row md:justify-between gap-2 md:gap-0">
                         <div className="flex items-center gap-3 md:gap-4">
                           <div className="bg-gray-200 p-2 rounded-full">
