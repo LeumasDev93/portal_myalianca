@@ -30,12 +30,12 @@ export default function AgenciasPage() {
 
   return (
     <div className="w-full">
-      <div className="container p-3 sm:p-4 md:p-6 mb-4 sm:mb-6 md:mb-8">
-        <div className="mt-4 sm:mt-5 md:mt-6">
-          <h1 className="text-lg sm:text-xl lg:text-2xl xl:text-3xl font-bold mb-2 text-[#002256]">
+      <div className="container p-3 sm:p-4 md:p-6 mb-2 sm:mb-3 md:mb-4">
+        <div className="mt-3 sm:mt-4 md:mt-5">
+          <h1 className="text-lg sm:text-xl lg:text-2xl xl:text-3xl font-bold mb-1 sm:mb-1.5 md:mb-2 text-[#002256]">
             Nossas Agências
           </h1>
-          <p className="text-sm sm:text-base text-gray-600 mb-4 sm:mb-6">
+          <p className="text-sm sm:text-base text-gray-600">
             Encontre a agência mais próxima de você para atendimento presencial.
           </p>
         </div>
