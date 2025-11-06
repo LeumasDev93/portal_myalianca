@@ -16,6 +16,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import { useSessionCheckToken } from "@/hooks/useSessionToken";
 import { useEffect, useState } from "react";
+import ReactDOM from "react-dom/client";
 import { PiExportLight } from "react-icons/pi";
 import {
   formatCurrency,
@@ -43,6 +44,8 @@ import {
 } from "@/types/typesData";
 import { FaTriangleExclamation } from "react-icons/fa6";
 import { LoadingContainer } from "@/components/ui/loading-container";
+import { ReciboPDFModal } from "@/components/(recibo)/ModalRecibo";
+import { useToast } from "@/components/ui/use-toast";
 
 type ApoliceDetailPageProps = {
   id: string;
@@ -62,12 +65,14 @@ export default function ApoliceDetailPage({
   onSelectDetail,
 }: ApoliceDetailPageProps) {
   const { token } = useSessionCheckToken();
+  const { toast: showToast } = useToast();
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [apoliceDetails, setApoliceDetails] = useState<ApoliceDataDetails[]>(
     []
   );
   const [loadingStates, setLoadingStates] = useState<ReciboLoadingState>({});
+  const [loadingView, setLoadingView] = useState<ReciboLoadingState>({});
   const [cobertura, setCobertura] = useState<InsurancePolicy[]>([]);
   const [sinistros, setSinistros] = useState<SinistroData[]>([]);
   const [expandedItems, setExpandedItems] = useState<boolean[]>([]);
@@ -209,6 +214,56 @@ export default function ApoliceDetailPage({
       setError(error.message || "Erro desconhecido ao baixar PDF.");
     } finally {
       setLoadingStates((prev) => ({ ...prev, [invoiceNumber]: false }));
+    }
+  };
+
+  const visualizarPDF = async (invoiceNumber: string) => {
+    setLoadingView((prev) => ({ ...prev, [invoiceNumber]: true }));
+
+    try {
+      const response = await fetch(
+        `/api/anywhere/api/v1/private/mobile/invoice/${invoiceNumber}/print/receipt`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            Accept: "application/pdf",
+          },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`Erro ${response.status}: ${response.statusText}`);
+      }
+
+      const arrayBuffer = await response.arrayBuffer();
+      const blob = new Blob([arrayBuffer], { type: "application/pdf" });
+      const url = URL.createObjectURL(blob);
+
+      // Criar modal para visualizar PDF
+      const modalContainer = document.createElement("div");
+      modalContainer.id = "pdf-modal-container";
+      document.body.appendChild(modalContainer);
+
+      const root = ReactDOM.createRoot(modalContainer);
+
+      const closeModal = () => {
+        root.unmount();
+        document.body.removeChild(modalContainer);
+        URL.revokeObjectURL(url);
+      };
+
+      root.render(<ReciboPDFModal pdfUrl={url} onClose={closeModal} />);
+    } catch (error: any) {
+      const errorMessage =
+        error?.message || error?.response?.data?.message || "Erro ao visualizar recibo";
+      
+      showToast({
+        title: "Erro ao visualizar recibo",
+        description: errorMessage,
+        variant: "destructive",
+      });
+    } finally {
+      setLoadingView((prev) => ({ ...prev, [invoiceNumber]: false }));
     }
   };
 
@@ -560,7 +615,21 @@ export default function ApoliceDetailPage({
                               </span>
                             </div>
                           </div>
-                          <div className="flex flex-col items-start md:items-end">
+                          <div className="flex gap-2 md:gap-3 items-start md:items-end">
+                            <Button
+                              onClick={() => visualizarPDF(item.number)}
+                              disabled={loadingView[item.number]}
+                              className="bg-blue-600 hover:bg-blue-700 px-3 md:px-4 py-2 text-xs md:text-sm text-white"
+                            >
+                              {loadingView[item.number] ? (
+                                <FaSpinner className="animate-spin" />
+                              ) : (
+                                <>
+                                  <FaEye className="size-3 md:size-4 xl:size-5 text-white" />
+                                  <span>Ver</span>
+                                </>
+                              )}
+                            </Button>
                             <Button
                               onClick={() => handleDownload(item.number)}
                               disabled={loadingStates[item.number]}
