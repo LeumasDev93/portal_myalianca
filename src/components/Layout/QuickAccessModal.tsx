@@ -251,7 +251,7 @@ export function QuickAccessModal({
       try {
         await registerActivity({
           action: menu.nome,
-          description: `${menu.nome} foi adicionado ao acesso rápido`,
+          description: `Adicionado ao acesso rápido`,
         });
       } catch (error) {
         console.error("Erro ao registrar atividade:", error);

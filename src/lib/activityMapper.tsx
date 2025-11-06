@@ -15,9 +15,12 @@ import {
   FaShare,
 } from "react-icons/fa";
 import { IoMdPin } from "react-icons/io";
+import { IoGrid, IoShieldCheckmarkSharp, IoReceiptSharp } from "react-icons/io5";
+import { MdEmail } from "react-icons/md";
 import { TbTopologyStar3 } from "react-icons/tb";
 import { LuSquareKanban } from "react-icons/lu";
 import { AiFillFileExclamation } from "react-icons/ai";
+import { FaTriangleExclamation } from "react-icons/fa6";
 
 export interface ActivityDisplay {
   icon: React.ReactNode;
@@ -185,6 +188,58 @@ export const getActivityDisplay = (action: string): ActivityDisplay => {
       icon: <FaShare className={iconSize} />,
       color: "text-orange-600",
       bgColor: "bg-orange-500",
+    },
+
+    // Menus de Acesso Rápido - Específicos por nome
+    "Histórico": {
+      icon: <IoGrid className={iconSize} />,
+      color: "text-blue-600",
+      bgColor: "bg-blue-500",
+    },
+    "Apólice": {
+      icon: <IoShieldCheckmarkSharp className={iconSize} />,
+      color: "text-blue-600",
+      bgColor: "bg-blue-500",
+    },
+    "Sinistros": {
+      icon: <FaTriangleExclamation className={iconSize} />,
+      color: "text-red-600",
+      bgColor: "bg-red-500",
+    },
+    "Recibos & Pagamentos": {
+      icon: <IoReceiptSharp className={iconSize} />,
+      color: "text-green-600",
+      bgColor: "bg-green-500",
+    },
+    "Ocorrências": {
+      icon: <AiFillFileExclamation className={iconSize} />,
+      color: "text-red-600",
+      bgColor: "bg-red-500",
+    },
+    "Simular & Contratar": {
+      icon: <TbTopologyStar3 className={iconSize} />,
+      color: "text-purple-600",
+      bgColor: "bg-purple-500",
+    },
+    "Agências": {
+      icon: <IoMdPin className={iconSize} />,
+      color: "text-pink-600",
+      bgColor: "bg-pink-500",
+    },
+    "Gestão de SOAT": {
+      icon: <LuSquareKanban className={iconSize} />,
+      color: "text-cyan-600",
+      bgColor: "bg-cyan-500",
+    },
+    "Mensagens": {
+      icon: <MdEmail className={iconSize} />,
+      color: "text-blue-600",
+      bgColor: "bg-blue-500",
+    },
+    "Dashboard Empresarial": {
+      icon: <IoGrid className={iconSize} />,
+      color: "text-indigo-600",
+      bgColor: "bg-indigo-500",
     },
   };
 

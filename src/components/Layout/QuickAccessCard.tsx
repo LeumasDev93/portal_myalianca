@@ -95,7 +95,7 @@ const QuickAccessCard: React.FC<QuickAccessCardProps> = ({
       try {
         await registerActivity({
           action: nome,
-          description: `${nome} foi removido do acesso rápido`,
+          description: `Removido do acesso rápido`,
         });
       } catch (error) {
         console.error("Erro ao registrar atividade:", error);
