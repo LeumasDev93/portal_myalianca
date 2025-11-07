@@ -239,26 +239,12 @@ const HistoryTable = ({
   const config = tableConfigs[activeTab];
   const totalItems = config.data.length;
 
-  const [itemsPerPage, setItemsPerPage] = useState(
-    typeof window !== "undefined" && window.innerWidth >= 1280 ? 6 : 5
-  );
+  const itemsPerPage = 5;
   // Get current items
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
   const currentItems = config.data.slice(indexOfFirstItem, indexOfLastItem);
   const totalPages = Math.ceil(totalItems / itemsPerPage);
-
-  useEffect(() => {
-    const updateItemsPerPage = () => {
-      const isXL = window.innerWidth >= 1280;
-      setItemsPerPage(isXL ? 6 : 5);
-    };
-
-    window.addEventListener("resize", updateItemsPerPage);
-    updateItemsPerPage(); // chamada inicial
-
-    return () => window.removeEventListener("resize", updateItemsPerPage);
-  }, []);
 
   const handleOptionsClick = (event: React.MouseEvent, item: any) => {
     const rect = event.currentTarget.getBoundingClientRect();
