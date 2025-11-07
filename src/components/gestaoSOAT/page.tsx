@@ -31,6 +31,7 @@ import { usePagination } from "@/hooks/usePagination";
 import { removeSoat } from "@/service/removeSoatService";
 import { sendSoat } from "@/service/sendSoatService";
 import { X } from "lucide-react";
+import { TableSkeleton } from "@/components/ui/table-skeleton";
 
 export default function PageGestaoSOAT() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -523,17 +524,7 @@ export default function PageGestaoSOAT() {
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {loading ? (
-                <tr>
-                  <td
-                    colSpan={8}
-                    className="px-6 py-12 text-center text-gray-500"
-                  >
-                    <div className="flex flex-col items-center">
-                      <FaSpinner className="w-8 h-8 text-gray-300 mb-4 animate-spin" />
-                      <p>Carregando dados do SOAT...</p>
-                    </div>
-                  </td>
-                </tr>
+                <TableSkeleton rows={5} columns={8} />
               ) : soatData.length === 0 ? (
                 <tr>
                   <td

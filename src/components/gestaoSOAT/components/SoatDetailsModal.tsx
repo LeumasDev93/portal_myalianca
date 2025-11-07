@@ -14,6 +14,7 @@ import { updateCollaborator } from "@/service/updateCollaboratorService";
 import * as XLSX from "xlsx";
 import { LoadingContainer } from "@/components/ui/loading-container";
 import { formatCurrency } from "@/lib/utils";
+import { TableSkeleton } from "@/components/ui/table-skeleton";
 
 interface SoatDetailsModalProps {
   isOpen: boolean;
