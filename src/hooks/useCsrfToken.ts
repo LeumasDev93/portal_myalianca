@@ -1,27 +1,31 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 
 export function useCsrfToken() {
   const [csrfToken, setCsrfToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    const fetchCsrfToken = async () => {
-      try {
-        const response = await fetch('/api/csrf-token');
-        if (response.ok) {
-          const data = await response.json();
-          setCsrfToken(data.csrfToken);
-        }
-      } catch (error) {
-        console.error('Erro ao buscar token CSRF:', error);
-      } finally {
-        setIsLoading(false);
+  const fetchCsrfToken = useCallback(async () => {
+    try {
+      const response = await fetch('/api/csrf-token');
+      if (response.ok) {
+        const data = await response.json();
+        setCsrfToken(data.csrfToken);
       }
-    };
-
-    fetchCsrfToken();
+    } catch (error) {
+      console.error('Erro ao buscar token CSRF:', error);
+    } finally {
+      setIsLoading(false);
+    }
   }, []);
 
-  return { csrfToken, isLoading };
+  useEffect(() => {
+    fetchCsrfToken();
+  }, [fetchCsrfToken]);
+
+  const refreshToken = useCallback(() => {
+    fetchCsrfToken();
+  }, [fetchCsrfToken]);
+
+  return { csrfToken, isLoading, refreshToken };
 }
 

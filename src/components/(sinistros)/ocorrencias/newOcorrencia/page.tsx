@@ -72,7 +72,7 @@ export default function NewOcorrênciasPage({ onBack }: NewSinistroPageProps) {
   const { token } = useSessionCheckToken();
   const { profile } = useUserProfile();
   const { registerOcorrenciaActivity } = useOcorrenciaActivity();
-  const { csrfToken, isLoading: isLoadingCsrf } = useCsrfToken();
+  const { csrfToken, isLoading: isLoadingCsrf, refreshToken } = useCsrfToken();
 
   // Estados do componente
   const [apolices, setApolices] = useState<Apolice[]>([]);
@@ -482,9 +482,9 @@ export default function NewOcorrênciasPage({ onBack }: NewSinistroPageProps) {
       return;
     }
 
-    // Verificar se tem token CSRF
+    // Validar token CSRF disponível
     if (!csrfToken) {
-      setError("Token de segurança não disponível");
+      setError("Aguarde, carregando...");
       setTimeout(() => setError(""), 3000);
       return;
     }
@@ -539,6 +539,9 @@ export default function NewOcorrênciasPage({ onBack }: NewSinistroPageProps) {
         setMessage("");
       }, 3000);
       
+      // Gerar novo token para próxima requisição
+      refreshToken();
+      
       // Limpar formulário após sucesso
       setFormData({
         apolice: "",
@@ -558,6 +561,9 @@ export default function NewOcorrênciasPage({ onBack }: NewSinistroPageProps) {
       setTimeout(() => {
         setError("");
       }, 3000);
+      
+      // Gerar novo token após erro
+      refreshToken();
     } finally {
       setIsSubmitting(false);
     }

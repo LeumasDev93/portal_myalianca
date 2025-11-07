@@ -1,18 +1,30 @@
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { getServerSession } from 'next-auth';
+import { validateRequest, markTokenAsUsed, isTokenUsed } from '@/lib/requestValidation';
 
 export async function POST(request: Request) {
   try {
-    // ===== CSRF Protection (Simples e Efetivo) =====
+    // ===== Proteção Completa =====
     
-    // 1. Validar sessão (usuário autenticado)
+    // 1. Validar sessão NextAuth
     const session = await getServerSession();
     if (!session || !session.user) {
       return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
     }
 
-    // 2. Validar token CSRF (Double Submit Cookie Pattern)
+    const userId = session.user.id || session.user.username || 'unknown';
+
+    // 2. Validar cliente, headers e rate limiting
+    const validation = validateRequest(request, userId);
+    if (!validation.valid) {
+      return NextResponse.json(
+        { error: validation.reason || 'Requisição não autorizada' },
+        { status: 403 }
+      );
+    }
+
+    // 3. Validar token CSRF (Double Submit Cookie)
     const csrfTokenFromHeader = request.headers.get('x-csrf-token');
     const cookieStore = await cookies();
     const csrfTokenFromCookie = cookieStore.get('csrf-token')?.value;
@@ -31,18 +43,18 @@ export async function POST(request: Request) {
       );
     }
 
-    // 3. Validar origem (SameSite)
-    const origin = request.headers.get('origin');
-    const referer = request.headers.get('referer');
-    
-    if (origin && !origin.includes('localhost:3000') && !origin.includes(process.env.NEXT_PUBLIC_APP_URL || '')) {
+    // 4. Verificar se token já foi usado (one-time use)
+    if (isTokenUsed(csrfTokenFromHeader)) {
       return NextResponse.json(
-        { error: 'Origem não autorizada' },
+        { error: 'Token já utilizado' },
         { status: 403 }
       );
     }
+
+    // 5. Marcar token como usado
+    markTokenAsUsed(csrfTokenFromHeader);
     
-    // ===== Fim CSRF Protection =====
+    // ===== Fim Proteção =====
 
     const apiUrl = `${process.env.NEXT_PUBLIC_API_BASE_URL}/ocorrencias`;
     const apiToken = process.env.API_SECRET_TOKEN;
