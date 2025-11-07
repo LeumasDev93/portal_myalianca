@@ -16,6 +16,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { ActivityItemSkeleton } from "@/components/ui/activity-skeleton";
 
 const AtivitysLastCard = () => {
   const {
@@ -155,12 +156,11 @@ const AtivitysLastCard = () => {
 
         <CardContent className="space-y-2 sm:space-y-3 px-3 sm:px-4 md:px-6">
           {loading && activities.length === 0 ? (
-            <div className="flex items-center justify-center py-6 sm:py-8">
-              <Loader2 className="h-5 w-5 sm:h-6 sm:w-6 animate-spin text-gray-400" />
-              <span className="ml-2 text-gray-500 text-xs sm:text-sm">
-                Carregando atividades...
-              </span>
-            </div>
+            <>
+              {Array.from({ length: 5 }).map((_, index) => (
+                <ActivityItemSkeleton key={index} />
+              ))}
+            </>
           ) : activities.length === 0 ? (
             <div className="text-center py-6 sm:py-8">
               <p className="text-gray-500 text-xs sm:text-sm">
