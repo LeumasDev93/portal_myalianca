@@ -24,6 +24,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { IoStatsChart } from "react-icons/io5";
 
 interface QuickAccessCardProps {
   nome?: string;
@@ -146,6 +147,7 @@ const QuickAccessCard: React.FC<QuickAccessCardProps> = ({
       TbTopologyStar3,
       IoMdPin,
       MdEmail,
+      IoStatsChart,
     };
 
     const IconComponent = iconMap[iconName];

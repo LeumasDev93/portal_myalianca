@@ -19,8 +19,8 @@ import { Loader2, X } from "lucide-react";
 import {
   IoShieldCheckmarkSharp,
   IoReceiptSharp,
+  IoStatsChart,
 } from "react-icons/io5";
-import { TbTopologyStar3 } from "react-icons/tb";
 import { FaTriangleExclamation } from "react-icons/fa6";
 import { IoMdPin } from "react-icons/io";
 import { AiFillFileExclamation } from "react-icons/ai";
@@ -108,20 +108,20 @@ const AVAILABLE_MENUS = [
     order_number: 2,
   },
   {
-    nome: "Simular & Contratar",
-    titulo: "Calcule valores de seguros",
+    nome: "My Dashboard",
+    titulo: "Acompanhe suas informações",
     descricao:
-      "Simule diferentes tipos de seguros, compare preços e coberturas, e contrate novos produtos.",
-    icone: TbTopologyStar3,
-    iconName: "TbTopologyStar3",
-    link: "Simulation",
-    descricao_botao: "Simular Agora",
+      "Acompanhe suas informações de forma rápida e fácil, com gráficos e estatísticas.",
+    icone: IoStatsChart,
+    iconName: "IoStatsChart",
+    link: "dashboard",
+    descricao_botao: "Acessar Dashboard",
     border_color: "border-[#002855]",
     icon_color: "text-[#002855]",
     bg_color: "bg-blue-100 hover:bg-blue-50",
     text_color: "text-[#002855]",
     bg_botton_color: "bg-[#002855] hover:bg-[#002855]/70",
-    order_number: 3,
+    order_number: 4,
   },
   {
     nome: "Agências",

@@ -12,17 +12,15 @@ import {
   MenuCard,
   MenuData,
 } from "@/components/dashboardEmpresarial/components/MenuCard";
-import { FinanceCard } from "@/components/dashboardEmpresarial/components/FinanceCard";
-import { StatisticsApiCard } from "@/components/dashboardEmpresarial/components/StatisticsApiCard";
 import {
   IoShieldCheckmarkSharp,
   IoReceiptSharp,
+  IoStatsChart,
 } from "react-icons/io5";
 import { TbTopologyStar3 } from "react-icons/tb";
 import { AiFillFileExclamation } from "react-icons/ai";
 import { LuSquareKanban } from "react-icons/lu";
 import HistoryTable from "../Historico/table/HistoryTable";
-import { DashboardCharts } from "../Historico/Charts/DashboartdCharts";
 import AtivitysLastCard from "../Layout/AtivitysLastCard";
 
 type DashboardEmpresarialProps = {
@@ -44,6 +42,12 @@ export default function DashboardEmpresarial({
 
   // Dados dos menus do portal (exatos do sistema, mesma cor para todos)
   const portalMenus: MenuData[] = [
+    {
+      title: "My Dashboard",
+      description: "Acompanhe suas informações de forma rápida e fácil, com gráficos e estatísticas.",
+      icon: IoStatsChart,
+      path: "dashboard",
+    },
     {
       title: "Gestão de SOAT",
       description: "Gerencie SOAT dos trabalhadores",
@@ -221,15 +225,7 @@ export default function DashboardEmpresarial({
 
   return (
     <div className="p-4 w-full">
-      <h1 className="text-2xl font-bold text-[#002256] mb-6">Dashboard</h1>
-      <div className="grid grid-cols-2 gap-3 md:gap-4 lg:gap-6 mb-8">
-        <div>
-          <StatisticsApiCard onNavigate={onNavigate} />
-        </div>
-        <div>
-          <FinanceCard onNavigate={onNavigate} />
-        </div>
-      </div>
+     
 
       <div className="mt-8">
         <h2 className="text-xl font-bold text-[#002856] mb-4">Acesso Rápido</h2>
@@ -303,19 +299,13 @@ export default function DashboardEmpresarial({
         <h1 className="text-xl font-bold text-[#002856]">Histórico</h1>
         <div className="flex flex-col lg:flex-row gap-4">
           <div
-            className="w-full lg:w-[65%] xl:w-[70%] overflow-auto"
+            className="w-full w-[100%] overflow-auto"
             style={{ minHeight: "400px", maxHeight: "650px" }}
           >
             <HistoryTable
               onSelectDetailApolice={onSelectDetailApolice || (() => {})}
               onSelectDetailSinistro={onSelectDetailSinistro || (() => {})}
             />
-          </div>
-          <div
-            className="w-full lg:w-[35%] xl:w-[30%]"
-            style={{ minHeight: "400px", maxHeight: "650px" }}
-          >
-            <DashboardCharts />
           </div>
         </div>
       </div>

@@ -617,7 +617,7 @@ const Page = () => {
                     onBack={() => setCurrentPage("sinistro")}
                   />
                 )}
-                {currentPage === "Simulation" && <SimulationScreen />}{" "}
+                {currentPage === "Simulation" && <SimulationScreen />}
                 {currentPage === "gestaoSOAT" && profile?.user?.tipo_cliente === "Company" && <PageGestaoSOAT />}
                 {currentPage === "Notificacoes" && <NotificationsPage />}
                 {currentPage === "dashboardEmpresarial" && profile?.user?.tipo_cliente === "Company" && (

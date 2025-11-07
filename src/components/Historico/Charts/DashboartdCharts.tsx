@@ -137,7 +137,7 @@ export function DashboardCharts() {
         <CardHeader>
           <div className="flex justify-between items-center">
             <CardTitle className="text-xl xl:text-2xl font-bold">
-              Dashboard
+            
             </CardTitle>
             <div className="flex items-center gap-2">
               <button
