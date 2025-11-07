@@ -256,35 +256,33 @@ export default function LoginPage() {
       {/* Banner Semi-Transparente no Centro - Largura Full */}
       <div className="hidden lg:block absolute top-1/2 left-0 right-0 -translate-y-1/2 z-10">
         <div className="bg-white/10 backdrop-blur-md py-8 lg:py-10 xl:py-12 2xl:py-14 px-6 lg:px-8 xl:px-10 2xl:px-12">
-          <div className="max-w-2xl lg:max-w-3xl xl:max-w-4xl 2xl:max-w-5xl mx-auto text-left text-white">
-            <h1 className="text-3xl lg:text-4xl xl:text-5xl 2xl:text-6xl font-bold mb-2 lg:mb-3 xl:mb-4">MYALIANÇA</h1>
-            <p className="text-base lg:text-lg xl:text-xl 2xl:text-2xl">Descomplicar é ter <span className="font-bold">MyAliança</span></p>
-          </div>
-        </div>
-      </div>
-
-      {/* Serviços na Parte Inferior Esquerda - Oculto no Mobile e Tablet */}
-      <div className="hidden lg:block absolute bottom-8 left-8 right-8 lg:left-16 lg:right-16 z-10">
-        <div className="bg-white/10 backdrop-blur-md rounded-lg p-4 lg:p-5 xl:p-6 text-white">
-          <div className="flex flex-wrap items-center justify-center gap-x-6 xl:gap-x-8 gap-y-3">
-            {[
-              "Gerenciamento de apólices",
-              "Acompanhamento de sinistros",
-              "Pagamentos online",
-              "Atendimento personalizado",
-            ].map((benefit) => (
-              <div key={benefit} className="flex items-center gap-2 lg:gap-2.5">
-                <CheckCircle2 className="h-4 lg:h-4 xl:h-5 w-4 lg:w-4 xl:w-5 text-white flex-shrink-0" />
-                <span className="text-xs lg:text-sm xl:text-base whitespace-nowrap">{benefit}</span>
-              </div>
-            ))}
+          <div className="text-white space-y-6 lg:space-y-8">
+            <div className="text-left lg:ml-48 xl:ml-64 2xl:ml-96">
+              <h1 className="text-3xl lg:text-4xl xl:text-5xl 2xl:text-6xl font-bold mb-2 lg:mb-3 xl:mb-4">MYALIANÇA</h1>
+              <p className="text-base lg:text-lg xl:text-xl 2xl:text-2xl">Descomplicar é ter <span className="font-bold">MyAliança</span></p>
+            </div>
+            
+            {/* Serviços em linha no rodapé do banner - uma única linha */}
+            <div className="flex flex-nowrap items-center justify-start gap-x-3 lg:gap-x-4 xl:gap-x-6 pt-4 border-t border-white/20 overflow-x-auto">
+              {[
+                "Gerenciamento de apólices",
+                "Acompanhamento de sinistros",
+                "Pagamentos online",
+                "Atendimento personalizado",
+              ].map((benefit) => (
+                <div key={benefit} className="flex items-center gap-1.5 lg:gap-2 flex-shrink-0">
+                  <CheckCircle2 className="h-3 lg:h-3.5 xl:h-4 w-3 lg:w-3.5 xl:w-4 text-white flex-shrink-0" />
+                  <span className="text-[10px] lg:text-xs xl:text-sm whitespace-nowrap">{benefit}</span>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </div>
 
       {/* Formulário de Login - Mobile fixo no bottom, Desktop/Tablet à direita */}
-      <div className="fixed bottom-0 left-0 right-0 md:absolute md:left-1/2 md:top-1/2 lg:left-auto lg:right-48 md:-translate-x-1/2 lg:translate-x-0 md:-translate-y-1/2 z-20 w-full md:max-w-sm lg:max-w-md md:px-6 lg:px-0">
-        <div className="bg-gray-100 rounded-t-3xl md:rounded-2xl shadow-2xl p-6 md:p-6 lg:p-7 xl:p-6 2xl:p-8 max-h-[75vh] md:max-h-[85vh] lg:max-h-[90vh] 2xl:max-h-[100vh] overflow-y-auto">
+      <div className="fixed bottom-0 left-0 right-0 md:absolute md:left-1/2 md:top-1/2 lg:left-auto lg:right-48 md:-translate-x-1/2 lg:translate-x-0 md:-translate-y-1/2 z-20 w-full md:max-w-sm lg:max-w-md xl:max-w-sm md:px-6 lg:px-0">
+        <div className="bg-gray-100 rounded-t-3xl md:rounded-2xl shadow-2xl p-6 md:p-6 lg:p-7 xl:p-5 2xl:p-6 max-h-[75vh] md:max-h-[85vh] lg:max-h-[90vh] 2xl:max-h-[100vh] overflow-y-auto">
           {/* Barra de indicação - Apenas Mobile */}
           <div className="md:hidden w-12 h-1.5 bg-gray-400 rounded-full mx-auto mb-4"></div>
           
