@@ -309,7 +309,8 @@ export default function SimulationForm({
         const data = await fetchSimulation(
           formValues as any,
           setIsLoading,
-          setSimulationResult
+          setSimulationResult,
+          productId
         );
         setSimulationResult(data);
         setIsModalOpen(true);

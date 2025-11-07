@@ -33,9 +33,11 @@ interface SimulationResult {
 export const fetchSimulation = async (
     formData: SimulationFormData,
     setIsLoading: (loading: boolean) => void,
-    setSimulationResult: (result: SimulationResult) => void
+    setSimulationResult: (result: SimulationResult) => void,
+    productId?: string
 ) => {
     setIsLoading(true);
+    console.log("productId", productId);
     const session = await getSession();
 
     if (!session?.user?.accessToken) {
@@ -144,7 +146,10 @@ export const fetchSimulation = async (
                 headers: {
                     "Content-Type": "application/json",
                 },
-                body: JSON.stringify(simulationResult),
+                body: JSON.stringify({
+                    ...simulationResult,
+                    product_id: productId,
+                }),
             });
 
             if (!externalRes.ok) {
