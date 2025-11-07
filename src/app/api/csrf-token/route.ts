@@ -1,25 +1,51 @@
 import { NextResponse } from 'next/server';
 import { generateCsrfToken, hashCsrfToken } from '@/lib/csrf';
 import { cookies } from 'next/headers';
+import { getServerSession } from 'next-auth';
 
 export async function GET() {
   try {
-    // Gerar token CSRF único (one-time use)
-    const token = generateCsrfToken();
-    const hashedToken = hashCsrfToken(token);
+    // 1. VALIDAR SESSÃO - Apenas usuários autenticados podem gerar tokens
+    const session = await getServerSession();
+    
+    if (!session || !session.user) {
+      console.warn('CSRF: Tentativa de gerar token sem sessão válida');
+      return NextResponse.json(
+        { error: 'Não autorizado - sessão inválida' },
+        { status: 401 }
+      );
+    }
 
-    // Armazenar hash no cookie (HttpOnly para segurança)
-    // Este token será invalidado após o primeiro uso
+    // 2. Gerar token CSRF único vinculado à sessão + timestamp
+    const sessionId = session.user.id || session.user.username || '';
+    const timestamp = Date.now().toString();
+    const token = generateCsrfToken();
+    
+    // Token completo: token + sessionId + timestamp (só o hash é armazenado)
+    const tokenWithSession = `${token}.${sessionId}.${timestamp}`;
+    const hashedToken = hashCsrfToken(tokenWithSession);
+
+    // 3. Armazenar hash no cookie (HttpOnly para segurança)
     const cookieStore = await cookies();
     cookieStore.set('csrf-token-hash', hashedToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
-      maxAge: 60 * 60, // 1 hora (mas será deletado após uso)
+      maxAge: 60 * 5, // 5 minutos (one-time use)
       path: '/',
     });
 
-    // Retornar token para o cliente
+    // Armazenar timestamp separado para validação
+    cookieStore.set('csrf-token-ts', timestamp, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 60 * 5,
+      path: '/',
+    });
+
+    // 4. Retornar apenas o token (sem session ID/timestamp) para o cliente
+    console.log('CSRF: Token gerado para usuário:', sessionId);
     return NextResponse.json({ csrfToken: token });
   } catch (error) {
     console.error('Erro ao gerar token CSRF:', error);
