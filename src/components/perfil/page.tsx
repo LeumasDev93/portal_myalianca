@@ -368,7 +368,7 @@ export function PerfilPage() {
       toast({
         title: "Senha alterada com sucesso",
         description: "Faça login novamente",
-        variant: "default",
+        variant: "success",
       });
       setTimeout(() => {
         setSuccess("");
