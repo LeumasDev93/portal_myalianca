@@ -7,6 +7,7 @@ import { ArrowLeft } from "lucide-react";
 import { OcorrenciaDetails } from "../OcorrenciaDetails";
 import { Ocorrencia, Anexo } from "@/types/typesData";
 import { LoadingContainer } from "@/components/ui/loading-container";
+import { OccurrenceDetailSkeleton } from "@/components/ui/occurrence-detail-skeleton";
 
 type OcorrenciaDetailsProps = {
   onBack: () => void;
@@ -33,11 +34,19 @@ export default function OcorrenciaDetailsPage({
         throw new Error("Erro ao buscar detalhes da ocorrência");
 
       const data = await response.json();
-      console.log("Dados da API recebidos:", data);
+      console.log("✅ Dados da API recebidos:", data);
+      console.log("✅ Tipo de data:", Array.isArray(data) ? 'Array' : typeof data);
+      console.log("✅ Tamanho do array:", Array.isArray(data) ? data.length : 'N/A');
+      
+      if (!data || (Array.isArray(data) && data.length === 0)) {
+        throw new Error('Nenhum dado retornado pela API');
+      }
+      
       setOcorrencia(data);
 
-      const ocorrencia = data[0];
-      console.log("Ocorrência processada:", ocorrencia);
+      const ocorrencia = Array.isArray(data) ? data[0] : data;
+      console.log("✅ Ocorrência processada:", ocorrencia);
+      console.log("✅ Campos da ocorrência:", Object.keys(ocorrencia || {}));
       // Se houver anexos, processar diretamente usando a URL da API externa
       let anexosIds: string[] = [];
 
@@ -102,11 +111,12 @@ export default function OcorrenciaDetailsPage({
 
   if (isLoading) {
     return (
-      <div className="flex flex-col items-center justify-center space-y-4 text-center py-12 ">
-        <LoadingContainer
-          fullHeight={true}
-          message="CARREGANDO DETALHES OCORRÊNCIAS..."
-        />
+      <div className="flex-1 space-y-6 p-6 md:p-8 mt-4">
+        <div className="flex items-center gap-2">
+          <div className="h-8 w-8 bg-gray-200 rounded-md" />
+          <div className="h-8 w-64 bg-gray-200 rounded" />
+        </div>
+        <OccurrenceDetailSkeleton />
       </div>
     );
   }
@@ -125,7 +135,7 @@ export default function OcorrenciaDetailsPage({
           Detalhes da Ocorrência
         </h1>
       </div>
-      {!error && ocorrencia ? (
+      {!error && ocorrencia && Array.isArray(ocorrencia) && ocorrencia.length > 0 ? (
         <OcorrenciaDetails ocorrencia={ocorrencia[0]} anexos={anexos} />
       ) : (
         <div className="flex flex-col items-center justify-center space-y-4 text-center py-12">

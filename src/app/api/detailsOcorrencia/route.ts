@@ -19,7 +19,7 @@ export async function GET(request: Request) {
       throw new Error('Variáveis de ambiente não configuradas');
     }
 
-    const apiUrl = `${NEXT_PUBLIC_API_BASE_URL}/ocorrencias?id=${id}`;
+    const apiUrl = `${NEXT_PUBLIC_API_BASE_URL}/middleware/1.0.0/ocorrencias/${id}`;
     console.log('[API Request]', apiUrl);
 
     const response = await fetch(apiUrl, {
@@ -27,7 +27,8 @@ export async function GET(request: Request) {
         Authorization: `Bearer ${API_SECRET_TOKEN}`,
         ApiKey: NEXT_PUBLIC_API_KEY || '',
         'Content-Type': 'application/json',
-      }
+      },
+      cache: 'no-store',
     });
 
     const responseText = await response.text();

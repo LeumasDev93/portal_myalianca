@@ -24,7 +24,7 @@ export const ActivityItemSkeleton: React.FC = () => {
   );
 };
 
-export const ActivityCardSkeleton: React.FC<{ items?: number }> = ({ items = 5 }) => {
+export const ActivityCardSkeleton: React.FC<{ items?: number }> = ({ items = 3 }) => {
   return (
     <div className="flex-1 bg-gray-50 animate-pulse">
       <div className="bg-white rounded-lg shadow-md h-full">
