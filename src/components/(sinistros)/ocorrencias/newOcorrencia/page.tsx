@@ -485,20 +485,6 @@ export default function NewOcorrênciasPage({ onBack }: NewSinistroPageProps) {
     setIsSubmitting(true);
 
     try {
-      // Gerar novo token CSRF imediatamente antes do submit
-      let tokenToUse = await regenerateToken();
-      
-      // Se falhar, tentar novamente (sem mostrar erro ao usuário)
-      if (!tokenToUse) {
-        console.warn("Token CSRF não gerado, tentando novamente...");
-        tokenToUse = await regenerateToken();
-      }
-      
-      // Se ainda falhar, mostrar erro genérico
-      if (!tokenToUse) {
-        throw new Error("Não foi possível processar sua solicitação. Tente novamente.");
-      }
-
       // Usar os IDs já carregados
       const documentosIds = uploadedFileIds;
       const payload = {
@@ -513,12 +499,20 @@ export default function NewOcorrênciasPage({ onBack }: NewSinistroPageProps) {
         id_anexos: documentosIds,
       };
 
+      // Gerar token CSRF fresco e usar IMEDIATAMENTE
+      const freshCsrfToken = await regenerateToken();
+      
+      if (!freshCsrfToken) {
+        throw new Error("Não foi possível processar sua solicitação. Tente novamente.");
+      }
+
+      // Enviar com o token recém-gerado
       const response = await fetch("/api/sinistro", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
-          "x-csrf-token": tokenToUse,
+          "x-csrf-token": freshCsrfToken,
         },
         body: JSON.stringify(payload),
       });
