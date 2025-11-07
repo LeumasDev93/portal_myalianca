@@ -48,7 +48,7 @@ export default function OcorrenciaDetailsPage({
       if (typeof ocorrencia.id_anexos === "string" && ocorrencia.id_anexos) {
         try {
           anexosIds = JSON.parse(ocorrencia.id_anexos);
-        } catch (e) {
+        } catch {
           anexosIds = [];
         }
       } else if (Array.isArray(ocorrencia.id_anexos)) {
