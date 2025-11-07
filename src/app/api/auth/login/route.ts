@@ -42,6 +42,15 @@ export async function POST(request: Request) {
       );
     }
 
+    // Verifica se precisa trocar senha
+    if (results.code === "NEED_CHANGE_PWD") {
+      return NextResponse.json({
+        needPasswordChange: true,
+        userId: results.id,
+        message: results.message || "Você precisa alterar sua senha",
+      });
+    }
+
     // Resposta com sucesso
     return NextResponse.json({
       user: results,

@@ -23,9 +23,9 @@ export async function POST(request: Request) {
         'ApiKey': process.env.NEXT_PUBLIC_API_KEY || ''
       },
       body: JSON.stringify({
-        senha_atual,
-        nova_senha,
-        user_id
+        user_id,
+        current_password: senha_atual,
+        new_password: nova_senha
       })
     });
 

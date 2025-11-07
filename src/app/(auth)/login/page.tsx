@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import { CheckCircle2 } from "lucide-react";
+import { ForcePasswordChangeModal } from "@/components/auth/ForcePasswordChangeModal";
 
 interface ApiErrorDetails {
   response?: {
@@ -48,6 +49,12 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [email, setEmail] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  
+  // Estados para mudança obrigatória de senha
+  const [showForcePasswordChange, setShowForcePasswordChange] = useState(false);
+  const [userIdForPasswordChange, setUserIdForPasswordChange] = useState("");
+  const [savedUsername, setSavedUsername] = useState("");
+  const [savedPassword, setSavedPassword] = useState("");
   const [isloading, setIsLoading] = useState(false);
   const [erro, setErro] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
@@ -67,9 +74,40 @@ export default function LoginPage() {
         throw new Error("Por favor, preencha todos os campos");
       }
 
+      // Chamar API de login primeiro para verificar needPasswordChange
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ username, password }),
+      });
+
+      const data = await response.json();
+
+      // Verificar se precisa trocar senha
+      if (data.needPasswordChange) {
+        setSavedUsername(username);
+        setSavedPassword(password);
+        setUserIdForPasswordChange(data.userId);
+        setShowForcePasswordChange(true);
+        return;
+      }
+
+      // Se não precisa trocar senha, continuar com login normal
       await login(username, password);
     } catch (err) {
       // console.error("Erro no login:", err);
+    }
+  };
+
+  const handlePasswordChangeSuccess = async () => {
+    setShowForcePasswordChange(false);
+    // Após trocar senha, fazer login automaticamente
+    try {
+      await login(savedUsername, savedPassword);
+    } catch (err) {
+      console.error("Erro ao fazer login após troca de senha:", err);
     }
   };
 
@@ -560,6 +598,13 @@ export default function LoginPage() {
           </div>
         </div>
       </div>
+
+      {/* Modal de Mudança de Senha Obrigatória */}
+      <ForcePasswordChangeModal
+        isOpen={showForcePasswordChange}
+        userId={userIdForPasswordChange}
+        onSuccess={handlePasswordChangeSuccess}
+      />
     </div>
   );
 }
