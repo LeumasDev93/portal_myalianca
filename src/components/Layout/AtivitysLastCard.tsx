@@ -1,12 +1,21 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { useActivities } from "@/hooks/useActivities";
 import { getActivityDisplay, formatActivityDateTime } from "@/lib/activityMapper";
-import { Loader2, RefreshCw, ChevronLeft, ChevronRight } from "lucide-react";
+import { Loader2, RefreshCw, ChevronLeft, ChevronRight, Trash2 } from "lucide-react";
 import { Button } from "../ui/button";
 import { Badge } from "../ui/badge";
+import { useToast } from "@/components/ui/use-toast";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 const AtivitysLastCard = () => {
   const {
@@ -18,7 +27,12 @@ const AtivitysLastCard = () => {
     totalActivities,
     fetchActivities,
     goToPage,
+    clearActivities,
   } = useActivities();
+
+  const [isClearing, setIsClearing] = useState(false);
+  const [showClearConfirm, setShowClearConfirm] = useState(false);
+  const { toast } = useToast();
 
   const handleRefresh = () => {
     fetchActivities();
@@ -26,6 +40,34 @@ const AtivitysLastCard = () => {
 
   const handlePageChange = (page: number) => {
     goToPage(page);
+  };
+
+  const handleClearClick = () => {
+    setShowClearConfirm(true);
+  };
+
+  const handleClearConfirm = async () => {
+    setIsClearing(true);
+    try {
+      await clearActivities();
+      toast({
+        title: "Sucesso",
+        description: "Todas as atividades foram limpas.",
+      });
+      setShowClearConfirm(false);
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: error instanceof Error ? error.message : "Erro ao limpar atividades",
+        variant: "destructive",
+      });
+    } finally {
+      setIsClearing(false);
+    }
+  };
+
+  const handleClearCancel = () => {
+    setShowClearConfirm(false);
   };
   if (error) {
     return (
@@ -79,19 +121,34 @@ const AtivitysLastCard = () => {
                 </Badge>
               )}
             </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleRefresh}
-              disabled={loading}
-              className="h-7 w-7 sm:h-8 sm:w-8 p-0"
-            >
-              {loading ? (
-                <Loader2 className="h-3 w-3 sm:h-4 sm:w-4 animate-spin" />
-              ) : (
-                <RefreshCw className="h-3 w-3 sm:h-4 sm:w-4" />
+            <div className="flex items-center gap-1 sm:gap-2">
+              {totalActivities > 0 && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleClearClick}
+                  disabled={loading || isClearing}
+                  className="h-7 w-7 sm:h-8 sm:w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
+                  title="Limpar todas as atividades"
+                >
+                  <Trash2 className="h-3 w-3 sm:h-4 sm:w-4" />
+                </Button>
               )}
-            </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleRefresh}
+                disabled={loading}
+                className="h-7 w-7 sm:h-8 sm:w-8 p-0"
+                title="Atualizar atividades"
+              >
+                {loading ? (
+                  <Loader2 className="h-3 w-3 sm:h-4 sm:w-4 animate-spin" />
+                ) : (
+                  <RefreshCw className="h-3 w-3 sm:h-4 sm:w-4" />
+                )}
+              </Button>
+            </div>
           </CardTitle>
         </CardHeader>
 
@@ -204,6 +261,50 @@ const AtivitysLastCard = () => {
           </div>
         </div>
       )}
+
+      {/* Dialog de Confirmação de Limpeza */}
+      <Dialog open={showClearConfirm} onOpenChange={setShowClearConfirm}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <div className="flex items-center gap-3">
+              <div className="flex-shrink-0 w-10 h-10 rounded-full bg-red-100 flex items-center justify-center">
+                <Trash2 className="h-5 w-5 text-red-600" />
+              </div>
+              <DialogTitle className="text-lg">Limpar todas as atividades?</DialogTitle>
+            </div>
+            <DialogDescription className="pt-3">
+              Esta ação não pode ser desfeita. Todas as suas {totalActivities} atividades serão permanentemente removidas.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button
+              variant="outline"
+              onClick={handleClearCancel}
+              disabled={isClearing}
+            >
+              Cancelar
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleClearConfirm}
+              disabled={isClearing}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              {isClearing ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  Limpando...
+                </>
+              ) : (
+                <>
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Limpar Tudo
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

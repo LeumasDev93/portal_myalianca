@@ -122,6 +122,36 @@ export const useActivities = () => {
     }
   };
 
+  // Limpar todas as atividades
+  const clearActivities = async () => {
+    if (!profile?.user?.id) {
+      throw new Error('Usuário não autenticado');
+    }
+
+    try {
+      const response = await fetch(`/api/activities?userId=${encodeURIComponent(profile.user.id)}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Erro ao limpar atividades');
+      }
+
+      // Limpar a lista local
+      setAllActivities([]);
+      setCurrentPage(1);
+      
+      return true;
+    } catch (err) {
+      console.error('❌ useActivities: Erro ao limpar atividades:', err);
+      throw err;
+    }
+  };
+
   // Buscar atividades quando o componente montar e atualizar periodicamente
   useEffect(() => {
     if (profile?.user?.id) {
@@ -149,5 +179,6 @@ export const useActivities = () => {
     fetchActivities,
     goToPage,
     registerActivity,
+    clearActivities,
   };
 };
