@@ -26,6 +26,9 @@ export async function POST(request: Request) {
         { status: 403 }
       );
     }
+
+    // Invalidar token após uso (one-time use token)
+    cookieStore.delete('csrf-token-hash');
     // ===== Fim CSRF Protection =====
 
     const apiUrl = `${process.env.NEXT_PUBLIC_API_BASE_URL}/ocorrencias`;

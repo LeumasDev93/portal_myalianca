@@ -4,17 +4,18 @@ import { cookies } from 'next/headers';
 
 export async function GET() {
   try {
-    // Gerar token CSRF
+    // Gerar token CSRF único (one-time use)
     const token = generateCsrfToken();
     const hashedToken = hashCsrfToken(token);
 
     // Armazenar hash no cookie (HttpOnly para segurança)
+    // Este token será invalidado após o primeiro uso
     const cookieStore = await cookies();
     cookieStore.set('csrf-token-hash', hashedToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
-      maxAge: 60 * 60, // 1 hora
+      maxAge: 60 * 60, // 1 hora (mas será deletado após uso)
       path: '/',
     });
 
