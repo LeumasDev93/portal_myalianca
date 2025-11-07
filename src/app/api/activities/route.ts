@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-// Rota dinâmica com cache - O next.revalidate no fetch cacheia por 60s
+// Rota dinâmica sem cache - sempre busca dados atualizados
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
@@ -31,7 +31,7 @@ export async function GET(request: NextRequest) {
           'Content-Type': 'application/json',
           'ApiKey': apiKey,
         },
-        next: { revalidate: 60 }, // Cache por 60 segundos
+        cache: 'no-store',
       }
     );
 
@@ -45,12 +45,7 @@ export async function GET(request: NextRequest) {
 
     const data = await response.json();
     
-    // Retorna com headers de cache
-    return NextResponse.json(data, {
-      headers: {
-        'Cache-Control': 'public, s-maxage=10, stale-while-revalidate=20',
-      },
-    });
+    return NextResponse.json(data);
   } catch (error) {
     console.error('Erro ao buscar atividades:', error);
     return NextResponse.json(
