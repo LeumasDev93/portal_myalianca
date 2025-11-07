@@ -245,7 +245,7 @@ export default function LoginPage() {
       <div className="lg:hidden absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10 text-center px-4">
         <Image src={Logo} alt="Logo" width={200} height={80} className="w-44 md:w-56 h-auto mx-auto mb-4 md:mb-6" />
         <h1 className="text-3xl md:text-4xl font-bold text-white mb-2 md:mb-3">MYALIANÇA</h1>
-        <p className="text-base md:text-lg text-white/90">descomplicar é ter <span className="font-bold">MyAliança</span></p>
+        <p className="text-base md:text-lg text-white/90">Descomplicar é ter <span className="font-bold">MyAliança</span></p>
       </div>
 
       {/* Logo - Apenas no Desktop, no canto superior esquerdo */}
@@ -258,25 +258,27 @@ export default function LoginPage() {
         <div className="bg-white/10 backdrop-blur-md py-8 lg:py-10 xl:py-12 2xl:py-14 px-6 lg:px-8 xl:px-10 2xl:px-12">
           <div className="max-w-2xl lg:max-w-3xl xl:max-w-4xl 2xl:max-w-5xl mx-auto text-left text-white">
             <h1 className="text-3xl lg:text-4xl xl:text-5xl 2xl:text-6xl font-bold mb-2 lg:mb-3 xl:mb-4">MYALIANÇA</h1>
-            <p className="text-base lg:text-lg xl:text-xl 2xl:text-2xl">descomplicar é ter <span className="font-bold">MyAliança</span></p>
+            <p className="text-base lg:text-lg xl:text-xl 2xl:text-2xl">Descomplicar é ter <span className="font-bold">MyAliança</span></p>
           </div>
         </div>
       </div>
 
       {/* Serviços na Parte Inferior Esquerda - Oculto no Mobile e Tablet */}
-      <div className="hidden lg:block absolute bottom-8 left-8 lg:left-16 z-10 max-w-sm">
-        <div className="bg-white/10 backdrop-blur-md rounded-lg p-4 lg:p-5 xl:p-6 text-white space-y-2 lg:space-y-2.5 xl:space-y-3">
-          {[
-            "Gerenciamento de apólices",
-            "Acompanhamento de sinistros",
-            "Pagamentos online",
-            "Atendimento personalizado",
-          ].map((benefit) => (
-            <div key={benefit} className="flex items-center gap-2.5 lg:gap-3">
-              <CheckCircle2 className="h-4 lg:h-4 xl:h-5 w-4 lg:w-4 xl:w-5 text-white flex-shrink-0" />
-              <span className="text-xs lg:text-sm xl:text-base">{benefit}</span>
-            </div>
-          ))}
+      <div className="hidden lg:block absolute bottom-8 left-8 right-8 lg:left-16 lg:right-16 z-10">
+        <div className="bg-white/10 backdrop-blur-md rounded-lg p-4 lg:p-5 xl:p-6 text-white">
+          <div className="flex flex-wrap items-center justify-center gap-x-6 xl:gap-x-8 gap-y-3">
+            {[
+              "Gerenciamento de apólices",
+              "Acompanhamento de sinistros",
+              "Pagamentos online",
+              "Atendimento personalizado",
+            ].map((benefit) => (
+              <div key={benefit} className="flex items-center gap-2 lg:gap-2.5">
+                <CheckCircle2 className="h-4 lg:h-4 xl:h-5 w-4 lg:w-4 xl:w-5 text-white flex-shrink-0" />
+                <span className="text-xs lg:text-sm xl:text-base whitespace-nowrap">{benefit}</span>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
 
