@@ -9,7 +9,7 @@ export async function POST(request: Request) {
 
     // Validação dos campos obrigatórios
     const requiredFields = [
-      'id_apolice', 'nome_apolice', 'tipo_apolice',
+      'id_apolice', 'nome_apolice',
       'descricao', 'data_ocorrencia', 'local_ocorrencia',
       'user_id'
     ];
@@ -33,7 +33,7 @@ export async function POST(request: Request) {
       body: JSON.stringify({
         id_apolice: body.id_apolice,
         nome_apolice: body.nome_apolice,
-        tipo_apolice: body.tipo_apolice,
+        objeto_seguro: body.objeto_seguro,
         descricao: body.descricao,
         id_anexos: body.id_anexos || [],
         data_ocorrencia: body.data_ocorrencia,

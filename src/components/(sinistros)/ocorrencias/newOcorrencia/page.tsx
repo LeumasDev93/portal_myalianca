@@ -2,7 +2,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   Card,
   CardContent,
@@ -30,6 +30,8 @@ import {
   Camera,
   AlertTriangle,
   CheckCircle,
+  Calendar,
+  Clock,
 } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { Separator } from "@/components/ui/separator";
@@ -51,6 +53,15 @@ interface Apolice {
   contractNumber: number;
 }
 
+interface InsuredObjectOption {
+  id?: string | number;
+  code?: string;
+  name?: string;
+  description?: string;
+  registration?: string;
+  [key: string]: unknown;
+}
+
 type NewSinistroPageProps = {
   onBack: () => void;
 };
@@ -66,21 +77,86 @@ export default function NewOcorrênciasPage({ onBack }: NewSinistroPageProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState<number>(0);
+  const [insuredObjectsMap, setInsuredObjectsMap] = useState<
+    Record<string, InsuredObjectOption[]>
+  >({});
+  const [isLoadingInsuredObjects, setIsLoadingInsuredObjects] =
+    useState(false);
+  const dateInputRef = useRef<HTMLInputElement | null>(null);
+  const timeInputRef = useRef<HTMLInputElement | null>(null);
+  const handleDateIconClick = () => {
+    if (dateInputRef.current) {
+      dateInputRef.current.showPicker?.();
+      dateInputRef.current.focus();
+    }
+  };
+
+  const handleTimeIconClick = () => {
+    if (timeInputRef.current) {
+      timeInputRef.current.showPicker?.();
+      timeInputRef.current.focus();
+    }
+  };
+
+  const loadInsuredObjects = async (contractNumber: string) => {
+    if (!token || !contractNumber) return;
+
+    // Evita refetch caso já esteja em cache
+    if (insuredObjectsMap[contractNumber]) {
+      return;
+    }
+
+    setIsLoadingInsuredObjects(true);
+    try {
+      const response = await fetch(
+        `/api/anywhere/api/v1/private/mobile/contract/${contractNumber}/insuredObjects`,
+        {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+            Accept: "application/json",
+          },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(
+          `Erro ${response.status}: ${response.statusText || "ao carregar objetos segurados"}`
+        );
+      }
+
+      const data = await response.json();
+      const objetosNormalizados = Array.isArray(data) ? data : [data];
+
+      setInsuredObjectsMap((prev) => ({
+        ...prev,
+        [contractNumber]: objetosNormalizados,
+      }));
+    } catch (error) {
+      console.error("Erro ao buscar objetos segurados:", error);
+      setError(
+        error instanceof Error
+          ? error.message
+          : "Erro ao carregar objetos segurados"
+      );
+      setTimeout(() => {
+        setError("");
+      }, 3000);
+    } finally {
+      setIsLoadingInsuredObjects(false);
+    }
+  };
 
   // Dados do formulário
   const [formData, setFormData] = useState({
     apolice: "",
-    tipoSinistro: "",
     nomeApolice: "",
-    tipoApolice: "",
+    objetoSeguro: "",
     data: "",
     hora: "",
     local: "",
     descricao: "",
-    envolvidos: "",
-    boletimOcorrencia: "nao",
-    numeroBO: "",
   });
 
   // Upload de fotos
@@ -88,8 +164,16 @@ export default function NewOcorrênciasPage({ onBack }: NewSinistroPageProps) {
   const [previews, setPreviews] = useState<string[]>([]);
   const [uploadedFileIds, setUploadedFileIds] = useState<string[]>([]);
   const [uploadingFiles, setUploadingFiles] = useState<Set<string>>(new Set());
+  const [uploadProgress, setUploadProgress] = useState<Record<number, number>>(
+    {}
+  );
 
   const [message, setMessage] = useState<string>("");
+
+  const objetosDoSeguro =
+    formData.apolice && insuredObjectsMap[formData.apolice]
+      ? insuredObjectsMap[formData.apolice]
+      : [];
 
   useEffect(() => {
     if (!token || !profile?.user?.nif) return;
@@ -146,8 +230,8 @@ export default function NewOcorrênciasPage({ onBack }: NewSinistroPageProps) {
       const newData = { ...prev, [name]: value };
 
       if (name === "apolice") {
-        // Limpar dados relacionados (exceto tipoSinistro que é independente)
-        newData.tipoApolice = "";
+        // Limpar objeto seguro ao trocar de apólice
+        newData.objetoSeguro = "";
 
         // Buscar dados da apólice selecionada
         const apoliceSelecionada = apolices.find(
@@ -156,13 +240,8 @@ export default function NewOcorrênciasPage({ onBack }: NewSinistroPageProps) {
 
         if (apoliceSelecionada) {
           newData.nomeApolice = apoliceSelecionada.productName;
-          newData.tipoApolice = apoliceSelecionada.insuranceType || "AUTO";
+          void loadInsuredObjects(String(apoliceSelecionada.contractNumber));
         }
-      }
-
-      if (name === "tipoSinistro") {
-        // Usar o valor selecionado diretamente
-        newData.tipoSinistro = value;
       }
 
       return newData;
@@ -246,8 +325,10 @@ export default function NewOcorrênciasPage({ onBack }: NewSinistroPageProps) {
       ]);
 
       // Upload imediato de cada arquivo
-      for (const file of newFiles) {
-        await uploadFileImmediately(file);
+      const startIndex = fotos.length;
+      for (let i = 0; i < newFiles.length; i++) {
+        const fileIndex = startIndex + i;
+        await uploadFileImmediately(newFiles[i], fileIndex);
       }
     } else {
       console.log("⚠️ Nenhum arquivo selecionado");
@@ -255,13 +336,14 @@ export default function NewOcorrênciasPage({ onBack }: NewSinistroPageProps) {
   };
 
   // Função para upload imediato de arquivo
-  const uploadFileImmediately = async (file: File) => {
+  const uploadFileImmediately = async (file: File, fileIndex: number) => {
     const fileId = `${file.name}-${Date.now()}`;
 
     setUploadingFiles((prev) => new Set(prev).add(fileId));
+    setUploadProgress((prev) => ({ ...prev, [fileIndex]: 0 }));
 
     try {
-      const uploadedId = await uploadDocument(file);
+      const uploadedId = await uploadDocument(file, fileIndex);
       setUploadedFileIds((prev) => [...prev, uploadedId]);
 
       setMessage(`${file.name} foi enviado com sucesso.`);
@@ -278,6 +360,11 @@ export default function NewOcorrênciasPage({ onBack }: NewSinistroPageProps) {
         const newSet = new Set(prev);
         newSet.delete(fileId);
         return newSet;
+      });
+      setUploadProgress((prev) => {
+        const newProgress = { ...prev };
+        delete newProgress[fileIndex];
+        return newProgress;
       });
     }
   };
@@ -298,49 +385,77 @@ export default function NewOcorrênciasPage({ onBack }: NewSinistroPageProps) {
   };
 
   // Função para upload de documento único usando o mesmo sistema das mensagens
-  const uploadDocument = async (file: File): Promise<string> => {
-    const formData = new FormData();
-    formData.append("file", file);
+  const uploadDocument = async (
+    file: File,
+    fileIndex: number
+  ): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const formData = new FormData();
+      formData.append("file", file);
 
-    // Timeout de 30 segundos para uploads
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 30000);
+      const xhr = new XMLHttpRequest();
 
-    try {
-      const response = await fetch("/api/upload", {
-        method: "POST",
-        body: formData,
-        signal: controller.signal,
+      // Timeout de 30 segundos para uploads
+      const timeoutId = setTimeout(() => {
+        xhr.abort();
+        reject(
+          new Error(
+            `Timeout no upload (${(file.size / (1024 * 1024)).toFixed(1)}MB) - verifique sua conexão ou tente novamente.`
+          )
+        );
+      }, 30000);
+
+      // Rastrear progresso do upload
+      xhr.upload.addEventListener("progress", (event) => {
+        if (event.lengthComputable) {
+          const percentComplete = Math.round((event.loaded / event.total) * 100);
+          setUploadProgress((prev) => ({ ...prev, [fileIndex]: percentComplete }));
+        }
       });
 
-      clearTimeout(timeoutId);
+      // Quando o upload terminar
+      xhr.addEventListener("load", () => {
+        clearTimeout(timeoutId);
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`Erro no upload do arquivo: ${response.status}`);
-      }
+        if (xhr.status === 200) {
+          try {
+            const data = JSON.parse(xhr.responseText);
 
-      const data = await response.json();
+            // Verificar se o ID foi retornado
+            if (!data.id) {
+              reject(
+                new Error(
+                  `API não retornou ID do arquivo. Resposta: ${xhr.responseText}`
+                )
+              );
+              return;
+            }
 
-      // Verificar se o ID foi retornado
-      if (!data.id) {
-        throw new Error(
-          `API não retornou ID do arquivo. Resposta: ${JSON.stringify(data)}`
-        );
-      }
+            resolve(data.id); // Retorna o ID do arquivo no servidor
+          } catch (error) {
+            reject(new Error(`Erro ao processar resposta do servidor`));
+          }
+        } else {
+          reject(new Error(`Erro no upload do arquivo: ${xhr.status}`));
+        }
+      });
 
-      return data.id; // Retorna o ID do arquivo no servidor
-    } catch (error) {
-      clearTimeout(timeoutId);
+      // Em caso de erro de rede
+      xhr.addEventListener("error", () => {
+        clearTimeout(timeoutId);
+        reject(new Error(`Erro de rede durante o upload`));
+      });
 
-      if (error instanceof Error && error.name === "AbortError") {
-        const fileSizeMB = (file.size / (1024 * 1024)).toFixed(1);
-        throw new Error(
-          `Timeout no upload (${fileSizeMB}MB) - verifique sua conexão ou tente novamente.`
-        );
-      }
-      throw error;
-    }
+      // Em caso de cancelamento
+      xhr.addEventListener("abort", () => {
+        clearTimeout(timeoutId);
+        reject(new Error(`Upload cancelado`));
+      });
+
+      // Enviar requisição
+      xhr.open("POST", "/api/upload");
+      xhr.send(formData);
+    });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -349,15 +464,11 @@ export default function NewOcorrênciasPage({ onBack }: NewSinistroPageProps) {
     const {
       apolice,
       nomeApolice,
-      tipoApolice,
-      tipoSinistro,
+      objetoSeguro,
       data,
       hora,
       local,
       descricao,
-      envolvidos,
-      boletimOcorrencia,
-      numeroBO,
     } = formData;
 
     // Verificação de campos obrigatórios
@@ -370,7 +481,6 @@ export default function NewOcorrênciasPage({ onBack }: NewSinistroPageProps) {
     }
 
     setIsSubmitting(true);
-    setUploadProgress(0);
 
     try {
       // Usar os IDs já carregados
@@ -378,17 +488,13 @@ export default function NewOcorrênciasPage({ onBack }: NewSinistroPageProps) {
       const payload = {
         id_apolice: apolice,
         nome_apolice: nomeApolice,
-        tipo_apolice: tipoApolice || "AUTO", // Usa o valor da API ou "AUTO" como fallback
-        tipo_sinistro: tipoSinistro || "", // Usa o valor do sinistro selecionado
+        objeto_seguro: objetoSeguro,
         descricao,
-        id_anexos: documentosIds,
-        data_ocorrencia: data,
-        hora_ocorrencia: hora || "00:00",
-        local_ocorrencia: local,
-        envolvidos: envolvidos || "",
-        boletim_ocorrencia: boletimOcorrencia === "sim",
-        numero_bo: numeroBO || null,
         user_id: profile?.user?.id,
+        data_ocorrencia: data,
+        hora_ocorrencia: hora || null,
+        local_ocorrencia: local,
+        id_anexos: documentosIds,
       };
 
       const response = await fetch("/api/sinistro", {
@@ -409,15 +515,15 @@ export default function NewOcorrênciasPage({ onBack }: NewSinistroPageProps) {
       // Registrar atividade
       try {
         await registerOcorrenciaActivity(
-          tipoSinistro || "Sinistro",
-          `${nomeApolice} - ${local}`
+          "NOVA_OCORRENCIA",
+          `${nomeApolice} - ${objetoSeguro} - ${local}`
         );
       } catch (error) {
         console.error("Erro ao registrar atividade:", error);
         // Não interrompe o fluxo se falhar ao registrar atividade
       }
 
-      setMessage("Sinistro registrado com sucesso!");
+      setMessage("Ocorrência registrada com sucesso!");
       setTimeout(() => {
         setMessage("");
       }, 3000);
@@ -425,28 +531,23 @@ export default function NewOcorrênciasPage({ onBack }: NewSinistroPageProps) {
       setFormData({
         apolice: "",
         nomeApolice: "",
-        tipoSinistro: "",
-        tipoApolice: "",
+        objetoSeguro: "",
         data: "",
         hora: "",
         local: "",
         descricao: "",
-        envolvidos: "",
-        boletimOcorrencia: "nao",
-        numeroBO: "",
       });
       setFotos([]);
       setPreviews([]);
       setUploadedFileIds([]);
       setUploadingFiles(new Set());
     } catch (error: any) {
-      setError(error.message || "Ocorreu um erro ao registrar o sinistro");
+      setError(error.message || "Ocorreu um erro ao registrar a ocorrência");
       setTimeout(() => {
         setError("");
       }, 3000);
     } finally {
       setIsSubmitting(false);
-      setUploadProgress(0);
     }
   };
 
@@ -480,7 +581,7 @@ export default function NewOcorrênciasPage({ onBack }: NewSinistroPageProps) {
         <CardHeader className="bg-gray-50">
           <CardTitle className="flex items-center gap-2 text-[#002256]">
             <AlertTriangle className="h-5 w-5 text-red-500" />
-            Formulário de Abertura de Sinistro
+            Formulário de Ocorrência
           </CardTitle>
           <CardDescription>
             Preencha todos os campos obrigatórios (*) e forneça o máximo de
@@ -527,7 +628,7 @@ export default function NewOcorrênciasPage({ onBack }: NewSinistroPageProps) {
                           key={apolice.contractNumber}
                           value={String(apolice.contractNumber)}
                         >
-                          {apolice.registration}
+                          {apolice.contractNumber} - {apolice.productName}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -535,29 +636,55 @@ export default function NewOcorrênciasPage({ onBack }: NewSinistroPageProps) {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="tipoApolice">Tipo de Apólice</Label>
-                  <Input
-                    id="tipoApolice"
-                    value={formData.tipoApolice || "Não definido"}
-                    disabled
-                    className="bg-gray-50"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="tipoSinistro">Tipo de Ocorrência</Label>
+                  <Label htmlFor="objetoSeguro">Objeto Seguro</Label>
                   <Select
-                    value={formData.tipoSinistro}
+                    value={formData.objetoSeguro}
                     onValueChange={(value) => {
-                      handleSelectChange("tipoSinistro", value);
+                      setFormData((prev) => ({
+                        ...prev,
+                        objetoSeguro: value,
+                      }));
                     }}
+                    disabled={!formData.apolice || isLoadingInsuredObjects}
                   >
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Selecione o tipo de sinistro" />
+                    <SelectTrigger id="objetoSeguro">
+                      <SelectValue
+                        placeholder={
+                          !formData.apolice
+                            ? "Selecione uma apólice primeiro"
+                            : isLoadingInsuredObjects
+                            ? "Carregando objetos..."
+                            : objetosDoSeguro.length === 0
+                            ? "Nenhum objeto disponível"
+                            : "Selecione um objeto"
+                        }
+                      />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="Sinistro">Sinistro</SelectItem>
-                      <SelectItem value="Suporte">Suporte</SelectItem>
+                      {objetosDoSeguro.map((objeto, index) => {
+                        // Usa description/registration como value (matrícula)
+                        const matricula = objeto.description || objeto.registration || `Objeto ${index + 1}`;
+                        
+                        // Label exibe name - description se disponível
+                        const label = objeto.name
+                          ? objeto.description
+                            ? `${objeto.name} - ${objeto.description}`
+                            : objeto.name
+                          : objeto.description
+                          ? objeto.description
+                          : objeto.registration
+                          ? objeto.registration
+                          : `Objeto ${index + 1}`;
+
+                        return (
+                          <SelectItem
+                            key={`${objeto.id ?? objeto.code ?? matricula ?? index}`}
+                            value={matricula}
+                          >
+                            {label}
+                          </SelectItem>
+                        );
+                      })}
                     </SelectContent>
                   </Select>
                 </div>
@@ -567,26 +694,50 @@ export default function NewOcorrênciasPage({ onBack }: NewSinistroPageProps) {
                     Data do Ocorrido{" "}
                     <span className="text-company-red-500">*</span>
                   </Label>
-                  <Input
-                    id="data"
-                    name="data"
-                    type="date"
-                    value={formData.data}
-                    onChange={handleChange}
-                    required
-                    max={new Date().toISOString().split("T")[0]}
-                  />
+                  <div className="relative">
+                    <Input
+                      id="data"
+                      name="data"
+                      type="date"
+                      value={formData.data}
+                      onChange={handleChange}
+                      required
+                      max={new Date().toISOString().split("T")[0]}
+                      ref={dateInputRef}
+                      className="pr-14 appearance-none [&::-webkit-calendar-picker-indicator]:opacity-0 [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:w-full [&::-webkit-calendar-picker-indicator]:h-full [&::-webkit-calendar-picker-indicator]:cursor-pointer"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleDateIconClick}
+                      className="absolute inset-y-0 right-0 flex items-center rounded-r-md bg-[#002256] px-3"
+                      aria-label="Selecionar data"
+                    >
+                      <Calendar className="h-4 w-4 text-white" />
+                    </button>
+                  </div>
                 </div>
 
                 <div className="space-y-2">
                   <Label htmlFor="hora">Hora do Ocorrido</Label>
-                  <Input
-                    id="hora"
-                    name="hora"
-                    type="time"
-                    value={formData.hora}
-                    onChange={handleChange}
-                  />
+                  <div className="relative">
+                    <Input
+                      id="hora"
+                      name="hora"
+                      type="time"
+                      value={formData.hora}
+                      onChange={handleChange}
+                      ref={timeInputRef}
+                      className="pr-14 appearance-none [&::-webkit-calendar-picker-indicator]:opacity-0 [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:w-full [&::-webkit-calendar-picker-indicator]:h-full [&::-webkit-calendar-picker-indicator]:cursor-pointer"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleTimeIconClick}
+                      className="absolute inset-y-0 right-0 flex items-center rounded-r-md bg-[#002256] px-3"
+                      aria-label="Selecionar hora"
+                    >
+                      <Clock className="h-4 w-4 text-white" />
+                    </button>
+                  </div>
                 </div>
 
                 <div className="space-y-2 md:col-span-2">
@@ -611,7 +762,7 @@ export default function NewOcorrênciasPage({ onBack }: NewSinistroPageProps) {
             {/* Seção Detalhes do Sinistro */}
             <div className="space-y-4">
               <h3 className="text-lg font-semibold text-[#002256]">
-                Detalhes do Sinistro
+                Detalhes da Ocorrência
               </h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
@@ -630,19 +781,6 @@ export default function NewOcorrênciasPage({ onBack }: NewSinistroPageProps) {
                   />
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="envolvidos">
-                    Pessoas ou Veículos Envolvidos
-                  </Label>
-                  <Textarea
-                    id="envolvidos"
-                    name="envolvidos"
-                    placeholder="Liste outras pessoas ou veículos envolvidos no sinistro, se houver"
-                    rows={3}
-                    value={formData.envolvidos}
-                    onChange={handleChange}
-                  />
-                </div>
               </div>
             </div>
 
@@ -656,7 +794,7 @@ export default function NewOcorrênciasPage({ onBack }: NewSinistroPageProps) {
 
               <div className="space-y-2">
                 <Label>
-                  Fotos do Sinistro (selecione uma por vez, máximo 5 fotos)
+                  Fotos da Ocorrência (selecione uma por vez, máximo 5 fotos)
                 </Label>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
                   <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 flex flex-col items-center justify-center text-center">
@@ -700,6 +838,10 @@ export default function NewOcorrênciasPage({ onBack }: NewSinistroPageProps) {
                             const isUploading = uploadingFiles.has(fileId);
                             const isUploaded = uploadedFileIds[index];
 
+                            const progress = uploadProgress[index];
+                            const hasProgress =
+                              progress !== undefined && progress < 100;
+
                             return (
                               <div
                                 key={index}
@@ -707,20 +849,35 @@ export default function NewOcorrênciasPage({ onBack }: NewSinistroPageProps) {
                               >
                                 <Image
                                   src={preview}
-                                  alt={`Foto do sinistro ${index + 1}`}
+                                  alt={`Foto da ocorrência ${index + 1}`}
                                   className="w-full h-24 object-cover"
                                   width={100}
                                   height={100}
                                 />
 
+                                {/* Barra de progresso do upload */}
+                                {hasProgress && (
+                                  <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 p-1">
+                                    <div className="w-full bg-gray-300 rounded-full h-1.5">
+                                      <div
+                                        className="bg-[#002256] h-1.5 rounded-full transition-all duration-300"
+                                        style={{ width: `${progress}%` }}
+                                      ></div>
+                                    </div>
+                                    <p className="text-white text-xs text-center mt-0.5">
+                                      {progress}%
+                                    </p>
+                                  </div>
+                                )}
+
                                 {/* Indicador de status */}
                                 <div className="absolute top-1 left-1">
-                                  {isUploading && (
+                                  {hasProgress && (
                                     <div className="bg-yellow-500 text-white text-xs px-1 py-0.5 rounded">
                                       📤
                                     </div>
                                   )}
-                                  {isUploaded && (
+                                  {isUploaded && !hasProgress && (
                                     <div className="bg-green-500 text-white text-xs px-1 py-0.5 rounded">
                                       ✅
                                     </div>
@@ -751,16 +908,6 @@ export default function NewOcorrênciasPage({ onBack }: NewSinistroPageProps) {
                   </div>
                 </div>
               </div>
-
-              {/* Barra de progresso do upload */}
-              {uploadProgress > 0 && uploadProgress < 100 && (
-                <div className="w-full bg-gray-200 rounded-full h-2.5 mt-4">
-                  <div
-                    className="bg-blue-600 h-2.5 rounded-full"
-                    style={{ width: `${uploadProgress}%` }}
-                  ></div>
-                </div>
-              )}
             </div>
 
             {/* Rodapé do Formulário */}
@@ -776,7 +923,7 @@ export default function NewOcorrênciasPage({ onBack }: NewSinistroPageProps) {
                 className="bg-[#002256] hover:bg-[#002256]/80"
                 disabled={isLoading || isSubmitting}
               >
-                {isSubmitting ? "Enviando..." : "Enviar Ocorrência"}
+                {isSubmitting ? "Enviando..." : "Enviar Ocorrência de Segurança"}
               </Button>
             </CardFooter>
           </form>

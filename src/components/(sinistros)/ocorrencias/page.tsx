@@ -65,6 +65,30 @@ export default function OcorrenciasPage({
   const [dateFilter, setDateFilter] = useState<string>("all");
   const [showFilters, setShowFilters] = useState(false);
 
+  // Mapear texto do status
+  const getStatusText = (status: string) => {
+    const statusMap: Record<string, string> = {
+      P: "Pendente",
+      EA: "Em Análise",
+      D: "Descartada",
+      CS: "Convertida em Sinistro",
+      A: "Arquivada",
+    };
+    return statusMap[status] || "Status Desconhecido";
+  };
+
+  // Status com cores específicas
+  const getStatusColor = (status: string) => {
+    const colorMap: Record<string, string> = {
+      P: "bg-yellow-100 text-yellow-800",
+      EA: "bg-blue-100 text-blue-800",
+      D: "bg-red-100 text-red-800",
+      CS: "bg-green-100 text-green-800",
+      A: "bg-gray-100 text-gray-800",
+    };
+    return colorMap[status] || "bg-gray-100 text-gray-800";
+  };
+
   // Busca ocorrências
   const fetchOcorrencias = async () => {
     try {
@@ -312,8 +336,11 @@ export default function OcorrenciasPage({
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Todos os status</SelectItem>
-                <SelectItem value="P">Pendentes</SelectItem>
-                <SelectItem value="R">Resolvidos</SelectItem>
+                <SelectItem value="P">Pendente</SelectItem>
+                <SelectItem value="EA">Em Análise</SelectItem>
+                <SelectItem value="D">Descartada</SelectItem>
+                <SelectItem value="CS">Convertida em Sinistro</SelectItem>
+                <SelectItem value="A">Arquivada</SelectItem>
               </SelectContent>
             </Select>
 
@@ -432,13 +459,11 @@ export default function OcorrenciasPage({
                     </CardDescription>
                   </div>
                   <span
-                    className={`inline-flex items-center rounded-lg px-3 py-1 text-xs xl:text-sm font-medium ${
-                      ocorrencia.status === "P"
-                        ? "bg-amber-100 text-amber-800"
-                        : "bg-green-100 text-green-800"
-                    }`}
+                    className={`inline-flex items-center rounded-lg px-3 py-1 text-xs xl:text-sm font-medium ${getStatusColor(
+                      ocorrencia.status
+                    )}`}
                   >
-                    {ocorrencia.status === "P" ? "Pendente" : "Resolvido"}
+                    {getStatusText(ocorrencia.status)}
                   </span>
                 </div>
               </CardHeader>
@@ -483,17 +508,15 @@ export default function OcorrenciasPage({
                         {ocorrencia.nome_apolice}
                       </h3>
                       <span
-                        className={`inline-flex items-center rounded-lg px-3 py-1 text-xs xl:text-sm font-medium ${
-                          ocorrencia.status === "P"
-                            ? "bg-amber-100 text-amber-800"
-                            : "bg-green-100 text-green-800"
-                        }`}
+                        className={`inline-flex items-center rounded-lg px-3 py-1 text-xs xl:text-sm font-medium ${getStatusColor(
+                          ocorrencia.status
+                        )}`}
                       >
-                        {ocorrencia.status === "P" ? "Pendente" : "Resolvido"}
+                        {getStatusText(ocorrencia.status)}
                       </span>
                     </div>
                     <p className="text-sm text-muted-foreground">
-                      #{ocorrencia.tipo_apolice} • #{ocorrencia.id_apolice}
+                      #{ocorrencia.id_apolice} • {ocorrencia.objeto_seguro}
                     </p>
                     <span className="text-xs text-muted-foreground">
                       {format(

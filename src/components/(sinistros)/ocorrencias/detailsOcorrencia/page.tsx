@@ -41,10 +41,6 @@ export default function OcorrenciaDetailsPage({
       // Se houver anexos, processar diretamente usando a URL da API externa
       let anexosIds: string[] = [];
 
-      // Verificar se id_anexos é string (JSON) ou array
-      console.log("Tipo de id_anexos:", typeof ocorrencia.id_anexos);
-      console.log("Valor de id_anexos:", ocorrencia.id_anexos);
-
       if (typeof ocorrencia.id_anexos === "string" && ocorrencia.id_anexos) {
         try {
           anexosIds = JSON.parse(ocorrencia.id_anexos);

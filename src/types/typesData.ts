@@ -112,6 +112,7 @@ export interface Ocorrencia {
   status: string;
   id_apolice: string;
   nome_apolice: string;
+  objeto_seguro: string | null;
   tipo_apolice: string;
   id_anexos: string | null;
   user_id: string;
