@@ -122,6 +122,7 @@ const AVAILABLE_MENUS = [
     text_color: "text-[#002855]",
     bg_botton_color: "bg-[#002855] hover:bg-[#002855]/70",
     order_number: 4,
+    onlyForCompany: true,
   },
   {
     nome: "Agências",
