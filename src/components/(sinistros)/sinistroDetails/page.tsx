@@ -255,7 +255,7 @@ export default function SinistroDetailPage({
             <ArrowLeft className="h-4 w-4" />
           </Button>
           <h1 className="text-[16px] sm:text-2xl xl:text-3xl text-[#002256] font-bold tracking-tight">
-            Detalhes da Sinistro
+            Detalhes do Sinistro
           </h1>
         </div>
         {/* <div className="flex items-center gap-2">
@@ -357,7 +357,7 @@ export default function SinistroDetailPage({
                               <FaTriangleExclamation className="size-3 sm:size-4 xl:size-5 text-[#002256]" />
                             </div>
                             <h3 className="text-sm font-medium text-[#002256]">
-                              Tipo de Sinistro
+                              Produto
                             </h3>
                           </div>
                           <div className="flex items-center gap-2">
@@ -475,6 +475,11 @@ export default function SinistroDetailPage({
                                           );
                                         })()}
                                       </span>
+                                      {comp.issueDate && (
+                                      <span className="text-xs md:text-sm text-gray-400">
+                                          Data: {formatDate(comp.issueDate || "")}
+                                        </span>
+                                      )}
                                     </div>
                                   </div>
                                 </div>
