@@ -74,11 +74,6 @@ export function PerfilPage() {
   // Debug: Log do perfil e URL da imagem
   useEffect(() => {
     if (profile) {
-      console.log("🔍 DEBUG - Perfil carregado:", profile);
-      console.log(
-        "🔍 DEBUG - NEXT_PUBLIC_API_BASE_URL_IMAGE:",
-        process.env.NEXT_PUBLIC_API_BASE_URL_IMAGE
-      );
 
       if (profile.user?.imagem_id) {
         const imageUrl = `/api/proxy-image?url=${encodeURIComponent(
@@ -194,8 +189,6 @@ export function PerfilPage() {
         throw new Error("API não retornou ID da imagem");
       }
 
-      // Agora, atualizar o perfil do usuário com o novo ID da imagem
-      console.log("🔄 Atualizando perfil com nova imagem:", uploadResult.id);
 
       const profileResponse = await fetch("/api/profile/update", {
         method: "PUT",
@@ -221,7 +214,6 @@ export function PerfilPage() {
       }
 
       const profileResult = await profileResponse.json();
-      console.log("✅ Perfil atualizado com sucesso:", profileResult);
 
       // Registrar atividade de alteração de foto
       try {
@@ -301,7 +293,6 @@ export function PerfilPage() {
     }
 
     try {
-      console.log("🔄 Atualizando perfil com nova imagem:", imageId);
 
       // Atualizar o estado local do perfil
       if (profile) {
@@ -317,12 +308,7 @@ export function PerfilPage() {
         localStorage.setItem("user", JSON.stringify(updatedProfile));
 
         // Atualizar estado do componente
-        updateProfile(updatedProfile);
-
-        console.log(
-          "✅ Perfil atualizado localmente com nova imagem:",
-          imageId
-        );
+        updateProfile(updatedProfile);    
       }
     } catch (error) {
       console.error("❌ Erro ao atualizar perfil:", error);
@@ -379,6 +365,11 @@ export function PerfilPage() {
       }
 
       setSuccess("Senha alterada com sucesso!");
+      toast({
+        title: "Senha alterada com sucesso",
+        description: "Faça login novamente",
+        variant: "default",
+      });
       setTimeout(() => {
         setSuccess("");
       }, 5000);
