@@ -72,7 +72,7 @@ export default function NewOcorrênciasPage({ onBack }: NewSinistroPageProps) {
   const { token } = useSessionCheckToken();
   const { profile } = useUserProfile();
   const { registerOcorrenciaActivity } = useOcorrenciaActivity();
-  const { csrfToken, isLoading: isLoadingCsrf, regenerateToken } = useCsrfToken();
+  const { csrfToken, isLoading: isLoadingCsrf } = useCsrfToken();
 
   // Estados do componente
   const [apolices, setApolices] = useState<Apolice[]>([]);
@@ -482,6 +482,13 @@ export default function NewOcorrênciasPage({ onBack }: NewSinistroPageProps) {
       return;
     }
 
+    // Verificar se tem token CSRF
+    if (!csrfToken) {
+      setError("Token de segurança não disponível");
+      setTimeout(() => setError(""), 3000);
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
@@ -499,20 +506,13 @@ export default function NewOcorrênciasPage({ onBack }: NewSinistroPageProps) {
         id_anexos: documentosIds,
       };
 
-      // Gerar token CSRF fresco e usar IMEDIATAMENTE
-      const freshCsrfToken = await regenerateToken();
-      
-      if (!freshCsrfToken) {
-        throw new Error("Não foi possível processar sua solicitação. Tente novamente.");
-      }
-
-      // Enviar com o token recém-gerado
+      // Enviar com o token CSRF
       const response = await fetch("/api/sinistro", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
-          "x-csrf-token": freshCsrfToken,
+          "x-csrf-token": csrfToken,
         },
         body: JSON.stringify(payload),
       });
