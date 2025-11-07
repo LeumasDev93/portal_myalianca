@@ -53,6 +53,7 @@ const AtivitysLastCard = () => {
       toast({
         title: "Sucesso",
         description: "Todas as atividades foram limpas.",
+        variant: "default",
       });
       setShowClearConfirm(false);
     } catch (error) {
