@@ -225,7 +225,13 @@ const Page = () => {
     return baseMenus;
   };
 
-  const MainMenus = getFilteredMenus();
+  const MainMenus = getFilteredMenus().filter(menu => {
+    // Filtrar Dashboard apenas para Company
+    if (menu.path === "dashboard") {
+      return profile?.user?.tipo_cliente === "Company";
+    }
+    return true;
+  });
 
   useEffect(() => {
     setIsClient(true);
