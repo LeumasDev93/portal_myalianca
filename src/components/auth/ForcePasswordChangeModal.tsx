@@ -6,7 +6,7 @@ import { AlertCircle, Eye, EyeOff, Loader2, LockKeyhole } from "lucide-react";
 interface ForcePasswordChangeModalProps {
   isOpen: boolean;
   userId: string;
-  onSuccess: () => void;
+  onSuccess: (newPassword: string) => void;
 }
 
 export function ForcePasswordChangeModal({
@@ -67,8 +67,8 @@ export function ForcePasswordChangeModal({
         return;
       }
 
-      // Sucesso
-      onSuccess();
+      // Sucesso - passa a nova senha para fazer login automático
+      onSuccess(newPassword);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao conectar com o servidor");
     } finally {

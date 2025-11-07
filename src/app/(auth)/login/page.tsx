@@ -54,7 +54,6 @@ export default function LoginPage() {
   const [showForcePasswordChange, setShowForcePasswordChange] = useState(false);
   const [userIdForPasswordChange, setUserIdForPasswordChange] = useState("");
   const [savedUsername, setSavedUsername] = useState("");
-  const [savedPassword, setSavedPassword] = useState("");
   const [isloading, setIsLoading] = useState(false);
   const [erro, setErro] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
@@ -88,7 +87,6 @@ export default function LoginPage() {
       // Verificar se precisa trocar senha
       if (data.needPasswordChange) {
         setSavedUsername(username);
-        setSavedPassword(password);
         setUserIdForPasswordChange(data.userId);
         setShowForcePasswordChange(true);
         return;
@@ -101,11 +99,11 @@ export default function LoginPage() {
     }
   };
 
-  const handlePasswordChangeSuccess = async () => {
+  const handlePasswordChangeSuccess = async (newPassword: string) => {
     setShowForcePasswordChange(false);
-    // Após trocar senha, fazer login automaticamente
+    // Após trocar senha, fazer login automaticamente com a NOVA senha
     try {
-      await login(savedUsername, savedPassword);
+      await login(savedUsername, newPassword);
     } catch (err) {
       console.error("Erro ao fazer login após troca de senha:", err);
     }
