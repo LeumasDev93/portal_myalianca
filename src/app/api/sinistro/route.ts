@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
-import { validateCsrfToken, validateOrigin, hashCsrfToken } from '@/lib/csrf';
+import { validateCsrfToken, validateOrigin } from '@/lib/csrf';
 import { getServerSession } from 'next-auth';
 import { checkRateLimit } from '@/lib/rateLimit';
 import { validateAndConsumeToken } from '@/lib/tokenRegistry';
