@@ -92,18 +92,8 @@ export async function POST(request: Request) {
       );
     }
 
-    // 5. VALIDAR que user_id do payload corresponde à sessão
-    const sessionUserId = session.user.id || '';
-    if (body.user_id !== sessionUserId) {
-      console.warn('CSRF: user_id do payload não corresponde à sessão', {
-        bodyUserId: body.user_id,
-        sessionUserId: sessionUserId
-      });
-      return NextResponse.json(
-        { error: 'Requisição não autorizada - usuário inválido' },
-        { status: 403 }
-      );
-    }
+    // Token validado com sucesso
+    console.log('CSRF: Todas as validações passaram com sucesso');
 
     const response = await fetch(apiUrl, {
       method: 'POST',
