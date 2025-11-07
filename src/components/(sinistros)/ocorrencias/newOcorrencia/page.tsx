@@ -486,11 +486,17 @@ export default function NewOcorrênciasPage({ onBack }: NewSinistroPageProps) {
 
     try {
       // Gerar novo token CSRF imediatamente antes do submit
-      const freshToken = await regenerateToken();
+      let tokenToUse = await regenerateToken();
       
-      // Verificar se token foi gerado com sucesso
-      if (!freshToken) {
-        throw new Error("Erro ao gerar token de segurança. Tente novamente.");
+      // Se falhar, tentar novamente (sem mostrar erro ao usuário)
+      if (!tokenToUse) {
+        console.warn("Token CSRF não gerado, tentando novamente...");
+        tokenToUse = await regenerateToken();
+      }
+      
+      // Se ainda falhar, mostrar erro genérico
+      if (!tokenToUse) {
+        throw new Error("Não foi possível processar sua solicitação. Tente novamente.");
       }
 
       // Usar os IDs já carregados
@@ -512,7 +518,7 @@ export default function NewOcorrênciasPage({ onBack }: NewSinistroPageProps) {
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
-          "x-csrf-token": freshToken,
+          "x-csrf-token": tokenToUse,
         },
         body: JSON.stringify(payload),
       });
@@ -935,7 +941,7 @@ export default function NewOcorrênciasPage({ onBack }: NewSinistroPageProps) {
                 className="bg-[#002256] hover:bg-[#002256]/80"
                 disabled={isLoading || isSubmitting || isLoadingCsrf}
               >
-                {isSubmitting ? "Enviando..." : "Enviar Ocorrência de Segurança"}
+                {isSubmitting ? "Processando..." : "Enviar Ocorrência de Segurança"}
               </Button>
             </CardFooter>
           </form>
