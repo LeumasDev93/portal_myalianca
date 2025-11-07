@@ -31,8 +31,6 @@ export function validateRequest(request: Request, userId: string): RequestValida
 
   // 2. Validar headers Sec-Fetch-* (navegadores modernos only)
   const secFetchSite = request.headers.get('sec-fetch-site');
-  const secFetchMode = request.headers.get('sec-fetch-mode');
-  const secFetchDest = request.headers.get('sec-fetch-dest');
 
   if (!secFetchSite || secFetchSite !== 'same-origin') {
     return { valid: false, reason: 'Headers de navegador ausentes ou inválidos' };

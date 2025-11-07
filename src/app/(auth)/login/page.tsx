@@ -256,14 +256,14 @@ export default function LoginPage() {
       {/* Banner Semi-Transparente no Centro - Largura Full */}
       <div className="hidden lg:block absolute top-1/2 left-0 right-0 -translate-y-1/2 z-10">
         <div className="bg-white/10 backdrop-blur-md py-8 lg:py-10 xl:py-12 2xl:py-14 px-6 2xl:px-12">
-          <div className="text-white space-y-6 lg:space-y-8">
-            <div className="text-left lg:ml-48 xl:ml-64 2xl:ml-96 lg:mr-[450px] xl:mr-[400px] 2xl:mr-[500px]">
+          <div className="text-white space-y-6 lg:space-y-8 lg:max-w-[calc(100%-450px)] xl:max-w-[calc(100%-420px)] 2xl:max-w-[calc(100%-550px)]">
+            <div className="text-left lg:ml-48 xl:ml-52 2xl:ml-64">
               <h1 className="text-3xl lg:text-4xl xl:text-5xl 2xl:text-6xl font-bold mb-2 lg:mb-3 xl:mb-4">MYALIANÇA</h1>
               <p className="text-base lg:text-lg xl:text-xl 2xl:text-2xl">Descomplicar é ter <span className="font-bold">MyAliança</span></p>
             </div>
             
             {/* Serviços no rodapé do banner - quebra em 2 linhas em telas < 2xl */}
-            <div className="flex flex-wrap 2xl:flex-nowrap items-center justify-start gap-x-3 lg:gap-x-4 xl:gap-x-5 2xl:gap-x-6 gap-y-2 lg:gap-y-3 pt-4 border-t border-white/20 lg:mr-[450px] xl:mr-[400px] 2xl:mr-[500px]">
+            <div className="flex flex-wrap 2xl:flex-nowrap items-center justify-start gap-x-3 lg:gap-x-4 xl:gap-x-5 2xl:gap-x-6 gap-y-2 lg:gap-y-3 pt-4 border-t border-white/20">
               {[
                 "Gerenciamento de apólices",
                 "Acompanhamento de sinistros",
