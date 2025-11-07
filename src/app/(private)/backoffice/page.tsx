@@ -13,6 +13,7 @@ import {
   IoNotifications,
   IoReceiptSharp,
   IoBusinessSharp,
+  IoStatsChart,
 } from "react-icons/io5";
 import { TbTopologyStar3 } from "react-icons/tb";
 import { FaTriangleExclamation, FaUserLarge } from "react-icons/fa6";
@@ -49,6 +50,7 @@ import { BottomNavigation } from "@/components/Layout/BottomNavigation";
 import NotificationsPage from "@/components/Notifications/page";
 import { LuSquareKanban } from "react-icons/lu";
 import DashboardEmpresarial from "@/components/dashboardEmpresarial/page";
+import DashboardPage from "@/components/dashboard/page";
 import { BackToDashboardButton } from "@/components/ui/BackToDashboardButton";
 import PageGestaoSOAT from "@/components/gestaoSOAT/page";
 import { BackToTopButton } from "@/components/ui/BackToTopButton";
@@ -192,8 +194,17 @@ const Page = () => {
         onClick: () => handleMenuClick("dashboardEmpresarial"),
       });
 
-      // Gestão de SOAT
+      // Dashboard
       baseMenus.splice(1, 0, {
+        title: "Dashboard",
+        path: "dashboard",
+        icon: IoStatsChart,
+        hoverIcon: <IoStatsChart />,
+        onClick: () => handleMenuClick("dashboard"),
+      });
+
+      // Gestão de SOAT
+      baseMenus.splice(2, 0, {
         title: "Gestão de SOAT",
         path: "gestaoSOAT",
         icon: LuSquareKanban,
@@ -615,6 +626,9 @@ const Page = () => {
                     onSelectDetailApolice={handleSelectApoliceDetail}
                     onSelectDetailSinistro={handleSelectSinistroDetail}
                   />
+                )}
+                {currentPage === "dashboard" && profile?.user?.tipo_cliente === "Company" && (
+                  <DashboardPage />
                 )}
                 {currentPage === "recibo" && (
                   <ReciboPage
