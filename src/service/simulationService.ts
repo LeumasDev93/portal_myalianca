@@ -147,8 +147,8 @@ export const fetchSimulation = async (
                     "Content-Type": "application/json",
                 },
                 body: JSON.stringify({
+                    productId: productId,
                     ...simulationResult,
-                    product_id: productId,
                 }),
             });
 

@@ -18,7 +18,7 @@ export async function POST(req: NextRequest) {
         }
 
         console.log("📦 Enviando para API Aliança:", {
-            product_id: simulationResult.product_id,
+            productId: simulationResult.productId,
             url: `${ALIANCA_API_URL}/simulador/1.0.0/simulations`
         });
 
