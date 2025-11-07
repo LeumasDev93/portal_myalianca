@@ -69,8 +69,8 @@ export function ForcePasswordChangeModal({
 
       // Sucesso
       onSuccess();
-    } catch (err:any) {
-      setError(err.message || "Erro ao conectar com o servidor");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erro ao conectar com o servidor");
     } finally {
       setIsLoading(false);
     }
