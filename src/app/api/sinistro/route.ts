@@ -1,8 +1,9 @@
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
-import { validateCsrfToken, validateOrigin } from '@/lib/csrf';
+import { validateCsrfToken, validateOrigin, hashCsrfToken } from '@/lib/csrf';
 import { getServerSession } from 'next-auth';
 import { checkRateLimit } from '@/lib/rateLimit';
+import { validateAndConsumeToken } from '@/lib/tokenRegistry';
 
 export async function POST(request: Request) {
   try {
@@ -106,17 +107,30 @@ export async function POST(request: Request) {
       );
     }
 
-    // Recriar token completo com sessionId + timestamp + nonce para validar
+    // 3.1. VALIDAR TOKEN NO REGISTRO DO SERVIDOR (lista branca)
     const sessionId = session.user.id || session.user.username || '';
-    const tokenWithSession = `${csrfToken}.${sessionId}.${tokenTimestamp}.${nonce}`;
+    
+    if (!validateAndConsumeToken(csrfTokenHash, sessionId, nonce)) {
+      console.warn('CSRF: ❌ Token não está registrado no servidor ou já foi usado');
+      return NextResponse.json(
+        { error: 'Token de segurança inválido ou já utilizado' },
+        { status: 403 }
+      );
+    }
+
+    // 3.2. Validar hash completo com serverSecret
+    const serverSecret = process.env.CSRF_SECRET || 'default-secret-change-in-production';
+    const tokenWithSession = `${csrfToken}.${sessionId}.${tokenTimestamp}.${nonce}.${serverSecret}`;
     
     if (!validateCsrfToken(tokenWithSession, csrfTokenHash)) {
-      console.warn('CSRF: Token inválido ou sessão não corresponde');
+      console.warn('CSRF: ❌ Hash do token não corresponde (serverSecret inválido)');
       return NextResponse.json(
         { error: 'Token de segurança inválido' },
         { status: 403 }
       );
     }
+    
+    console.log('CSRF: ✅ Token validado - todas as camadas de segurança passaram');
 
     // 4. Invalidar token após uso (one-time use token)
     cookieStore.delete('csrf-token-hash');

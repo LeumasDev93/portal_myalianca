@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { generateCsrfToken, hashCsrfToken } from '@/lib/csrf';
 import { cookies } from 'next/headers';
 import { getServerSession } from 'next-auth';
+import { registerToken } from '@/lib/tokenRegistry';
 
 export async function GET() {
   try {
@@ -16,14 +17,16 @@ export async function GET() {
       );
     }
 
-    // 2. Gerar token CSRF único vinculado à sessão + timestamp + nonce
+    // 2. Gerar token CSRF único vinculado à sessão + timestamp + nonce + secret
     const sessionId = session.user.id || session.user.username || '';
     const timestamp = Date.now().toString();
     const token = generateCsrfToken();
     const nonce = generateCsrfToken(); // Nonce adicional para cada token
+    const serverSecret = process.env.CSRF_SECRET || 'default-secret-change-in-production';
     
-    // Token completo: token + sessionId + timestamp + nonce (só o hash é armazenado)
-    const tokenWithSession = `${token}.${sessionId}.${timestamp}.${nonce}`;
+    // Token completo: token + sessionId + timestamp + nonce + serverSecret
+    // O serverSecret NUNCA é enviado ao cliente, apenas usado na validação
+    const tokenWithSession = `${token}.${sessionId}.${timestamp}.${nonce}.${serverSecret}`;
     const hashedToken = hashCsrfToken(tokenWithSession);
 
     // 3. Armazenar hash no cookie (HttpOnly para segurança)
@@ -53,8 +56,11 @@ export async function GET() {
       path: '/',
     });
 
-    // 4. Retornar apenas o token (sem session ID/timestamp) para o cliente
-    console.log('CSRF: Token gerado para usuário:', sessionId);
+    // 4. REGISTRAR TOKEN NO SERVIDOR (lista branca)
+    registerToken(hashedToken, sessionId, parseInt(timestamp), nonce);
+
+    // 5. Retornar apenas o token (sem session ID/timestamp/nonce/secret) para o cliente
+    console.log('CSRF: Token gerado e registrado para usuário:', sessionId);
     return NextResponse.json({ csrfToken: token });
   } catch (error) {
     console.error('Erro ao gerar token CSRF:', error);
