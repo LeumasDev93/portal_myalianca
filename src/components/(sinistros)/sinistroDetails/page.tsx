@@ -12,7 +12,7 @@ import {
   CardFooter,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Phone, Upload, Download } from "lucide-react";
+import { ArrowLeft, Phone, Upload, Download, Copy, Check } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useSessionCheckToken } from "@/hooks/useSessionToken";
@@ -94,7 +94,18 @@ export default function SinistroDetailPage({
   const [loadingStates, setLoadingStates] = useState<Record<string, boolean>>(
     {}
   );
+  const [copiedRecibo, setCopiedRecibo] = useState<string | null>(null);
   console.log("Sinistro id:", id);
+
+  const handleCopyRecibo = async (reference: string) => {
+    try {
+      await navigator.clipboard.writeText(reference);
+      setCopiedRecibo(reference);
+      setTimeout(() => setCopiedRecibo(null), 2000);
+    } catch (error) {
+      console.error("Erro ao copiar:", error);
+    }
+  };
 
   const handleDownload = async (refOrNumber: string) => {
     if (!token || !refOrNumber) return;
@@ -362,7 +373,7 @@ export default function SinistroDetailPage({
                               <FaUser className="size-3 sm:size-4 xl:size-5 text-[#002256]" />
                             </div>
                             <h3 className="text-sm font-medium text-[#002256]">
-                              Tomador se Seguros
+                              Tomador de Seguros
                             </h3>
                           </div>
                           <div className="flex flex-col items-end gap-2">
@@ -428,12 +439,25 @@ export default function SinistroDetailPage({
                                       <IoReceiptSharp className="size-4 md:size-6 xl:size-8 text-[#002256]" />
                                     </div>
                                     <div className="flex flex-col">
-                                      <span className="font-medium underline text-[#002256] text-sm md:text-base">
-                                        Recibo Nº {reference}
-                                      </span>
+                                      <div className="flex items-center gap-2">
+                                        <span className="font-medium underline text-[#002256] text-sm md:text-base">
+                                          Recibo Nº {reference}
+                                        </span>
+                                        <button
+                                          onClick={() => handleCopyRecibo(reference)}
+                                          className="p-1 hover:bg-gray-100 rounded transition-colors"
+                                          title="Copiar referência"
+                                        >
+                                          {copiedRecibo === reference ? (
+                                            <Check className="h-3 w-3 md:h-4 md:w-4 text-green-600" />
+                                          ) : (
+                                            <Copy className="h-3 w-3 md:h-4 md:w-4 text-[#002256]" />
+                                          )}
+                                        </button>
+                                      </div>
                                       {typeof comp.value === "number" && (
                                         <span className="text-xs md:text-sm text-gray-400">
-                                          Valor do Prêmio:{" "}
+                                          Valor:{" "}
                                           {formatCurrency(comp.value)}
                                         </span>
                                       )}
@@ -502,9 +526,6 @@ export default function SinistroDetailPage({
                   <TabsContent value="riscos">
                     <div className=" bg-gray-100 rounded-xl p-4 gap-4 shadow-sm hover:shadow-md transition-shadow">
                       <div>
-                        <h3 className="text-lg text-[#002855] font-semibold uppercase mb-2">
-                          Coberturas
-                        </h3>
                         {sinistroCoberturas.map((cobertura) => (
                           <div key={cobertura.code} className="flex flex-col ">
                             <div className="flex  px-4 py-2">
