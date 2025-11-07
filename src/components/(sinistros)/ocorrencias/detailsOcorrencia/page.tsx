@@ -7,7 +7,6 @@ import { ArrowLeft } from "lucide-react";
 import { OcorrenciaDetails } from "../OcorrenciaDetails";
 import { Ocorrencia, Anexo } from "@/types/typesData";
 import { LoadingContainer } from "@/components/ui/loading-container";
-import { OccurrenceDetailSkeleton } from "@/components/ui/occurrence-detail-skeleton";
 
 type OcorrenciaDetailsProps = {
   onBack: () => void;
@@ -28,15 +27,12 @@ export default function OcorrenciaDetailsPage({
     try {
       setIsLoading(true);
       setError(null);
-      console.log(id);
+      
       const response = await fetch(`/api/detailsOcorrencia?id=${id}`);
       if (!response.ok)
         throw new Error("Erro ao buscar detalhes da ocorrência");
 
       const data = await response.json();
-      console.log("✅ Dados da API recebidos:", data);
-      console.log("✅ Tipo de data:", Array.isArray(data) ? 'Array' : typeof data);
-      console.log("✅ Tamanho do array:", Array.isArray(data) ? data.length : 'N/A');
       
       if (!data || (Array.isArray(data) && data.length === 0)) {
         throw new Error('Nenhum dado retornado pela API');
@@ -45,27 +41,21 @@ export default function OcorrenciaDetailsPage({
       setOcorrencia(data);
 
       const ocorrencia = Array.isArray(data) ? data[0] : data;
-      console.log("✅ Ocorrência processada:", ocorrencia);
-      console.log("✅ Campos da ocorrência:", Object.keys(ocorrencia || {}));
+      
       // Se houver anexos, processar diretamente usando a URL da API externa
       let anexosIds: string[] = [];
 
       if (typeof ocorrencia.id_anexos === "string" && ocorrencia.id_anexos) {
         try {
           anexosIds = JSON.parse(ocorrencia.id_anexos);
-          console.log("Anexos IDs parseados:", anexosIds);
         } catch (e) {
-          console.log("❌ Erro ao fazer parse de id_anexos:", e);
           anexosIds = [];
         }
       } else if (Array.isArray(ocorrencia.id_anexos)) {
         anexosIds = ocorrencia.id_anexos;
-        console.log("Anexos IDs (array):", anexosIds);
       }
 
       if (anexosIds.length > 0) {
-        console.log("Processando anexos IDs:", anexosIds);
-
         // Processar anexos diretamente usando a URL da API externa
         const processedAnexos = anexosIds.map((id: string) => {
           const apiBaseUrl =
@@ -83,14 +73,11 @@ export default function OcorrenciaDetailsPage({
             url: imageUrl, // URL direta para download
           };
 
-          console.log("Anexo processado:", anexo);
           return anexo;
         });
 
-        console.log("Todos os anexos processados:", processedAnexos);
         setAnexos(processedAnexos);
       } else {
-        console.log("Nenhum anexo encontrado");
         setAnexos([]);
       }
     } catch (err: any) {
@@ -111,12 +98,11 @@ export default function OcorrenciaDetailsPage({
 
   if (isLoading) {
     return (
-      <div className="flex-1 space-y-6 p-6 md:p-8 mt-4">
-        <div className="flex items-center gap-2">
-          <div className="h-8 w-8 bg-gray-200 rounded-md" />
-          <div className="h-8 w-64 bg-gray-200 rounded" />
-        </div>
-        <OccurrenceDetailSkeleton />
+      <div className="flex flex-col items-center justify-center space-y-4 text-center py-12 ">
+        <LoadingContainer
+          fullHeight={true}
+          message="CARREGANDO DETALHES OCORRÊNCIAS..."
+        />
       </div>
     );
   }

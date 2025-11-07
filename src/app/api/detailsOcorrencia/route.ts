@@ -19,8 +19,7 @@ export async function GET(request: Request) {
       throw new Error('Variáveis de ambiente não configuradas');
     }
 
-    const apiUrl = `${NEXT_PUBLIC_API_BASE_URL}/middleware/1.0.0/ocorrencias/${id}`;
-    console.log('[API Request]', apiUrl);
+    const apiUrl = `${NEXT_PUBLIC_API_BASE_URL}/ocorrencias/${id}`;
 
     const response = await fetch(apiUrl, {
       headers: {
@@ -32,7 +31,6 @@ export async function GET(request: Request) {
     });
 
     const responseText = await response.text();
-    console.log('[API Raw Response]', responseText);
 
     if (!response.ok) {
       throw new Error(`Erro HTTP: ${response.status}`);
