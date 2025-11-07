@@ -1,7 +1,33 @@
 import { NextResponse } from 'next/server';
+import { cookies } from 'next/headers';
+import { validateCsrfToken, validateOrigin } from '@/lib/csrf';
 
 export async function POST(request: Request) {
   try {
+    // ===== CSRF Protection =====
+    // 1. Validar origem da requisição
+    if (!validateOrigin(request)) {
+      console.warn('CSRF: Requisição bloqueada - origem inválida');
+      return NextResponse.json(
+        { error: 'Requisição não autorizada' },
+        { status: 403 }
+      );
+    }
+
+    // 2. Validar token CSRF
+    const csrfToken = request.headers.get('x-csrf-token');
+    const cookieStore = await cookies();
+    const csrfTokenHash = cookieStore.get('csrf-token-hash')?.value;
+
+    if (!csrfToken || !csrfTokenHash || !validateCsrfToken(csrfToken, csrfTokenHash)) {
+      console.warn('CSRF: Token inválido ou ausente');
+      return NextResponse.json(
+        { error: 'Token de segurança inválido' },
+        { status: 403 }
+      );
+    }
+    // ===== Fim CSRF Protection =====
+
     const apiUrl = `${process.env.NEXT_PUBLIC_API_BASE_URL}/ocorrencias`;
     const apiToken = process.env.API_SECRET_TOKEN;
 

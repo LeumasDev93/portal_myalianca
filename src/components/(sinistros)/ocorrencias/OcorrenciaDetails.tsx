@@ -24,21 +24,23 @@ const StatusTimeline = ({ currentStatus }: { currentStatus: string }) => {
   };
 
   // Determinar quais steps mostrar baseado no estado atual
-  let activeSteps = [...baseSteps];
-
-  if (currentStatus === "P" || currentStatus === "EA") {
-    // Se Pendente ou Em Análise: mostrar TODOS os 5 estados possíveis
-    activeSteps.push(endSteps.D, endSteps.CS, endSteps.A);
-  } else if (currentStatus === "D") {
-    // Se Descartada: P → EA → D (3 estados, CS e A desaparecem)
-    activeSteps.push(endSteps.D);
-  } else if (currentStatus === "CS") {
-    // Se Convertida em Sinistro: P → EA → CS → A (4 estados, D desaparece)
-    activeSteps.push(endSteps.CS, endSteps.A);
-  } else if (currentStatus === "A") {
-    // Se Arquivada: P → EA → CS → A (4 estados, D desaparece)
-    activeSteps.push(endSteps.CS, endSteps.A);
-  }
+  const activeSteps = (() => {
+    if (currentStatus === "P" || currentStatus === "EA") {
+      // Se Pendente ou Em Análise: mostrar TODOS os 5 estados possíveis
+      return [...baseSteps, endSteps.D, endSteps.CS, endSteps.A];
+    } else if (currentStatus === "D") {
+      // Se Descartada: P → EA → D (3 estados, CS e A desaparecem)
+      return [...baseSteps, endSteps.D];
+    } else if (currentStatus === "CS") {
+      // Se Convertida em Sinistro: P → EA → CS → A (4 estados, D desaparece)
+      return [...baseSteps, endSteps.CS, endSteps.A];
+    } else if (currentStatus === "A") {
+      // Se Arquivada: P → EA → CS → A (4 estados, D desaparece)
+      return [...baseSteps, endSteps.CS, endSteps.A];
+    }
+    // Fallback: apenas estados base
+    return baseSteps;
+  })();
 
   const currentIndex = activeSteps.findIndex((step) => step.key === currentStatus);
   const progressPercentage = currentIndex >= 0 ? (currentIndex / (activeSteps.length - 1)) * 100 : 0;

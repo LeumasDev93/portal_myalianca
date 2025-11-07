@@ -40,6 +40,7 @@ import { useSessionCheckToken } from "@/hooks/useSessionToken";
 import { Toaster } from "@/components/ui/toaster";
 import { useUserProfile } from "@/hooks/useUserProfile";
 import { useOcorrenciaActivity } from "@/lib/activityExamples";
+import { useCsrfToken } from "@/hooks/useCsrfToken";
 
 interface Apolice {
   registration: string;
@@ -71,6 +72,7 @@ export default function NewOcorrênciasPage({ onBack }: NewSinistroPageProps) {
   const { token } = useSessionCheckToken();
   const { profile } = useUserProfile();
   const { registerOcorrenciaActivity } = useOcorrenciaActivity();
+  const { csrfToken, isLoading: isLoadingCsrf } = useCsrfToken();
 
   // Estados do componente
   const [apolices, setApolices] = useState<Apolice[]>([]);
@@ -480,6 +482,15 @@ export default function NewOcorrênciasPage({ onBack }: NewSinistroPageProps) {
       return;
     }
 
+    // Verificar token CSRF
+    if (!csrfToken) {
+      setError("Token de segurança não disponível. Recarregue a página.");
+      setTimeout(() => {
+        setError("");
+      }, 3000);
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
@@ -502,6 +513,7 @@ export default function NewOcorrênciasPage({ onBack }: NewSinistroPageProps) {
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
+          "x-csrf-token": csrfToken,
         },
         body: JSON.stringify(payload),
       });
@@ -921,7 +933,7 @@ export default function NewOcorrênciasPage({ onBack }: NewSinistroPageProps) {
               <Button
                 type="submit"
                 className="bg-[#002256] hover:bg-[#002256]/80"
-                disabled={isLoading || isSubmitting}
+                disabled={isLoading || isSubmitting || isLoadingCsrf}
               >
                 {isSubmitting ? "Enviando..." : "Enviar Ocorrência de Segurança"}
               </Button>
