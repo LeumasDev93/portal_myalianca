@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { validateCsrfToken, validateOrigin } from '@/lib/csrf';
 import { getServerSession } from 'next-auth';
+import { checkRateLimit } from '@/lib/rateLimit';
 
 export async function POST(request: Request) {
   try {
@@ -26,14 +27,66 @@ export async function POST(request: Request) {
       );
     }
 
+    // 2.1. Validar headers de navegador (detectar Postman/curl)
+    const userAgent = request.headers.get('user-agent') || '';
+    const secFetchSite = request.headers.get('sec-fetch-site');
+    const secFetchMode = request.headers.get('sec-fetch-mode');
+    const secFetchDest = request.headers.get('sec-fetch-dest');
+
+    // Sec-Fetch-* headers são adicionados automaticamente por navegadores modernos
+    // Postman/curl não envia esses headers corretamente
+    if (!secFetchSite || !secFetchMode || !secFetchDest) {
+      console.warn('CSRF: Headers Sec-Fetch ausentes - possível Postman/curl');
+      return NextResponse.json(
+        { error: 'Requisição não autorizada - cliente inválido' },
+        { status: 403 }
+      );
+    }
+
+    // Validar que Sec-Fetch-Site é "same-origin"
+    if (secFetchSite !== 'same-origin') {
+      console.warn('CSRF: Sec-Fetch-Site inválido:', secFetchSite);
+      return NextResponse.json(
+        { error: 'Requisição não autorizada - origem cross-site' },
+        { status: 403 }
+      );
+    }
+
+    // Detectar User-Agents suspeitos (Postman, curl, etc)
+    const suspiciousAgents = ['postman', 'curl', 'wget', 'python', 'insomnia', 'httpie'];
+    if (suspiciousAgents.some(agent => userAgent.toLowerCase().includes(agent))) {
+      console.warn('CSRF: User-Agent suspeito detectado:', userAgent);
+      return NextResponse.json(
+        { error: 'Requisição não autorizada - cliente não permitido' },
+        { status: 403 }
+      );
+    }
+
+    // 2.2. Rate Limiting - Máximo 5 requisições por minuto por usuário
+    const clientIp = request.headers.get('x-forwarded-for')?.split(',')[0] || 
+                     request.headers.get('x-real-ip') || 
+                     'unknown';
+    
+    const sessionUserId = session.user.id || '';
+    const rateLimit = checkRateLimit(sessionUserId, clientIp, 5, 60 * 1000);
+    
+    if (!rateLimit.allowed) {
+      console.warn('CSRF: Rate limit excedido', { userId: sessionUserId, ip: clientIp });
+      return NextResponse.json(
+        { error: 'Muitas requisições. Aguarde um momento e tente novamente.' },
+        { status: 429 }
+      );
+    }
+
     // 3. Validar token CSRF vinculado à sessão
     const csrfToken = request.headers.get('x-csrf-token');
     const cookieStore = await cookies();
     const csrfTokenHash = cookieStore.get('csrf-token-hash')?.value;
     const tokenTimestamp = cookieStore.get('csrf-token-ts')?.value;
+    const nonce = cookieStore.get('csrf-nonce')?.value;
 
-    if (!csrfToken || !csrfTokenHash || !tokenTimestamp) {
-      console.warn('CSRF: Token ou timestamp ausente');
+    if (!csrfToken || !csrfTokenHash || !tokenTimestamp || !nonce) {
+      console.warn('CSRF: Token, timestamp ou nonce ausente');
       return NextResponse.json(
         { error: 'Token de segurança ausente' },
         { status: 403 }
@@ -46,15 +99,16 @@ export async function POST(request: Request) {
       console.warn('CSRF: Token expirado');
       cookieStore.delete('csrf-token-hash');
       cookieStore.delete('csrf-token-ts');
+      cookieStore.delete('csrf-nonce');
       return NextResponse.json(
         { error: 'Token de segurança expirado' },
         { status: 403 }
       );
     }
 
-    // Recriar token completo com sessionId + timestamp para validar
+    // Recriar token completo com sessionId + timestamp + nonce para validar
     const sessionId = session.user.id || session.user.username || '';
-    const tokenWithSession = `${csrfToken}.${sessionId}.${tokenTimestamp}`;
+    const tokenWithSession = `${csrfToken}.${sessionId}.${tokenTimestamp}.${nonce}`;
     
     if (!validateCsrfToken(tokenWithSession, csrfTokenHash)) {
       console.warn('CSRF: Token inválido ou sessão não corresponde');
@@ -67,6 +121,7 @@ export async function POST(request: Request) {
     // 4. Invalidar token após uso (one-time use token)
     cookieStore.delete('csrf-token-hash');
     cookieStore.delete('csrf-token-ts');
+    cookieStore.delete('csrf-nonce');
     
     console.log('CSRF: Token validado com sucesso para usuário:', sessionId);
     // ===== Fim CSRF Protection =====

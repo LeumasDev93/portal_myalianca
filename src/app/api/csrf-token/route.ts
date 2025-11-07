@@ -16,13 +16,14 @@ export async function GET() {
       );
     }
 
-    // 2. Gerar token CSRF único vinculado à sessão + timestamp
+    // 2. Gerar token CSRF único vinculado à sessão + timestamp + nonce
     const sessionId = session.user.id || session.user.username || '';
     const timestamp = Date.now().toString();
     const token = generateCsrfToken();
+    const nonce = generateCsrfToken(); // Nonce adicional para cada token
     
-    // Token completo: token + sessionId + timestamp (só o hash é armazenado)
-    const tokenWithSession = `${token}.${sessionId}.${timestamp}`;
+    // Token completo: token + sessionId + timestamp + nonce (só o hash é armazenado)
+    const tokenWithSession = `${token}.${sessionId}.${timestamp}.${nonce}`;
     const hashedToken = hashCsrfToken(tokenWithSession);
 
     // 3. Armazenar hash no cookie (HttpOnly para segurança)
@@ -35,8 +36,16 @@ export async function GET() {
       path: '/',
     });
 
-    // Armazenar timestamp separado para validação
+    // Armazenar timestamp e nonce separados para validação
     cookieStore.set('csrf-token-ts', timestamp, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 60 * 5,
+      path: '/',
+    });
+
+    cookieStore.set('csrf-nonce', nonce, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
