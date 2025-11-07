@@ -213,7 +213,7 @@ export function PerfilPage() {
         );
       }
 
-      const profileResult = await profileResponse.json();
+      await profileResponse.json();
 
       // Registrar atividade de alteração de foto
       try {
