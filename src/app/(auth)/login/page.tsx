@@ -262,15 +262,15 @@ export default function LoginPage() {
               <p className="text-base lg:text-lg xl:text-xl 2xl:text-2xl">Descomplicar é ter <span className="font-bold">MyAliança</span></p>
             </div>
             
-            {/* Serviços em linha no rodapé do banner - uma única linha */}
-            <div className="flex flex-nowrap items-center justify-start gap-x-2 2xl:gap-x-6 pt-4 border-t border-white/20 overflow-x-auto lg:mr-[450px] xl:mr-[400px] 2xl:mr-[500px]">
+            {/* Serviços no rodapé do banner - quebra em 2 linhas em telas < 2xl */}
+            <div className="flex flex-wrap 2xl:flex-nowrap items-center justify-start gap-x-3 lg:gap-x-4 xl:gap-x-5 2xl:gap-x-6 gap-y-2 lg:gap-y-3 pt-4 border-t border-white/20 lg:mr-[450px] xl:mr-[400px] 2xl:mr-[500px]">
               {[
                 "Gerenciamento de apólices",
                 "Acompanhamento de sinistros",
                 "Pagamentos online",
                 "Atendimento personalizado",
               ].map((benefit) => (
-                <div key={benefit} className="flex items-center gap-1.5 2xl:gap-2 flex-shrink-0">
+                <div key={benefit} className="flex items-center gap-1.5 lg:gap-2 flex-shrink-0">
                   <CheckCircle2 className="h-3 lg:h-3.5 xl:h-4 w-3 lg:w-3.5 xl:w-4 text-white flex-shrink-0" />
                   <span className="text-[10px] lg:text-xs xl:text-sm whitespace-nowrap">{benefit}</span>
                 </div>
