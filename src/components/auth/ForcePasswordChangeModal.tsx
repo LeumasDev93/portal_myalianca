@@ -69,8 +69,8 @@ export function ForcePasswordChangeModal({
 
       // Sucesso
       onSuccess();
-    } catch (err) {
-      setError("Erro ao conectar com o servidor");
+    } catch (err:any) {
+      setError(err.message || "Erro ao conectar com o servidor");
     } finally {
       setIsLoading(false);
     }
@@ -84,7 +84,7 @@ export function ForcePasswordChangeModal({
           <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-amber-400 to-amber-600 rounded-full flex items-center justify-center shadow-lg">
             <LockKeyhole className="h-8 w-8 text-white" />
           </div>
-          <h1 className="text-xl md:text-2xl font-bold text-gray-900 mb-2 bg-gradient-to-r from-blue-600 to-blue-800 bg-clip-text">
+          <h1 className="text-lg md:text-xl font-bold text-gray-900 mb-2 bg-gradient-to-r from-blue-600 to-blue-800 bg-clip-text">
             ALTERAÇÃO DE SENHA OBRIGATÓRIA
           </h1>
           <div className="w-16 md:w-20 h-1 bg-gradient-to-r from-blue-400 to-blue-600 mx-auto rounded-full mb-3"></div>
