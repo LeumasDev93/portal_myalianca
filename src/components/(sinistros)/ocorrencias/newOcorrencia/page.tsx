@@ -482,18 +482,17 @@ export default function NewOcorrênciasPage({ onBack }: NewSinistroPageProps) {
       return;
     }
 
-    // Verificar token CSRF
-    if (!csrfToken) {
-      setError("Token de segurança não disponível. Recarregue a página.");
-      setTimeout(() => {
-        setError("");
-      }, 3000);
-      return;
-    }
-
     setIsSubmitting(true);
 
     try {
+      // Gerar novo token CSRF imediatamente antes do submit
+      const freshToken = await regenerateToken();
+      
+      // Verificar se token foi gerado com sucesso
+      if (!freshToken) {
+        throw new Error("Erro ao gerar token de segurança. Tente novamente.");
+      }
+
       // Usar os IDs já carregados
       const documentosIds = uploadedFileIds;
       const payload = {
@@ -513,7 +512,7 @@ export default function NewOcorrênciasPage({ onBack }: NewSinistroPageProps) {
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
-          "x-csrf-token": csrfToken,
+          "x-csrf-token": freshToken,
         },
         body: JSON.stringify(payload),
       });
@@ -540,9 +539,6 @@ export default function NewOcorrênciasPage({ onBack }: NewSinistroPageProps) {
         setMessage("");
       }, 3000);
       
-      // Regenerar token CSRF para próxima requisição
-      await regenerateToken();
-      
       // Limpar formulário após sucesso
       setFormData({
         apolice: "",
@@ -562,9 +558,6 @@ export default function NewOcorrênciasPage({ onBack }: NewSinistroPageProps) {
       setTimeout(() => {
         setError("");
       }, 3000);
-      
-      // Regenerar token CSRF mesmo em caso de erro
-      await regenerateToken();
     } finally {
       setIsSubmitting(false);
     }
