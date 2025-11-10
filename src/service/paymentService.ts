@@ -206,12 +206,8 @@ export function openCheckout(reference: string, sessionId: string): void {
   modalOverlay.appendChild(modalContainer);
   document.body.appendChild(modalOverlay);
 
-  // Variável para armazenar o intervalo
-  let intervalId: NodeJS.Timeout | null = null;
-
-  // Função para mostrar resultado (declarada antes de ser usada)
+  // Função para mostrar resultado
   const showResult = (success: boolean, message: string) => {
-    if (intervalId) clearInterval(intervalId);
     iframe.style.display = 'none';
     
     const resultDiv = document.createElement('div');
@@ -264,36 +260,7 @@ export function openCheckout(reference: string, sessionId: string): void {
     }
   };
 
-  // Monitorar mudanças de URL no iframe para detectar callback
-  let lastCheckedUrl = '';
-  intervalId = setInterval(() => {
-    try {
-      const currentUrl = iframe.contentWindow?.location.href || '';
-      
-      if (currentUrl && currentUrl !== lastCheckedUrl) {
-        lastCheckedUrl = currentUrl;
-        
-        if (currentUrl.includes('/backoffice') && currentUrl.includes('server_status')) {
-          const url = new URL(currentUrl);
-          const serverStatus = url.searchParams.get('server_status');
-          const collectStatus = url.searchParams.get('collect_status');
-          const serverMessage = url.searchParams.get('server_message') || '';
-          const collectMessage = url.searchParams.get('collect_message') || '';
-          
-          const isSuccess = serverStatus === 'ok' && collectStatus === 'ok';
-          const message = isSuccess 
-            ? 'Pagamento processado e confirmado com sucesso.' 
-            : (serverMessage || collectMessage || 'Erro ao processar pagamento.');
-          
-          showResult(isSuccess, message);
-        }
-      }
-    } catch {
-      // Erro de CORS quando iframe está em domínio externo - ignorar
-    }
-  }, 500);
-
-  // Listener para mensagens do iframe (fallback via postMessage)
+  // Listener para mensagens do iframe via postMessage
   const handleMessage = (event: MessageEvent) => {
     if (event.data?.type === 'payment-result') {
       const { success, message } = event.data;
@@ -306,7 +273,6 @@ export function openCheckout(reference: string, sessionId: string): void {
   // Fechar ao clicar fora
   modalOverlay.addEventListener('click', (e) => {
     if (e.target === modalOverlay) {
-      if (intervalId) clearInterval(intervalId);
       document.body.removeChild(modalOverlay);
       window.removeEventListener('message', handleMessage);
     }
@@ -316,7 +282,6 @@ export function openCheckout(reference: string, sessionId: string): void {
   const handleEsc = (e: KeyboardEvent) => {
     if (e.key === 'Escape') {
       if (document.getElementById('checkout-modal')) {
-        if (intervalId) clearInterval(intervalId);
         document.body.removeChild(modalOverlay);
         window.removeEventListener('message', handleMessage);
       }
@@ -327,7 +292,6 @@ export function openCheckout(reference: string, sessionId: string): void {
   
   // Configurar fechamento pelo botão X
   closeButton.onclick = () => {
-    if (intervalId) clearInterval(intervalId);
     window.removeEventListener('message', handleMessage);
     document.removeEventListener('keydown', handleEsc);
     document.body.removeChild(modalOverlay);
