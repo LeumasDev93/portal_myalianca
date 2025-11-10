@@ -10,8 +10,6 @@ import {
   FaFileInvoiceDollar,
   FaMoneyBillWave,
   FaPercentage,
-  FaCar,
-  FaShieldAlt,
 } from "react-icons/fa";
 import { SimulationDetails } from "./MySimulationsTab";
 

@@ -3,61 +3,19 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { fetchVehicleBrands } from "@/service/marcaService";
 import { fetchVehicleModels } from "@/service/modeloService";
-import Select from "react-select";
+import ReactSelect from "react-select";
 import { useUserProfile } from "@/hooks/useUserProfile";
-
-const tipoUtilizadorOptions = [
-  { value: "1", label: "Taxi" },
-  { value: "10", label: "VeiculoLigeiroInstrucao" },
-  { value: "16", label: "VeículoIndustrial" },
-  { value: "17", label: "VeículoAgrícola" },
-  { value: "18", label: "MáquinaAgrícola" },
-  { value: "2", label: "AmbulanciaProntoSocorro" },
-  { value: "23", label: "TransporteMercadorias" },
-  { value: "30", label: "Transporte de passageiros em caixa de carga" },
-  { value: "31", label: "Reboque de proprietário sem rebocador próprio" },
-  { value: "32", label: "Veículos de abastecimento de água às populações" },
-  { value: "33", label: "Bombeiros de instituição de utilidade pública" },
-  {
-    value: "34",
-    label: "Veículo rebocador com seguro de reboque dispensado pelo proponente",
-  },
-  { value: "35", label: "Transporte coletivo de passageiros" },
-  { value: "36", label: "VeiculoPesadoInstrucao" },
-  { value: "37", label: "TaxiAluguer" },
-  { value: "38", label: "TransporteMateriasPerigosas" },
-  { value: "39", label: "MaquinaIndustrialRebocavel" },
-  { value: "4", label: "Aluguer" },
-  { value: "40", label: "TransporteMercadoriasAluguer" },
-  { value: "41", label: "ReboqueCargaPassageiros" },
-  { value: "42", label: "ReboqueCarga" },
-  {
-    value: "43",
-    label: "Veículo de aluguer sem condutor passageiros ate 9 lugares",
-  },
-  {
-    value: "44",
-    label: "Veículo de aluguer sem condutor passageiros ou carga até 1600kg",
-  },
-  {
-    value: "45",
-    label:
-      "Veículo de aluguer sem condutor passageiros ou carga 1601kg a 3500kg",
-  },
-  { value: "99", label: "Normal" },
-];
-
-const ilhaOptions = [
-  { id: 1967, name: "Ilha Santo Antão", value: "1", rank: "1" },
-  { id: 1968, name: "Ilha São Vicente", value: "2", rank: "2" },
-  { id: 1969, name: "Ilha São Nicolau", value: "3", rank: "3" },
-  { id: 1970, name: "Ilha do Sal", value: "4", rank: "4" },
-  { id: 1971, name: "Ilha da Boa Vista", value: "5", rank: "5" },
-  { id: 1972, name: "Ilha de Santiago", value: "6", rank: "6" },
-  { id: 1973, name: "Ilha do Maio", value: "7", rank: "7" },
-  { id: 1974, name: "Ilha do Fogo", value: "8", rank: "8" },
-  { id: 1975, name: "Ilha Brava", value: "9", rank: "9" },
-];
+import { useDomain } from "@/hooks/useDomain";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Calendar } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 interface Option {
   id: number | string;
   name: string;
@@ -67,6 +25,7 @@ interface FormFieldData {
   name: string;
   label: string;
   sourceData: string;
+  sourceDataType?: string;
   type:
     | "text"
     | "date"
@@ -124,6 +83,11 @@ export default function FormField({
   options = [],
 }: FormFieldProps) {
   const { profile } = useUserProfile();
+  
+  // Hook para buscar dados de domínio quando sourceDataType for "DOMAIN"
+  const isDomainField = field.sourceDataType?.toUpperCase() === "DOMAIN";
+  const domainName = isDomainField ? field.sourceData : null;
+  const { options: domainOptions, loading: loadingDomain, error: errorDomain } = useDomain(domainName);
 
   const [filter, setFilter] = useState(value || "");
   const [showOptions, setShowOptions] = useState(false);
@@ -145,7 +109,14 @@ export default function FormField({
     years: number;
     months: number;
     days: number;
-  } | null>(null); // Função para atualizar estado local
+  } | null>(null);
+  
+  // Refs para os campos de data
+  const licenseDateRef = useRef<HTMLInputElement>(null);
+  const birthDateRef = useRef<HTMLInputElement>(null);
+  const driverLicenseDateRef = useRef<HTMLInputElement>(null);
+  
+  // Função para atualizar estado local
   const updateLocalState = useCallback(() => {
     setLocalGlobalState({ ...globalState });
   }, []);
@@ -381,193 +352,207 @@ export default function FormField({
         field.fieldSize || 1
       } relative mb-3 sm:mb-4`}
     >
-      <label
-        htmlFor={field.name}
-        className="block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2"
-      >
-        {field.label}
-        {field.required && <span className="text-red-500 ml-1">*</span>}
-      </label>
+      <div className="space-y-2">
+        <Label htmlFor={field.name}>
+          {field.label}
+          {field.required && <span className="text-red-500 ml-1">*</span>}
+        </Label>
       {field.name === "licenseDate" ? (
-        <div>
-          <input
-            id={field.name}
-            name={field.name}
-            type="date"
-            value={value}
-            className={`w-full px-3 py-2 sm:px-4 sm:py-3 text-xs sm:text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#002B5B] focus:border-transparent ${
-              licenseDateError ? "border-red-500" : "border-gray-300"
-            }`}
-            onChange={(e) => {
-              const selectedDate = e.target.value;
-              const today = new Date();
-              today.setHours(0, 0, 0, 0); // Normaliza a data atual
+        <>
+          <div className="relative">
+            <Input
+              id={field.name}
+              name={field.name}
+              type="date"
+              value={value}
+              ref={licenseDateRef}
+              className="pr-14 appearance-none [&::-webkit-calendar-picker-indicator]:opacity-0 [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:w-full [&::-webkit-calendar-picker-indicator]:h-full [&::-webkit-calendar-picker-indicator]:cursor-pointer"
+              onChange={(e) => {
+                const selectedDate = e.target.value;
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
 
-              if (selectedDate) {
-                const licenseDate = new Date(selectedDate);
-                licenseDate.setHours(0, 0, 0, 0); // Normaliza a data selecionada
+                if (selectedDate) {
+                  const licenseDate = new Date(selectedDate);
+                  licenseDate.setHours(0, 0, 0, 0);
 
-                // Validação principal: data não pode ser futura
-                if (licenseDate > today) {
-                  setLicenseDateError("A data da carta não pode ser futura");
+                  if (licenseDate > today) {
+                    setLicenseDateError("A data da carta não pode ser futura");
+                    onChange("");
+                    return;
+                  }
+
+                  const minDate = new Date(1900, 0, 1);
+                  if (licenseDate < minDate) {
+                    setLicenseDateError("Data inválida");
+                    onChange("");
+                    return;
+                  }
+
+                  setLicenseDateError("");
+                  onChange(selectedDate);
+                } else {
                   onChange("");
-                  return;
                 }
-
-                // Validação adicional: data mínima (exemplo: 1900)
-                const minDate = new Date(1900, 0, 1);
-                if (licenseDate < minDate) {
-                  setLicenseDateError("Data inválida");
-                  onChange("");
-                  return;
-                }
-
-                setLicenseDateError("");
-                onChange(selectedDate);
-
-                // Cálculo do tempo com carta (opcional)
-                const diffTime = Math.abs(
-                  today.getTime() - licenseDate.getTime()
-                );
-                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-                const diffYears = Math.floor(diffDays / 365);
-                const remainingDays = diffDays % 365;
-                const diffMonths = Math.floor(remainingDays / 30);
-                const diffDaysFinal = remainingDays % 30;
-
-                console.log(
-                  `Tempo com carta: ${diffYears} anos, ${diffMonths} meses e ${diffDaysFinal} dias`
-                );
-              } else {
-                onChange("");
-              }
-            }}
-            required={field.required}
-            max={new Date().toISOString().split("T")[0]} // Usa new Date() diretamente aqui
-            min="1900-01-01" // Data mínima razoável
-          />
+              }}
+              required={field.required}
+              max={new Date().toISOString().split("T")[0]}
+              min="1900-01-01"
+            />
+            <button
+              type="button"
+              onClick={() => {
+                licenseDateRef.current?.showPicker?.();
+                licenseDateRef.current?.focus();
+              }}
+              className="absolute inset-y-0 right-0 flex items-center rounded-r-md bg-[#002256] px-3"
+              aria-label="Selecionar data"
+            >
+              <Calendar className="h-4 w-4 text-white" />
+            </button>
+          </div>
           {licenseDateError && (
             <p className="text-red-500 text-sm mt-1">{licenseDateError}</p>
           )}
-        </div>
+        </>
       ) : field.name === "birthDate" ? (
-        <div>
-          <input
-            id={field.name}
-            name={field.name}
-            type="date"
-            value={value}
-            onChange={(e) => {
-              const selectedDate = e.target.value;
-              const today = new Date();
-              today.setHours(0, 0, 0, 0);
+        <>
+          <div className="relative">
+            <Input
+              id={field.name}
+              name={field.name}
+              type="date"
+              value={value}
+              ref={birthDateRef}
+              className="pr-14 appearance-none [&::-webkit-calendar-picker-indicator]:opacity-0 [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:w-full [&::-webkit-calendar-picker-indicator]:h-full [&::-webkit-calendar-picker-indicator]:cursor-pointer"
+              onChange={(e) => {
+                const selectedDate = e.target.value;
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
 
-              if (selectedDate) {
-                const birthDate = new Date(selectedDate);
-                birthDate.setHours(0, 0, 0, 0);
+                if (selectedDate) {
+                  const birthDate = new Date(selectedDate);
+                  birthDate.setHours(0, 0, 0, 0);
 
-                // Calcula a idade
-                let age = today.getFullYear() - birthDate.getFullYear();
-                const monthDiff = today.getMonth() - birthDate.getMonth();
+                  let age = today.getFullYear() - birthDate.getFullYear();
+                  const monthDiff = today.getMonth() - birthDate.getMonth();
 
-                if (
-                  monthDiff < 0 ||
-                  (monthDiff === 0 && today.getDate() < birthDate.getDate())
-                ) {
-                  age--;
-                }
+                  if (
+                    monthDiff < 0 ||
+                    (monthDiff === 0 && today.getDate() < birthDate.getDate())
+                  ) {
+                    age--;
+                  }
 
-                // Validação da idade mínima (18 anos)
-                if (age < 18) {
-                  setBirthDateError(
-                    "É necessário ter pelo menos 18 anos de idade"
-                  );
-                  onChange("");
-                  return;
+                  if (age < 18) {
+                    setBirthDateError(
+                      "É necessário ter pelo menos 18 anos de idade"
+                    );
+                    onChange("");
+                    return;
+                  } else {
+                    setBirthDateError("");
+                  }
+
+                  onChange(selectedDate);
                 } else {
-                  setBirthDateError("");
+                  onChange("");
                 }
-
-                onChange(selectedDate);
-              } else {
-                onChange("");
+              }}
+              required={field.required}
+              max={
+                new Date(new Date().setFullYear(new Date().getFullYear() - 18))
+                  .toISOString()
+                  .split("T")[0]
               }
-            }}
-            className={`w-full p-2 border rounded-md focus:ring-2 focus:ring-[#002256] ${
-              birthDateError ? "border-red-500" : "border-gray-300"
-            }`}
-            required={field.required}
-            max={
-              new Date(new Date().setFullYear(new Date().getFullYear() - 18))
-                .toISOString()
-                .split("T")[0]
-            }
-          />
+            />
+            <button
+              type="button"
+              onClick={() => {
+                birthDateRef.current?.showPicker?.();
+                birthDateRef.current?.focus();
+              }}
+              className="absolute inset-y-0 right-0 flex items-center rounded-r-md bg-[#002256] px-3"
+              aria-label="Selecionar data"
+            >
+              <Calendar className="h-4 w-4 text-white" />
+            </button>
+          </div>
           {birthDateError && (
             <p className="text-red-500 text-sm mt-1">{birthDateError}</p>
           )}
-        </div>
+        </>
       ) : field.name === "driverLicenseDate" ? (
-        <div>
-          <input
-            id={field.name}
-            name={field.name}
-            type="date"
-            value={value}
-            onChange={(e) => {
-              const selectedDate = e.target.value;
-              const today = new Date();
-              today.setHours(0, 0, 0, 0);
+        <>
+          <div className="relative">
+            <Input
+              id={field.name}
+              name={field.name}
+              type="date"
+              value={value}
+              ref={driverLicenseDateRef}
+              className="pr-14 appearance-none [&::-webkit-calendar-picker-indicator]:opacity-0 [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:w-full [&::-webkit-calendar-picker-indicator]:h-full [&::-webkit-calendar-picker-indicator]:cursor-pointer"
+              onChange={(e) => {
+                const selectedDate = e.target.value;
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
 
-              if (selectedDate) {
-                const licenseDate = new Date(selectedDate);
-                licenseDate.setHours(0, 0, 0, 0);
+                if (selectedDate) {
+                  const licenseDate = new Date(selectedDate);
+                  licenseDate.setHours(0, 0, 0, 0);
 
-                // Validação da data
-                if (licenseDate > today) {
-                  setDateError(
-                    "A data da carta de condução não pode ser futura"
-                  );
-                  onChange("");
-                  setLicenseDuration(null);
-                  return;
+                  if (licenseDate > today) {
+                    setDateError(
+                      "A data da carta de condução não pode ser futura"
+                    );
+                    onChange("");
+                    setLicenseDuration(null);
+                    return;
+                  } else {
+                    setDateError("");
+                  }
+
+                  let years = today.getFullYear() - licenseDate.getFullYear();
+                  let months = today.getMonth() - licenseDate.getMonth();
+                  let days = today.getDate() - licenseDate.getDate();
+
+                  if (days < 0) {
+                    months--;
+                    const lastDayOfMonth = new Date(
+                      today.getFullYear(),
+                      today.getMonth(),
+                      0
+                    ).getDate();
+                    days += lastDayOfMonth;
+                  }
+
+                  if (months < 0) {
+                    years--;
+                    months += 12;
+                  }
+
+                  setLicenseDuration({ years, months, days });
+                  onChange(selectedDate);
                 } else {
-                  setDateError("");
+                  setLicenseDuration(null);
+                  onChange("");
                 }
-
-                // Cálculo da diferença
-                let years = today.getFullYear() - licenseDate.getFullYear();
-                let months = today.getMonth() - licenseDate.getMonth();
-                let days = today.getDate() - licenseDate.getDate();
-
-                if (days < 0) {
-                  months--;
-                  const lastDayOfMonth = new Date(
-                    today.getFullYear(),
-                    today.getMonth(),
-                    0
-                  ).getDate();
-                  days += lastDayOfMonth;
-                }
-
-                if (months < 0) {
-                  years--;
-                  months += 12;
-                }
-
-                setLicenseDuration({ years, months, days });
-                onChange(selectedDate);
-              } else {
-                setLicenseDuration(null);
-                onChange("");
-              }
-            }}
-            className={`w-full p-2 border rounded-md focus:ring-2 focus:ring-[#002256] ${
-              dateError ? "border-red-500" : "border-gray-300"
-            }`}
-            required={field.required}
-            max={new Date().toISOString().split("T")[0]}
-          />
+              }}
+              required={field.required}
+              max={new Date().toISOString().split("T")[0]}
+            />
+            <button
+              type="button"
+              onClick={() => {
+                driverLicenseDateRef.current?.showPicker?.();
+                driverLicenseDateRef.current?.focus();
+              }}
+              className="absolute inset-y-0 right-0 flex items-center rounded-r-md bg-[#002256] px-3"
+              aria-label="Selecionar data"
+            >
+              <Calendar className="h-4 w-4 text-white" />
+            </button>
+          </div>
           {licenseDuration && (
             <p className="text-sm text-gray-600 mt-1">
               Tem{" "}
@@ -593,21 +578,21 @@ export default function FormField({
           {dateError && (
             <p className="text-red-500 text-sm mt-1">{dateError}</p>
           )}
-        </div>
+        </>
       ) : field.name === "brand" ? (
         loadingMarca ? (
-          <div className="p-2 border rounded-md bg-blue-50 text-blue-600 border-blue-200">
+          <div className="px-4 py-3 border-2 border-blue-300 rounded-lg bg-blue-50 text-blue-700">
             <div className="flex items-center">
-              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mr-2"></div>
-              Buscando marcas...
+              <div className="animate-spin rounded-full h-5 w-5 border-2 border-blue-700 border-t-transparent mr-3"></div>
+              <span className="text-sm font-medium">Buscando marcas...</span>
             </div>
           </div>
         ) : errorMarca ? (
-          <div className="text-red-500 bg-red-50 p-2 border border-red-300 rounded-md">
-            {errorMarca}
+          <div className="px-4 py-3 border-2 border-red-300 rounded-lg bg-red-50 text-red-700">
+            <span className="text-sm">{errorMarca}</span>
           </div>
         ) : (
-          <Select
+          <ReactSelect
             id={field.name}
             name={field.name}
             value={value ? { value, label: value } : null}
@@ -652,126 +637,97 @@ export default function FormField({
           />
         )
       ) : field.sourceData === "modelo" ? (
-        /* Campo de Modelo */
+        /* Campo de Modelo customizado */
         loadingModel ? (
-          <div className="p-2 border rounded-md bg-blue-50 text-blue-600 border-blue-200">
+          <div className="px-4 py-3 border-2 border-blue-300 rounded-lg bg-blue-50 text-blue-700">
             <div className="flex items-center">
-              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mr-2"></div>
-              Buscando modelos...
+              <div className="animate-spin rounded-full h-5 w-5 border-2 border-blue-700 border-t-transparent mr-3"></div>
+              <span className="text-sm font-medium">Buscando modelos...</span>
             </div>
           </div>
         ) : errorModel ? (
-          <div className="text-red-500 bg-red-50 p-2 border border-red-300 rounded-md">
-            {errorModel}
+          <div className="px-4 py-3 border-2 border-red-300 rounded-lg bg-red-50 text-red-700">
+            <span className="text-sm">{errorModel}</span>
             <button
               type="button"
               onClick={() =>
                 localGlobalState.selectedBrand.id &&
                 loadModels(localGlobalState.selectedBrand.id)
               }
-              className="ml-2 text-sm underline hover:no-underline"
+              className="ml-2 text-sm font-medium underline hover:no-underline"
             >
               Tentar novamente
             </button>
           </div>
         ) : (
-          <select
-            id={field.name}
-            name={field.name}
-            value={value}
-            onChange={(e) => onChange(e.target.value)}
+          <Select
+            value={value || ""}
+            onValueChange={(newValue) => onChange(newValue)}
             disabled={modelFieldState.disabled}
-            className={`w-full p-2 border rounded-md focus:ring-2 focus:ring-[#002256] ${
-              error ? "border-red-500" : "border-gray-300"
-            } ${
-              modelFieldState.disabled
-                ? "bg-gray-100 cursor-not-allowed text-gray-500"
-                : "bg-white"
-            }`}
             required={field.required}
           >
-            <option value="">{modelFieldState.placeholder}</option>
-            {modelFieldState.showOptions &&
-              localGlobalState.modelOptions.map((model) => (
-                <option key={model.id} value={model.name}>
-                  {model.name}
-                </option>
-              ))}
-          </select>
+            <SelectTrigger className={error ? "border-red-500" : ""} disabled={modelFieldState.disabled}>
+              <SelectValue placeholder={modelFieldState.placeholder} />
+            </SelectTrigger>
+            <SelectContent>
+              {modelFieldState.showOptions &&
+                localGlobalState.modelOptions.map((model) => (
+                  <SelectItem key={model.id} value={model.name}>
+                    {model.name}
+                  </SelectItem>
+                ))}
+            </SelectContent>
+          </Select>
         )
-      ) : field.name === "TipoDeUtilizacao" ? (
-        <Select
-          id={field.name}
-          name={field.name}
-          value={
-            tipoUtilizadorOptions.find((opt) => opt.value === value) || null
-          }
-          onChange={(selectedOption) => {
-            const newValue = selectedOption ? selectedOption.value : "";
-            onChange(newValue);
-          }}
-          options={tipoUtilizadorOptions}
-          className={`react-select-container ${
-            error ? "react-select--error" : ""
-          }`}
-          classNamePrefix="react-select"
-          placeholder={
-            field.fieldPlaceholder || "Selecione o tipo de utilização"
-          }
-          isClearable
-          noOptionsMessage={() => "Nenhuma opção disponível"}
-          required={field.required}
-        />
-      ) : field.name === "Ilha" ? (
-        <Select
-          id={field.name}
-          name={field.name}
-          value={
-            ilhaOptions.find((opt) => opt.value === value)
-              ? {
-                  value: value,
-                  label: ilhaOptions.find((opt) => opt.value === value)?.name,
-                }
-              : null
-          }
-          onChange={(selectedOption) => {
-            const newValue = selectedOption ? selectedOption.value : "";
-            onChange(newValue);
-          }}
-          options={ilhaOptions.map((ilha) => ({
-            value: ilha.value,
-            label: ilha.name,
-          }))}
-          className={`react-select-container ${
-            error ? "react-select--error" : ""
-          }`}
-          classNamePrefix="react-select"
-          placeholder={field.fieldPlaceholder || "Selecione a ilha"}
-          isClearable
-          noOptionsMessage={() => "Nenhuma opção disponível"}
-          required={field.required}
-        />
+      ) : isDomainField ? (
+        /* Campo com dados de domínio dinâmico customizado */
+        loadingDomain ? (
+          <div className="px-4 py-3 border-2 border-blue-300 rounded-lg bg-blue-50 text-blue-700">
+            <div className="flex items-center">
+              <div className="animate-spin rounded-full h-5 w-5 border-2 border-blue-700 border-t-transparent mr-3"></div>
+              <span className="text-sm font-medium">Carregando opções...</span>
+            </div>
+          </div>
+        ) : errorDomain ? (
+          <div className="px-4 py-3 border-2 border-red-300 rounded-lg bg-red-50 text-red-700">
+            <span className="text-sm">Erro ao carregar opções: {errorDomain}</span>
+          </div>
+        ) : (
+          <Select
+            value={value || ""}
+            onValueChange={(newValue) => onChange(newValue)}
+            required={field.required}
+          >
+            <SelectTrigger className={error ? "border-red-500" : ""}>
+              <SelectValue placeholder={field.fieldPlaceholder || "Selecione uma opção"} />
+            </SelectTrigger>
+            <SelectContent>
+              {domainOptions.map((opt) => (
+                <SelectItem key={opt.value} value={opt.value}>
+                  {opt.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )
       ) : field.type === "select" ? (
-        /* Select genérico */
-        <select
-          id={field.name}
-          name={field.name}
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          className={`w-full p-2 border rounded-md focus:ring-2 focus:ring-[#002256] ${
-            error ? "border-red-500" : "border-gray-300"
-          }`}
+        /* Select genérico customizado */
+        <Select
+          value={value || ""}
+          onValueChange={(newValue) => onChange(newValue)}
           required={field.required}
         >
-          <option value="">
-            {field.fieldPlaceholder || "Selecione uma opção"}
-          </option>
-          {options.map((opt) => (
-            <option key={opt.id} value={opt.name}>
-              {opt.name}
-            </option>
-          ))}
-        </select>
+          <SelectTrigger className={error ? "border-red-500" : ""}>
+            <SelectValue placeholder={field.fieldPlaceholder || "Selecione uma opção"} />
+          </SelectTrigger>
+          <SelectContent>
+            {options.map((opt) => (
+              <SelectItem key={opt.id} value={opt.name}>
+                {opt.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       ) : field.type === "autocomplete" ? (
         /* Autocomplete */
         <div className="relative">
@@ -809,20 +765,16 @@ export default function FormField({
           )}
         </div>
       ) : (
-        /* Input padrão */
-        <input
+        /* Input padrão customizado */
+        <Input
           id={field.name}
           name={field.name}
           type={field.type || "text"}
-          value={value}
+          value={value || ""}
           placeholder={field.fieldPlaceholder}
           onChange={(e) => onChange(e.target.value)}
-          className={`w-full p-2 border rounded-md focus:ring-2 focus:ring-[#002256] ${
-            error ? "border-red-500" : "border-gray-300"
-          } ${
-            ["nif", "emails"].includes(field.name)
-              ? "bg-gray-100 text-gray-500 cursor-not-allowed"
-              : "bg-white"
+          className={`${error ? "border-red-500" : ""} ${
+            ["nif", "emails"].includes(field.name) ? "bg-gray-50" : ""
           }`}
           required={field.required}
           disabled={["nif", "emails"].includes(field.name)}
@@ -830,6 +782,7 @@ export default function FormField({
       )}
       {/* Mensagem de erro */}
       {error && <p className="text-red-500 text-sm mt-1">{error}</p>}
+      </div>
       <style jsx>{`
         .react-select-container {
           width: 100%;

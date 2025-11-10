@@ -260,10 +260,13 @@ export default function SimulationForm({
 
   // Atualiza valores do formulário e limpa erro no campo
   const handleFieldChange = (name: string, value: string) => {
-    setFormValues((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+    setFormValues((prev) => {
+      const updated = {
+        ...prev,
+        [name]: value,
+      };
+      return updated;
+    });
 
     if (errors[name]) {
       setErrors((prev) => {
@@ -281,7 +284,8 @@ export default function SimulationForm({
     tab.form.fields.forEach((field: any) => {
       const value = formValues[field.name];
       const isRequired = field.required ?? true;
-      if (isRequired && (!value || value.trim() === "")) {
+      const stringValue = value != null ? String(value).trim() : "";
+      if (isRequired && !stringValue) {
         newErrors[field.name] = "Este campo é obrigatório.";
       }
     });
@@ -505,11 +509,7 @@ export default function SimulationForm({
                   {tab.form.fields
                     .sort((a: any, b: any) => a.position - b.position)
                     .map((field: any) => {
-                      const fieldValue = formValues[field.name];
-                      console.log(
-                        `Renderizando campo ${field.name} com valor:`,
-                        fieldValue
-                      );
+                      const fieldValue = formValues[field.name] || "";
                       return (
                         <FormField
                           key={field.name}
@@ -547,7 +547,25 @@ export default function SimulationForm({
           reset={reset}
           data={simulationResult}
           isOpen={isModalOpen}
-          onClose={() => setIsModalOpen(false)}
+          onClose={() => {
+            setIsModalOpen(false);
+            // Se não houver erro, limpar apenas campos editáveis
+            if (!simulationResult?.hasError) {
+              // Preservar campos do usuário (session data)
+              const fieldsToKeep = ['name', 'nif', 'emails', 'bi', 'entityType'];
+              const preservedValues: Record<string, any> = {};
+              
+              fieldsToKeep.forEach(fieldName => {
+                if (formValues[fieldName]) {
+                  preservedValues[fieldName] = formValues[fieldName];
+                }
+              });
+              
+              setFormValues(preservedValues);
+              setActiveTab(product.tabs[0]?.title || "");
+            }
+            // Se houver erro, mantém os campos preenchidos
+          }}
         />
       )}
     </Tabs>

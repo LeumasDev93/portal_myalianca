@@ -58,21 +58,27 @@ export function SimulationResults({ data, onClose, isOpen, reset }: Props) {
       <div className="bg-white rounded-lg shadow-xl max-w-7xl w-full max-h-[90vh] overflow-y-auto">
         <div className="sticky top-0 bg-gray-100 p-6 border-b flex justify-between items-center">
           <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
-            Simulação Feita Com Sucesso /
-            <button
-              onClick={handleCopy}
-              className="flex items-center gap-1 text-gray-600 hover:underline active:opacity-70"
-              title="Clique para copiar"
-            >
-              #{data.reference}
-              {copied ? (
-                <Check size={16} className="text-green-600" />
-              ) : (
-                <Copy size={16} />
-              )}
-            </button>
-            {copied && (
-              <span className="text-sm text-green-600 ml-2">Copiado!</span>
+            {data.hasError ? (
+              <span className="text-red-600">Erro na Simulação</span>
+            ) : (
+              <>
+                Simulação Feita Com Sucesso /
+                <button
+                  onClick={handleCopy}
+                  className="flex items-center gap-1 text-gray-600 hover:underline active:opacity-70"
+                  title="Clique para copiar"
+                >
+                  #{data.reference}
+                  {copied ? (
+                    <Check size={16} className="text-green-600" />
+                  ) : (
+                    <Copy size={16} />
+                  )}
+                </button>
+                {copied && (
+                  <span className="text-sm text-green-600 ml-2">Copiado!</span>
+                )}
+              </>
             )}
           </h2>
 
@@ -85,8 +91,30 @@ export function SimulationResults({ data, onClose, isOpen, reset }: Props) {
         </div>
 
         <div className="p-8">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-            {data.installmentValues.map((installment) => {
+          {/* Verificar se há erros */}
+          {data.hasError && data.errors && data.errors.length > 0 ? (
+            <div className="bg-red-50 border border-red-300 rounded-lg p-6">
+              <div className="flex items-start">
+                <div className="flex-shrink-0">
+                  <X className="h-6 w-6 text-red-600" />
+                </div>
+                <div className="ml-3">
+                  <h3 className="text-lg font-medium text-red-800">
+                    Erro na Simulação
+                  </h3>
+                  <div className="mt-2 text-sm text-red-700">
+                    <ul className="list-disc list-inside space-y-1">
+                      {data.errors.map((error, index) => (
+                        <li key={index}>{error}</li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+              {data.installmentValues.map((installment) => {
               // Define ícone com base no tipo de parcela
               const getPeriodIcon = () => {
                 switch (installment.name) {
@@ -176,6 +204,7 @@ export function SimulationResults({ data, onClose, isOpen, reset }: Props) {
               );
             })}
           </div>
+          )}
         </div>
 
         <div className="sticky bottom-0 bg-white p-4 border-t flex justify-end gap-4">

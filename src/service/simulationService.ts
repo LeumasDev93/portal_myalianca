@@ -12,6 +12,7 @@ interface SimulationFormData {
     Ilha: string;
     TipoDeUtilizacao: string;
     name: string;
+    name_condutor?: string;
     birthDate: string;
     driverLicenseNumber: string;
     driverLicenseDate: string;
@@ -21,8 +22,10 @@ interface SimulationFormData {
     passport: string;
     entityType: string;
     maritalStatus: string;
-    email: string;
-    mobile: string;
+    email?: string;
+    emails?: string;
+    mobile?: string;
+    mobiles?: string;
     currentValue: string;
 }
 
@@ -59,12 +62,6 @@ export const fetchSimulation = async (
 
     const idSimulationTel = generateRandomSimulationId();
 
-    const {
-        licensePlate, licenseDate, brand, model, seats, cylinderCap, weight, chassis, Ilha, TipoDeUtilizacao,
-        name, birthDate, driverLicenseNumber, driverLicenseDate, gender, nif, bi, passport,
-        entityType, maritalStatus, email, mobile, currentValue
-    } = formData;
-
     const payload = {
         productId: productId,
         idSimulationTel,
@@ -77,43 +74,43 @@ export const fetchSimulation = async (
         simulationObjects: [
             {
                 properties: {
-                    licensePlate,
-                    licenseDate,
-                    brand,
-                    model,
-                    seats: seats ? parseInt(seats) : undefined,
-                    cylinderCap: cylinderCap ? parseInt(cylinderCap) : undefined,
-                    weight: weight ? parseInt(weight) : undefined,
-                    chassis,
-                    currentValue,
-                    Ilha,
-                    TipoDeUtilizacao
+                    licensePlate: formData.licensePlate || "",
+                    licenseDate: formData.licenseDate || "",
+                    brand: formData.brand || "",
+                    model: formData.model || "",
+                    seats: formData.seats ? parseInt(formData.seats) : 0,
+                    cylinderCap: formData.cylinderCap ? parseInt(formData.cylinderCap) : 0,
+                    weight: formData.weight ? parseInt(formData.weight) : 0,
+                    chassis: formData.chassis || "",
+                    currentValue: formData.currentValue || "0",
+                    Ilha: (formData as any).ilha || "",
+                    TipoDeUtilizacao: (formData as any).tipo_veiculo || ""
                 },
                 children: [
                     {
                         type: "AUTO_C",
                         properties: {
-                            name,
-                            birthDate,
-                            driverLicenseNumber,
-                            driverLicenseDate,
-                            gender
+                            name: formData.name_condutor || formData.name,
+                            birthDate: formData.birthDate,
+                            driverLicenseNumber: formData.driverLicenseNumber,
+                            driverLicenseDate: formData.driverLicenseDate,
+                            gender: formData.gender
                         }
                     },
                 ]
             }
         ],
         client: {
-            nif,
-            name,
-            bi,
-            birthDate,
-            entityType,
-            maritalStatus,
-            passport,
-            gender,
-            emails: email ? [email] : [],
-            mobiles: mobile ? [mobile] : []
+            nif: formData.nif,
+            name: formData.name,
+            bi: formData.bi,
+            birthDate: formData.birthDate,
+            entityType: formData.entityType,
+            maritalStatus: formData.maritalStatus,
+            passport: formData.passport,
+            gender: formData.gender,
+            emails: formData.emails ? [formData.emails] : formData.email ? [formData.email] : [],
+            mobiles: formData.mobiles ? [formData.mobiles] : formData.mobile ? [formData.mobile] : []
         }
     };
 
@@ -141,12 +138,18 @@ export const fetchSimulation = async (
         setSimulationResult(simulationResult.installmentValues);
 
         try {
+            // Enviar resultado da simulação com productId para a API da Aliança
+            const dataToSend = {
+                ...simulationResult,
+                productId: productId
+            };
+            
             const externalRes = await fetch("/api/sendToAlianca", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
                 },
-                body: JSON.stringify(simulationResult),
+                body: JSON.stringify(dataToSend),
             });
 
             if (!externalRes.ok) {

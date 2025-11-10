@@ -202,12 +202,6 @@ export default function SimulationScreen() {
                   </p>
                 </div>
               )}
-              {products.length < 1 && (
-                <EmptyState
-                  message="Nenhuma simulação encontrada!"
-                  showFilter={false}
-                />
-              )}
 
               {products && products.length > 0 && (
                 <ProductsTab
