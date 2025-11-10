@@ -11,6 +11,8 @@ interface SimulationFormData {
     chassis: string;
     Ilha: string;
     TipoDeUtilizacao: string;
+    ilha?: string;
+    tipo_veiculo?: string;
     name: string;
     name_condutor?: string;
     birthDate: string;
@@ -83,8 +85,8 @@ export const fetchSimulation = async (
                     weight: formData.weight ? parseInt(formData.weight) : 0,
                     chassis: formData.chassis || "",
                     currentValue: formData.currentValue || "0",
-                    Ilha: (formData as any).ilha || "",
-                    TipoDeUtilizacao: (formData as any).tipo_veiculo || ""
+                    Ilha: formData.ilha || "",
+                    TipoDeUtilizacao: formData.tipo_veiculo || ""
                 },
                 children: [
                     {

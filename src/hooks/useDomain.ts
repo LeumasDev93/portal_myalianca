@@ -5,11 +5,16 @@ interface DomainOption {
     label: string;
 }
 
+interface DomainItem {
+    code: string;
+    description: string;
+}
+
 interface DomainResponse {
     info?: {
         status: number;
     };
-    results?: any[];
+    results?: DomainItem[];
 }
 
 export const useDomain = (domainName: string | null) => {
@@ -39,7 +44,7 @@ export const useDomain = (domainName: string | null) => {
                 if (data.results && Array.isArray(data.results)) {
                     // Mapeia os resultados para o formato de opções do select
                     // API retorna: { code: "2", description: "São Vicente" }
-                    const mappedOptions = data.results.map((item: any) => ({
+                    const mappedOptions = data.results.map((item) => ({
                         value: item.code,
                         label: item.description
                     }));

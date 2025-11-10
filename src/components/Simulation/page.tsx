@@ -8,7 +8,6 @@ import { Product } from "@/types/typesData";
 import Image from "next/image";
 
 import { LoadingContainer } from "../ui/loading-container";
-import EmptyState from "./Form/EmptyState";
 import { FaExclamationTriangle } from "react-icons/fa";
 
 export default function SimulationScreen() {
