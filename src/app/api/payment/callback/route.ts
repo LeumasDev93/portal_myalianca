@@ -127,84 +127,46 @@ export async function GET(request: NextRequest) {
       serverMessage = 'Erro no servidor ao validar/cobrar';
     }
 
-    // Determinar sucesso/erro
-    const isSuccess = serverStatus === 'ok' && collectStatus === 'ok';
-    const finalMessage = isSuccess 
-      ? 'Pagamento processado e confirmado com sucesso.' 
-      : (serverMessage || collectMessage || 'Erro ao processar pagamento.');
+    // Redireciona com resultado server-side 
+    const redirectUrl = new URL('/backoffice', request.url);
+    redirectUrl.searchParams.set('menu', 'recibo');
+    redirectUrl.searchParams.set('server_status', serverStatus);
+    if (serverStatus !== 'ok') redirectUrl.searchParams.set('server_message', serverMessage);
+    redirectUrl.searchParams.set('collect_status', collectStatus);
+    if (collectMessage) redirectUrl.searchParams.set('collect_message', collectMessage);
+    redirectUrl.searchParams.set('merchantRef', merchantRef || '');
+    redirectUrl.searchParams.set('amount', (amount || '').toString());
+    // Em caso de erro, devolve os dados usados para HMAC via query string (debug)
+    if (serverStatus !== 'ok') {
+      try {
+        redirectUrl.searchParams.set('debug_ref', (reference || merchantRef || ''));
+        redirectUrl.searchParams.set('debug_fp', (fingerprint || ''));
+      } catch {}
+    }
 
-    // HTML para enviar mensagem ao parent window (modal)
-    const htmlResponse = `
-      <!DOCTYPE html>
-      <html>
-        <head><title>Processando...</title></head>
-        <body>
-          <script>
-            if (window.parent) {
-              window.parent.postMessage({
-                type: 'payment-result',
-                success: ${isSuccess},
-                message: '${finalMessage.replace(/'/g, "\\'")}'
-              }, '*');
-            }
-          </script>
-          <p style="text-align: center; padding: 40px; font-family: sans-serif;">
-            ${isSuccess ? 'Pagamento realizado com sucesso!' : 'Erro no pagamento.'}
-          </p>
-        </body>
-      </html>
-    `;
-
-    const res = new NextResponse(htmlResponse, {
-      status: 200,
-      headers: { 
-        'Content-Type': 'text/html',
-        'X-Frame-Options': 'SAMEORIGIN',
-        'Content-Security-Policy': "frame-ancestors 'self'"
-      },
-    });
+    const res = NextResponse.redirect(redirectUrl, 303);
     res.cookies.set('postpay', '1', {
       path: '/',
       maxAge: 10,
-      sameSite: 'lax',
+      sameSite: 'none',
+      secure: true,
     });
-    res.cookies.set('pay_token', '', { path: '/', maxAge: 0, sameSite: 'lax' });
+    res.cookies.set('pay_token', '', { path: '/', maxAge: 0, sameSite: 'none', secure: true });
     return res;
   } catch (error) {
     console.error('[PAYMENT CALLBACK] Erro no callback:', error);
     
-    // HTML de erro para enviar ao parent window
-    const htmlResponse = `
-      <!DOCTYPE html>
-      <html>
-        <head><title>Erro</title></head>
-        <body>
-          <script>
-            if (window.parent) {
-              window.parent.postMessage({
-                type: 'payment-result',
-                success: false,
-                message: 'Erro ao processar o callback do pagamento.'
-              }, '*');
-            }
-          </script>
-          <p style="text-align: center; padding: 40px; font-family: sans-serif;">Erro no pagamento.</p>
-        </body>
-      </html>
-    `;
+    // Em caso de erro, redireciona para a página de recibos
+    const redirectUrl = new URL('/backoffice', request.url);
+    redirectUrl.searchParams.set('menu', 'recibo');
+    redirectUrl.searchParams.set('payment_status', 'error');
     
-    const res = new NextResponse(htmlResponse, {
-      status: 200,
-      headers: { 
-        'Content-Type': 'text/html',
-        'X-Frame-Options': 'SAMEORIGIN',
-        'Content-Security-Policy': "frame-ancestors 'self'"
-      },
-    });
+    const res = NextResponse.redirect(redirectUrl);
     res.cookies.set('postpay', '1', {
       path: '/',
       maxAge: 10,
-      sameSite: 'lax',
+      sameSite: 'none',
+      secure: true,
     });
     return res;
   }
@@ -302,89 +264,46 @@ export async function POST(request: NextRequest) {
       serverMessage = 'Erro no servidor ao validar/cobrar';
     }
 
-    // Determinar sucesso/erro
-    const isSuccess = serverStatus === 'ok' && collectStatus === 'ok';
-    const finalMessage = isSuccess 
-      ? 'Pagamento processado e confirmado com sucesso.' 
-      : (serverMessage || collectMessage || 'Erro ao processar pagamento.');
+    // Redireciona para a página de recibos com resultado do servidor
+    const redirectUrl = new URL('/backoffice', request.url);
+    redirectUrl.searchParams.set('menu', 'recibo');
+    redirectUrl.searchParams.set('server_status', serverStatus);
+    redirectUrl.searchParams.set('server_message', serverMessage);
+    redirectUrl.searchParams.set('collect_status', collectStatus);
+    if (collectMessage) redirectUrl.searchParams.set('collect_message', collectMessage);
+    redirectUrl.searchParams.set('merchantRef', merchantRef || '');
+    redirectUrl.searchParams.set('amount', amount?.toString() || '');
+    // Em caso de erro, devolve os dados usados para HMAC via query string (debug)
+    if (serverStatus !== 'ok') {
+      try {
+        redirectUrl.searchParams.set('debug_ref', (refPost));
+        redirectUrl.searchParams.set('debug_fp', (fpPost));
+      } catch {}
+    }
 
-    // HTML para enviar mensagem ao parent window (modal)
-    const htmlResponse = `
-      <!DOCTYPE html>
-      <html>
-        <head><title>Processando...</title></head>
-        <body>
-          <script>
-            if (window.parent) {
-              window.parent.postMessage({
-                type: 'payment-result',
-                success: ${isSuccess},
-                message: '${finalMessage.replace(/'/g, "\\'")}'
-              }, '*');
-            }
-          </script>
-          <p style="text-align: center; padding: 40px; font-family: sans-serif;">
-            ${isSuccess ? 'Pagamento realizado com sucesso!' : 'Erro no pagamento.'}
-          </p>
-        </body>
-      </html>
-    `;
-
-    const res = new NextResponse(htmlResponse, {
-      status: 200,
-      headers: { 
-        'Content-Type': 'text/html',
-        'X-Frame-Options': 'SAMEORIGIN',
-        'Content-Security-Policy': "frame-ancestors 'self'"
-      },
-    });
+    const res = NextResponse.redirect(redirectUrl, 303);
     res.cookies.set('postpay', '1', {
       path: '/',
       maxAge: 10,
-      sameSite: 'lax',
+      sameSite: 'none',
+      secure: true,
     });
+    // Limpa o gateway token curto após uso
     res.cookies.set('pay_token', '', {
       path: '/',
       maxAge: 0,
-      sameSite: 'lax',
+      sameSite: 'none',
+      secure: true,
     });
     return res;
   } catch (error) {
     console.error('[PAYMENT CALLBACK] Erro no callback POST:', error);
     
-    // HTML de erro para enviar ao parent window
-    const htmlResponse = `
-      <!DOCTYPE html>
-      <html>
-        <head><title>Erro</title></head>
-        <body>
-          <script>
-            if (window.parent) {
-              window.parent.postMessage({
-                type: 'payment-result',
-                success: false,
-                message: 'Erro ao processar o callback do pagamento.'
-              }, '*');
-            }
-          </script>
-          <p style="text-align: center; padding: 40px; font-family: sans-serif;">Erro no pagamento.</p>
-        </body>
-      </html>
-    `;
+    // Em caso de erro, redireciona para a página de recibos
+    const redirectUrl = new URL('/backoffice', request.url);
+    redirectUrl.searchParams.set('menu', 'recibo');
+    redirectUrl.searchParams.set('payment_status', 'error');
     
-    const res = new NextResponse(htmlResponse, {
-      status: 200,
-      headers: { 
-        'Content-Type': 'text/html',
-        'X-Frame-Options': 'SAMEORIGIN',
-        'Content-Security-Policy': "frame-ancestors 'self'"
-      },
-    });
-    res.cookies.set('postpay', '1', {
-      path: '/',
-      maxAge: 10,
-      sameSite: 'lax',
-    });
-    return res;
+    return NextResponse.redirect(redirectUrl, 303);
   }
 }
