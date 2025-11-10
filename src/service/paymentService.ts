@@ -206,12 +206,12 @@ export function openCheckout(reference: string, sessionId: string): void {
   modalOverlay.appendChild(modalContainer);
   document.body.appendChild(modalOverlay);
 
-  // Variável para o intervalo de checagem
-  let urlCheckInterval: NodeJS.Timeout;
+  // Variável para armazenar o intervalo
+  let intervalId: NodeJS.Timeout | null = null;
 
-  // Função para mostrar resultado
+  // Função para mostrar resultado (declarada antes de ser usada)
   const showResult = (success: boolean, message: string) => {
-    if (urlCheckInterval) clearInterval(urlCheckInterval);
+    if (intervalId) clearInterval(intervalId);
     iframe.style.display = 'none';
     
     const resultDiv = document.createElement('div');
@@ -266,18 +266,14 @@ export function openCheckout(reference: string, sessionId: string): void {
 
   // Monitorar mudanças de URL no iframe para detectar callback
   let lastCheckedUrl = '';
-  urlCheckInterval = setInterval(() => {
+  intervalId = setInterval(() => {
     try {
-      // Tentar acessar a URL do iframe (vai funcionar após o callback retornar)
       const currentUrl = iframe.contentWindow?.location.href || '';
       
       if (currentUrl && currentUrl !== lastCheckedUrl) {
         lastCheckedUrl = currentUrl;
         
-        // Verificar se é a página de callback
         if (currentUrl.includes('/backoffice') && currentUrl.includes('server_status')) {
-          clearInterval(urlCheckInterval);
-          
           const url = new URL(currentUrl);
           const serverStatus = url.searchParams.get('server_status');
           const collectStatus = url.searchParams.get('collect_status');
@@ -292,7 +288,7 @@ export function openCheckout(reference: string, sessionId: string): void {
           showResult(isSuccess, message);
         }
       }
-    } catch (e) {
+    } catch {
       // Erro de CORS quando iframe está em domínio externo - ignorar
     }
   }, 500);
@@ -300,7 +296,6 @@ export function openCheckout(reference: string, sessionId: string): void {
   // Listener para mensagens do iframe (fallback via postMessage)
   const handleMessage = (event: MessageEvent) => {
     if (event.data?.type === 'payment-result') {
-      clearInterval(urlCheckInterval);
       const { success, message } = event.data;
       showResult(success, message);
       window.removeEventListener('message', handleMessage);
@@ -311,7 +306,7 @@ export function openCheckout(reference: string, sessionId: string): void {
   // Fechar ao clicar fora
   modalOverlay.addEventListener('click', (e) => {
     if (e.target === modalOverlay) {
-      clearInterval(urlCheckInterval);
+      if (intervalId) clearInterval(intervalId);
       document.body.removeChild(modalOverlay);
       window.removeEventListener('message', handleMessage);
     }
@@ -321,7 +316,7 @@ export function openCheckout(reference: string, sessionId: string): void {
   const handleEsc = (e: KeyboardEvent) => {
     if (e.key === 'Escape') {
       if (document.getElementById('checkout-modal')) {
-        clearInterval(urlCheckInterval);
+        if (intervalId) clearInterval(intervalId);
         document.body.removeChild(modalOverlay);
         window.removeEventListener('message', handleMessage);
       }
@@ -332,7 +327,7 @@ export function openCheckout(reference: string, sessionId: string): void {
   
   // Configurar fechamento pelo botão X
   closeButton.onclick = () => {
-    clearInterval(urlCheckInterval);
+    if (intervalId) clearInterval(intervalId);
     window.removeEventListener('message', handleMessage);
     document.removeEventListener('keydown', handleEsc);
     document.body.removeChild(modalOverlay);
