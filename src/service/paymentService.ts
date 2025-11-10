@@ -115,11 +115,228 @@ export function getCheckoutUrl(reference: string, sessionId: string): string {
 }
 
 /**
- * Abre página de checkout na mesma aba
+ * Abre página de checkout em um modal
  */
 export function openCheckout(reference: string, sessionId: string): void {
   const checkoutUrl = getCheckoutUrl(reference, sessionId);
-  window.location.assign(checkoutUrl);
+  
+  // Criar modal overlay
+  const modalOverlay = document.createElement('div');
+  modalOverlay.id = 'checkout-modal';
+  modalOverlay.style.cssText = `
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  `;
+
+  // Criar container do modal
+  const modalContainer = document.createElement('div');
+  modalContainer.style.cssText = `
+    position: relative;
+    width: 100%;
+    max-width: 600px;
+    height: 60vh;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    display: flex;
+    flex-direction: column;
+  `;
+
+  // Criar header do modal com botão fechar
+  const modalHeader = document.createElement('div');
+  modalHeader.style.cssText = `
+    padding: 16px 24px;
+    border-bottom: 1px solid #e5e7eb;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #f9fafb;
+    border-radius: 12px 12px 0 0;
+  `;
+
+  const modalTitle = document.createElement('h2');
+  modalTitle.textContent = 'Checkout - Pagamento';
+  modalTitle.style.cssText = `
+    font-size: 18px;
+    font-weight: 600;
+    color: #1f2937;
+    margin: 0;
+  `;
+
+  const closeButton = document.createElement('button');
+  closeButton.innerHTML = '✕';
+  closeButton.style.cssText = `
+    background: none;
+    border: none;
+    font-size: 24px;
+    color: #6b7280;
+    cursor: pointer;
+    padding: 4px 8px;
+    line-height: 1;
+    transition: color 0.2s;
+  `;
+  closeButton.onmouseover = () => closeButton.style.color = '#1f2937';
+  closeButton.onmouseout = () => closeButton.style.color = '#6b7280';
+
+  modalHeader.appendChild(modalTitle);
+  modalHeader.appendChild(closeButton);
+
+  // Criar iframe
+  const iframe = document.createElement('iframe');
+  iframe.src = checkoutUrl;
+  iframe.style.cssText = `
+    width: 100%;
+    height: 100%;
+    border: none;
+    border-radius: 0 0 12px 12px;
+  `;
+
+  // Montar modal
+  modalContainer.appendChild(modalHeader);
+  modalContainer.appendChild(iframe);
+  modalOverlay.appendChild(modalContainer);
+  document.body.appendChild(modalOverlay);
+
+  // Variável para o intervalo de checagem
+  let urlCheckInterval: NodeJS.Timeout;
+
+  // Função para mostrar resultado
+  const showResult = (success: boolean, message: string) => {
+    if (urlCheckInterval) clearInterval(urlCheckInterval);
+    iframe.style.display = 'none';
+    
+    const resultDiv = document.createElement('div');
+    resultDiv.style.cssText = `
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      padding: 40px;
+      text-align: center;
+    `;
+
+    if (success) {
+      resultDiv.innerHTML = `
+        <div style="background: #10b981; border-radius: 50%; width: 80px; height: 80px; display: flex; align-items: center; justify-content: center; margin-bottom: 24px;">
+          <svg style="width: 48px; height: 48px; color: white;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+          </svg>
+        </div>
+        <h3 style="font-size: 24px; font-weight: 700; color: #047857; margin: 0 0 12px 0;">Pagamento Realizado com Sucesso!</h3>
+        <p style="color: #6b7280; font-size: 16px; margin: 0 0 32px 0;">${message}</p>
+        <button id="close-btn" style="background: #10b981; color: white; padding: 12px 32px; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 16px;">
+          Fechar
+        </button>
+      `;
+    } else {
+      resultDiv.innerHTML = `
+        <div style="background: #ef4444; border-radius: 50%; width: 80px; height: 80px; display: flex; align-items: center; justify-content: center; margin-bottom: 24px;">
+          <svg style="width: 48px; height: 48px; color: white;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </div>
+        <h3 style="font-size: 24px; font-weight: 700; color: #dc2626; margin: 0 0 12px 0;">Erro no Pagamento</h3>
+        <p style="color: #6b7280; font-size: 16px; margin: 0 0 32px 0;">${message}</p>
+        <button id="close-btn" style="background: #ef4444; color: white; padding: 12px 32px; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 16px;">
+          Fechar
+        </button>
+      `;
+    }
+
+    modalContainer.appendChild(resultDiv);
+
+    const closeBtn = resultDiv.querySelector('#close-btn');
+    if (closeBtn) {
+      closeBtn.addEventListener('click', () => {
+        document.body.removeChild(modalOverlay);
+        window.location.reload();
+      });
+    }
+  };
+
+  // Monitorar mudanças de URL no iframe para detectar callback
+  let lastCheckedUrl = '';
+  urlCheckInterval = setInterval(() => {
+    try {
+      // Tentar acessar a URL do iframe (vai funcionar após o callback retornar)
+      const currentUrl = iframe.contentWindow?.location.href || '';
+      
+      if (currentUrl && currentUrl !== lastCheckedUrl) {
+        lastCheckedUrl = currentUrl;
+        
+        // Verificar se é a página de callback
+        if (currentUrl.includes('/backoffice') && currentUrl.includes('server_status')) {
+          clearInterval(urlCheckInterval);
+          
+          const url = new URL(currentUrl);
+          const serverStatus = url.searchParams.get('server_status');
+          const collectStatus = url.searchParams.get('collect_status');
+          const serverMessage = url.searchParams.get('server_message') || '';
+          const collectMessage = url.searchParams.get('collect_message') || '';
+          
+          const isSuccess = serverStatus === 'ok' && collectStatus === 'ok';
+          const message = isSuccess 
+            ? 'Pagamento processado e confirmado com sucesso.' 
+            : (serverMessage || collectMessage || 'Erro ao processar pagamento.');
+          
+          showResult(isSuccess, message);
+        }
+      }
+    } catch (e) {
+      // Erro de CORS quando iframe está em domínio externo - ignorar
+    }
+  }, 500);
+
+  // Listener para mensagens do iframe (fallback via postMessage)
+  const handleMessage = (event: MessageEvent) => {
+    if (event.data?.type === 'payment-result') {
+      clearInterval(urlCheckInterval);
+      const { success, message } = event.data;
+      showResult(success, message);
+      window.removeEventListener('message', handleMessage);
+    }
+  };
+  window.addEventListener('message', handleMessage);
+
+  // Fechar ao clicar fora
+  modalOverlay.addEventListener('click', (e) => {
+    if (e.target === modalOverlay) {
+      clearInterval(urlCheckInterval);
+      document.body.removeChild(modalOverlay);
+      window.removeEventListener('message', handleMessage);
+    }
+  });
+
+  // Fechar com ESC
+  const handleEsc = (e: KeyboardEvent) => {
+    if (e.key === 'Escape') {
+      if (document.getElementById('checkout-modal')) {
+        clearInterval(urlCheckInterval);
+        document.body.removeChild(modalOverlay);
+        window.removeEventListener('message', handleMessage);
+      }
+      document.removeEventListener('keydown', handleEsc);
+    }
+  };
+  document.addEventListener('keydown', handleEsc);
+  
+  // Configurar fechamento pelo botão X
+  closeButton.onclick = () => {
+    clearInterval(urlCheckInterval);
+    window.removeEventListener('message', handleMessage);
+    document.removeEventListener('keydown', handleEsc);
+    document.body.removeChild(modalOverlay);
+  };
 }
 
 /**
@@ -221,9 +438,6 @@ export async function processPayment(
   orderReference?: string // Referência do recibo (ex: P2025.458)
 ): Promise<void> {
   try {
-    console.log("[PAYMENT] ==================== PROCESSO DE PAGAMENTO ====================");
-    console.log("[PAYMENT] Dados de entrada:", { amount, userName, userEmail, userPhone, reciboNumber });
-
     // Gera merchantRef e merchantSession únicos com máximo 15 caracteres
     const timestamp = Date.now();
     const timestampStr = timestamp.toString().slice(-8); // Últimos 8 dígitos do timestamp
@@ -232,25 +446,15 @@ export async function processPayment(
     // Formato: R/S + 8 dígitos + 6 caracteres = 15 caracteres
     const merchantRef = `R${timestampStr}${randomStr}`.substring(0, 15);
     const merchantSession = `S${timestampStr}${randomStr}`.substring(0, 15);
-    
-    console.log("[PAYMENT] MerchantRef gerado:", merchantRef, `(${merchantRef.length} chars)`);
-    console.log("[PAYMENT] MerchantSession gerado:", merchantSession, `(${merchantSession.length} chars)`);
-    console.log("[PAYMENT] Recibo original (para referência):", reciboNumber);
-    
+  
     // Validação de comprimento
     if (merchantRef.length > 15 || merchantSession.length > 15) {
-      console.error("[PAYMENT] ⚠️ ERRO: merchantRef ou merchantSession excede 15 caracteres!");
       throw new Error("Referência do recibo excede limite permitido");
     }
 
     // PASSO 1: Obter token de acesso (sempre novo para evitar expiração)
-    console.log("[PAYMENT] PASSO 1: Chamando API de autorização...");
     const accessToken = await getPaymentAccessToken();
-    console.log("[PAYMENT] ✅ Token obtido com sucesso");
-    console.log("[PAYMENT] Token completo:", accessToken);
-
     // PASSO 2: Criar intenção de pagamento com o token
-    console.log("[PAYMENT] PASSO 2: Criando intenção de pagamento...");
     const paymentData: PaymentIntentRequest = {
       name: userName,
       amount: amount,
@@ -266,23 +470,10 @@ export async function processPayment(
       phoneNumber: userPhone.replace(/[^0-9]/g, ""), // Remove formatação
       ...(orderReference && { orderReference }), // Referência do recibo se fornecida
     };
-    console.log("[PAYMENT] Dados que serão enviados:", JSON.stringify(paymentData, null, 2));
-    console.log("[PAYMENT] Token que será usado:", accessToken.substring(0, 50) + "...");
-
     const paymentIntent = await createPaymentIntent(accessToken, paymentData);
-    console.log("[PAYMENT] ✅ Intenção criada:", paymentIntent);
-
-    // PASSO 3: Abrir checkout com reference e sessionId
-    console.log("[PAYMENT] PASSO 3: Abrindo checkout...");
-    console.log("[PAYMENT] Reference (Checkout UUID):", paymentIntent.reference);
-    console.log("[PAYMENT] SessionId:", paymentIntent.sessionId);
-    console.log("[PAYMENT] MerchantRef (Recibo):", paymentIntent.merchantRef);
-    console.log("[PAYMENT] Recibo original:", reciboNumber);
     
     openCheckout(paymentIntent.reference, paymentIntent.sessionId);
-    console.log("[PAYMENT] ✅ Checkout aberto com sucesso!");
   } catch (error) {
-    console.error("[PAYMENT] ❌ Erro no processamento de pagamento:", error);
     throw error;
   }
 }
