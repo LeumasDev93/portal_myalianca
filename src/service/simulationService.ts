@@ -37,7 +37,6 @@ export const fetchSimulation = async (
     productId?: string
 ) => {
     setIsLoading(true);
-    console.log("productId", productId);
     const session = await getSession();
 
     if (!session?.user?.accessToken) {
@@ -67,6 +66,7 @@ export const fetchSimulation = async (
     } = formData;
 
     const payload = {
+        productId: productId,
         idSimulationTel,
         producer: 2,
         registerDateSimulationTel: new Date().toISOString(),
@@ -146,10 +146,7 @@ export const fetchSimulation = async (
                 headers: {
                     "Content-Type": "application/json",
                 },
-                body: JSON.stringify({
-                    productId: productId,
-                    ...simulationResult,
-                }),
+                body: JSON.stringify(simulationResult),
             });
 
             if (!externalRes.ok) {

@@ -17,11 +17,6 @@ export async function POST(req: NextRequest) {
             );
         }
 
-        console.log("📦 Enviando para API Aliança:", {
-            productId: simulationResult.productId,
-            url: `${ALIANCA_API_URL}/simulador/1.0.0/simulations`
-        });
-
         const response = await fetch(`${ALIANCA_API_URL}/simulador/1.0.0/simulations`, {
             method: "POST",
             headers: {
