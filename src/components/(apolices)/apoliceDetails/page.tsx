@@ -235,6 +235,12 @@ export default function ApoliceDetailPage({
   };
 
   const openConfirmDialog = (type: 'view' | 'download', reciboNumber: string) => {
+    // Para "Ver", executa diretamente sem confirmação
+    if (type === 'view') {
+      visualizarPDF(reciboNumber);
+      return;
+    }
+    // Para outros tipos, abre o dialog de confirmação
     setConfirmDialog({
       open: true,
       type,

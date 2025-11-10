@@ -102,6 +102,13 @@ const HistoryTable = ({
   const { registerReciboDownloadActivity } = useReciboActivity();
 
   const openConfirmDialog = (type: 'view' | 'download' | 'payment', reciboNumber: string, reciboData?: any) => {
+    // Para "Ver", executa diretamente sem confirmação
+    if (type === 'view' && token) {
+      visualizarPDF(reciboNumber, token, reciboData?.status);
+      setShowPopup(false);
+      return;
+    }
+    // Para outros tipos, abre o dialog de confirmação
     setConfirmDialog({ open: true, type, reciboNumber, reciboData });
     setShowPopup(false);
   };

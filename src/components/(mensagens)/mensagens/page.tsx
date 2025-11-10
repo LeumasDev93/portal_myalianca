@@ -485,6 +485,7 @@ export default function MensagensPage({
                             if (!isMessageRead(message.id)) {
                               markMessageAsRead(message.id);
                               await markAsRead(message.id);
+                              refreshUnreadCount(); // Atualiza contador global
                             }
                             onSelectDetail(message.id);
                           }}
@@ -648,9 +649,11 @@ export default function MensagensPage({
                               if (isMessageRead(message.id)) {
                                 markMessageAsUnread(message.id);
                                 await markAsUnread(message.id);
+                                refreshUnreadCount(); // Atualiza contador global
                               } else {
                                 markMessageAsRead(message.id);
                                 await markAsRead(message.id);
+                                refreshUnreadCount(); // Atualiza contador global
                               }
                             }}
                             title={
@@ -819,9 +822,11 @@ export default function MensagensPage({
                                   if (isMessageRead(message.id)) {
                                     markMessageAsUnread(message.id);
                                     await markAsUnread(message.id);
+                                    refreshUnreadCount(); // Atualiza contador global
                                   } else {
                                     markMessageAsRead(message.id);
                                     await markAsRead(message.id);
+                                    refreshUnreadCount(); // Atualiza contador global
                                   }
                                 }}
                                 className="flex items-center gap-2 sm:gap-3 p-2 sm:p-2 text-xs sm:text-sm cursor-pointer hover:bg-gray-100 rounded-md"

@@ -60,10 +60,11 @@ export default function LoginPage() {
   const [step, setStep] = useState<"email" | "otp" | "password">("email");
   const [otp, setOtp] = useState("");
   const [new_password, setNewPassword] = useState("");
+  const [imageError, setImageError] = useState(false);
 
-  const ImageCapa = `/api/proxy-image?url=${encodeURIComponent(
-    `${process.env.NEXT_PUBLIC_API_BASE_URL_DEFAULT}/files/1.0.0/login-file`
-  )}`;
+  // Usar proxy para carregar a imagem com API Key
+  const ImageCapa = `/api/proxy-image?url=${encodeURIComponent('https://api.aliancaseguros.cv/files/1.0.0/login-file')}`;
+  
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     clearError();
@@ -274,9 +275,47 @@ export default function LoginPage() {
     }
   };
 
+  // Tentar carregar a imagem através do proxy ao montar o componente
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    
+    const img = document.createElement('img');
+    img.onload = () => {
+      console.log('✅ Imagem carregada com sucesso via proxy');
+      setImageError(false);
+    };
+    img.onerror = () => {
+      console.warn('⚠️ Erro ao carregar imagem via proxy, usando gradiente como fallback');
+      setImageError(true);
+    };
+    img.src = ImageCapa;
+    
+    return () => {
+      img.onload = null;
+      img.onerror = null;
+    };
+  }, [ImageCapa]);
+
   // console.log(useAuth());
   return (
-    <div className="relative h-screen w-full bg-gradient-to-br from-blue-900 to-red-800 overflow-hidden">
+    <div className="relative h-screen w-full overflow-hidden">
+      {/* Background: Gradiente sempre presente como base */}
+      <div className="absolute inset-0 bg-gradient-to-br from-blue-900 to-red-800"></div>
+      
+      {/* Background Image da API por cima do gradiente (se carregar) */}
+      {!imageError && (
+        <>
+          <img
+            src={ImageCapa}
+            alt="Background"
+            className="absolute inset-0 w-full h-full object-cover object-center"
+            loading="eager"
+          />
+          {/* Overlay Escuro sobre a imagem */}
+          <div className="absolute inset-0 bg-black/40"></div>
+        </>
+      )}
+      
       {/* Logo e Texto - Mobile no centro da página */}
       <div className="lg:hidden absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10 text-center px-4">
         <Image src={Logo} alt="Logo" width={200} height={80} className="w-44 md:w-56 h-auto mx-auto mb-4 md:mb-6" />

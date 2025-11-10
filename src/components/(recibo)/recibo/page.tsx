@@ -106,6 +106,12 @@ export default function ReciboPage({ filterParams }: ReciboPageProps) {
   } = useRecibos(filterParams);
 
   const openConfirmDialog = (type: 'view' | 'download' | 'payment', reciboNumber: string, reciboData?: any) => {
+    // Para "Ver", executa diretamente sem confirmação
+    if (type === 'view') {
+      visualizarPDF(reciboNumber, reciboData?.status);
+      return;
+    }
+    // Para outros tipos, abre o dialog de confirmação
     setConfirmDialog({ open: true, type, reciboNumber, reciboData });
   };
 
@@ -677,6 +683,14 @@ export default function ReciboPage({ filterParams }: ReciboPageProps) {
                     <h3 className="text-sm font-medium text-[#002256]">
                       {recibo.clientName}
                     </h3>
+                  </div> 
+                  <div className="flex items-start gap-2">
+                    <h3 className="text-sm font-medium text-[#002256]">
+                      Data Faturação:
+                    </h3>
+                    <h3 className="text-sm font-medium text-[#002256]">
+                      {formatDate(recibo.from)} - {formatDate(recibo.to)}
+                    </h3>
                   </div>
                   <div className="flex items-start gap-2">
                     <h3 className="text-sm font-medium text-[#002256]">
@@ -686,25 +700,8 @@ export default function ReciboPage({ filterParams }: ReciboPageProps) {
                       {formatCurrency(recibo.value)}
                     </h3>
                   </div>
-                  <div className="flex items-start gap-2">
-                    <h3 className="text-sm font-medium text-[#002256]">
-                      {recibo.mbref}
-                    </h3>
-                    <h3 className="text-sm font-medium text-[#002256]">
-                      {recibo.mbref}
-                    </h3>
-                  </div>
                 </div>
-                <div className="mt-2 md:mt-3 grid grid-cols-1 md:grid-cols-4 gap-2 text-xs md:text-sm">
-                  <div>
-                    <h3 className="text-sm font-medium text-[#002256]">
-                      Data Faturação:
-                    </h3>
-                    <h3 className="text-sm font-medium text-[#002256]">
-                      {formatDate(recibo.from)} - {formatDate(recibo.to)}
-                    </h3>
-                  </div>
-                </div>
+               
                 <div className="flex flex-col items-start md:items-end gap-2">
                   <span
                     className={`px-2 md:px-3 py-1 rounded-full text-xs font-medium ${getStatusReciverColors(

@@ -20,12 +20,12 @@ export default function ProductsTab({
 
   return (
     <div className="w-full">
-      <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 lg:gap-6 items-stretch sm:items-center justify-center max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-3 sm:gap-4 lg:gap-6 px-4 sm:px-6 lg:px-8">
         {products.map((product) => (
           <div
             key={product.productId}
             onClick={() => onSelect(product)}
-            className="cursor-pointer w-full sm:w-auto sm:flex-1 sm:max-w-[280px] lg:max-w-[320px]"
+            className="cursor-pointer w-full"
           >
             <Card product={product} />
           </div>

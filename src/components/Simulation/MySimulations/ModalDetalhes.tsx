@@ -12,6 +12,7 @@ import {
   FaPercentage,
 } from "react-icons/fa";
 import { SimulationDetails } from "./MySimulationsTab";
+import { ModalContratacao } from "./ModalContratacao";
 
 // Tipos atualizados para refletir a estrutura real dos dados
 
@@ -32,10 +33,14 @@ interface Props {
 
 export function ModalDetails({ data, onClose, isOpen, reset }: Props) {
   const [copied, setCopied] = useState(false);
+  const [showContratacaoModal, setShowContratacaoModal] = useState(false);
+  const [selectedInstallment, setSelectedInstallment] = useState<any>(null);
 
   useEffect(() => {
     if (!isOpen) {
       setCopied(false);
+      setShowContratacaoModal(false);
+      setSelectedInstallment(null);
     }
   }, [isOpen]);
 
@@ -233,7 +238,18 @@ export function ModalDetails({ data, onClose, isOpen, reset }: Props) {
                 </div>
 
                 <div className="p-4 border-t">
-                  <button className="w-full bg-[#002855] text-white py-2 rounded-md hover:bg-[#002256]/70 transition-colors flex items-center justify-center">
+                  <button 
+                    onClick={() => {
+                      console.log('🔷 Abrindo modal de contratação...');
+                      console.log('  Dados da simulação:', data.results);
+                      console.log('  Product:', data.results.product);
+                      console.log('  Installment selecionado:', installment);
+                      setSelectedInstallment(installment);
+                      setShowContratacaoModal(true);
+                    }}
+                    type="button"
+                    className="w-full cursor-pointer bg-[#002855] text-white py-2 rounded-md hover:bg-[#002256]/70 transition-colors flex items-center justify-center"
+                  >
                     <FaFileInvoiceDollar className="mr-2" />
                     Contratar
                   </button>
@@ -350,12 +366,26 @@ export function ModalDetails({ data, onClose, isOpen, reset }: Props) {
         <div className="sticky bottom-0 bg-white p-4 border-t flex justify-end gap-4">
           <button
             onClick={handleClose}
-            className="px-4 py-2 bg-[#002855] text-white rounded-lg hover:bg-[#002256]/70 transition-colors"
+            className="px-4 cursor-pointer py-2 bg-[#002855] text-white rounded-lg hover:bg-[#002256]/70 transition-colors"
           >
             Fechar
           </button>
         </div>
       </div>
+
+      {/* Modal de Contratação */}
+      <ModalContratacao
+        isOpen={showContratacaoModal}
+        onClose={() => setShowContratacaoModal(false)}
+        simulationData={{
+          productId: (data.results.product as any)?.id || '',
+          productType: (data.results.product as any)?.type || '',
+          productName: (data.results.product as any)?.name || 'Produto',
+          reference: data.results.reference,
+          premium: selectedInstallment?.value || data.results.premium,
+          totalPremium: data.results.totalPremium,
+        }}
+      />
     </div>
   );
 }

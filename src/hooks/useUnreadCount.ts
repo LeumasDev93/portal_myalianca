@@ -91,19 +91,44 @@ export function useUnreadCount(userId?: string) {
 
   const markAsRead = async (id: string) => {
     if (!userId) return;
+    
+    // Verificar se o ID existe nas mensagens antes de enviar
+    if (!id || id.trim() === '') {
+      console.warn('⚠️ ID da mensagem inválido, não enviando para API');
+      return;
+    }
+    
+    // Verificar se a mensagem existe na lista
+    const messageExists = messages.some(msg => msg.id === id);
+    if (!messageExists) {
+      console.warn('⚠️ Mensagem não encontrada na lista, não enviando para API');
+      return;
+    }
 
     try {
-      // Chamar API para marcar como lida
-      const response = await fetch("/api/menssage", {
-        method: "POST",
+      // Chamar PROXY para marcar como lida (evita CORS)
+      console.log('📧 Marcando mensagem como LIDA via proxy:', id);
+      
+      // Buscar conteúdo da mensagem
+      const message = messages.find(msg => msg.id === id);
+      const conteudo = message?.assunto || '';
+      
+      const response = await fetch('/api/menssage/mark-read', {
+        method: "PATCH",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
+        body: JSON.stringify({ 
           messageId: id,
           userId: userId,
-          action: "mark-as-read",
+          conteudo: conteudo,
         }),
+      });
+
+      const data = await response.json();
+      console.log('📧 Resposta do proxy:', {
+        status: response.status,
+        data
       });
 
       if (response.ok) {
@@ -111,9 +136,13 @@ export function useUnreadCount(userId?: string) {
           const updated = prev.map((msg) =>
             msg.id === id ? { ...msg, read: true } : msg
           );
-          setUnreadCount(updated.filter((m) => !m.read).length);
+          const newUnreadCount = updated.filter((m) => !m.read).length;
+          setUnreadCount(newUnreadCount);
+          console.log('✅ Mensagem marcada como lida. Novo contador:', newUnreadCount);
           return updated;
         });
+      } else {
+        console.error('❌ Erro:', response.status, data);
       }
     } catch (error) {
       console.error("Erro ao marcar mensagem como lida:", error);
@@ -130,19 +159,44 @@ export function useUnreadCount(userId?: string) {
 
   const markAsUnread = async (id: string) => {
     if (!userId) return;
+    
+    // Verificar se o ID existe nas mensagens antes de enviar
+    if (!id || id.trim() === '') {
+      console.warn('⚠️ ID da mensagem inválido, não enviando para API');
+      return;
+    }
+    
+    // Verificar se a mensagem existe na lista
+    const messageExists = messages.some(msg => msg.id === id);
+    if (!messageExists) {
+      console.warn('⚠️ Mensagem não encontrada na lista, não enviando para API');
+      return;
+    }
 
     try {
-      // Chamar API para marcar como não lida
-      const response = await fetch("/api/menssage", {
-        method: "POST",
+      // Chamar PROXY para marcar como não lida (evita CORS)
+      console.log('📧 Marcando mensagem como NÃO LIDA via proxy:', id);
+      
+      // Buscar conteúdo da mensagem
+      const message = messages.find(msg => msg.id === id);
+      const conteudo = message?.assunto || '';
+      
+      const response = await fetch('/api/menssage/mark-unread', {
+        method: "PATCH",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
+        body: JSON.stringify({ 
           messageId: id,
           userId: userId,
-          action: "mark-as-unread",
+          conteudo: conteudo,
         }),
+      });
+
+      const data = await response.json();
+      console.log('📧 Resposta do proxy:', {
+        status: response.status,
+        data
       });
 
       if (response.ok) {
@@ -150,9 +204,13 @@ export function useUnreadCount(userId?: string) {
           const updated = prev.map((msg) =>
             msg.id === id ? { ...msg, read: false } : msg
           );
-          setUnreadCount(updated.filter((m) => !m.read).length);
+          const newUnreadCount = updated.filter((m) => !m.read).length;
+          setUnreadCount(newUnreadCount);
+          console.log('✅ Mensagem marcada como não lida. Novo contador:', newUnreadCount);
           return updated;
         });
+      } else {
+        console.error('❌ Erro:', response.status, data);
       }
     } catch (error) {
       console.error("Erro ao marcar mensagem como não lida:", error);

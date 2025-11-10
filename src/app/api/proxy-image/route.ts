@@ -11,22 +11,20 @@ export async function GET(request: NextRequest) {
       return new Response('URL da imagem não fornecida', { status: 400 });
     }
 
-    const apiKey = process.env.NEXT_PUBLIC_API_KEY || "";
-    const apiToken = process.env.API_SECRET_TOKEN || "";
+    // API Key do arquivo .env
+    const apiKey = process.env.NEXT_PUBLIC_API_KEY || '';
 
-    console.log('🔧 Configurações da API Proxy:');
-    console.log('  - API Key:', apiKey ? 'Definida' : 'Não definida');
-    console.log('  - API Token:', apiToken ? 'Definida' : 'Não definida');
-    console.log('  - URL da imagem:', imageUrl);
+    if (!apiKey) {
+      console.error('❌ NEXT_PUBLIC_API_KEY não configurada no .env');
+      return new Response('API Key não configurada', { status: 500 });
+    }
 
     console.log('🖼️ Fazendo proxy para:', imageUrl);
+    console.log('🔑 Usando API Key do .env');
 
     const response = await fetch(imageUrl, {
       headers: {
-        Authorization: `Bearer ${apiToken}`,
-        ApiKey: apiKey,
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
+        'ApiKey': apiKey,
       },
     });
 
