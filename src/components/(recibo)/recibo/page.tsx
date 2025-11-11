@@ -122,26 +122,6 @@ export default function ReciboPage({ filterParams }: ReciboPageProps) {
     resetFilters,
   } = useRecibos(filterParams);
 
-  console.log('📊 ReciboPage - statusFilter atual:', statusFilter);
-  console.log('📊 ReciboPage - searchTerm atual:', searchTerm);
-
-  // Debug: mostrar resultados da busca
-  useEffect(() => {
-    if (filterParams?.reference) {
-      console.log('🔍 ReciboPage - Buscando por referência:', filterParams.reference);
-      console.log('📊 Total de recibos:', recibos.length);
-      console.log('📊 Recibos filtrados:', filteredRecibos.length);
-      console.log('📋 Recibos encontrados:', filteredRecibos.map(r => ({ number: r.number, mbref: r.mbref })));
-    }
-    if (filterParams?.estado) {
-      console.log('🔍 ReciboPage - Filtrando por estado:', filterParams.estado);
-      console.log('📊 Status atual do filtro:', statusFilter);
-      console.log('📊 Total de recibos:', recibos.length);
-      console.log('📊 Recibos filtrados:', filteredRecibos.length);
-      console.log('📋 Status dos recibos filtrados:', filteredRecibos.map(r => ({ number: r.number, status: r.status })));
-      console.log('📋 TODOS os recibos:', recibos.map(r => ({ number: r.number, status: r.status })));
-    }
-  }, [filterParams?.reference, filterParams?.estado, filteredRecibos, recibos, statusFilter]);
 
   // Detect payment callback results and show modal
   useEffect(() => {
@@ -344,7 +324,6 @@ export default function ReciboPage({ filterParams }: ReciboPageProps) {
         setDownloadStatus((prev) => ({ ...prev, [invoiceNumber]: "idle" }));
       }, 3000);
     } catch (error: any) {
-      console.error("Erro ao baixar PDF:", error);
       setDownloadStatus((prev) => ({ ...prev, [invoiceNumber]: "error" }));
       const errorMessage = error?.message || "Erro desconhecido ao baixar recibo";
       toast.error(errorMessage, {
@@ -668,7 +647,6 @@ export default function ReciboPage({ filterParams }: ReciboPageProps) {
           />
         </div>
         <Select value={statusFilter} onValueChange={(value) => {
-          console.log('📊 Mudando filtro de status para:', value);
           setStatusFilter(value);
         }}>
           <SelectTrigger className="w-full md:w-48 text-sm md:text-base">
