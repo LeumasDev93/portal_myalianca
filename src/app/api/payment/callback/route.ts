@@ -71,45 +71,7 @@ async function tryValidateHmac(options: {
   return { ok: res3.ok, status: res3.status, text: await res3.text().catch(() => '') };
 }
 
-export async function GET(request: NextRequest) {
-  try {
-    const { searchParams } = new URL(request.url);
-    const reference = searchParams.get('reference');
-    const merchantRef = searchParams.get('merchantRef');
-    const amount = searchParams.get('amount');
-    const status = searchParams.get('status'); // Status do SISP
-
-    console.log('[PAYMENT CALLBACK][GET] Parâmetros recebidos:', { reference, merchantRef, amount, status });
-
-    // GET callback: apenas redireciona para a página de recibos
-    // Não fazemos validação HMAC no GET
-    const redirectUrl = new URL('/backoffice', request.url);
-    redirectUrl.searchParams.set('menu', 'recibo');
-    redirectUrl.searchParams.set('server_status', 'pending');
-    redirectUrl.searchParams.set('server_message', 'Aguardando confirmação do pagamento...');
-    redirectUrl.searchParams.set('merchantRef', merchantRef || '');
-    redirectUrl.searchParams.set('amount', (amount || '').toString());
-
-    const res = NextResponse.redirect(redirectUrl, 303);
-    res.cookies.set('postpay', '1', {
-      path: '/',
-      maxAge: 10,
-      sameSite: 'none',
-      secure: true,
-    });
-    return res;
-  } catch (error) {
-    console.error('[PAYMENT CALLBACK] Erro no callback GET:', error);
-    
-    // Em caso de erro, redireciona para a página de recibos
-    const redirectUrl = new URL('/backoffice', request.url);
-    redirectUrl.searchParams.set('menu', 'recibo');
-    redirectUrl.searchParams.set('server_status', 'error');
-    redirectUrl.searchParams.set('server_message', 'Erro ao processar callback');
-    
-    return NextResponse.redirect(redirectUrl, 303);
-  }
-}
+// GET não é necessário - SISP envia diretamente via POST
 
 export async function POST(request: NextRequest) {
   try {
@@ -265,8 +227,17 @@ export async function POST(request: NextRequest) {
     // Em caso de erro, redireciona para a página de recibos
     const redirectUrl = new URL('/backoffice', request.url);
     redirectUrl.searchParams.set('menu', 'recibo');
-    redirectUrl.searchParams.set('payment_status', 'error');
+    redirectUrl.searchParams.set('server_status', 'error');
+    redirectUrl.searchParams.set('server_message', 'Erro ao processar callback');
+    redirectUrl.searchParams.set('collect_status', 'skipped');
     
-    return NextResponse.redirect(redirectUrl, 303);
+    const res = NextResponse.redirect(redirectUrl, 303);
+    res.cookies.set('postpay', '1', {
+      path: '/',
+      maxAge: 10,
+      sameSite: 'none',
+      secure: true,
+    });
+    return res;
   }
 }

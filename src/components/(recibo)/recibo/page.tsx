@@ -145,6 +145,10 @@ export default function ReciboPage({ filterParams }: ReciboPageProps) {
 
   // Detect payment callback results and show modal
   useEffect(() => {
+    console.log('🔍 [PAYMENT MODAL] useEffect executado');
+    console.log('🔍 [PAYMENT MODAL] window.location.search:', window?.location?.search);
+    console.log('🔍 [PAYMENT MODAL] searchParams:', searchParams);
+    
     if (!searchParams) {
       console.log('🔍 [PAYMENT MODAL] searchParams não disponível');
       return;
@@ -155,6 +159,14 @@ export default function ReciboPage({ filterParams }: ReciboPageProps) {
       return;
     }
     
+    // Ler diretamente da URL também
+    const urlParams = new URLSearchParams(window.location.search);
+    console.log('🔍 [PAYMENT MODAL] URL params direto:', {
+      server_status: urlParams.get("server_status"),
+      server_message: urlParams.get("server_message"),
+      collect_status: urlParams.get("collect_status")
+    });
+    
     const serverStatus = searchParams.get("server_status");
     const serverMessage = searchParams.get("server_message");
     const collectStatus = searchParams.get("collect_status");
@@ -164,7 +176,7 @@ export default function ReciboPage({ filterParams }: ReciboPageProps) {
     const debugRef = searchParams.get("debug_ref");
     const debugFp = searchParams.get("debug_fp");
 
-    console.log('🔍 [PAYMENT MODAL] Parâmetros detectados:', {
+    console.log('🔍 [PAYMENT MODAL] Parâmetros detectados via searchParams:', {
       serverStatus,
       serverMessage,
       collectStatus,
