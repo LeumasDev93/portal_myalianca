@@ -57,7 +57,6 @@ import { useReciboActivity } from "@/lib/activityExamples";
 import { useUserProfile } from "@/hooks/useUserProfile";
 import { processPayment } from "@/service/paymentService";
 import { PaymentResultModal } from "../PaymentResultModal";
-import { useSearchParams } from "next/navigation";
 
 type ViewMode = "grid" | "list";
 
@@ -105,7 +104,6 @@ export default function ReciboPage({ filterParams }: ReciboPageProps) {
   const { registerReciboDownloadActivity } = useReciboActivity();
   const { profile } = useUserProfile(); // Dados do usuário
   const { toast: showToast } = useToast();
-  const searchParams = useSearchParams();
 
   // Debug: verificar se os parâmetros estão chegando
   console.log("🔍 ReciboPage - filterParams recebidos:", filterParams);
@@ -126,47 +124,35 @@ export default function ReciboPage({ filterParams }: ReciboPageProps) {
   // Detect payment callback results and show modal
   useEffect(() => {
     console.log('🔍 [PAYMENT MODAL] useEffect executado');
-    console.log('🔍 [PAYMENT MODAL] window.location.search:', window?.location?.search);
-    console.log('🔍 [PAYMENT MODAL] searchParams:', searchParams);
-    
-    if (!searchParams) {
-      console.log('🔍 [PAYMENT MODAL] searchParams não disponível');
-      return;
-    }
     
     if (paymentModalShownRef.current) {
       console.log('🔍 [PAYMENT MODAL] Modal já foi mostrado, ignorando');
       return;
     }
     
-    // Ler diretamente da URL também
-    const urlParams = new URLSearchParams(window.location.search);
-    console.log('🔍 [PAYMENT MODAL] URL params direto:', {
-      server_status: urlParams.get("server_status"),
-      server_message: urlParams.get("server_message"),
-      collect_status: urlParams.get("collect_status")
-    });
+    // Ler do cookie em vez da URL (mais confiável)
+    const getCookie = (name: string) => {
+      const value = `; ${document.cookie}`;
+      const parts = value.split(`; ${name}=`);
+      if (parts.length === 2) return parts.pop()?.split(';').shift();
+      return null;
+    };
     
-    const serverStatus = searchParams.get("server_status");
-    const serverMessage = searchParams.get("server_message");
-    const collectStatus = searchParams.get("collect_status");
-    const collectMessage = searchParams.get("collect_message");
-    const merchantRef = searchParams.get("merchantRef");
-    const amount = searchParams.get("amount");
-    const debugRef = searchParams.get("debug_ref");
-    const debugFp = searchParams.get("debug_fp");
-
-    console.log('🔍 [PAYMENT MODAL] Parâmetros detectados via searchParams:', {
-      serverStatus,
-      serverMessage,
-      collectStatus,
-      collectMessage,
-      merchantRef,
-      amount
-    });
-
-    // Only show modal if we have payment callback parameters
-    if (serverStatus || collectStatus) {
+    const paymentResultCookie = getCookie('payment_result');
+    console.log('🍪 [PAYMENT MODAL] Cookie payment_result:', paymentResultCookie);
+    
+    if (!paymentResultCookie) {
+      console.log('ℹ️ [PAYMENT MODAL] Nenhum cookie de pagamento encontrado');
+      return;
+    }
+    
+    try {
+      const paymentData = JSON.parse(decodeURIComponent(paymentResultCookie));
+      console.log('📦 [PAYMENT MODAL] Dados do pagamento parseados:', paymentData);
+      
+      const { serverStatus, serverMessage, collectStatus, collectMessage, merchantRef, amount, debugRef, debugFp } = paymentData;
+      
+      // Determinar status do modal
       let modalStatus: "success" | "error" | "pending" = "error";
       
       if (serverStatus === "pending") {
@@ -190,10 +176,15 @@ export default function ReciboPage({ filterParams }: ReciboPageProps) {
       });
       
       paymentModalShownRef.current = true;
-    } else {
-      console.log('ℹ️ [PAYMENT MODAL] Nenhum parâmetro de pagamento detectado');
+      
+      // Limpar o cookie após ler
+      document.cookie = 'payment_result=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT';
+      console.log('🍪 [PAYMENT MODAL] Cookie payment_result limpo');
+      
+    } catch (error) {
+      console.error('❌ [PAYMENT MODAL] Erro ao parsear cookie:', error);
     }
-  }, [searchParams]);
+  }, []);
 
   const openConfirmDialog = (type: 'view' | 'download' | 'payment', reciboNumber: string, reciboData?: any) => {
     // Para "Ver", executa diretamente sem confirmação

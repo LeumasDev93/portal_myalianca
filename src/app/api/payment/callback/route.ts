@@ -296,12 +296,33 @@ export async function POST(request: NextRequest) {
     console.log('═══════════════════════════════════════════════════════════════');
 
     const res = NextResponse.redirect(redirectUrl, 303);
+    
+    // Salvar dados do pagamento em cookie para o modal ler
+    const paymentResult = {
+      serverStatus,
+      serverMessage,
+      collectStatus,
+      collectMessage,
+      merchantRef: merchantRef || '',
+      amount: amount?.toString() || '',
+      debugRef: serverStatus !== 'ok' ? refPost : '',
+      debugFp: serverStatus !== 'ok' ? fpPost.substring(0, 50) : '',
+    };
+    
+    res.cookies.set('payment_result', JSON.stringify(paymentResult), {
+      path: '/',
+      maxAge: 30, // 30 segundos
+      sameSite: 'lax',
+      secure: true,
+    });
+    
     res.cookies.set('postpay', '1', {
       path: '/',
       maxAge: 10,
       sameSite: 'none',
       secure: true,
     });
+    
     // Limpa o gateway token curto após uso
     res.cookies.set('pay_token', '', {
       path: '/',
@@ -309,6 +330,9 @@ export async function POST(request: NextRequest) {
       sameSite: 'none',
       secure: true,
     });
+    
+    console.log('🍪 [CALLBACK] Cookie payment_result criado:', paymentResult);
+    
     return res;
   } catch (error) {
     console.error('═══════════════════════════════════════════════════════════════');
@@ -344,21 +368,38 @@ export async function GET(request: NextRequest) {
   
   const redirectUrl = new URL('/backoffice', request.url);
   redirectUrl.searchParams.set('menu', 'recibo');
-  redirectUrl.searchParams.set('server_status', 'error');
-  redirectUrl.searchParams.set('server_message', 'Teste de callback simulado');
-  redirectUrl.searchParams.set('collect_status', 'skipped');
-  redirectUrl.searchParams.set('merchantRef', 'TEST123');
-  redirectUrl.searchParams.set('amount', '1000');
   
   console.log('🧪 [TEST] URL de redirecionamento:', redirectUrl.toString());
   
+  // Criar dados de teste
+  const paymentResult = {
+    serverStatus: 'error',
+    serverMessage: 'Teste de callback simulado - Erro de validação',
+    collectStatus: 'skipped',
+    collectMessage: '',
+    merchantRef: 'TEST123',
+    amount: '1000',
+    debugRef: 'REF_TEST_123',
+    debugFp: 'FP_TEST_ABC...',
+  };
+  
   const res = NextResponse.redirect(redirectUrl, 303);
+  
+  res.cookies.set('payment_result', JSON.stringify(paymentResult), {
+    path: '/',
+    maxAge: 30,
+    sameSite: 'lax',
+    secure: true,
+  });
+  
   res.cookies.set('postpay', '1', {
     path: '/',
     maxAge: 10,
     sameSite: 'none',
     secure: true,
   });
+  
+  console.log('🍪 [TEST] Cookie payment_result criado:', paymentResult);
   
   return res;
 }
