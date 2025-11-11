@@ -16,7 +16,7 @@ import { LoadingSpinner } from "@/components/ui/loading-spinner";
 type PaymentResultModalProps = {
   isOpen: boolean;
   onClose: () => void;
-  status: "success" | "error";
+  status: "success" | "error" | "pending";
   hmacMessage?: string;
   collectMessage?: string;
   merchantRef?: string;
@@ -42,6 +42,8 @@ export function PaymentResultModal({
   isDownloading = false,
 }: PaymentResultModalProps) {
   const isSuccess = status === "success";
+  const isPending = status === "pending";
+  const isError = status === "error";
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -52,6 +54,11 @@ export function PaymentResultModal({
               <>
                 <FaCheckCircle className="text-green-500 text-2xl" />
                 <span className="text-green-700">Pagamento Confirmado!</span>
+              </>
+            ) : isPending ? (
+              <>
+                <LoadingSpinner size="sm" />
+                <span className="text-blue-700">Processando Pagamento...</span>
               </>
             ) : (
               <>
@@ -93,6 +100,29 @@ export function PaymentResultModal({
                 
                 <p className="text-sm text-gray-700 font-medium mt-4">
                   Você pode baixar o recibo agora ou acessá-lo mais tarde na lista de recibos.
+                </p>
+              </>
+            ) : isPending ? (
+              <>
+                <p className="text-base">
+                  {hmacMessage || "Aguardando confirmação do pagamento..."}
+                </p>
+                
+                {merchantRef && (
+                  <div className="bg-blue-50 border border-blue-200 rounded-md p-3 mt-3">
+                    <p className="text-sm font-semibold text-blue-800">
+                      Referência: <span className="font-normal">{merchantRef}</span>
+                    </p>
+                    {amount && (
+                      <p className="text-sm font-semibold text-blue-800">
+                        Valor: <span className="font-normal">{amount} CVE</span>
+                      </p>
+                    )}
+                  </div>
+                )}
+                
+                <p className="text-sm text-gray-700 font-medium mt-4">
+                  Você receberá uma notificação quando o pagamento for confirmado.
                 </p>
               </>
             ) : (
@@ -185,10 +215,12 @@ export function PaymentResultModal({
               className={`w-full ${
                 isSuccess
                   ? "bg-green-600 hover:bg-green-700"
+                  : isPending
+                  ? "bg-blue-600 hover:bg-blue-700"
                   : "bg-red-600 hover:bg-red-700"
               } text-white`}
             >
-              {isSuccess ? "Entendido" : "Tentar Novamente"}
+              {isSuccess ? "Entendido" : isPending ? "Entendido" : "Fechar"}
             </Button>
           )}
         </DialogFooter>

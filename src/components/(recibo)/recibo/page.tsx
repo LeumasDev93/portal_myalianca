@@ -35,7 +35,7 @@ import {
   getStatusReciverTexts,
   STATUS_OPTIONS_RECIBOS,
 } from "@/lib/utils";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import {
   FaDownload,
   FaUser,
@@ -88,7 +88,7 @@ export default function ReciboPage({ filterParams }: ReciboPageProps) {
   }>({ open: false, type: null, reciboNumber: '' });
   const [paymentResultModal, setPaymentResultModal] = useState<{
     isOpen: boolean;
-    status: "success" | "error";
+    status: "success" | "error" | "pending";
     hmacMessage?: string;
     collectMessage?: string;
     merchantRef?: string;
@@ -99,6 +99,7 @@ export default function ReciboPage({ filterParams }: ReciboPageProps) {
     status: "success",
   });
   const [isDownloadingRecibo, setIsDownloadingRecibo] = useState(false);
+  const paymentModalShownRef = useRef(false);
   
   const { token } = useSessionCheckToken();
   const { registerReciboDownloadActivity } = useReciboActivity();
@@ -144,7 +145,15 @@ export default function ReciboPage({ filterParams }: ReciboPageProps) {
 
   // Detect payment callback results and show modal
   useEffect(() => {
-    if (!searchParams) return;
+    if (!searchParams) {
+      console.log('🔍 [PAYMENT MODAL] searchParams não disponível');
+      return;
+    }
+    
+    if (paymentModalShownRef.current) {
+      console.log('🔍 [PAYMENT MODAL] Modal já foi mostrado, ignorando');
+      return;
+    }
     
     const serverStatus = searchParams.get("server_status");
     const serverMessage = searchParams.get("server_message");
@@ -155,19 +164,42 @@ export default function ReciboPage({ filterParams }: ReciboPageProps) {
     const debugRef = searchParams.get("debug_ref");
     const debugFp = searchParams.get("debug_fp");
 
+    console.log('🔍 [PAYMENT MODAL] Parâmetros detectados:', {
+      serverStatus,
+      serverMessage,
+      collectStatus,
+      collectMessage,
+      merchantRef,
+      amount
+    });
+
     // Only show modal if we have payment callback parameters
     if (serverStatus || collectStatus) {
-      const isSuccess = serverStatus === "ok" && (!collectStatus || collectStatus === "ok");
+      let modalStatus: "success" | "error" | "pending" = "error";
+      
+      if (serverStatus === "pending") {
+        modalStatus = "pending";
+      } else if (serverStatus === "ok" && (!collectStatus || collectStatus === "ok")) {
+        modalStatus = "success";
+      } else {
+        modalStatus = "error";
+      }
+      
+      console.log('✅ [PAYMENT MODAL] Abrindo modal com status:', modalStatus);
       
       setPaymentResultModal({
         isOpen: true,
-        status: isSuccess ? "success" : "error",
-        hmacMessage: serverMessage || (serverStatus === "ok" ? "Validação HMAC confirmada" : "Falha na validação HMAC"),
+        status: modalStatus,
+        hmacMessage: serverMessage || (serverStatus === "ok" ? "Validação HMAC confirmada" : serverStatus === "pending" ? "Aguardando confirmação..." : "Falha na validação"),
         collectMessage: collectMessage || (collectStatus === "ok" ? "Cobrança confirmada com sucesso" : collectStatus === "error" ? "Erro ao processar cobrança" : undefined),
         merchantRef: merchantRef || undefined,
         amount: amount || undefined,
         debugInfo: debugRef || debugFp ? { reference: debugRef || undefined, fingerprint: debugFp || undefined } : undefined,
       });
+      
+      paymentModalShownRef.current = true;
+    } else {
+      console.log('ℹ️ [PAYMENT MODAL] Nenhum parâmetro de pagamento detectado');
     }
   }, [searchParams]);
 
@@ -318,7 +350,10 @@ export default function ReciboPage({ filterParams }: ReciboPageProps) {
   };
 
   const handleClosePaymentModal = () => {
+    console.log('🔍 [PAYMENT MODAL] Fechando modal');
     setPaymentResultModal((prev) => ({ ...prev, isOpen: false }));
+    // Resetar a ref após fechar permite que o modal seja mostrado novamente se houver novo callback
+    // paymentModalShownRef.current = false; // Descomente se quiser permitir múltiplas exibições
   };
 
   const handleDownloadReciboFromModal = async () => {

@@ -78,71 +78,18 @@ export async function GET(request: NextRequest) {
     const merchantRef = searchParams.get('merchantRef');
     const amount = searchParams.get('amount');
     const fingerprint = searchParams.get('fingerprint');
+    const status = searchParams.get('status'); // Status do SISP
 
-    // SERVER-SIDE: valida HMAC também para GET
-    const refGet = (reference || merchantRef || '').toString().trim();
-    const fpGet = (fingerprint || '').toString(); // mantém como veio (base64)
-    const hmacPayload = { reference: refGet, hmacFingerprint: fpGet };
-    let serverStatus = 'error';
-    let serverMessage = 'Falha na validação HMAC';
-    let collectStatus = 'skipped';
-    let collectMessage = '';
-    try {
-      const gatewayToken = request.cookies.get('pay_token')?.value || '';
-      const attempt = await tryValidateHmac({ reference: hmacPayload.reference, fingerprint: hmacPayload.hmacFingerprint, accessToken: gatewayToken });
-      if (!attempt.ok) {
-        console.error('[PAYMENT CALLBACK][GET] validar-hmac falhou:', attempt.status, attempt.text);
-      }
-      if (attempt.ok) {
-        serverStatus = 'ok';
-        serverMessage = 'HMAC válido';
-        if (amount) {
-          const receiptRef = request.cookies.get('recibo_ref')?.value;
-          const collectUrl = `https://aliancacvtest.rtcom.pt/anywhere/api/v1/private/mobile/invoice/${receiptRef}/collect`;
-          const collectBody = {
-            value: Number(amount),
-            reference: receiptRef,
-            sendEmail: false,
-            apiName: 'WebsiteCollection',
-          };
-          const anywhereBearer = request.cookies.get('anywhere_token')?.value;
-          const collectRes = await fetch(collectUrl, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              Authorization: `Bearer ${anywhereBearer}`,
-            },
-            body: JSON.stringify(collectBody),
-            cache: 'no-store',
-          });
-          collectStatus = collectRes.ok ? 'ok' : 'error';
-          collectMessage = collectRes.ok ? 'Cobrança confirmada' : `Falha ao cobrar (${collectRes.status})`;
-        }
-      } else {
-        serverStatus = 'error';
-        serverMessage = `Validação HMAC falhou`;
-      }
-    } catch {
-      serverStatus = 'error';
-      serverMessage = 'Erro no servidor ao validar/cobrar';
-    }
+    console.log('[PAYMENT CALLBACK][GET] Parâmetros recebidos:', { reference, merchantRef, amount, status });
 
-    // Redireciona com resultado server-side 
+    // GET callback: apenas redireciona para a página de recibos
+    // Não fazemos validação HMAC no GET
     const redirectUrl = new URL('/backoffice', request.url);
     redirectUrl.searchParams.set('menu', 'recibo');
-    redirectUrl.searchParams.set('server_status', serverStatus);
-    redirectUrl.searchParams.set('server_message', serverMessage);
-    redirectUrl.searchParams.set('collect_status', collectStatus);
-    if (collectMessage) redirectUrl.searchParams.set('collect_message', collectMessage);
+    redirectUrl.searchParams.set('server_status', 'pending');
+    redirectUrl.searchParams.set('server_message', 'Aguardando confirmação do pagamento...');
     redirectUrl.searchParams.set('merchantRef', merchantRef || '');
     redirectUrl.searchParams.set('amount', (amount || '').toString());
-    // Em caso de erro, devolve os dados usados para HMAC via query string (debug)
-    if (serverStatus !== 'ok') {
-      try {
-        redirectUrl.searchParams.set('debug_ref', (reference || merchantRef || ''));
-        redirectUrl.searchParams.set('debug_fp', (fingerprint || ''));
-      } catch {}
-    }
 
     const res = NextResponse.redirect(redirectUrl, 303);
     res.cookies.set('postpay', '1', {
@@ -151,24 +98,17 @@ export async function GET(request: NextRequest) {
       sameSite: 'none',
       secure: true,
     });
-    res.cookies.set('pay_token', '', { path: '/', maxAge: 0, sameSite: 'none', secure: true });
     return res;
   } catch (error) {
-    console.error('[PAYMENT CALLBACK] Erro no callback:', error);
+    console.error('[PAYMENT CALLBACK] Erro no callback GET:', error);
     
     // Em caso de erro, redireciona para a página de recibos
     const redirectUrl = new URL('/backoffice', request.url);
     redirectUrl.searchParams.set('menu', 'recibo');
-    redirectUrl.searchParams.set('payment_status', 'error');
+    redirectUrl.searchParams.set('server_status', 'error');
+    redirectUrl.searchParams.set('server_message', 'Erro ao processar callback');
     
-    const res = NextResponse.redirect(redirectUrl);
-    res.cookies.set('postpay', '1', {
-      path: '/',
-      maxAge: 10,
-      sameSite: 'none',
-      secure: true,
-    });
-    return res;
+    return NextResponse.redirect(redirectUrl, 303);
   }
 }
 
@@ -200,68 +140,92 @@ export async function POST(request: NextRequest) {
       merchantRef,
       fingerprint,
       reciboRef: reciboRefBody,
+      status: sispStatus, // Status do SISP
     } = body;
 
-    // SERVER-SIDE: valida HMAC e, se OK, efetiva a cobrança do recibo
+    console.log('[PAYMENT CALLBACK][POST] Body recebido:', { reference, merchantRef, amount, sispStatus, fingerprint: fingerprint?.substring(0, 20) + '...' });
+
+    // SERVER-SIDE: Só valida HMAC se o SISP retornou sucesso
     const refPost = (reference || merchantRef || '').toString().trim();
     const fpPost = (body.hmacFingerprint || fingerprint || '').toString(); // mantém como veio
-    const hmacPayload = { reference: refPost, hmacFingerprint: fpPost };
     let serverStatus = 'error';
-    let serverMessage = 'Falha na validação HMAC';
+    let serverMessage = 'Pagamento não processado';
     let collectStatus = 'skipped';
     let collectMessage = '';
-    try {
-      const gatewayToken = request.cookies.get('pay_token')?.value || '';
-      const attempt = await tryValidateHmac({ reference: hmacPayload.reference, fingerprint: hmacPayload.hmacFingerprint, accessToken: gatewayToken });
-      if (!attempt.ok) {
-        console.error('[PAYMENT CALLBACK][POST] validar-hmac falhou:', attempt.status, attempt.text);
-      }
-      if (attempt.ok) {
-        serverStatus = 'ok';
-        serverMessage = 'HMAC válido';
-        if (merchantRef && amount) {
-          const receiptRef = reciboRefBody || request.cookies.get('recibo_ref')?.value || refPost;
-          const collectUrl = `https://aliancacvtest.rtcom.pt/anywhere/api/v1/private/mobile/invoice/${merchantRef}/collect`;
-          const collectBody = {
-            value: Number(amount),
-            reference: receiptRef || merchantRef,
-            sendEmail: false,
-            apiName: 'WebsiteCollection',
-          };
-          
-          const anywhereBearerPost = request.cookies.get('anywhere_token')?.value;
-          const collectRes = await fetch(collectUrl, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              ...(anywhereBearerPost ? { Authorization: `Bearer ${anywhereBearerPost}` } : {}),
-            },
-            body: JSON.stringify(collectBody),
-            cache: 'no-store',
-          });
-          try {
-            const contentType = collectRes.headers.get('content-type') || '';
-            let respBody: unknown = null;
-            if (contentType.includes('application/json')) {
-              respBody = await collectRes.json();
-            } else {
-              const text = await collectRes.text();
-              respBody = text.length > 300 ? text.slice(0, 300) : text;
-            }
-            console.log('[COLLECT][callback][POST]', collectUrl, 'status=', collectRes.status, 'body=', respBody);
-          } catch {
-            console.log('[COLLECT][callback][POST]', collectUrl, 'status=', collectRes.status, '(no body)');
-          }
-          collectStatus = collectRes.ok ? 'ok' : 'error';
-          collectMessage = collectRes.ok ? 'Cobrança confirmada' : `Falha ao cobrar (${collectRes.status})`;
-        }
-      } else {
-        serverStatus = 'error';
-        serverMessage = `Validação HMAC falhou`;
-      }
-    } catch {
+
+    // Verificar se o SISP retornou sucesso
+    if (sispStatus !== 'success' && sispStatus !== 'approved') {
       serverStatus = 'error';
-      serverMessage = 'Erro no servidor ao validar/cobrar';
+      serverMessage = `Pagamento rejeitado pelo SISP: ${sispStatus || 'status desconhecido'}`;
+      console.log('[PAYMENT CALLBACK][POST] SISP não retornou sucesso:', sispStatus);
+    } else {
+      // SISP retornou sucesso, agora validar HMAC
+      try {
+        const gatewayToken = request.cookies.get('pay_token')?.value || '';
+        console.log('[PAYMENT CALLBACK][POST] Validando HMAC com token:', gatewayToken ? 'presente' : 'ausente');
+        
+        const attempt = await tryValidateHmac({ 
+          reference: refPost, 
+          fingerprint: fpPost, 
+          accessToken: gatewayToken 
+        });
+        
+        if (!attempt.ok) {
+          console.error('[PAYMENT CALLBACK][POST] validar-hmac falhou:', attempt.status, attempt.text);
+          serverStatus = 'error';
+          serverMessage = `Validação HMAC falhou (${attempt.status})`;
+        } else {
+          serverStatus = 'ok';
+          serverMessage = 'HMAC válido';
+          console.log('[PAYMENT CALLBACK][POST] HMAC validado com sucesso');
+          
+          // HMAC válido, agora cobrar o recibo
+          if (merchantRef && amount) {
+            const receiptRef = reciboRefBody || request.cookies.get('recibo_ref')?.value || refPost;
+            const collectUrl = `https://aliancacvtest.rtcom.pt/anywhere/api/v1/private/mobile/invoice/${merchantRef}/collect`;
+            const collectBody = {
+              value: Number(amount),
+              reference: receiptRef || merchantRef,
+              sendEmail: false,
+              apiName: 'WebsiteCollection',
+            };
+            
+            const anywhereBearerPost = request.cookies.get('anywhere_token')?.value;
+            console.log('[PAYMENT CALLBACK][POST] Chamando collect API:', collectUrl);
+            
+            const collectRes = await fetch(collectUrl, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                ...(anywhereBearerPost ? { Authorization: `Bearer ${anywhereBearerPost}` } : {}),
+              },
+              body: JSON.stringify(collectBody),
+              cache: 'no-store',
+            });
+            
+            try {
+              const contentType = collectRes.headers.get('content-type') || '';
+              let respBody: unknown = null;
+              if (contentType.includes('application/json')) {
+                respBody = await collectRes.json();
+              } else {
+                const text = await collectRes.text();
+                respBody = text.length > 300 ? text.slice(0, 300) : text;
+              }
+              console.log('[COLLECT][callback][POST]', collectUrl, 'status=', collectRes.status, 'body=', respBody);
+            } catch {
+              console.log('[COLLECT][callback][POST]', collectUrl, 'status=', collectRes.status, '(no body)');
+            }
+            
+            collectStatus = collectRes.ok ? 'ok' : 'error';
+            collectMessage = collectRes.ok ? 'Cobrança confirmada com sucesso' : `Falha ao cobrar (${collectRes.status})`;
+          }
+        }
+      } catch (error) {
+        console.error('[PAYMENT CALLBACK][POST] Erro ao validar/cobrar:', error);
+        serverStatus = 'error';
+        serverMessage = 'Erro no servidor ao validar/cobrar';
+      }
     }
 
     // Redireciona para a página de recibos com resultado do servidor
