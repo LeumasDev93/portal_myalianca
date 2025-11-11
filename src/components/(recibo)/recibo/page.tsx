@@ -56,6 +56,8 @@ import { useToast } from "@/components/ui/use-toast";
 import { useReciboActivity } from "@/lib/activityExamples";
 import { useUserProfile } from "@/hooks/useUserProfile";
 import { processPayment } from "@/service/paymentService";
+import { PaymentResultModal } from "../PaymentResultModal";
+import { useSearchParams } from "next/navigation";
 
 type ViewMode = "grid" | "list";
 
@@ -84,10 +86,25 @@ export default function ReciboPage({ filterParams }: ReciboPageProps) {
     reciboNumber: string;
     reciboData?: any;
   }>({ open: false, type: null, reciboNumber: '' });
+  const [paymentResultModal, setPaymentResultModal] = useState<{
+    isOpen: boolean;
+    status: "success" | "error";
+    hmacMessage?: string;
+    collectMessage?: string;
+    merchantRef?: string;
+    amount?: string;
+    debugInfo?: { reference?: string; fingerprint?: string };
+  }>({
+    isOpen: false,
+    status: "success",
+  });
+  const [isDownloadingRecibo, setIsDownloadingRecibo] = useState(false);
+  
   const { token } = useSessionCheckToken();
   const { registerReciboDownloadActivity } = useReciboActivity();
   const { profile } = useUserProfile(); // Dados do usuário
   const { toast: showToast } = useToast();
+  const searchParams = useSearchParams();
 
   // Debug: verificar se os parâmetros estão chegando
   console.log("🔍 ReciboPage - filterParams recebidos:", filterParams);
@@ -124,6 +141,35 @@ export default function ReciboPage({ filterParams }: ReciboPageProps) {
       console.log('📋 TODOS os recibos:', recibos.map(r => ({ number: r.number, status: r.status })));
     }
   }, [filterParams?.reference, filterParams?.estado, filteredRecibos, recibos, statusFilter]);
+
+  // Detect payment callback results and show modal
+  useEffect(() => {
+    if (!searchParams) return;
+    
+    const serverStatus = searchParams.get("server_status");
+    const serverMessage = searchParams.get("server_message");
+    const collectStatus = searchParams.get("collect_status");
+    const collectMessage = searchParams.get("collect_message");
+    const merchantRef = searchParams.get("merchantRef");
+    const amount = searchParams.get("amount");
+    const debugRef = searchParams.get("debug_ref");
+    const debugFp = searchParams.get("debug_fp");
+
+    // Only show modal if we have payment callback parameters
+    if (serverStatus || collectStatus) {
+      const isSuccess = serverStatus === "ok" && (!collectStatus || collectStatus === "ok");
+      
+      setPaymentResultModal({
+        isOpen: true,
+        status: isSuccess ? "success" : "error",
+        hmacMessage: serverMessage || (serverStatus === "ok" ? "Validação HMAC confirmada" : "Falha na validação HMAC"),
+        collectMessage: collectMessage || (collectStatus === "ok" ? "Cobrança confirmada com sucesso" : collectStatus === "error" ? "Erro ao processar cobrança" : undefined),
+        merchantRef: merchantRef || undefined,
+        amount: amount || undefined,
+        debugInfo: debugRef || debugFp ? { reference: debugRef || undefined, fingerprint: debugFp || undefined } : undefined,
+      });
+    }
+  }, [searchParams]);
 
   const openConfirmDialog = (type: 'view' | 'download' | 'payment', reciboNumber: string, reciboData?: any) => {
     // Para "Ver", executa diretamente sem confirmação
@@ -268,6 +314,31 @@ export default function ReciboPage({ filterParams }: ReciboPageProps) {
       }, 5000);
     } finally {
       setLoadingStates((prev) => ({ ...prev, [invoiceNumber]: false }));
+    }
+  };
+
+  const handleClosePaymentModal = () => {
+    setPaymentResultModal((prev) => ({ ...prev, isOpen: false }));
+  };
+
+  const handleDownloadReciboFromModal = async () => {
+    if (!paymentResultModal.merchantRef) return;
+    
+    setIsDownloadingRecibo(true);
+    try {
+      await handleDownload(paymentResultModal.merchantRef);
+      showToast({
+        title: "Recibo baixado com sucesso!",
+        description: `Recibo: ${paymentResultModal.merchantRef}`,
+      });
+    } catch (error: any) {
+      showToast({
+        title: "Erro ao baixar recibo",
+        description: error?.message || "Tente novamente mais tarde",
+        variant: "destructive",
+      });
+    } finally {
+      setIsDownloadingRecibo(false);
     }
   };
 
@@ -781,6 +852,20 @@ export default function ReciboPage({ filterParams }: ReciboPageProps) {
           ))}
         </div>
       )}
+
+      {/* Payment Result Modal */}
+      <PaymentResultModal
+        isOpen={paymentResultModal.isOpen}
+        onClose={handleClosePaymentModal}
+        status={paymentResultModal.status}
+        hmacMessage={paymentResultModal.hmacMessage}
+        collectMessage={paymentResultModal.collectMessage}
+        merchantRef={paymentResultModal.merchantRef}
+        amount={paymentResultModal.amount}
+        debugInfo={paymentResultModal.debugInfo}
+        onDownloadRecibo={paymentResultModal.status === "success" ? handleDownloadReciboFromModal : undefined}
+        isDownloading={isDownloadingRecibo}
+      />
 
       {/* Dialog de Confirmação */}
       <Dialog open={confirmDialog.open} onOpenChange={(open) => setConfirmDialog({ ...confirmDialog, open })}>

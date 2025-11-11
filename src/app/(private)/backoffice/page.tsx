@@ -309,30 +309,16 @@ const Page = () => {
     }
   }, [isClient, profile?.user?.tipo_cliente, searchParams, router, toast]);
 
-  // Exibe toast apenas para resultado SERVER-SIDE (validação/cobrança) e limpa parâmetros
+  // Limpa parâmetros de pagamento da URL - O modal na página de recibo exibirá o resultado
   const paymentHandledRef = useRef(false);
 
   useEffect(() => {
     if (!isClient) return;
     if (paymentHandledRef.current) return;
     const params = new URLSearchParams(window.location.search);
-    // Exibir toast apenas se houver resultado do servidor
-    const serverStatus = params.get("server_status");
-    const serverMessage = params.get("server_message");
-    const collectStatus = params.get("collect_status");
-    const collectMessage = params.get("collect_message");
-    if (serverStatus || collectStatus) {
-      const isOk = (serverStatus === "ok") && (collectStatus ? collectStatus === "ok" : true);
-      const title = isOk ? "Pagamento confirmado" : "Validação/Cobrança falhou";
-      const lines = [serverMessage, collectMessage].filter(Boolean) as string[];
-      toast({
-        title,
-        description: lines.join("\n"),
-        variant: isOk ? "default" : "destructive",
-      });
-    }
-
+    
     // Limpa apenas os parâmetros de pagamento da URL, preservando menu e demais filtros
+    // O modal PaymentResultModal no ReciboPage exibirá o resultado
     const paymentKeys = [
       // params do callback SISP (limpar silenciosamente)
       "payment_status",
@@ -344,13 +330,6 @@ const Page = () => {
       "timestamp",
       "panMascarado",
       "fingerprint",
-      // params de resultado server-side (após exibição)
-      "server_status",
-      "server_message",
-      "collect_status",
-      "collect_message",
-      "amount",
-      "merchantRef",
     ];
     let changed = false;
     for (const key of paymentKeys) {
@@ -363,14 +342,14 @@ const Page = () => {
       paymentHandledRef.current = true;
       // Evita navegação do Next.js; apenas atualiza a barra de endereços
       const qs = params.toString();
-      const newUrl = qs ? `?${qs}` : "?menu=recibo";
+      const newUrl = qs ? `?${qs}` : window.location.pathname;
       try {
         window.history.replaceState(null, "", newUrl);
       } catch {
         router.replace(newUrl, { scroll: false });
       }
     }
-  }, [isClient, router, searchParams, toast]);
+  }, [isClient, router, searchParams]);
 
   // Limpa o cookie 'postpay' apenas quando o usuário já está autenticado
   useEffect(() => {
