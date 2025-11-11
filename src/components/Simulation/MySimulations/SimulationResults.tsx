@@ -10,19 +10,32 @@ import {
   FaMoneyBillWave,
   FaPercentage,
 } from "react-icons/fa";
+import { ModalContratacao } from "./ModalContratacao";
+
+interface InstallmentValue {
+  name: string;
+  value: number;
+  annualValue: number;
+  taxes: Record<string, number>;
+}
 
 interface Props {
   data: SimulationResponse;
   onClose?: () => void;
   isOpen: boolean;
   reset: () => void;
+  onNavigateToRecibo?: (reference: string) => void;
 }
 
-export function SimulationResults({ data, onClose, isOpen, reset }: Props) {
+export function SimulationResults({ data, onClose, isOpen, reset, onNavigateToRecibo }: Props) {
   if (!isOpen || !data) return null;
 
   // eslint-disable-next-line react-hooks/rules-of-hooks
   const [copied, setCopied] = useState(false);
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  const [showContratacaoModal, setShowContratacaoModal] = useState(false);
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  const [selectedInstallment, setSelectedInstallment] = useState<InstallmentValue | null>(null);
 
   const handleCopy = () => {
     navigator.clipboard.writeText(data.reference);
@@ -195,7 +208,17 @@ export function SimulationResults({ data, onClose, isOpen, reset }: Props) {
                   </div>
 
                   <div className="p-4 border-t">
-                    <button className="w-full cursor-pointer bg-[#002855] text-white py-2 rounded-md hover:bg-[#002855]/70 transition-colors flex items-center justify-center">
+                    <button 
+                      onClick={() => {
+                        console.log('🔷 Abrindo modal de contratação...');
+                        console.log('  Dados da simulação:', data);
+                        console.log('  Installment selecionado:', installment);
+                        setSelectedInstallment(installment);
+                        setShowContratacaoModal(true);
+                      }}
+                      type="button"
+                      className="w-full cursor-pointer bg-[#002855] text-white py-2 rounded-md hover:bg-[#002855]/70 transition-colors flex items-center justify-center"
+                    >
                       <FaFileInvoiceDollar className="mr-2" />
                       Contratar
                     </button>
@@ -222,6 +245,23 @@ export function SimulationResults({ data, onClose, isOpen, reset }: Props) {
           </button>
         </div>
       </div>
+
+      {/* Modal de Contratação */}
+      <ModalContratacao
+        isOpen={showContratacaoModal}
+        onClose={() => setShowContratacaoModal(false)}
+        onNavigateToRecibo={onNavigateToRecibo}
+        simulationData={{
+          productId: (data as unknown as Record<string, unknown>).productId as string ?? (data.product as unknown as Record<string, unknown>)?.id as string ?? '',
+          productType: (data as unknown as Record<string, unknown>).productType as string ?? (data.product as unknown as Record<string, unknown>)?.type as string ?? '',
+          productName: (data as unknown as Record<string, unknown>).productType as string ?? (data.product as unknown as Record<string, unknown>)?.name as string ?? 'Produto',
+          reference: data.reference,
+          premium: selectedInstallment?.value || data.premium,
+          totalPremium: data.totalPremium,
+        }}
+        simulationDetails={data as unknown as Record<string, unknown>}
+        selectedInstallment={selectedInstallment}
+      />
     </div>
   );
 }

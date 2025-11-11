@@ -11,6 +11,8 @@ interface RecibosState {
 
 
 export const useRecibos = (initialFilters?: Record<string, string>) => {
+    console.log('🔍 useRecibos - initialFilters recebidos:', initialFilters);
+    
     // Estado único para evitar múltiplos re-renders
     const [state, setState] = useState<RecibosState>({
         recibos: [],
@@ -19,10 +21,36 @@ export const useRecibos = (initialFilters?: Record<string, string>) => {
     });
     
     const [dataLoaded, setDataLoaded] = useState(false);
-    const [searchTerm, setSearchTerm] = useState('');
+    const [searchTerm, setSearchTerm] = useState(initialFilters?.reference || '');
     const [statusFilter, setStatusFilter] = useState<string>(
         initialFilters?.estado || 'all'
     );
+
+    console.log('📊 useRecibos - Estado inicial:', {
+        searchTerm,
+        statusFilter,
+        reference: initialFilters?.reference,
+        estado: initialFilters?.estado
+    });
+
+    // Atualizar searchTerm quando filterParams.reference mudar
+    useEffect(() => {
+        if (initialFilters?.reference) {
+            console.log('🔍 useRecibos - Filtrando por referência:', initialFilters.reference);
+            setSearchTerm(initialFilters.reference);
+        }
+    }, [initialFilters?.reference]);
+
+    // Atualizar statusFilter quando filterParams.estado mudar
+    useEffect(() => {
+        const estadoParam = initialFilters?.estado;
+        console.log('🔍 useRecibos - useEffect estado disparado. Valor:', estadoParam);
+        if (estadoParam && estadoParam !== statusFilter) {
+            console.log('🔍 useRecibos - Filtrando por estado:', estadoParam);
+            console.log('📊 useRecibos - Atualizando statusFilter de', statusFilter, 'para', estadoParam);
+            setStatusFilter(estadoParam);
+        }
+    }, [initialFilters?.estado, statusFilter]);
     
     const { token } = useSessionCheckToken();
     const { profile } = useUserProfile();

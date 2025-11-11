@@ -20,7 +20,7 @@ import {
 import {
   StatisticsCard,
   StatisticData,
-} from "@/components/dashboardEmpresarial/components/StatisticsCard";
+} from "@/components/empresarial/components/StatisticsCard";
 import { useSoat } from "@/hooks/useSoat";
 import { useSoatDetails } from "@/hooks/useSoatDetails";
 import SoatDetailsModal from "./components/SoatDetailsModal";

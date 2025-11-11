@@ -11,7 +11,7 @@ import { FaMapMarkerAlt, FaExclamationTriangle } from "react-icons/fa";
 import {
   MenuCard,
   MenuData,
-} from "@/components/dashboardEmpresarial/components/MenuCard";
+} from "@/components/empresarial/components/MenuCard";
 import {
   IoShieldCheckmarkSharp,
   IoReceiptSharp,
@@ -23,17 +23,17 @@ import { LuSquareKanban } from "react-icons/lu";
 import HistoryTable from "../Historico/table/HistoryTable";
 import AtivitysLastCard from "../Layout/AtivitysLastCard";
 
-type DashboardEmpresarialProps = {
+type EmpresarialProps = {
   onNavigate?: (page: string, params?: Record<string, string>) => void;
   onSelectDetailApolice?: (id: string, contractNumber: string) => void;
   onSelectDetailSinistro?: (id: string) => void;
 };
 
-export default function DashboardEmpresarial({
+export default function Empresarial({
   onNavigate,
   onSelectDetailApolice,
   onSelectDetailSinistro,
-}: DashboardEmpresarialProps) {
+}: EmpresarialProps) {
   const [cardsPerPage, setCardsPerPage] = useState(5);
   const [currentPage, setCurrentPage] = useState(0);
   const [isMobile, setIsMobile] = useState(false);

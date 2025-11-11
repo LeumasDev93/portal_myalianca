@@ -55,12 +55,14 @@ interface SimulationFormProps {
   onClose?: () => void;
   reset: () => void;
   initialData?: any; // Dados iniciais da simulação para preencher o formulário
+  onNavigateToRecibo?: (reference: string) => void;
 }
 
 export default function SimulationForm({
   productId,
   onClose,
   reset,
+  onNavigateToRecibo,
   initialData,
 }: SimulationFormProps) {
   const { product, loading, error } = useProductDetails(productId);
@@ -564,8 +566,9 @@ export default function SimulationForm({
               setFormValues(preservedValues);
               setActiveTab(product.tabs[0]?.title || "");
             }
-            // Se houver erro, mantém os campos preenchidos
+            // Se não houver erro, mantém os campos preenchidos
           }}
+          onNavigateToRecibo={onNavigateToRecibo}
         />
       )}
     </Tabs>

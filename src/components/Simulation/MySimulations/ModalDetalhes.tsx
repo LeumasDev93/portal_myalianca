@@ -29,9 +29,10 @@ interface Props {
   onClose: () => void;
   isOpen: boolean;
   reset: () => void;
+  onNavigateToRecibo?: (reference: string) => void;
 }
 
-export function ModalDetails({ data, onClose, isOpen, reset }: Props) {
+export function ModalDetails({ data, onClose, isOpen, reset, onNavigateToRecibo }: Props) {
   const [copied, setCopied] = useState(false);
   const [showContratacaoModal, setShowContratacaoModal] = useState(false);
   const [selectedInstallment, setSelectedInstallment] = useState<any>(null);
@@ -377,14 +378,17 @@ export function ModalDetails({ data, onClose, isOpen, reset }: Props) {
       <ModalContratacao
         isOpen={showContratacaoModal}
         onClose={() => setShowContratacaoModal(false)}
+        onNavigateToRecibo={onNavigateToRecibo}
         simulationData={{
-          productId: (data.results.product as any)?.id || '',
-          productType: (data.results.product as any)?.type || '',
-          productName: (data.results.product as any)?.name || 'Produto',
+          productId: data.results.productId ?? '',
+          productType: data.results.productType ?? '',
+          productName: data.results.productType ?? 'Produto',
           reference: data.results.reference,
           premium: selectedInstallment?.value || data.results.premium,
           totalPremium: data.results.totalPremium,
         }}
+        simulationDetails={data.results}
+        selectedInstallment={selectedInstallment}
       />
     </div>
   );

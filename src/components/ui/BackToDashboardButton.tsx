@@ -1,5 +1,7 @@
 "use client";
 
+import { useUserProfile } from "@/hooks/useUserProfile";
+
 interface BackToDashboardButtonProps {
   onClick: () => void;
   isMobile: boolean;
@@ -11,6 +13,9 @@ export function BackToDashboardButton({
   isMobile,
   currentPage,
 }: BackToDashboardButtonProps) {
+  const { profile } = useUserProfile();
+  const isCompany = profile?.user?.tipo_cliente === "Company";
+  const destinationName = isCompany ? "Empresarial" : "Dashboard";
   // Função para obter nome amigável da página
   const getPageDisplayName = (page: string) => {
     const pageNames: Record<string, string> = {
@@ -29,7 +34,8 @@ export function BackToDashboardButton({
       Ajuda: "Ajuda",
       newOcorrencia: "Nova Ocorrência",
       gestaoSOAT: "Gestão de SOAT",
-      dashboardEmpresarial: "Dashboard Empresarial",
+      empresarial: "Empresarial",
+      dashboard: "Dashboard",
       mensagemDetails: "Detalhes Mensagem",
       encaminhar: "Encaminhar Mensagem",
       detailsOcorrencia: "Detalhes Ocorrência",
@@ -73,7 +79,7 @@ export function BackToDashboardButton({
           </span>
           <span className="opacity-60">→</span>
           <span className="text-[#002256] font-bold group-hover:text-white">
-            Dashboard
+            {destinationName}
           </span>
         </div>
       </button>

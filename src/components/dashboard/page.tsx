@@ -1,24 +1,29 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import { FinanceCard } from "../dashboardEmpresarial/components/FinanceCard";
-import { StatisticsApiCard } from "../dashboardEmpresarial/components/StatisticsApiCard";
+import { FinanceCard } from "../empresarial/components/FinanceCard";
+import { StatisticsApiCard } from "../empresarial/components/StatisticsApiCard";
 import { DashboardCharts } from "../Historico/Charts/DashboartdCharts";
 
-export default function DashboardPage() {
-  const router = useRouter();
-  const onNavigate = (path: string) => {
-    router.push(`/${path}`);
+interface DashboardPageProps {
+  onNavigate?: (page: string, params?: Record<string, string>) => void;
+}
+
+export default function DashboardPage({ onNavigate }: DashboardPageProps = {}) {
+  const handleNavigate = (page: string, params?: Record<string, string>) => {
+    console.log('📍 DashboardPage.handleNavigate - page:', page, 'params:', params);
+    if (onNavigate) {
+      onNavigate(page, params);
+    }
   };
   return (
     <div className="p-4 w-full">
        <h1 className="text-2xl font-bold text-[#002256] mb-6">Dashboard</h1>
       <div className="grid grid-cols-2 gap-3 md:gap-4 lg:gap-6 mb-8">
         <div>
-          <StatisticsApiCard onNavigate={onNavigate} />
+          <StatisticsApiCard onNavigate={handleNavigate} />
         </div>
         <div>
-          <FinanceCard onNavigate={onNavigate} />
+          <FinanceCard onNavigate={handleNavigate} />
         </div>
       </div>
 

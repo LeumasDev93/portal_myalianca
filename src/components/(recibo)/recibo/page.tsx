@@ -1,5 +1,4 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable @typescript-eslint/no-unused-vars */
 "use client";
 
 import { Button } from "@/components/ui/button";
@@ -91,7 +90,7 @@ export default function ReciboPage({ filterParams }: ReciboPageProps) {
   const { toast: showToast } = useToast();
 
   // Debug: verificar se os parâmetros estão chegando
-  console.log("ReciboPage - filterParams:", filterParams);
+  console.log("🔍 ReciboPage - filterParams recebidos:", filterParams);
 
   const {
     filteredRecibos,
@@ -104,6 +103,27 @@ export default function ReciboPage({ filterParams }: ReciboPageProps) {
     setStatusFilter,
     resetFilters,
   } = useRecibos(filterParams);
+
+  console.log('📊 ReciboPage - statusFilter atual:', statusFilter);
+  console.log('📊 ReciboPage - searchTerm atual:', searchTerm);
+
+  // Debug: mostrar resultados da busca
+  useEffect(() => {
+    if (filterParams?.reference) {
+      console.log('🔍 ReciboPage - Buscando por referência:', filterParams.reference);
+      console.log('📊 Total de recibos:', recibos.length);
+      console.log('📊 Recibos filtrados:', filteredRecibos.length);
+      console.log('📋 Recibos encontrados:', filteredRecibos.map(r => ({ number: r.number, mbref: r.mbref })));
+    }
+    if (filterParams?.estado) {
+      console.log('🔍 ReciboPage - Filtrando por estado:', filterParams.estado);
+      console.log('📊 Status atual do filtro:', statusFilter);
+      console.log('📊 Total de recibos:', recibos.length);
+      console.log('📊 Recibos filtrados:', filteredRecibos.length);
+      console.log('📋 Status dos recibos filtrados:', filteredRecibos.map(r => ({ number: r.number, status: r.status })));
+      console.log('📋 TODOS os recibos:', recibos.map(r => ({ number: r.number, status: r.status })));
+    }
+  }, [filterParams?.reference, filterParams?.estado, filteredRecibos, recibos, statusFilter]);
 
   const openConfirmDialog = (type: 'view' | 'download' | 'payment', reciboNumber: string, reciboData?: any) => {
     // Para "Ver", executa diretamente sem confirmação
@@ -529,7 +549,10 @@ export default function ReciboPage({ filterParams }: ReciboPageProps) {
             className="w-full pl-8 md:pl-10 pr-3 md:pr-4 py-2 md:py-2 text-sm md:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#002256] focus:border-transparent"
           />
         </div>
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
+        <Select value={statusFilter} onValueChange={(value) => {
+          console.log('📊 Mudando filtro de status para:', value);
+          setStatusFilter(value);
+        }}>
           <SelectTrigger className="w-full md:w-48 text-sm md:text-base">
             <SelectValue placeholder="Filtrar por status" />
           </SelectTrigger>

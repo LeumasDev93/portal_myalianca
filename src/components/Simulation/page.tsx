@@ -10,7 +10,11 @@ import Image from "next/image";
 import { LoadingContainer } from "../ui/loading-container";
 import { FaExclamationTriangle } from "react-icons/fa";
 
-export default function SimulationScreen() {
+interface SimulationScreenProps {
+  onNavigateToRecibo?: (reference: string) => void;
+}
+
+export default function SimulationScreen({ onNavigateToRecibo }: SimulationScreenProps = {}) {
   const { products, loading, error } = useProducts();
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [currentSlide, setCurrentSlide] = useState(0);
@@ -183,6 +187,7 @@ export default function SimulationScreen() {
               productId={selectedProduct.productId}
               onClose={() => setSelectedProduct(null)}
               reset={handleCloseForm}
+              onNavigateToRecibo={onNavigateToRecibo}
             />
           ) : (
             <>
@@ -218,7 +223,7 @@ export default function SimulationScreen() {
           value="mySimulations"
           className="bg-white rounded-lg shadow-xl p-3 sm:p-4 md:p-6 xl:p-8"
         >
-          <MySimulationsTab />
+          <MySimulationsTab onNavigateToRecibo={onNavigateToRecibo} />
         </TabsContent>
       </Tabs>
     </div>

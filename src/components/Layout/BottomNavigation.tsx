@@ -6,6 +6,7 @@ import { IoGrid, IoBusinessSharp } from "react-icons/io5";
 import { IoShieldCheckmarkSharp } from "react-icons/io5";
 import { FaTriangleExclamation } from "react-icons/fa6";
 import { TbTopologyStar3 } from "react-icons/tb";
+import { MdDashboard } from "react-icons/md";
 import { useUserProfile } from "@/hooks/useUserProfile";
 
 interface BottomNavItem {
@@ -29,11 +30,17 @@ export const BottomNavigation = ({
 
   const navItems: BottomNavItem[] = [
     {
-      title: isCompany ? "Dashboard" : "Início",
-      key: isCompany ? "dashboardEmpresarial" : "Historico",
+      title: isCompany ? "Empresarial" : "Início",
+      key: isCompany ? "empresarial" : "Historico",
       icon: isCompany ? IoBusinessSharp : IoGrid,
       onClick: () =>
-        onNavigate(isCompany ? "dashboardEmpresarial" : "Historico"),
+        onNavigate(isCompany ? "empresarial" : "Historico"),
+    },
+    {
+      title: "Dashboard",
+      key: "dashboard",
+      icon: MdDashboard,
+      onClick: () => onNavigate("dashboard"),
     },
     {
       title: "Apólice",

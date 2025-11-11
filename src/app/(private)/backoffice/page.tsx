@@ -49,7 +49,7 @@ import OcorrenciaDetailsPage from "@/components/(sinistros)/ocorrencias/detailsO
 import { BottomNavigation } from "@/components/Layout/BottomNavigation";
 import NotificationsPage from "@/components/Notifications/page";
 import { LuSquareKanban } from "react-icons/lu";
-import DashboardEmpresarial from "@/components/dashboardEmpresarial/page";
+import Empresarial from "@/components/empresarial/page";
 import DashboardPage from "@/components/dashboard/page";
 import { BackToDashboardButton } from "@/components/ui/BackToDashboardButton";
 import PageGestaoSOAT from "@/components/gestaoSOAT/page";
@@ -63,7 +63,7 @@ const Page = () => {
   console.log('profile -->', profile);
   const [isLoading, setIsLoading] = useState(false);
   // Define a página padrão baseada no tipo_cliente
-  const defaultPage = profile?.user?.tipo_cliente === 'Company' ? 'DashboardEmpresarial' : 'Historico';
+  const defaultPage = profile?.user?.tipo_cliente === 'Company' ? 'Empresarial' : 'Historico';
   const [currentPage, setCurrentPage] = useState(defaultPage);
   const [isMobile, setIsMobile] = useState(false);
   const [isClient, setIsClient] = useState(false);
@@ -107,7 +107,7 @@ const Page = () => {
   // Atualiza a página padrão quando o profile for carregado
   useEffect(() => {
     if (profile?.user?.tipo_cliente) {
-      const newDefaultPage = profile.user.tipo_cliente === 'Company' ? 'DashboardEmpresarial' : 'Historico';
+      const newDefaultPage = profile.user.tipo_cliente === 'Company' ? 'Empresarial' : 'Historico';
       setCurrentPage(newDefaultPage);
     }
   }, [profile?.user?.tipo_cliente]);
@@ -116,7 +116,7 @@ const Page = () => {
   useEffect(() => {
     if (profile?.user?.tipo_cliente !== 'Company') {
       // Se não for Company e tentar acessar páginas restritas, redireciona
-      if (currentPage === 'dashboardEmpresarial' || currentPage === 'gestaoSOAT' || currentPage === 'DashboardEmpresarial') {
+      if (currentPage === 'empresarial' || currentPage === 'gestaoSOAT' || currentPage === 'Empresarial') {
         setCurrentPage('Historico');
         router.push('/backoffice?page=Historico');
         toast({
@@ -185,16 +185,16 @@ const Page = () => {
 
     // Adiciona menus específicos baseado no tipo de usuário
     if (profile?.user?.tipo_cliente === "Company") {
-      // Dashboard Empresarial no início
+      // Empresarial no início
       baseMenus.unshift({
-        title: "Dashboard Empresarial",
-        path: "dashboardEmpresarial",
+        title: "Empresarial",
+        path: "empresarial",
         icon: IoBusinessSharp,
         hoverIcon: <IoBusinessSharp />,
-        onClick: () => handleMenuClick("dashboardEmpresarial"),
+        onClick: () => handleMenuClick("empresarial"),
       });
 
-      // Dashboard
+      // Dashboard para Company
       baseMenus.splice(1, 0, {
         title: "Dashboard",
         path: "dashboard",
@@ -220,18 +220,21 @@ const Page = () => {
         hoverIcon: <IoGrid />,
         onClick: () => handleMenuClick("Historico"),
       });
+      
+      // Dashboard para usuários não-Company
+      baseMenus.splice(1, 0, {
+        title: "Dashboard",
+        path: "dashboard",
+        icon: IoStatsChart,
+        hoverIcon: <IoStatsChart />,
+        onClick: () => handleMenuClick("dashboard"),
+      });
     }
 
     return baseMenus;
   };
 
-  const MainMenus = getFilteredMenus().filter(menu => {
-    // Filtrar Dashboard apenas para Company
-    if (menu.path === "dashboard") {
-      return profile?.user?.tipo_cliente === "Company";
-    }
-    return true;
-  });
+  const MainMenus = getFilteredMenus();
 
   useEffect(() => {
     setIsClient(true);
@@ -247,7 +250,7 @@ const Page = () => {
     if (menuFromUrl) {
       // Verifica se o usuário tem permissão para acessar a página da URL
       if (profile?.user?.tipo_cliente !== 'Company' && 
-          (menuFromUrl === 'dashboardEmpresarial' || menuFromUrl === 'gestaoSOAT' || menuFromUrl === 'DashboardEmpresarial')) {
+          (menuFromUrl === 'empresarial' || menuFromUrl === 'gestaoSOAT' || menuFromUrl === 'Empresarial')) {
         // Redireciona para Historico se não tiver permissão
         const defaultMenu = "Historico";
         setCurrentPage(defaultMenu);
@@ -276,7 +279,7 @@ const Page = () => {
         if (lastMenu) {
           // Verifica permissão antes de restaurar
           if (profile?.user?.tipo_cliente !== 'Company' && 
-              (lastMenu === 'dashboardEmpresarial' || lastMenu === 'gestaoSOAT' || lastMenu === 'DashboardEmpresarial')) {
+              (lastMenu === 'empresarial' || lastMenu === 'gestaoSOAT' || lastMenu === 'Empresarial')) {
             // Limpa o sessionStorage e usa o menu padrão
             sessionStorage.removeItem("lastMenu");
           } else {
@@ -293,7 +296,7 @@ const Page = () => {
       }
       
       const defaultMenu = profile.user.tipo_cliente === "Company" 
-        ? "dashboardEmpresarial" 
+        ? "empresarial" 
         : "Historico";
       
       setCurrentPage(defaultMenu);
@@ -397,11 +400,13 @@ const Page = () => {
     menuPage: string,
     params?: Record<string, string>
   ) => {
-    console.log("handleMenuClick - menuPage:", menuPage, "params:", params);
+    console.log("🔷 handleMenuClick chamado:");
+    console.log("  menuPage:", menuPage);
+    console.log("  params recebidos:", params);
     
     // Verifica permissão para páginas exclusivas de Company
     if (profile?.user?.tipo_cliente !== 'Company') {
-      if (menuPage === 'dashboardEmpresarial' || menuPage === 'gestaoSOAT' || menuPage === 'DashboardEmpresarial') {
+      if (menuPage === 'empresarial' || menuPage === 'gestaoSOAT' || menuPage === 'Empresarial') {
         toast({
           title: "Acesso Negado",
           description: "Esta página é exclusiva para empresas.",
@@ -433,12 +438,13 @@ const Page = () => {
 
     // Armazenar parâmetros de filtro se fornecidos
     if (params) {
+      console.log("✅ Definindo filterParams:", params);
       setFilterParams(params);
-      console.log("Parâmetros de filtro definidos:", params);
     } else {
+      console.log("⚠️ Limpando filterParams (params undefined)");
       setFilterParams({});
-      console.log("Parâmetros de filtro limpos");
     }
+    console.log("📊 Estado filterParams após atualização:", params || {});
 
     setTimeout(() => {
       setIsLoading(false);
@@ -532,11 +538,11 @@ const Page = () => {
               : "ml-16 xl:ml-64" // outras páginas no desktop com sidebar
           }`}
         >
-          {/* Botão de Voltar para Dashboard Empresarial - só para Company */}
+          {/* Botão de Voltar para Empresarial - só para Company */}
           {profile?.user?.tipo_cliente === "Company" &&
-            currentPage !== "dashboardEmpresarial" && (
+            currentPage !== "empresarial" && (
               <BackToDashboardButton
-                onClick={() => handleMenuClick("dashboardEmpresarial")}
+                onClick={() => handleMenuClick("empresarial")}
                 isMobile={isMobile}
                 currentPage={currentPage}
               />
@@ -623,18 +629,25 @@ const Page = () => {
                     onBack={() => setCurrentPage("sinistro")}
                   />
                 )}
-                {currentPage === "Simulation" && <SimulationScreen />}
+                {currentPage === "Simulation" && (
+                  <SimulationScreen 
+                    onNavigateToRecibo={(reference) => {
+                      console.log('🔗 Navegando para recibo:', reference);
+                      handleMenuClick('recibo', { reference });
+                    }}
+                  />
+                )}
                 {currentPage === "gestaoSOAT" && profile?.user?.tipo_cliente === "Company" && <PageGestaoSOAT />}
                 {currentPage === "Notificacoes" && <NotificationsPage />}
-                {currentPage === "dashboardEmpresarial" && profile?.user?.tipo_cliente === "Company" && (
-                  <DashboardEmpresarial 
+                {currentPage === "empresarial" && profile?.user?.tipo_cliente === "Company" && (
+                  <Empresarial 
                     onNavigate={handleMenuClick}
                     onSelectDetailApolice={handleSelectApoliceDetail}
                     onSelectDetailSinistro={handleSelectSinistroDetail}
                   />
                 )}
-                {currentPage === "dashboard" && profile?.user?.tipo_cliente === "Company" && (
-                  <DashboardPage />
+                {currentPage === "dashboard" && (
+                  <DashboardPage onNavigate={handleMenuClick} />
                 )}
                 {currentPage === "recibo" && (
                   <ReciboPage

@@ -53,7 +53,7 @@ export function TopMenu({
   // Função para navegação condicional baseada no tipo de usuário
   const handleLogoClick = () => {
     if (profile?.user?.tipo_cliente === "Company") {
-      onMenuClick("dashboardEmpresarial");
+      onMenuClick("empresarial");
     } else {
       onMenuClick("Historico");
     }
@@ -105,7 +105,8 @@ export function TopMenu({
       Ajuda: "Ajuda",
       newOcorrencia: "Nova Ocorrência",
       gestaoSOAT: "Gestão de SOAT",
-      dashboardEmpresarial: "Dashboard Empresarial",
+      empresarial: "Empresarial",
+      dashboard: "Dashboard",
       mensagemDetails: "Detalhes Mensagem",
       encaminhar: "Encaminhar Mensagem",
       detailsOcorrencia: "Detalhes Ocorrência",
@@ -190,8 +191,8 @@ export function TopMenu({
         )}
 
         <div className="flex flex-col items-start min-w-0">
-          {/* Layout especial para Dashboard Empresarial */}
-          {currentPage === "dashboardEmpresarial" ? (
+          {/* Layout especial para Empresarial */}
+          {currentPage === "empresarial" ? (
             <div className="hidden md:block">
               <h1 className="text-xl font-semibold text-[#002256] mb-1">
                 {getSaudacao()},{" "}

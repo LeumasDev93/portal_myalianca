@@ -236,7 +236,7 @@ export const getActivityDisplay = (action: string): ActivityDisplay => {
       color: "text-blue-600",
       bgColor: "bg-blue-500",
     },
-    "Dashboard Empresarial": {
+    "Empresarial": {
       icon: <IoGrid className={iconSize} />,
       color: "text-indigo-600",
       bgColor: "bg-indigo-500",

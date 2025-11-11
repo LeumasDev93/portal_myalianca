@@ -36,6 +36,27 @@ export interface SimulationDetails {
   producerReference: string | null;
   product: null;
   propertyGroup: null;
+  productId?: string;
+  productType?: string;
+  client?: {
+    name: string;
+    nif: string;
+    activity: string;
+    birthdate: string | null;
+    primaryMobileContact: string;
+    primaryEmailContact: string;
+    addresses: {
+      address: string;
+      postalCode: string | null;
+      county: string;
+      country: string;
+      city: string;
+    }[];
+    contacts: {
+      type: string;
+      value: string;
+    }[];
+  };
   installmentValues: {
     name: string;
     value: number;
@@ -89,7 +110,11 @@ export interface SimulationDetails {
   warnings: any[];
 }
 
-export default function MySimulationsTab() {
+interface MySimulationsTabProps {
+  onNavigateToRecibo?: (reference: string) => void;
+}
+
+export default function MySimulationsTab({ onNavigateToRecibo }: MySimulationsTabProps = {}) {
   const [loadingDetailsId, setLoadingDetailsId] = useState<string | null>(null);
   const [simulations, setSimulations] = useState<Simulation[] | null>(null);
   const [filteredSimulations, setFilteredSimulations] = useState<
@@ -524,6 +549,7 @@ export default function MySimulationsTab() {
           setSimulationDetails(null);
           setShowSimulationResults(false);
         }}
+        onNavigateToRecibo={onNavigateToRecibo}
       />
 
       {showSimulationForm && (
@@ -546,6 +572,7 @@ export default function MySimulationsTab() {
                   setSelectedProductId("");
                   setSimulationDetails(null);
                 }}
+                onNavigateToRecibo={onNavigateToRecibo}
               />
             </div>
           </div>
