@@ -43,7 +43,6 @@ export function PaymentResultModal({
 }: PaymentResultModalProps) {
   const isSuccess = status === "success";
   const isPending = status === "pending";
-  const isError = status === "error";
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>

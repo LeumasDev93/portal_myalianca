@@ -77,7 +77,6 @@ export async function GET(request: NextRequest) {
     const reference = searchParams.get('reference');
     const merchantRef = searchParams.get('merchantRef');
     const amount = searchParams.get('amount');
-    const fingerprint = searchParams.get('fingerprint');
     const status = searchParams.get('status'); // Status do SISP
 
     console.log('[PAYMENT CALLBACK][GET] Parâmetros recebidos:', { reference, merchantRef, amount, status });
