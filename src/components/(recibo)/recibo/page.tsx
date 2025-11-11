@@ -56,8 +56,6 @@ import { useToast } from "@/components/ui/use-toast";
 import { useReciboActivity } from "@/lib/activityExamples";
 import { useUserProfile } from "@/hooks/useUserProfile";
 import { processPayment } from "@/service/paymentService";
-import { PaymentResultModal } from "../PaymentResultModal";
-import { useRouter } from "next/navigation";
 
 type ViewMode = "grid" | "list";
 
@@ -86,29 +84,12 @@ export default function ReciboPage({ filterParams }: ReciboPageProps) {
     reciboNumber: string;
     reciboData?: any;
   }>({ open: false, type: null, reciboNumber: '' });
-  const [paymentResultModal, setPaymentResultModal] = useState<{
-    isOpen: boolean;
-    status: "success" | "error" | "pending";
-    hmacMessage?: string;
-    collectMessage?: string;
-    merchantRef?: string;
-    amount?: string;
-    debugInfo?: { reference?: string; fingerprint?: string };
-  }>({
-    isOpen: false,
-    status: "success",
-  });
-  const [isDownloadingRecibo, setIsDownloadingRecibo] = useState(false);
   const paymentModalShownRef = useRef(false);
   
   const { token } = useSessionCheckToken();
   const { registerReciboDownloadActivity } = useReciboActivity();
   const { profile } = useUserProfile(); // Dados do usuário
   const { toast: showToast } = useToast();
-  const router = useRouter();
-
-  // Debug: verificar se os parâmetros estão chegando
-  console.log("🔍 ReciboPage - filterParams recebidos:", filterParams);
 
   const {
     filteredRecibos,
@@ -123,83 +104,51 @@ export default function ReciboPage({ filterParams }: ReciboPageProps) {
   } = useRecibos(filterParams);
 
 
-  // Detect payment callback results and show modal
+  // Detect payment callback results and show toast
   useEffect(() => {
-    console.log('🔍 [PAYMENT MODAL] useEffect executado');
+    if (paymentModalShownRef.current) return;
     
-    if (paymentModalShownRef.current) {
-      console.log('🔍 [PAYMENT MODAL] Modal já foi mostrado, ignorando');
-      return;
-    }
-    
-    // Ler DIRETAMENTE da URL usando window.location
     const urlParams = new URLSearchParams(window.location.search);
     const serverStatus = urlParams.get("server_status");
     const serverMessage = urlParams.get("server_message");
     const collectStatus = urlParams.get("collect_status");
     const collectMessage = urlParams.get("collect_message");
-    const merchantRef = urlParams.get("merchantRef");
-    const amount = urlParams.get("amount");
-    const debugRef = urlParams.get("debug_ref");
-    const debugFp = urlParams.get("debug_fp");
     
-    console.log('🔍 [PAYMENT MODAL] Parâmetros da URL:', {
-      serverStatus,
-      serverMessage,
-      collectStatus,
-      collectMessage,
-      merchantRef,
-      amount
-    });
-    
-    // Verificar se tem parâmetros de pagamento
-    if (!serverStatus && !collectStatus) {
-      console.log('ℹ️ [PAYMENT MODAL] Nenhum parâmetro de pagamento encontrado');
-      return;
-    }
-    
-    // Determinar status do modal
-    let modalStatus: "success" | "error" | "pending" = "error";
-    
-    if (serverStatus === "pending") {
-      modalStatus = "pending";
-    } else if (serverStatus === "ok" && (!collectStatus || collectStatus === "ok")) {
-      modalStatus = "success";
-    } else {
-      modalStatus = "error";
-    }
-    
-    console.log('✅ [PAYMENT MODAL] Abrindo modal com status:', modalStatus);
-    
-    setPaymentResultModal({
-      isOpen: true,
-      status: modalStatus,
-      hmacMessage: serverMessage || (serverStatus === "ok" ? "Validação HMAC confirmada" : serverStatus === "pending" ? "Aguardando confirmação..." : "Falha na validação"),
-      collectMessage: collectMessage || (collectStatus === "ok" ? "Cobrança confirmada com sucesso" : collectStatus === "error" ? "Erro ao processar cobrança" : undefined),
-      merchantRef: merchantRef || undefined,
-      amount: amount || undefined,
-      debugInfo: debugRef || debugFp ? { reference: debugRef || undefined, fingerprint: debugFp || undefined } : undefined,
-    });
+    if (!serverStatus && !collectStatus) return;
     
     paymentModalShownRef.current = true;
     
-    // LIMPAR parâmetros da URL DEPOIS de ler
-    console.log('🧹 [PAYMENT MODAL] Limpando parâmetros da URL...');
-    const cleanParams = new URLSearchParams(window.location.search);
-    cleanParams.delete('server_status');
-    cleanParams.delete('server_message');
-    cleanParams.delete('collect_status');
-    cleanParams.delete('collect_message');
-    cleanParams.delete('merchantRef');
-    cleanParams.delete('amount');
-    cleanParams.delete('debug_ref');
-    cleanParams.delete('debug_fp');
+    // Mostrar toast após delay
+    setTimeout(() => {
+      if (serverStatus === "ok" && (!collectStatus || collectStatus === "ok")) {
+        // Sucesso
+        showToast({
+          title: "✅ Pagamento confirmado!",
+          description: collectMessage || serverMessage || "Recibo pago com sucesso",
+          duration: 5000,
+        });
+      } else {
+        // Erro
+        const errorMsg = serverMessage || collectMessage || "Erro ao processar pagamento";
+        showToast({
+          title: "❌ Erro no pagamento",
+          description: errorMsg,
+          variant: "destructive",
+          duration: 8000,
+        });
+      }
+    }, 500);
     
-    const newUrl = cleanParams.toString() ? `?${cleanParams.toString()}` : window.location.pathname;
-    window.history.replaceState(null, '', newUrl);
-    console.log('✅ [PAYMENT MODAL] URL limpa');
-    
-  }, [router]);
+    // Limpar URL após 3 segundos
+    setTimeout(() => {
+      const cleanParams = new URLSearchParams(window.location.search);
+      const paramsToClean = ['server_status', 'server_message', 'collect_status', 'collect_message', 'merchantRef', 'amount', 'debug_ref', 'debug_fp'];
+      paramsToClean.forEach(param => cleanParams.delete(param));
+      
+      const newUrl = cleanParams.toString() ? `?${cleanParams.toString()}` : window.location.pathname;
+      window.history.replaceState(null, '', newUrl);
+    }, 3000);
+  }, [showToast]);
 
   const openConfirmDialog = (type: 'view' | 'download' | 'payment', reciboNumber: string, reciboData?: any) => {
     // Para "Ver", executa diretamente sem confirmação
@@ -343,34 +292,6 @@ export default function ReciboPage({ filterParams }: ReciboPageProps) {
       }, 5000);
     } finally {
       setLoadingStates((prev) => ({ ...prev, [invoiceNumber]: false }));
-    }
-  };
-
-  const handleClosePaymentModal = () => {
-    console.log('🔍 [PAYMENT MODAL] Fechando modal');
-    setPaymentResultModal((prev) => ({ ...prev, isOpen: false }));
-    // Resetar a ref após fechar permite que o modal seja mostrado novamente se houver novo callback
-    // paymentModalShownRef.current = false; // Descomente se quiser permitir múltiplas exibições
-  };
-
-  const handleDownloadReciboFromModal = async () => {
-    if (!paymentResultModal.merchantRef) return;
-    
-    setIsDownloadingRecibo(true);
-    try {
-      await handleDownload(paymentResultModal.merchantRef);
-      showToast({
-        title: "Recibo baixado com sucesso!",
-        description: `Recibo: ${paymentResultModal.merchantRef}`,
-      });
-    } catch (error: any) {
-      showToast({
-        title: "Erro ao baixar recibo",
-        description: error?.message || "Tente novamente mais tarde",
-        variant: "destructive",
-      });
-    } finally {
-      setIsDownloadingRecibo(false);
     }
   };
 
@@ -883,20 +804,6 @@ export default function ReciboPage({ filterParams }: ReciboPageProps) {
           ))}
         </div>
       )}
-
-      {/* Payment Result Modal */}
-      <PaymentResultModal
-        isOpen={paymentResultModal.isOpen}
-        onClose={handleClosePaymentModal}
-        status={paymentResultModal.status}
-        hmacMessage={paymentResultModal.hmacMessage}
-        collectMessage={paymentResultModal.collectMessage}
-        merchantRef={paymentResultModal.merchantRef}
-        amount={paymentResultModal.amount}
-        debugInfo={paymentResultModal.debugInfo}
-        onDownloadRecibo={paymentResultModal.status === "success" ? handleDownloadReciboFromModal : undefined}
-        isDownloading={isDownloadingRecibo}
-      />
 
       {/* Dialog de Confirmação */}
       <Dialog open={confirmDialog.open} onOpenChange={(open) => setConfirmDialog({ ...confirmDialog, open })}>

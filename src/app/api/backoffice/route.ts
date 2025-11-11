@@ -26,19 +26,32 @@ export async function POST(request: NextRequest) {
 
     console.log('[PAYMENT CALLBACK] Recebido callback POST do SISP (via /backoffice):', body);
 
-    const { reference, amount, merchantRef } = body;
+    const { reference, amount, merchantRef, status: sispStatus, message: sispMessage } = body;
     const awtFromQuery = urlObj.searchParams.get('awt') || '';
     const reciboRefFromQuery = urlObj.searchParams.get('reciboRef') || '';
 
-    const hmacPayload = {
-      reference: (reference || merchantRef || '').toString().trim(),
-      hmacFingerprint: (body.hmacFingerprint || body.fingerprint || '').toString(),
-    };
-
     let serverStatus: 'ok' | 'error' = 'error';
-    let serverMessage = 'Falha na validação HMAC';
+    let serverMessage = 'Pagamento não processado';
     let collectStatus: 'ok' | 'error' | 'skipped' = 'skipped';
     let collectMessage = '';
+
+    console.log('[BACKOFFICE] Status do SISP:', sispStatus);
+    console.log('[BACKOFFICE] Mensagem do SISP:', sispMessage);
+
+    // SE SISP RETORNOU ERRO - NÃO VALIDA HMAC
+    if (sispStatus === 'ERRO' || sispStatus === 'ERROR' || sispStatus === 'FAILED') {
+      serverStatus = 'error';
+      serverMessage = sispMessage || 'Pagamento rejeitado pelo gateway';
+      console.log('❌ [BACKOFFICE] SISP retornou ERRO - NÃO validando HMAC');
+      console.log('❌ [BACKOFFICE] Mensagem:', serverMessage);
+    } else {
+      // SISP retornou sucesso - VALIDA HMAC
+      console.log('✅ [BACKOFFICE] SISP OK - Validando HMAC...');
+      
+      const hmacPayload = {
+        reference: (reference || merchantRef || '').toString().trim(),
+        hmacFingerprint: (body.hmacFingerprint || body.fingerprint || '').toString(),
+      };
 
     try {
       const gatewayToken = request.cookies.get('pay_token')?.value || '';
@@ -138,11 +151,12 @@ export async function POST(request: NextRequest) {
         }
       } else {
         serverStatus = 'error';
-        serverMessage = 'Validação HMAC falhou';
+        serverMessage = 'Falha na validação de segurança do pagamento';
       }
     } catch {
       serverStatus = 'error';
       serverMessage = 'Erro no servidor ao validar/cobrar';
+    }
     }
 
     const redirectUrl = new URL('/backoffice', request.url);

@@ -119,6 +119,7 @@ export async function POST(request: NextRequest) {
       fingerprint,
       reciboRef: reciboRefBody,
       status: sispStatus, // Status do SISP
+      message: sispMessage, // Mensagem do SISP
     } = body;
 
     console.log('📊 [CALLBACK] Dados extraídos:', {
@@ -126,30 +127,28 @@ export async function POST(request: NextRequest) {
       merchantRef,
       amount,
       sispStatus,
+      sispMessage,
       reciboRef: reciboRefBody,
       fingerprint: fingerprint ? fingerprint.substring(0, 30) + '...' : 'N/A'
     });
 
-    // SERVER-SIDE: Só valida HMAC se o SISP retornou sucesso
     const refPost = (reference || merchantRef || '').toString().trim();
-    const fpPost = (body.hmacFingerprint || fingerprint || '').toString(); // mantém como veio
+    const fpPost = (body.hmacFingerprint || fingerprint || '').toString();
     let serverStatus = 'error';
     let serverMessage = 'Pagamento não processado';
     let collectStatus = 'skipped';
     let collectMessage = '';
 
     console.log('🔍 [CALLBACK] Verificando status do SISP...');
-    console.log('🔍 [CALLBACK] sispStatus recebido:', sispStatus);
-    console.log('🔍 [CALLBACK] Valores aceitos: "success" ou "approved"');
+    console.log('🔍 [CALLBACK] Status:', sispStatus);
+    console.log('🔍 [CALLBACK] Mensagem:', sispMessage);
     
-    // Verificar se o SISP retornou sucesso
-    if (sispStatus !== 'success' && sispStatus !== 'approved') {
+    // SE SISP RETORNOU ERRO - NÃO VALIDA HMAC
+    if (sispStatus === 'ERRO' || sispStatus === 'ERROR' || sispStatus === 'FAILED') {
       serverStatus = 'error';
-      serverMessage = `Pagamento rejeitado pelo SISP: ${sispStatus || 'status desconhecido'}`;
-      console.log('❌ [CALLBACK] SISP NÃO RETORNOU SUCESSO!');
-      console.log('❌ [CALLBACK] Status recebido:', sispStatus);
-      console.log('❌ [CALLBACK] serverStatus:', serverStatus);
-      console.log('❌ [CALLBACK] serverMessage:', serverMessage);
+      serverMessage = sispMessage || 'Pagamento rejeitado pelo gateway';
+      console.log('❌ [CALLBACK] SISP retornou ERRO!');
+      console.log('❌ [CALLBACK] Mensagem:', serverMessage);
     } else {
       console.log('✅ [CALLBACK] SISP retornou sucesso!');
       console.log('✅ [CALLBACK] Iniciando validação HMAC...');
@@ -179,10 +178,10 @@ export async function POST(request: NextRequest) {
           console.error('❌ [CALLBACK] Status HTTP:', attempt.status);
           console.error('❌ [CALLBACK] Resposta:', attempt.text);
           serverStatus = 'error';
-          serverMessage = `Validação HMAC falhou (${attempt.status})`;
+          serverMessage = 'Falha na validação de segurança do pagamento';
         } else {
           serverStatus = 'ok';
-          serverMessage = 'HMAC válido';
+          serverMessage = 'Pagamento validado com sucesso';
           console.log('✅ [CALLBACK] HMAC VALIDADO COM SUCESSO!');
           console.log('✅ [CALLBACK] Iniciando cobrança do recibo...');
           
@@ -234,7 +233,7 @@ export async function POST(request: NextRequest) {
             }
             
             collectStatus = collectRes.ok ? 'ok' : 'error';
-            collectMessage = collectRes.ok ? 'Cobrança confirmada com sucesso' : `Falha ao cobrar (${collectRes.status})`;
+            collectMessage = collectRes.ok ? 'Recibo cobrado com sucesso' : `Erro ao cobrar o recibo`;
             
             if (collectRes.ok) {
               console.log('✅ [CALLBACK] COBRANÇA REALIZADA COM SUCESSO!');
