@@ -57,6 +57,7 @@ import { useReciboActivity } from "@/lib/activityExamples";
 import { useUserProfile } from "@/hooks/useUserProfile";
 import { processPayment } from "@/service/paymentService";
 import { PaymentResultModal } from "../PaymentResultModal";
+import { useRouter } from "next/navigation";
 
 type ViewMode = "grid" | "list";
 
@@ -104,6 +105,7 @@ export default function ReciboPage({ filterParams }: ReciboPageProps) {
   const { registerReciboDownloadActivity } = useReciboActivity();
   const { profile } = useUserProfile(); // Dados do usuário
   const { toast: showToast } = useToast();
+  const router = useRouter();
 
   // Debug: verificar se os parâmetros estão chegando
   console.log("🔍 ReciboPage - filterParams recebidos:", filterParams);
@@ -130,61 +132,74 @@ export default function ReciboPage({ filterParams }: ReciboPageProps) {
       return;
     }
     
-    // Ler do cookie em vez da URL (mais confiável)
-    const getCookie = (name: string) => {
-      const value = `; ${document.cookie}`;
-      const parts = value.split(`; ${name}=`);
-      if (parts.length === 2) return parts.pop()?.split(';').shift();
-      return null;
-    };
+    // Ler DIRETAMENTE da URL usando window.location
+    const urlParams = new URLSearchParams(window.location.search);
+    const serverStatus = urlParams.get("server_status");
+    const serverMessage = urlParams.get("server_message");
+    const collectStatus = urlParams.get("collect_status");
+    const collectMessage = urlParams.get("collect_message");
+    const merchantRef = urlParams.get("merchantRef");
+    const amount = urlParams.get("amount");
+    const debugRef = urlParams.get("debug_ref");
+    const debugFp = urlParams.get("debug_fp");
     
-    const paymentResultCookie = getCookie('payment_result');
-    console.log('🍪 [PAYMENT MODAL] Cookie payment_result:', paymentResultCookie);
+    console.log('🔍 [PAYMENT MODAL] Parâmetros da URL:', {
+      serverStatus,
+      serverMessage,
+      collectStatus,
+      collectMessage,
+      merchantRef,
+      amount
+    });
     
-    if (!paymentResultCookie) {
-      console.log('ℹ️ [PAYMENT MODAL] Nenhum cookie de pagamento encontrado');
+    // Verificar se tem parâmetros de pagamento
+    if (!serverStatus && !collectStatus) {
+      console.log('ℹ️ [PAYMENT MODAL] Nenhum parâmetro de pagamento encontrado');
       return;
     }
     
-    try {
-      const paymentData = JSON.parse(decodeURIComponent(paymentResultCookie));
-      console.log('📦 [PAYMENT MODAL] Dados do pagamento parseados:', paymentData);
-      
-      const { serverStatus, serverMessage, collectStatus, collectMessage, merchantRef, amount, debugRef, debugFp } = paymentData;
-      
-      // Determinar status do modal
-      let modalStatus: "success" | "error" | "pending" = "error";
-      
-      if (serverStatus === "pending") {
-        modalStatus = "pending";
-      } else if (serverStatus === "ok" && (!collectStatus || collectStatus === "ok")) {
-        modalStatus = "success";
-      } else {
-        modalStatus = "error";
-      }
-      
-      console.log('✅ [PAYMENT MODAL] Abrindo modal com status:', modalStatus);
-      
-      setPaymentResultModal({
-        isOpen: true,
-        status: modalStatus,
-        hmacMessage: serverMessage || (serverStatus === "ok" ? "Validação HMAC confirmada" : serverStatus === "pending" ? "Aguardando confirmação..." : "Falha na validação"),
-        collectMessage: collectMessage || (collectStatus === "ok" ? "Cobrança confirmada com sucesso" : collectStatus === "error" ? "Erro ao processar cobrança" : undefined),
-        merchantRef: merchantRef || undefined,
-        amount: amount || undefined,
-        debugInfo: debugRef || debugFp ? { reference: debugRef || undefined, fingerprint: debugFp || undefined } : undefined,
-      });
-      
-      paymentModalShownRef.current = true;
-      
-      // Limpar o cookie após ler
-      document.cookie = 'payment_result=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT';
-      console.log('🍪 [PAYMENT MODAL] Cookie payment_result limpo');
-      
-    } catch (error) {
-      console.error('❌ [PAYMENT MODAL] Erro ao parsear cookie:', error);
+    // Determinar status do modal
+    let modalStatus: "success" | "error" | "pending" = "error";
+    
+    if (serverStatus === "pending") {
+      modalStatus = "pending";
+    } else if (serverStatus === "ok" && (!collectStatus || collectStatus === "ok")) {
+      modalStatus = "success";
+    } else {
+      modalStatus = "error";
     }
-  }, []);
+    
+    console.log('✅ [PAYMENT MODAL] Abrindo modal com status:', modalStatus);
+    
+    setPaymentResultModal({
+      isOpen: true,
+      status: modalStatus,
+      hmacMessage: serverMessage || (serverStatus === "ok" ? "Validação HMAC confirmada" : serverStatus === "pending" ? "Aguardando confirmação..." : "Falha na validação"),
+      collectMessage: collectMessage || (collectStatus === "ok" ? "Cobrança confirmada com sucesso" : collectStatus === "error" ? "Erro ao processar cobrança" : undefined),
+      merchantRef: merchantRef || undefined,
+      amount: amount || undefined,
+      debugInfo: debugRef || debugFp ? { reference: debugRef || undefined, fingerprint: debugFp || undefined } : undefined,
+    });
+    
+    paymentModalShownRef.current = true;
+    
+    // LIMPAR parâmetros da URL DEPOIS de ler
+    console.log('🧹 [PAYMENT MODAL] Limpando parâmetros da URL...');
+    const cleanParams = new URLSearchParams(window.location.search);
+    cleanParams.delete('server_status');
+    cleanParams.delete('server_message');
+    cleanParams.delete('collect_status');
+    cleanParams.delete('collect_message');
+    cleanParams.delete('merchantRef');
+    cleanParams.delete('amount');
+    cleanParams.delete('debug_ref');
+    cleanParams.delete('debug_fp');
+    
+    const newUrl = cleanParams.toString() ? `?${cleanParams.toString()}` : window.location.pathname;
+    window.history.replaceState(null, '', newUrl);
+    console.log('✅ [PAYMENT MODAL] URL limpa');
+    
+  }, [router]);
 
   const openConfirmDialog = (type: 'view' | 'download' | 'payment', reciboNumber: string, reciboData?: any) => {
     // Para "Ver", executa diretamente sem confirmação
