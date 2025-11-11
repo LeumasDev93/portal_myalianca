@@ -74,26 +74,43 @@ async function tryValidateHmac(options: {
 // GET não é necessário - SISP envia diretamente via POST
 
 export async function POST(request: NextRequest) {
+  console.log('═══════════════════════════════════════════════════════════════');
+  console.log('🚀 [PAYMENT CALLBACK][POST] INICIANDO CALLBACK DO SISP');
+  console.log('═══════════════════════════════════════════════════════════════');
+  
   try {
+    // Log de headers
+    const headers: Record<string, string> = {};
+    request.headers.forEach((value, key) => {
+      headers[key] = value;
+    });
+    console.log('📨 [CALLBACK] Headers recebidos:', JSON.stringify(headers, null, 2));
+    
     let body: Record<string, string> = {};
     const contentType = request.headers.get('content-type') || '';
+    console.log('📋 [CALLBACK] Content-Type:', contentType);
     
     if (contentType.includes('application/x-www-form-urlencoded') || contentType.includes('multipart/form-data')) {
+      console.log('📝 [CALLBACK] Processando como FormData');
       const form = await request.formData();
       form.forEach((value, key) => {
         body[key] = typeof value === 'string' ? value : '';
       });
     } else if (contentType.includes('application/json')) {
+      console.log('📝 [CALLBACK] Processando como JSON');
       const json = await request.json();
       body = json as Record<string, string>;
     } else {
-      // Tenta JSON como fallback
+      console.log('📝 [CALLBACK] Tentando JSON como fallback');
       try {
         body = await request.json();
-      } catch {
+      } catch (e) {
+        console.error('❌ [CALLBACK] Falha ao ler body:', e);
         body = {};
       }
     }
+    
+    console.log('📦 [CALLBACK] Body completo recebido do SISP:', JSON.stringify(body, null, 2));
     
     const {
       reference,
@@ -104,7 +121,14 @@ export async function POST(request: NextRequest) {
       status: sispStatus, // Status do SISP
     } = body;
 
-    console.log('[PAYMENT CALLBACK][POST] Body recebido:', { reference, merchantRef, amount, sispStatus, fingerprint: fingerprint?.substring(0, 20) + '...' });
+    console.log('📊 [CALLBACK] Dados extraídos:', {
+      reference,
+      merchantRef,
+      amount,
+      sispStatus,
+      reciboRef: reciboRefBody,
+      fingerprint: fingerprint ? fingerprint.substring(0, 30) + '...' : 'N/A'
+    });
 
     // SERVER-SIDE: Só valida HMAC se o SISP retornou sucesso
     const refPost = (reference || merchantRef || '').toString().trim();
@@ -114,16 +138,29 @@ export async function POST(request: NextRequest) {
     let collectStatus = 'skipped';
     let collectMessage = '';
 
+    console.log('🔍 [CALLBACK] Verificando status do SISP...');
+    console.log('🔍 [CALLBACK] sispStatus recebido:', sispStatus);
+    console.log('🔍 [CALLBACK] Valores aceitos: "success" ou "approved"');
+    
     // Verificar se o SISP retornou sucesso
     if (sispStatus !== 'success' && sispStatus !== 'approved') {
       serverStatus = 'error';
       serverMessage = `Pagamento rejeitado pelo SISP: ${sispStatus || 'status desconhecido'}`;
-      console.log('[PAYMENT CALLBACK][POST] SISP não retornou sucesso:', sispStatus);
+      console.log('❌ [CALLBACK] SISP NÃO RETORNOU SUCESSO!');
+      console.log('❌ [CALLBACK] Status recebido:', sispStatus);
+      console.log('❌ [CALLBACK] serverStatus:', serverStatus);
+      console.log('❌ [CALLBACK] serverMessage:', serverMessage);
     } else {
+      console.log('✅ [CALLBACK] SISP retornou sucesso!');
+      console.log('✅ [CALLBACK] Iniciando validação HMAC...');
       // SISP retornou sucesso, agora validar HMAC
       try {
         const gatewayToken = request.cookies.get('pay_token')?.value || '';
-        console.log('[PAYMENT CALLBACK][POST] Validando HMAC com token:', gatewayToken ? 'presente' : 'ausente');
+        console.log('🔑 [CALLBACK] Lendo token de pagamento...');
+        console.log('🔑 [CALLBACK] pay_token:', gatewayToken ? `presente (${gatewayToken.substring(0, 20)}...)` : 'AUSENTE');
+        console.log('🔑 [CALLBACK] Preparando validação HMAC...');
+        console.log('🔑 [CALLBACK] reference:', refPost);
+        console.log('🔑 [CALLBACK] fingerprint:', fpPost ? fpPost.substring(0, 30) + '...' : 'N/A');
         
         const attempt = await tryValidateHmac({ 
           reference: refPost, 
@@ -131,14 +168,23 @@ export async function POST(request: NextRequest) {
           accessToken: gatewayToken 
         });
         
+        console.log('📡 [CALLBACK] Resposta da validação HMAC:', {
+          ok: attempt.ok,
+          status: attempt.status,
+          text: attempt.text
+        });
+        
         if (!attempt.ok) {
-          console.error('[PAYMENT CALLBACK][POST] validar-hmac falhou:', attempt.status, attempt.text);
+          console.error('❌ [CALLBACK] VALIDAÇÃO HMAC FALHOU!');
+          console.error('❌ [CALLBACK] Status HTTP:', attempt.status);
+          console.error('❌ [CALLBACK] Resposta:', attempt.text);
           serverStatus = 'error';
           serverMessage = `Validação HMAC falhou (${attempt.status})`;
         } else {
           serverStatus = 'ok';
           serverMessage = 'HMAC válido';
-          console.log('[PAYMENT CALLBACK][POST] HMAC validado com sucesso');
+          console.log('✅ [CALLBACK] HMAC VALIDADO COM SUCESSO!');
+          console.log('✅ [CALLBACK] Iniciando cobrança do recibo...');
           
           // HMAC válido, agora cobrar o recibo
           if (merchantRef && amount) {
@@ -152,7 +198,10 @@ export async function POST(request: NextRequest) {
             };
             
             const anywhereBearerPost = request.cookies.get('anywhere_token')?.value;
-            console.log('[PAYMENT CALLBACK][POST] Chamando collect API:', collectUrl);
+            console.log('💰 [CALLBACK] Preparando cobrança...');
+            console.log('💰 [CALLBACK] URL:', collectUrl);
+            console.log('💰 [CALLBACK] Body:', JSON.stringify(collectBody, null, 2));
+            console.log('💰 [CALLBACK] anywhere_token:', anywhereBearerPost ? `presente (${anywhereBearerPost.substring(0, 20)}...)` : 'AUSENTE');
             
             const collectRes = await fetch(collectUrl, {
               method: 'POST',
@@ -164,6 +213,12 @@ export async function POST(request: NextRequest) {
               cache: 'no-store',
             });
             
+            console.log('📡 [CALLBACK] Resposta da API de cobrança:', {
+              status: collectRes.status,
+              ok: collectRes.ok,
+              statusText: collectRes.statusText
+            });
+            
             try {
               const contentType = collectRes.headers.get('content-type') || '';
               let respBody: unknown = null;
@@ -173,13 +228,25 @@ export async function POST(request: NextRequest) {
                 const text = await collectRes.text();
                 respBody = text.length > 300 ? text.slice(0, 300) : text;
               }
-              console.log('[COLLECT][callback][POST]', collectUrl, 'status=', collectRes.status, 'body=', respBody);
-            } catch {
-              console.log('[COLLECT][callback][POST]', collectUrl, 'status=', collectRes.status, '(no body)');
+              console.log('📄 [CALLBACK] Body da resposta:', JSON.stringify(respBody, null, 2));
+            } catch (e) {
+              console.log('⚠️ [CALLBACK] Erro ao ler body da resposta:', e);
             }
             
             collectStatus = collectRes.ok ? 'ok' : 'error';
             collectMessage = collectRes.ok ? 'Cobrança confirmada com sucesso' : `Falha ao cobrar (${collectRes.status})`;
+            
+            if (collectRes.ok) {
+              console.log('✅ [CALLBACK] COBRANÇA REALIZADA COM SUCESSO!');
+            } else {
+              console.error('❌ [CALLBACK] FALHA NA COBRANÇA!');
+              console.error('❌ [CALLBACK] Status:', collectRes.status);
+              console.error('❌ [CALLBACK] Mensagem:', collectMessage);
+            }
+          } else {
+            console.log('⚠️ [CALLBACK] Cobrança não realizada - dados insuficientes');
+            console.log('⚠️ [CALLBACK] merchantRef:', merchantRef);
+            console.log('⚠️ [CALLBACK] amount:', amount);
           }
         }
       } catch (error) {
@@ -189,6 +256,17 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    console.log('═══════════════════════════════════════════════════════════════');
+    console.log('🎯 [CALLBACK] PREPARANDO REDIRECIONAMENTO');
+    console.log('═══════════════════════════════════════════════════════════════');
+    console.log('📊 [CALLBACK] Resultado final:');
+    console.log('   - serverStatus:', serverStatus);
+    console.log('   - serverMessage:', serverMessage);
+    console.log('   - collectStatus:', collectStatus);
+    console.log('   - collectMessage:', collectMessage);
+    console.log('   - merchantRef:', merchantRef);
+    console.log('   - amount:', amount);
+    
     // Redireciona para a página de recibos com resultado do servidor
     const redirectUrl = new URL('/backoffice', request.url);
     redirectUrl.searchParams.set('menu', 'recibo');
@@ -198,6 +276,7 @@ export async function POST(request: NextRequest) {
     if (collectMessage) redirectUrl.searchParams.set('collect_message', collectMessage);
     redirectUrl.searchParams.set('merchantRef', merchantRef || '');
     redirectUrl.searchParams.set('amount', amount?.toString() || '');
+    
     // Em caso de erro, devolve os dados usados para HMAC via query string (debug)
     if (serverStatus !== 'ok') {
       try {
@@ -205,6 +284,16 @@ export async function POST(request: NextRequest) {
         redirectUrl.searchParams.set('debug_fp', (fpPost));
       } catch {}
     }
+
+    console.log('🔗 [CALLBACK] URL COMPLETA DE REDIRECIONAMENTO:');
+    console.log('🔗 [CALLBACK]', redirectUrl.toString());
+    console.log('🔗 [CALLBACK] Parâmetros individuais:');
+    redirectUrl.searchParams.forEach((value, key) => {
+      console.log(`   ✓ ${key} = ${value}`);
+    });
+    console.log('═══════════════════════════════════════════════════════════════');
+    console.log('✅ [CALLBACK] CALLBACK FINALIZADO - REDIRECIONANDO...');
+    console.log('═══════════════════════════════════════════════════════════════');
 
     const res = NextResponse.redirect(redirectUrl, 303);
     res.cookies.set('postpay', '1', {
@@ -222,7 +311,11 @@ export async function POST(request: NextRequest) {
     });
     return res;
   } catch (error) {
-    console.error('[PAYMENT CALLBACK] Erro no callback POST:', error);
+    console.error('═══════════════════════════════════════════════════════════════');
+    console.error('❌❌❌ [CALLBACK] ERRO NO CALLBACK POST ❌❌❌');
+    console.error('═══════════════════════════════════════════════════════════════');
+    console.error('[CALLBACK] Erro:', error);
+    console.error('[CALLBACK] Stack:', error instanceof Error ? error.stack : 'N/A');
     
     // Em caso de erro, redireciona para a página de recibos
     const redirectUrl = new URL('/backoffice', request.url);
@@ -230,6 +323,9 @@ export async function POST(request: NextRequest) {
     redirectUrl.searchParams.set('server_status', 'error');
     redirectUrl.searchParams.set('server_message', 'Erro ao processar callback');
     redirectUrl.searchParams.set('collect_status', 'skipped');
+    
+    console.error('🔗 [CALLBACK] URL de redirecionamento (erro):', redirectUrl.toString());
+    console.error('═══════════════════════════════════════════════════════════════');
     
     const res = NextResponse.redirect(redirectUrl, 303);
     res.cookies.set('postpay', '1', {
@@ -240,4 +336,29 @@ export async function POST(request: NextRequest) {
     });
     return res;
   }
+}
+
+// ROTA DE TESTE - Simulação de callback do SISP
+export async function GET(request: NextRequest) {
+  console.log('\n🧪 [TEST] SIMULAÇÃO DE CALLBACK PARA TESTES');
+  
+  const redirectUrl = new URL('/backoffice', request.url);
+  redirectUrl.searchParams.set('menu', 'recibo');
+  redirectUrl.searchParams.set('server_status', 'error');
+  redirectUrl.searchParams.set('server_message', 'Teste de callback simulado');
+  redirectUrl.searchParams.set('collect_status', 'skipped');
+  redirectUrl.searchParams.set('merchantRef', 'TEST123');
+  redirectUrl.searchParams.set('amount', '1000');
+  
+  console.log('🧪 [TEST] URL de redirecionamento:', redirectUrl.toString());
+  
+  const res = NextResponse.redirect(redirectUrl, 303);
+  res.cookies.set('postpay', '1', {
+    path: '/',
+    maxAge: 10,
+    sameSite: 'none',
+    secure: true,
+  });
+  
+  return res;
 }
