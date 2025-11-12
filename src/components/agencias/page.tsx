@@ -105,7 +105,7 @@ export default function AgenciasPage() {
                     {isExpanded && (
                       <div className="p-3 sm:p-4 md:p-5 w-full space-y-3 sm:space-y-4">
                         {/* Informações da agência */}
-                        <div className="flex flex-col lg:flex-row lg:items-start gap-3 sm:gap-4 md:gap-5 lg:gap-6 xl:gap-8">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 2xl:grid-cols-3 gap-3 sm:gap-4 md:gap-5 lg:gap-6">
                           {agencia.telefone && (
                             <div className="flex items-center gap-2">
                               <Phone className="h-4 w-4 sm:h-5 sm:w-5 text-[#002256] flex-shrink-0" />
@@ -172,46 +172,46 @@ export default function AgenciasPage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 2xl:grid-cols-4 gap-3 sm:gap-4 md:gap-5 lg:gap-6">
               {agencias.map((agencia) => (
                 <Card key={agencia.id}>
-              <CardHeader className="p-3 sm:p-4 md:p-5 lg:p-6">
-                <CardTitle className="text-sm sm:text-base md:text-lg lg:text-xl">{agencia.nome}</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-2 sm:space-y-3 md:space-y-4 p-3 sm:p-4 md:p-5 lg:p-6 pt-0">
-                <div className="flex items-start gap-1.5 sm:gap-2">
-                  <MapPin className="h-3.5 w-3.5 sm:h-4 sm:w-4 md:h-5 md:w-5 text-[#002256] mt-0.5 flex-shrink-0" />
-                  <span className="text-xs sm:text-sm md:text-base">{agencia.localizacao}</span>
-                </div>
-                {agencia.telefone && (
-                  <div className="flex items-center gap-1.5 sm:gap-2">
-                    <Phone className="h-3.5 w-3.5 sm:h-4 sm:w-4 md:h-5 md:w-5 text-[#002256] flex-shrink-0" />
-                    <span className="text-xs sm:text-sm md:text-base">{agencia.telefone}</span>
-                  </div>
-                )}
-                {agencia.email && (
-                  <div className="flex items-center gap-1.5 sm:gap-2">
-                    <Mail className="h-3.5 w-3.5 sm:h-4 sm:w-4 md:h-5 md:w-5 text-[#002256] flex-shrink-0" />
-                    <span className="text-xs sm:text-sm md:text-base break-all">{agencia.email}</span>
-                  </div>
-                )}
-                {agencia.horarios && agencia.horarios.length > 0 && (
-                  <div className="flex items-start gap-1.5 sm:gap-2">
-                    <Clock className="h-3.5 w-3.5 sm:h-4 sm:w-4 md:h-5 md:w-5 text-[#002256] mt-0.5 flex-shrink-0" />
-                    <div className="space-y-0.5 sm:space-y-1">
-                      {agencia.horarios.map((horario, index) => (
-                        <div key={index} className="text-[10px] sm:text-xs md:text-sm">
-                          {horario}
-                        </div>
-                      ))}
+                  <CardHeader className="p-3 sm:p-4 md:p-5 lg:p-6">
+                    <CardTitle className="text-sm sm:text-base md:text-lg lg:text-xl">{agencia.nome}</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-2 sm:space-y-3 md:space-y-4 p-3 sm:p-4 md:p-5 lg:p-6 pt-0">
+                    <div className="flex items-start gap-1.5 sm:gap-2">
+                      <MapPin className="h-3.5 w-3.5 sm:h-4 sm:w-4 md:h-5 md:w-5 text-[#002256] mt-0.5 flex-shrink-0" />
+                      <span className="text-xs sm:text-sm md:text-base">{agencia.localizacao}</span>
                     </div>
-                  </div>
-                )}
-                <button
-                  onClick={() => setSelectedAgencia(agencia)}
-                  className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-[#002256] border-[#002256] text-[10px] sm:text-xs md:text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border bg-white hover:bg-[#002256] hover:text-white h-8 sm:h-9 md:h-10 px-3 sm:px-4 py-1.5 sm:py-2 w-full mt-3 sm:mt-4"
-                >
-                  <FaMapMarker className="mr-1.5 sm:mr-2 h-3 w-3 sm:h-3.5 sm:w-3.5 md:h-4 md:w-4" />
-                  Ver no mapa
-                </button>
-              </CardContent>
+                    {agencia.telefone && (
+                      <div className="flex items-center gap-1.5 sm:gap-2">
+                        <Phone className="h-3.5 w-3.5 sm:h-4 sm:w-4 md:h-5 md:w-5 text-[#002256] flex-shrink-0" />
+                        <span className="text-xs sm:text-sm md:text-base">{agencia.telefone}</span>
+                      </div>
+                    )}
+                    {agencia.email && (
+                      <div className="flex items-center gap-1.5 sm:gap-2">
+                        <Mail className="h-3.5 w-3.5 sm:h-4 sm:w-4 md:h-5 md:w-5 text-[#002256] flex-shrink-0" />
+                        <span className="text-xs sm:text-sm md:text-base break-all">{agencia.email}</span>
+                      </div>
+                    )}
+                    {agencia.horarios && agencia.horarios.length > 0 && (
+                      <div className="flex items-start gap-1.5 sm:gap-2">
+                        <Clock className="h-3.5 w-3.5 sm:h-4 sm:w-4 md:h-5 md:w-5 text-[#002256] mt-0.5 flex-shrink-0" />
+                        <div className="space-y-0.5 sm:space-y-1">
+                          {agencia.horarios.map((horario, index) => (
+                            <div key={index} className="text-[10px] sm:text-xs md:text-sm">
+                              {horario}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    <button
+                      onClick={() => setSelectedAgencia(agencia)}
+                      className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-[#002256] border-[#002256] text-[10px] sm:text-xs md:text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border bg-white hover:bg-[#002256] hover:text-white h-8 sm:h-9 md:h-10 px-3 sm:px-4 py-1.5 sm:py-2 w-full mt-3 sm:mt-4"
+                    >
+                      <FaMapMarker className="mr-1.5 sm:mr-2 h-3 w-3 sm:h-3.5 sm:w-3.5 md:h-4 md:w-4" />
+                      Ver no mapa
+                    </button>
+                  </CardContent>
                 </Card>
               ))}
             </div>
