@@ -144,6 +144,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setAuthCookies(token);
 
         router.replace("/backoffice");
+        // Mantém isLoading=true até a página carregar
       } catch (error) {
         let errorMessage = "";
 
@@ -158,9 +159,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         setError(errorMessage);
         setTimeout(() => setError(null), 5000);
+        setIsLoading(false); // Só desativa loading em caso de erro
         throw error;
-      } finally {
-        setIsLoading(false);
       }
     },
     [router, searchParams, clearAuthData]
@@ -168,6 +168,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = useCallback(async () => {
     clearAuthData();
+    setIsLoading(false); // Garante que loading está desativado ao fazer logout
     router.push("/login");
   }, [router, clearAuthData]);
 
