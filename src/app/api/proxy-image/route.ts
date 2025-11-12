@@ -54,7 +54,9 @@ export async function GET(request: NextRequest) {
     return new Response(imageBuffer, {
       headers: {
         'Content-Type': contentType,
-        'Cache-Control': 'public, max-age=3600', // Cache por 1 hora
+        'Cache-Control': 'public, max-age=604800, s-maxage=604800, stale-while-revalidate=2592000, immutable', // Cache por 7 dias, revalidação em 30 dias
+        'X-Content-Type-Options': 'nosniff',
+        'Vary': 'Accept-Encoding',
       },
     });
 

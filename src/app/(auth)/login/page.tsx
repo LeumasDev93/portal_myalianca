@@ -298,78 +298,94 @@ export default function LoginPage() {
 
   // console.log(useAuth());
   return (
-    <div className="relative h-screen w-full overflow-hidden">
-      {/* Background: Gradiente sempre presente como base */}
-      <div className="absolute inset-0 bg-gradient-to-br from-blue-900 to-red-800"></div>
-      
-      {/* Background Image da API por cima do gradiente (se carregar) */}
-      {!imageError && (
-        <>
-          <img
-            src={ImageCapa}
-            alt="Background"
-            className="absolute inset-0 w-full h-full object-cover object-center"
-            loading="eager"
-          />
-          {/* Overlay Escuro sobre a imagem */}
-          <div className="absolute inset-0 bg-black/40"></div>
-        </>
-      )}
-      
-      {/* Logo e Texto - Mobile no centro da página */}
-      <div className="lg:hidden absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10 text-center px-4">
-        <Image src={Logo} alt="Logo" width={200} height={80} className="w-44 md:w-56 h-auto mx-auto mb-4 md:mb-6" />
-        <h1 className="text-3xl md:text-4xl font-bold text-white mb-2 md:mb-3">MYALIANÇA</h1>
-        <p className="text-base md:text-lg text-white/90">Descomplicar é ter <span className="font-bold">MyAliança</span></p>
-      </div>
-
-      {/* Logo - Apenas no Desktop, no canto superior esquerdo */}
-      <div className="hidden lg:block absolute top-6 left-6 z-30">
-        <Image src={Logo} alt="Logo" width={100} height={100} className="w-44 h-16" />
-      </div>
-
-      {/* Banner Semi-Transparente no Centro - Largura Full */}
-      <div className="hidden lg:block absolute top-1/2 left-0 right-0 -translate-y-1/2 z-10">
-        <div className="bg-white/10 backdrop-blur-md py-8 lg:py-10 xl:py-12 2xl:py-14 px-6 2xl:px-12">
-          <div className="text-white space-y-6 lg:space-y-8 lg:max-w-[calc(100%-450px)] xl:max-w-[calc(100%-420px)] 2xl:max-w-[calc(100%-550px)]">
-            <div className="text-left lg:ml-48 xl:ml-52 2xl:ml-64">
-              <h1 className="text-3xl lg:text-4xl xl:text-5xl 2xl:text-6xl font-bold mb-2 lg:mb-3 xl:mb-4">MYALIANÇA</h1>
-              <p className="text-base lg:text-lg xl:text-xl 2xl:text-2xl">Descomplicar é ter <span className="font-bold">MyAliança</span></p>
+    <div className="h-screen w-full flex flex-col lg:flex-row overflow-hidden">
+      {/* Lado Esquerdo - Imagem e Banner (65%) - Mobile ocupa topo */}
+      <div className="relative lg:w-[65%] h-1/3 lg:h-full flex flex-col">
+        {/* Background: Gradiente sempre presente como base */}
+        <div className="absolute inset-0 bg-gradient-to-br from-blue-900 to-red-800"></div>
+        
+        {/* Background Image da API por cima do gradiente (se carregar) */}
+        {!imageError && (
+          <>
+            <div className="absolute inset-0 w-full h-full">
+              <Image
+                src={ImageCapa}
+                alt="Background"
+                fill
+                priority
+                quality={100}
+                className="object-cover object-center"
+                style={{
+                  imageRendering: 'auto',
+                  WebkitBackfaceVisibility: 'hidden',
+                  backfaceVisibility: 'hidden',
+                  transform: 'translateZ(0)',
+                  willChange: 'transform',
+                } as React.CSSProperties}
+                sizes="(max-width: 1024px) 100vw, 65vw"
+                unoptimized
+              />
             </div>
-            
-            {/* Serviços no rodapé do banner - quebra em 2 linhas em telas < 2xl */}
-            <div className="flex flex-wrap 2xl:flex-nowrap items-center justify-start gap-x-3 lg:gap-x-4 xl:gap-x-5 2xl:gap-x-6 gap-y-2 lg:gap-y-3 pt-4 border-t border-white/20">
-              {[
-                "Gerenciamento de apólices",
-                "Acompanhamento de sinistros",
-                "Pagamentos online",
-                "Atendimento personalizado",
-              ].map((benefit) => (
-                <div key={benefit} className="flex items-center gap-1.5 lg:gap-2 flex-shrink-0">
-                  <CheckCircle2 className="h-3 lg:h-3.5 xl:h-4 w-3 lg:w-3.5 xl:w-4 text-white flex-shrink-0" />
-                  <span className="text-[10px] lg:text-xs xl:text-sm whitespace-nowrap">{benefit}</span>
-                </div>
-              ))}
+            {/* Overlay Escuro sobre a imagem */}
+            <div className="absolute inset-0 bg-black/40"></div>
+          </>
+        )}
+        
+        {/* Logo no topo */}
+        <div className="relative z-10 p-6 lg:p-8 xl:p-10">
+          <Image src={Logo} alt="Logo" width={200} height={80} className="w-32 md:w-40 lg:w-44 xl:w-48 h-auto" />
+        </div>
+        
+        {/* Banner Semi-Transparente */}
+        <div className="hidden lg:block absolute top-1/2 left-0 right-0 -translate-y-1/2 z-10">
+          <div className="bg-white/10 backdrop-blur-md py-8 lg:py-10 xl:py-12 px-8 lg:px-12 xl:px-16">
+            <div className="text-white space-y-4 lg:space-y-6 xl:space-y-8">
+              <div className="text-left">
+                <h1 className="text-3xl lg:text-4xl xl:text-5xl 2xl:text-6xl font-bold mb-2 lg:mb-3 xl:mb-4">MYALIANÇA</h1>
+                <p className="text-base lg:text-lg xl:text-xl 2xl:text-2xl">Descomplicar é ter <span className="font-bold">MyAliança</span></p>
+              </div>
+              
+              {/* Serviços */}
+              <div className="grid grid-cols-1 xl:grid-cols-2 gap-3 lg:gap-4 pt-4 lg:pt-6 border-t border-white/20">
+                {[
+                  "Gerenciamento de apólices",
+                  "Acompanhamento de sinistros",
+                  "Pagamentos online",
+                  "Atendimento personalizado",
+                ].map((benefit) => (
+                  <div key={benefit} className="flex items-center gap-2">
+                    <CheckCircle2 className="h-4 lg:h-5 w-4 lg:w-5 text-white flex-shrink-0" />
+                    <span className="text-sm lg:text-base xl:text-lg">{benefit}</span>
+                  </div>
+                ))}
+              </div>
             </div>
+          </div>
+        </div>
+        
+        {/* Conteúdo Mobile centralizado */}
+        <div className="lg:hidden relative z-10 flex-1 flex items-center justify-center px-6">
+          <div className="text-white space-y-3 text-center">
+            <h1 className="text-2xl md:text-3xl font-bold mb-2">MYALIANÇA</h1>
+            <p className="text-sm md:text-base">Descomplicar é ter <span className="font-bold">MyAliança</span></p>
           </div>
         </div>
       </div>
 
-      {/* Formulário de Login - Mobile fixo no bottom, Desktop/Tablet à direita */}
-      <div className="fixed bottom-0 left-0 right-0 md:absolute md:left-1/2 md:top-1/2 lg:left-auto md:right-20 2xl:right-48 md:-translate-x-1/2 lg:translate-x-0 md:-translate-y-1/2 z-20 w-full md:max-w-sm lg:max-w-md xl:max-w-sm md:px-6 lg:px-0">
-        <div className="bg-gray-100 rounded-t-3xl md:rounded-2xl shadow-2xl p-6 md:p-6 lg:p-7 xl:p-5 2xl:p-6 max-h-[75vh] md:max-h-[85vh] lg:max-h-[90vh] 2xl:max-h-[100vh] overflow-y-auto">
+      {/* Lado Direito - Formulário (35%) - Mobile ocupa bottom */}
+      <div className="lg:w-[35%] h-2/3 lg:h-full bg-white lg:bg-gray-100 flex items-center justify-center p-0 lg:p-6 xl:p-8 overflow-y-auto">
+        <div className="w-full max-w-md bg-white rounded-t-3xl lg:rounded-2xl shadow-2xl p-6 lg:p-8">
           {/* Barra de indicação - Apenas Mobile */}
-          <div className="md:hidden w-12 h-1.5 bg-gray-400 rounded-full mx-auto mb-4"></div>
+          <div className="lg:hidden w-12 h-1.5 bg-gray-400 rounded-full mx-auto mb-4"></div>
           
-          <div className="w-full transition-all duration-300">
           {/* Logo acima do formulário */}
-          <div className="hidden lg:flex justify-center mb-3 md:mb-4 lg:mb-5 xl:mb-4 2xl:mb-6 w-20 h-16 mx-auto">
-            <Image src={LogoForm} alt="Aliança Seguros" width={100} height={100} className="w-full h-full" />
+          <div className="flex justify-center mb-4 lg:mb-6">
+            <Image src={LogoForm} alt="Aliança Seguros" width={80} height={80} className="w-16 lg:w-20 h-16 lg:h-16" />
           </div>
 
           {/* Cabeçalho com animação sutil */}
-          <div className="mb-3 md:mb-5 lg:mb-6 xl:mb-5 2xl:mb-7 w-full max-w-sm mx-auto text-center transform transition-transform duration-300 hover:scale-[1.01]">
-            <h1 className="text-sm md:text-base lg:text-lg xl:text-xl font-bold text-gray-900 mb-2 bg-gradient-to-r from-blue-600 to-blue-800 bg-clip-text w-full max-w-xs mx-auto leading-tight">
+          <div className="mb-3 md:mb-5 lg:mb-6 xl:mb-8 2xl:mb-10 w-full  text-center transform transition-transform duration-300 hover:scale-[1.01]">
+            <h1 className="text-sm md:text-sm 2xl:text-base font-bold text-gray-900 mb-2 bg-gradient-to-r from-blue-600 to-blue-800 bg-clip-text w-full leading-tight">
               {isLoginForm
                 ? "FAÇA LOGIN NA SUA ÁREA DE CLIENTE"
                 : step === "email"
@@ -632,7 +648,6 @@ export default function LoginPage() {
               </button>
             </div>
           )}
-          </div>
         </div>
       </div>
 
