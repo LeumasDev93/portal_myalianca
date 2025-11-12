@@ -63,7 +63,7 @@ export function Menu({ onMenuClick, menuItems, activePath }: MenuProps) {
           ${isCollapsed ? "w-12 lg:w-14 xl:w-16" : "w-14 lg:w-58 2xl:w-64"}`}
       >
         {/* Cabeçalho */}
-        <div className="flex items-center px-1 lg:px-2 xl:px-4 py-2 lg:py-4 xl:py-[15px] bg-white shadow-sm border-b border-gray-100">
+        <div className="flex items-center px-1 lg:px-2 xl:px-4 py-2 lg:py-4 xl:py-3 2xl:py-[15px] bg-white shadow-sm border-b border-gray-100">
           <div
             className="flex items-center cursor-pointer"
             onClick={handleLogoClick}

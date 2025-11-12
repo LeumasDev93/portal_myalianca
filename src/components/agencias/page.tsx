@@ -78,14 +78,14 @@ export default function AgenciasPage() {
       ) : agencias.length === 0 ? (
         <LoadingContainer message="CARREGANDO AGÊNCIAS..." />
       ) : (
-        <div className="container p-2 sm:p-3 md:p-4 lg:p-5 xl:p-6">
+        <div className="w-full p-2 sm:p-3 md:p-4 lg:p-5 xl:p-6">
           {viewMode === "list" ? (
             /* Visualização em Lista */
-            <div className="space-y-2 sm:space-y-3">
+            <div className="space-y-2 sm:space-y-3 w-full max-w-full">
               {agencias.map((agencia) => {
                 const isExpanded = expandedAgenciaId === agencia.id;
                 return (
-                  <div key={agencia.id} className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+                  <div key={agencia.id} className="bg-white rounded-lg shadow-sm border border-gray-200 w-full overflow-hidden flex flex-col">
                     <div
                       className="bg-gray-100 hover:bg-gray-200 p-3 sm:p-4 cursor-pointer transition-colors flex items-center justify-between group"
                       onClick={() => setExpandedAgenciaId(isExpanded ? null : agencia.id)}
@@ -103,7 +103,7 @@ export default function AgenciasPage() {
                     
                     {/* Conteúdo expandido com mapa */}
                     {isExpanded && (
-                      <div className="p-3 sm:p-4 md:p-5 space-y-3 sm:space-y-4">
+                      <div className="p-3 sm:p-4 md:p-5 w-full space-y-3 sm:space-y-4">
                         {/* Informações da agência */}
                         <div className="flex flex-col lg:flex-row lg:items-start gap-3 sm:gap-4 md:gap-5 lg:gap-6 xl:gap-8">
                           {agencia.telefone && (
