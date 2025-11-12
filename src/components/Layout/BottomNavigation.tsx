@@ -28,19 +28,13 @@ export const BottomNavigation = ({
   const { profile } = useUserProfile();
   const isCompany = profile?.user?.tipo_cliente === "Company";
 
-  const navItems: BottomNavItem[] = [
+  const baseItems: BottomNavItem[] = [
     {
       title: isCompany ? "Empresarial" : "Início",
       key: isCompany ? "empresarial" : "Historico",
       icon: isCompany ? IoBusinessSharp : IoGrid,
       onClick: () =>
         onNavigate(isCompany ? "empresarial" : "Historico"),
-    },
-    {
-      title: "Dashboard",
-      key: "dashboard",
-      icon: MdDashboard,
-      onClick: () => onNavigate("dashboard"),
     },
     {
       title: "Apólice",
@@ -61,6 +55,20 @@ export const BottomNavigation = ({
       onClick: () => onNavigate("Simulation"),
     },
   ];
+
+  // Adiciona Dashboard apenas para Company
+  const navItems: BottomNavItem[] = isCompany
+    ? [
+        baseItems[0],
+        {
+          title: "Dashboard",
+          key: "dashboard",
+          icon: MdDashboard,
+          onClick: () => onNavigate("dashboard"),
+        },
+        ...baseItems.slice(1),
+      ]
+    : baseItems;
 
   return (
     <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50">

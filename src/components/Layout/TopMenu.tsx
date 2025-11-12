@@ -166,8 +166,8 @@ export function TopMenu({
   return (
     <div
       className={`${isMobile ? "hidden" : ""} fixed top-0 ${
-        showSidebar ? "left-16 xl:left-64" : "left-0"
-      } right-0 bg-white shadow-sm z-50 px-6 py-2 xl:py-3 flex justify-between items-center border-b border-gray-100`}
+        showSidebar ? "left-14 xl:left-58 2xl:left-64" : "left-0"
+      } right-0 bg-white shadow-sm z-50 px-6 py-2 2xl:py-3 flex justify-between items-center border-b border-gray-100`}
     >
       <div className="flex items-center gap-4">
         {!showSidebar && (

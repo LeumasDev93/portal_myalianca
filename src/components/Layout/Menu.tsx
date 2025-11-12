@@ -48,22 +48,22 @@ export function Menu({ onMenuClick, menuItems, activePath }: MenuProps) {
           alt="Icon"
           width={20}
           height={20}
-          className="w-5 h-5"
+          className="w-3.5 lg:w-4 xl:w-5 h-3.5 lg:h-4 xl:h-5"
         />
       );
     }
     const Icon = icon;
-    return <Icon className="w-5 h-5" />;
+    return <Icon className="w-3.5 lg:w-4 xl:w-5 h-3.5 lg:h-4 xl:h-5" />;
   };
 
   return (
     <div className="relative">
       <aside
         className={`hidden md:flex flex-col h-screen bg-white shadow-xl fixed top-0 left-0 z-40 transition-all duration-300
-          ${isCollapsed ? "w-16" : "w-64"}`}
+          ${isCollapsed ? "w-12 lg:w-14 xl:w-16" : "w-14 lg:w-58 2xl:w-64"}`}
       >
         {/* Cabeçalho */}
-        <div className="flex items-center px-4 py-[16px] xl:py-[15px] bg-white shadow-sm border-b border-gray-100">
+        <div className="flex items-center px-1 lg:px-2 xl:px-4 py-2 lg:py-4 xl:py-[15px] bg-white shadow-sm border-b border-gray-100">
           <div
             className="flex items-center cursor-pointer"
             onClick={handleLogoClick}
@@ -75,13 +75,13 @@ export function Menu({ onMenuClick, menuItems, activePath }: MenuProps) {
               width={60}
               height={60}
               className={`transition-all duration-300 ${
-                isCollapsed ? "w-10" : "w-12"
+                isCollapsed ? "w-7 lg:w-8 xl:w-10" : "w-8 lg:w-9 xl:w-12"
               }`}
             />
             {!isCollapsed && (
-              <div className="flex ml-2">
-                <h1 className="text-lg font-extrabold text-[#B7021C]">My</h1>
-                <h1 className="text-lg font-extrabold text-[#002256]">
+              <div className="flex ml-1 lg:ml-1.5 xl:ml-2">
+                <h1 className="text-xs lg:text-sm xl:text-lg font-extrabold text-[#B7021C]">My</h1>
+                <h1 className="text-xs lg:text-sm xl:text-lg font-extrabold text-[#002256]">
                   Aliança
                 </h1>
               </div>
@@ -91,10 +91,10 @@ export function Menu({ onMenuClick, menuItems, activePath }: MenuProps) {
 
         {/* Itens do menu principal (scrolláveis) */}
         <div
-          className="flex-1 overflow-y-auto py-2 px-1 mt-4 xl:mt-10"
+          className="flex-1 overflow-y-auto py-1 lg:py-1.5 xl:py-2 px-0.5 lg:px-1 mt-2 lg:mt-3 xl:mt-10"
           style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
         >
-          <ul className="ml-2 space-y-4">
+          <ul className="ml-0.5 lg:ml-1 xl:ml-2 space-y-1.5 lg:space-y-2 xl:space-y-4">
             {mainItems.map((menu, index) => {
               const isActive = menu.isActive || activePath === menu.path;
               return (
@@ -103,7 +103,7 @@ export function Menu({ onMenuClick, menuItems, activePath }: MenuProps) {
                     onMouseEnter={() => setHoveredItem(index)}
                     onMouseLeave={() => setHoveredItem(null)}
                     onClick={menu.onClick || (() => onMenuClick(menu.path))}
-                    className={`flex items-center w-full p-2 xl:p-3 rounded-md transition-colors
+                    className={`flex items-center w-full p-1 lg:p-1.5 xl:p-3 rounded-md transition-colors text-[9px] lg:text-[10px] xl:text-sm
                       ${isCollapsed ? "justify-center" : "justify-start"}
                       ${
                         isActive
@@ -113,7 +113,7 @@ export function Menu({ onMenuClick, menuItems, activePath }: MenuProps) {
                   >
                     <span>{renderIcon(menu.icon)}</span>
                     {!isCollapsed && (
-                      <span className="ml-3 font-medium">{menu.title}</span>
+                      <span className="ml-1.5 lg:ml-2 xl:ml-3 font-medium text-[9px] lg:text-[10px] xl:text-sm">{menu.title}</span>
                     )}
                   </button>
                 </li>
@@ -124,16 +124,16 @@ export function Menu({ onMenuClick, menuItems, activePath }: MenuProps) {
 
         {/* Item Sair (fixo no final) */}
         {logoutItem && (
-          <div className="mt-auto p-4 border-t">
+          <div className="mt-auto p-1.5 lg:p-2 xl:p-4 border-t">
             <button
               onClick={logoutItem.onClick}
-              className={`flex items-center w-full p-2 xl:p-3 rounded-md transition-colors
+              className={`flex items-center w-full p-1 lg:p-1.5 xl:p-3 rounded-md transition-colors text-[9px] lg:text-[10px] xl:text-sm
                 ${isCollapsed ? "justify-center" : "justify-start"}
                 text-[#002256] hover:bg-[#B7021C] hover:text-white`}
             >
               <span>{renderIcon(logoutItem.icon)}</span>
               {!isCollapsed && (
-                <span className="ml-3 font-medium">{logoutItem.title}</span>
+                <span className="ml-1.5 lg:ml-2 xl:ml-3 font-medium text-[9px] lg:text-[10px] xl:text-sm">{logoutItem.title}</span>
               )}
             </button>
           </div>
@@ -146,16 +146,16 @@ export function Menu({ onMenuClick, menuItems, activePath }: MenuProps) {
           (menu, index) => (
             <div
               key={index}
-              className={`fixed left-16 top-0 h-full pointer-events-none z-50 transition-opacity duration-200 ${
+              className={`fixed left-12 lg:left-14 xl:left-16 top-0 h-full pointer-events-none z-50 transition-opacity duration-200 ${
                 hoveredItem === index ? "opacity-100" : "opacity-0"
               }`}
               style={{
-                top: `${80 + index * 56}px`,
+                top: `${50 + index * 38}px`,
               }}
             >
-              <div className="ml-2 px-3 py-1 bg-gray-900 text-white text-sm rounded shadow-lg whitespace-nowrap">
+              <div className="ml-1 lg:ml-1.5 xl:ml-2 px-2 lg:px-2.5 xl:px-3 py-0.5 lg:py-0.5 xl:py-1 bg-gray-900 text-white text-[10px] lg:text-xs xl:text-sm rounded shadow-lg whitespace-nowrap">
                 {menu.title}
-                <div className="absolute right-full top-1/2 -translate-y-1/2 w-0 h-0 border-t-4 border-t-transparent border-r-4 border-r-gray-900 border-b-4 border-b-transparent"></div>
+                <div className="absolute right-full top-1/2 -translate-y-1/2 w-0 h-0 border-t-[3px] lg:border-t-[3px] xl:border-t-4 border-t-transparent border-r-[3px] lg:border-r-[3px] xl:border-r-4 border-r-gray-900 border-b-[3px] lg:border-b-[3px] xl:border-b-4 border-b-transparent"></div>
               </div>
             </div>
           )

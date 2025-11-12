@@ -220,15 +220,6 @@ const Page = () => {
         hoverIcon: <IoGrid />,
         onClick: () => handleMenuClick("Historico"),
       });
-      
-      // Dashboard para usuários não-Company
-      baseMenus.splice(1, 0, {
-        title: "Dashboard",
-        path: "dashboard",
-        icon: IoStatsChart,
-        hoverIcon: <IoStatsChart />,
-        onClick: () => handleMenuClick("dashboard"),
-      });
     }
 
     return baseMenus;
@@ -454,7 +445,7 @@ const Page = () => {
         )}
 
         {!isMobile && profile?.user?.tipo_cliente !== "Company" && (
-          <div className="fixed left-0 top-16 h-[calc(100vh-4rem)] w-16 xl:w-64">
+          <div className="fixed left-0 top-16 h-[calc(100vh-4rem)] w-14 lg:w-16 xl:w-58 2xl:w-64">
             <Menu
               onMenuClick={handleMenuClick}
               menuItems={MainMenus}
@@ -469,12 +460,12 @@ const Page = () => {
                 ? "-mt-4 pb-20" // Simulation no mobile com padding bottom
                 : profile?.user?.tipo_cliente === "Company"
                 ? "-mt-4" // Simulation no desktop sem sidebar (cliente empresarial)
-                : "ml-12 md:ml-12 xl:ml-60 -mt-4 xl:-mt-2 " // Simulation no desktop com sidebar
+                : "ml-14 lg:ml-16 xl:ml-60 -mt-4 xl:-mt-2 " // Simulation no desktop com sidebar
               : isMobile
               ? "pb-20" // outras páginas no mobile com padding bottom
               : profile?.user?.tipo_cliente === "Company"
               ? "" // outras páginas no desktop sem sidebar (cliente empresarial)
-              : "ml-16 xl:ml-64" // outras páginas no desktop com sidebar
+              : "ml-14 lg:ml-16 xl:ml-58 2xl:ml-64" // outras páginas no desktop com sidebar
           }`}
         >
           {/* Botão de Voltar para Empresarial - só para Company */}

@@ -157,24 +157,24 @@ export function DashboardCharts() {
             </div>
           </div>
         </CardHeader>
-        <CardContent className="px-2 xl:px-6">
+        <CardContent className="px-1 sm:px-2 md:px-4 xl:px-6">
           <Tabs defaultValue="apolices" className="space-y-2 xl:space-y-4">
-            <TabsList className="grid w-full grid-cols-3 bg-white xl:gap-2">
+            <TabsList className="grid w-full grid-cols-3 bg-white gap-1 sm:gap-2">
               <TabsTrigger
                 value="apolices"
-                className="text-[#002855] text-xs xl:text-sm font-bold data-[state=active]:bg-[#002855] data-[state=active]:text-white data-[state=active]:py-2 xl:data-[state=active]:py-2 rounded-lg"
+                className="text-[#002855] text-[10px] sm:text-xs xl:text-sm font-bold data-[state=active]:bg-[#002855] data-[state=active]:text-white px-2 py-2 data-[state=active]:px-3 data-[state=active]:py-2.5 sm:data-[state=active]:px-4 sm:data-[state=active]:py-3 xl:data-[state=active]:px-5 xl:data-[state=active]:py-3 rounded-lg transition-all whitespace-nowrap overflow-hidden text-ellipsis"
               >
                 Apólices
               </TabsTrigger>
               <TabsTrigger
                 value="sinistros"
-                className="text-[#002855] text-xs xl:text-sm font-bold data-[state=active]:bg-[#002855] data-[state=active]:text-white data-[state=active]:py-2 xl:data-[state=active]:py-2 rounded-lg"
+                className="text-[#002855] text-[10px] sm:text-xs xl:text-sm font-bold data-[state=active]:bg-[#002855] data-[state=active]:text-white px-2 py-2 data-[state=active]:px-3 data-[state=active]:py-2.5 sm:data-[state=active]:px-4 sm:data-[state=active]:py-3 xl:data-[state=active]:px-5 xl:data-[state=active]:py-3 rounded-lg transition-all whitespace-nowrap overflow-hidden text-ellipsis"
               >
                 Sinistros
               </TabsTrigger>
               <TabsTrigger
                 value="pagamentos"
-                className="text-[#002855] text-xs xl:text-sm font-bold data-[state=active]:bg-[#002855] data-[state=active]:text-white data-[state=active]:py-2 xl:data-[state=active]:py-2 rounded-lg"
+                className="text-[#002855] text-[10px] sm:text-xs xl:text-sm font-bold data-[state=active]:bg-[#002855] data-[state=active]:text-white px-2 py-2 data-[state=active]:px-3 data-[state=active]:py-2.5 sm:data-[state=active]:px-4 sm:data-[state=active]:py-3 xl:data-[state=active]:px-5 xl:data-[state=active]:py-3 rounded-lg transition-all whitespace-nowrap overflow-hidden text-ellipsis"
               >
                 Pagamentos
               </TabsTrigger>
@@ -238,8 +238,9 @@ export function DashboardCharts() {
                       <span>Nenhum dado encontrado.</span>
                     </div>
                   ) : (
-                    <div className="flex flex-col items-center justify-center h-[200px] sm:h-[250px] xl:h-[300px] xl:gap-4">
-                      <div className="w-full h-[180px] sm:h-[200px] xl:h-full">
+                    <div className="flex flex-col items-center justify-center gap-2 sm:gap-3 md:gap-4 py-2 sm:py-3 md:py-4">
+                      {/* Gráfico */}
+                      <div className="w-full h-[180px] sm:h-[220px] md:h-[250px] xl:h-[300px]">
                         <ResponsiveContainer width="100%" height="100%">
                           <PieChart>
                             <Pie
@@ -258,14 +259,18 @@ export function DashboardCharts() {
                           </PieChart>
                         </ResponsiveContainer>
                       </div>
-                      <div className="flex gap-1 sm:gap-3 text-xs xl:text-sm">
+                      
+                      {/* Legendas abaixo com quebra de linha automática */}
+                      <div className="flex flex-wrap gap-1.5 sm:gap-2 md:gap-3 xl:gap-4 justify-center items-center text-[10px] sm:text-xs xl:text-sm w-full px-2">
                         {data.map((entry, i) => (
-                          <div key={i} className="flex items-center gap-2">
+                          <div key={i} className="flex items-center gap-1 sm:gap-1.5 md:gap-2">
                             <span
-                              className="w-2 h-4 sm:h-6 rounded-full"
+                              className="w-2.5 h-2.5 sm:w-3 sm:h-3 xl:w-4 xl:h-4 rounded-full flex-shrink-0"
                               style={{ backgroundColor: entry.color }}
                             />
-                            {entry.label || "Não Definido"}
+                            <span className="font-medium text-gray-700 whitespace-nowrap">
+                              {entry.label || "Não Definido"}
+                            </span>
                           </div>
                         ))}
                       </div>

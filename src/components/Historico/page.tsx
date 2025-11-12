@@ -276,7 +276,7 @@ export default function Historico({
             />
           </div>
           <div
-            className="w-full lg:w-[35%] xl:w-[30%]"
+            className="w-full lg:w-[35%] xl:w-[40%] 2xl:w-[30%]"
             style={{ minHeight: "400px", maxHeight: "650px" }}
           >
             <DashboardCharts />

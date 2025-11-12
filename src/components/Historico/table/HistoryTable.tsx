@@ -188,7 +188,6 @@ const HistoryTable = ({
       
       setConfirmDialog({ open: false, type: null, reciboNumber: '' });
     } catch (error: any) {
-      console.error("Erro ao visualizar PDF:", error);
       const errorMessage = error?.message || "Erro desconhecido ao visualizar recibo";
       setConfirmDialog({ open: false, type: null, reciboNumber: '' });
       showToast({
@@ -348,14 +347,8 @@ const HistoryTable = ({
         variant: "default",
       });
     } catch (error: any) {
-      console.error("❌ [HISTORICO] Erro capturado:", error);
-      console.error("❌ [HISTORICO] error.message:", error?.message);
-      console.error("❌ [HISTORICO] error.response:", error?.response);
-      console.error("❌ [HISTORICO] typeof error:", typeof error);
-      console.error("❌ [HISTORICO] Object.keys(error):", Object.keys(error || {}));
       
       const errorMessage = error?.message || error?.response?.data?.message || "Erro ao processar pagamento. Tente novamente.";
-      console.error("❌ [HISTORICO] Mensagem final para toast:", errorMessage);
       
       setConfirmDialog({ open: false, type: null, reciboNumber: '' });
       showToast({
@@ -482,7 +475,7 @@ const HistoryTable = ({
                 {config.headers.map((header) => (
                   <th
                     key={header.key}
-                    className={`px-2 md:px-3 py-2 md:py-3 text-center text-xs md:text-sm font-semibold whitespace-nowrap ${
+                    className={`px-2 md:px-3 py-2 md:py-3 text-center text-[10px] md:text-xs 2xl:text-sm font-semibold whitespace-nowrap ${
                       header.key === "options" ? "w-8 md:w-10" : ""
                     } ${
                       header.label ? "text-black uppercase tracking-wider" : ""
@@ -633,11 +626,11 @@ const HistoryTable = ({
 
         {totalItems > itemsPerPage && (
           <div className="flex flex-col md:flex-row justify-between items-center gap-3 mt-4 px-2 md:px-4 py-2">
-            <div className="text-xs md:text-sm text-gray-600 text-center md:text-left">
+            <div className="text-[10px] md:text-xs text-gray-600 text-center md:text-left">
               Mostrando {indexOfFirstItem + 1} a{" "}
               {Math.min(indexOfLastItem, totalItems)} de {totalItems} itens
             </div>
-            <div className="flex items-center space-x-1 md:space-x-2">
+            <div className="flex items-center space-x-1 md:space-x-2 text-[10px] md:text-sm">
               <button
                 onClick={() => handlePageChange(currentPage - 1)}
                 disabled={currentPage === 1}
@@ -647,24 +640,78 @@ const HistoryTable = ({
                     : "bg-[#002256] text-white hover:bg-[#002256]/90"
                 }`}
               >
-                <FaChevronLeft className="h-3 w-3 md:h-4 md:w-4" />
+                <FaChevronLeft className="h-2 w-2 2xl:h-3 2xl:w-3" />
               </button>
 
-              {Array.from({ length: totalPages }, (_, i) => i + 1).map(
-                (page) => (
-                  <button
-                    key={page}
-                    onClick={() => handlePageChange(page)}
-                    className={`w-6 h-6 md:w-8 md:h-8 rounded-md text-xs md:text-sm ${
-                      page === currentPage
-                        ? "bg-[#002256] text-white"
-                        : "bg-gray-200 text-gray-700 hover:bg-gray-300"
-                    }`}
-                  >
-                    {page}
-                  </button>
-                )
-              )}
+              {(() => {
+                const pages: (number | string)[] = [];
+                
+                if (totalPages <= 4) {
+                  // Se tiver até 4 páginas, mostra todas
+                  for (let i = 1; i <= totalPages; i++) {
+                    pages.push(i);
+                  }
+                } else {
+                  let startPage = 1;
+                  
+                  // Determina onde começar o grupo de 4 páginas
+                  if (currentPage <= 2) {
+                    // Início: mostra 1 2 3 4
+                    startPage = 1;
+                  } else if (currentPage >= totalPages - 1) {
+                    // Final: mostra as últimas 4
+                    startPage = totalPages - 3;
+                  } else {
+                    // Meio: centraliza na página atual
+                    startPage = currentPage - 1;
+                  }
+                  
+                  // Adiciona as 4 páginas
+                  for (let i = 0; i < 4; i++) {
+                    const pageNum = startPage + i;
+                    if (pageNum <= totalPages) {
+                      pages.push(pageNum);
+                    }
+                  }
+                  
+                  // Adiciona reticências no início se necessário
+                  if (startPage > 1) {
+                    pages.unshift('...');
+                  }
+                  
+                  // Adiciona reticências no final se necessário
+                  if (startPage + 3 < totalPages) {
+                    pages.push('...');
+                  }
+                }
+                
+                return pages.map((page, index) => {
+                  if (page === '...') {
+                    return (
+                      <span
+                        key={`ellipsis-${index}`}
+                        className="w-2 h-2 md:w-4 md:h-4 flex items-center justify-center text-gray-500 text-xs md:text-sm"
+                      >
+                        ...
+                      </span>
+                    );
+                  }
+                  
+                  return (
+                    <button
+                      key={page}
+                      onClick={() => handlePageChange(page as number)}
+                      className={`w-2 h-2 md:w-6 md:h-6 2xl:w-8 2xl:h-8 rounded-md text-xs md:text-sm font-medium transition-colors ${
+                        page === currentPage
+                          ? "bg-[#002256] text-white shadow-md"
+                          : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                      }`}
+                    >
+                      {page}
+                    </button>
+                  );
+                });
+              })()}
 
               <button
                 onClick={() => handlePageChange(currentPage + 1)}
@@ -675,7 +722,7 @@ const HistoryTable = ({
                     : "bg-[#002256] text-white hover:bg-[#002256]/90"
                 }`}
               >
-                <FaChevronRight className="h-3 w-3 md:h-4 md:w-4" />
+                <FaChevronRight className="h-2 w-2 2xl:h-3 2xl:w-3" />
               </button>
             </div>
           </div>
