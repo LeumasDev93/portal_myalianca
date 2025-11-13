@@ -300,7 +300,7 @@ export default function LoginPage() {
   return (
     <div className="h-screen w-full flex flex-col lg:flex-row overflow-hidden">
       {/* Lado Esquerdo - Imagem e Banner (65%) - Mobile ocupa topo */}
-      <div className="relative lg:w-[65%] h-1/3 lg:h-full flex flex-col">
+      <div className="relative lg:w-[66%] h-1/3 lg:h-full flex flex-col">
         {/* Background: Gradiente sempre presente como base */}
         <div className="absolute inset-0 bg-gradient-to-br from-blue-900 to-red-800"></div>
         
@@ -341,8 +341,8 @@ export default function LoginPage() {
           <div className="bg-white/10 backdrop-blur-md py-8 lg:py-10 xl:py-12 px-8 lg:px-12 xl:px-16">
             <div className="text-white space-y-4 lg:space-y-6 xl:space-y-8">
               <div className="text-left">
-                <h1 className="text-3xl lg:text-4xl xl:text-5xl 2xl:text-6xl font-bold mb-2 lg:mb-3 xl:mb-4">MYALIANÇA</h1>
-                <p className="text-base lg:text-lg xl:text-xl 2xl:text-2xl">Descomplicar é ter <span className="font-bold">MyAliança</span></p>
+                <h1 className="text-3xl lg:text-4xl xl:text-4xl 2xl:text-6xl font-bold mb-2 lg:mb-3 xl:mb-4">MYALIANÇA</h1>
+                <p className="text-base lg:text-lg 2xl:text-2xl">Descomplicar é ter <span className="font-bold">MyAliança</span></p>
               </div>
               
               {/* Serviços */}
@@ -355,7 +355,7 @@ export default function LoginPage() {
                 ].map((benefit) => (
                   <div key={benefit} className="flex items-center gap-2">
                     <CheckCircle2 className="h-4 lg:h-5 w-4 lg:w-5 text-white flex-shrink-0" />
-                    <span className="text-sm lg:text-base xl:text-lg">{benefit}</span>
+                    <span className="text-sm lg:text-base 2xl:text-lg">{benefit}</span>
                   </div>
                 ))}
               </div>
@@ -366,14 +366,14 @@ export default function LoginPage() {
         {/* Conteúdo Mobile centralizado */}
         <div className="lg:hidden relative z-10 flex-1 flex items-center justify-center px-6">
           <div className="text-white space-y-3 text-center">
-            <h1 className="text-2xl md:text-3xl font-bold mb-2">MYALIANÇA</h1>
-            <p className="text-sm md:text-base">Descomplicar é ter <span className="font-bold">MyAliança</span></p>
+            <h1 className="text-2xl 2xl:text-3xl font-bold mb-2">MYALIANÇA</h1>
+            <p className="text-sm 2xl:text-base">Descomplicar é ter <span className="font-bold">MyAliança</span></p>
           </div>
         </div>
       </div>
 
       {/* Lado Direito - Formulário (35%) - Mobile ocupa bottom */}
-      <div className="lg:w-[35%] h-2/3 lg:h-full bg-white lg:bg-gray-100 flex items-center justify-center p-0 lg:p-6 xl:p-8 overflow-y-auto">
+      <div className="lg:w-[47%] h-2/3 lg:h-full bg-white lg:bg-gray-100 flex items-center justify-center p-0 lg:p-6 xl:p-8 overflow-y-auto">
         <div className="w-full max-w-md bg-white rounded-t-3xl lg:rounded-2xl shadow-2xl p-6 lg:p-8">
           {/* Barra de indicação - Apenas Mobile */}
           <div className="lg:hidden w-12 h-1.5 bg-gray-400 rounded-full mx-auto mb-4"></div>
