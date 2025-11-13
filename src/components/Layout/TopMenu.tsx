@@ -208,21 +208,19 @@ export function TopMenu({
             </div>
           ) : (
             /* Layout padrão para outras páginas */
-            <>
-              <h1 className="xl:text-xl font-bold text-[#002256] hidden md:block whitespace-nowrap">
-                {getPageTitle()}
-              </h1>
-              <p className="font-medium text-gray-900 text-sm hidden md:block">
-                {getSaudacao()},
+            <div className="hidden md:block">
+              <h1 className="text-xl font-semibold text-[#002256] mb-1">
+                {getSaudacao()},{" "}
                 {profile?.user?.nome &&
                   profile.user.nome
                     .split(" ")
                     .filter(Boolean)
                     .filter((_, i, arr) => i === 0 || i === arr.length - 1)
                     .join(" ")}
-                ! {formatarDataCompleta()}
-              </p>
-            </>
+                !
+              </h1>
+              <p className="text-sm text-gray-800">{formatarDataCompleta()}</p>
+            </div>
           )}
         </div>
       </div>
