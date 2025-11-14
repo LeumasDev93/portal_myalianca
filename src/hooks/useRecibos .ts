@@ -25,17 +25,9 @@ export const useRecibos = (initialFilters?: Record<string, string>) => {
         initialFilters?.estado || 'all'
     );
 
-    console.log('📊 useRecibos - Estado inicial:', {
-        searchTerm,
-        statusFilter,
-        reference: initialFilters?.reference,
-        estado: initialFilters?.estado
-    });
-
     // Atualizar searchTerm quando filterParams.reference mudar
     useEffect(() => {
         if (initialFilters?.reference) {
-            console.log('🔍 useRecibos - Filtrando por referência:', initialFilters.reference);
             setSearchTerm(initialFilters.reference);
         }
     }, [initialFilters?.reference]);
@@ -43,10 +35,7 @@ export const useRecibos = (initialFilters?: Record<string, string>) => {
     // Atualizar statusFilter quando filterParams.estado mudar
     useEffect(() => {
         const estadoParam = initialFilters?.estado;
-        console.log('🔍 useRecibos - useEffect estado disparado. Valor:', estadoParam);
         if (estadoParam && estadoParam !== statusFilter) {
-            console.log('🔍 useRecibos - Filtrando por estado:', estadoParam);
-            console.log('📊 useRecibos - Atualizando statusFilter de', statusFilter, 'para', estadoParam);
             setStatusFilter(estadoParam);
         }
     }, [initialFilters?.estado, statusFilter]);
@@ -54,8 +43,7 @@ export const useRecibos = (initialFilters?: Record<string, string>) => {
     const { token } = useSessionCheckToken();
     const { profile } = useUserProfile();
     const nifUser = profile?.user?.nif;
-
-    console.log('token de anywhere', token);
+    
     // Busca os recibos da API
     useEffect(() => {
         if (!token || !nifUser) {
