@@ -11,7 +11,6 @@ interface RecibosState {
 
 
 export const useRecibos = (initialFilters?: Record<string, string>) => {
-    console.log('🔍 useRecibos - initialFilters recebidos:', initialFilters);
     
     // Estado único para evitar múltiplos re-renders
     const [state, setState] = useState<RecibosState>({

@@ -35,7 +35,8 @@ import {
   getStatusReciverTexts,
   STATUS_OPTIONS_RECIBOS,
 } from "@/lib/utils";
-import { useEffect, useState, useRef } from "react";
+import { useState, useRef, useEffect, Suspense, useCallback } from "react";
+import { useSearchParams } from "next/navigation";
 import {
   FaDownload,
   FaUser,
@@ -55,9 +56,53 @@ import { toast } from "sonner";
 import { useToast } from "@/components/ui/use-toast";
 import { useReciboActivity } from "@/lib/activityExamples";
 import { useUserProfile } from "@/hooks/useUserProfile";
-import { processPayment } from "@/service/paymentService";
+import { processPaymentSISP } from "@/service/paymentService";
 
 type ViewMode = "grid" | "list";
+
+// Função para abrir HTML do SISP na mesma página
+function openSISPInSamePage(html: string) {
+  console.log("[SISP DISPLAY] Redirecionando para HTML do SISP na mesma página...");
+  console.log("[SISP DISPLAY] HTML length:", html.length);
+  
+  // Processa HTML (remove caracteres de escape se necessário)
+  let processedHtml = html;
+  const hasEscapeChars = html.includes('\\r\\n') || (html.includes('\\n') && !html.includes('\n'));
+  
+  if (hasEscapeChars) {
+    console.log("[SISP DISPLAY] Processando caracteres de escape...");
+    processedHtml = html
+      .replace(/\\r\\n/g, '\r\n')
+      .replace(/\\n/g, '\n')
+      .replace(/\\t/g, '\t')
+      .replace(/\\"/g, '"')
+      .replace(/\\'/g, "'");
+  }
+  
+  // Cria Blob URL
+  try {
+    const blob = new Blob([processedHtml], { type: "text/html;charset=utf-8" });
+    const blobUrl = URL.createObjectURL(blob);
+    
+    console.log("[SISP DISPLAY] ✅ Blob URL criado:", blobUrl);
+    
+    // Verifica se estamos em um iframe
+    const isInIframe = window.self !== window.top;
+    console.log("[SISP DISPLAY] Está em iframe:", isInIframe);
+    
+    // Redireciona a página atual para o blob URL
+    if (isInIframe && window.top) {
+      console.log("[SISP DISPLAY] Redirecionando window.top para blob URL");
+      window.top.location.href = blobUrl;
+    } else {
+      console.log("[SISP DISPLAY] Redirecionando window.location para blob URL");
+      window.location.href = blobUrl;
+    }
+  } catch (error) {
+    console.error("[SISP DISPLAY] ❌ Erro ao criar blob:", error);
+  }
+}
+
 
 type ReciboPageProps = {
   onSelectDetail?: (id: string) => void;
@@ -72,7 +117,7 @@ type DownloadStatus = {
   [number: string]: "idle" | "downloading" | "success" | "error";
 };
 
-export default function ReciboPage({ filterParams }: ReciboPageProps) {
+function ReciboPageContent({ filterParams }: ReciboPageProps) {
   const [loadingStates, setLoadingStates] = useState<ReciboLoadingState>({});
   const [loadingView, setLoadingView] = useState<ReciboLoadingState>({});
   const [loadingPayment, setLoadingPayment] = useState<ReciboLoadingState>({}); // Loading para pagamento
@@ -84,7 +129,23 @@ export default function ReciboPage({ filterParams }: ReciboPageProps) {
     reciboNumber: string;
     reciboData?: any;
   }>({ open: false, type: null, reciboNumber: '' });
+  const [paymentResult, setPaymentResult] = useState<{
+    show: boolean;
+    statusCode: string | null;
+    transactionId: string | null;
+    fingerPrint: string | null;
+    message: string | null;
+    channelTransactionId: string | null;
+  }>({
+    show: false,
+    statusCode: null,
+    transactionId: null,
+    fingerPrint: null,
+    message: null,
+    channelTransactionId: null,
+  });
   const paymentModalShownRef = useRef(false);
+  const searchParams = useSearchParams();
   
   const { token } = useSessionCheckToken();
   const { registerReciboDownloadActivity } = useReciboActivity();
@@ -103,16 +164,180 @@ export default function ReciboPage({ filterParams }: ReciboPageProps) {
     resetFilters,
   } = useRecibos(filterParams);
 
+  // Função para validar HMAC quando status_code = 1
+  const validateHMAC = useCallback(async (transactionId: string, hmacFingerprint: string) => {
+    try {
+      console.log("[VALIDATE HMAC] ========== CHAMANDO API DE VALIDAÇÃO ==========");
+      console.log("[VALIDATE HMAC] transactionId:", transactionId);
+      console.log("[VALIDATE HMAC] hmacFingerprint:", hmacFingerprint);
+      
+      const response = await fetch("/api/payment/validate-hmac", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          transactionId,
+          hmacFingerprint,
+        }),
+      });
 
-  // Detect payment callback results and show toast
+      const data = await response.json();
+      
+      if (response.ok && data.success) {
+        console.log("[VALIDATE HMAC] ✅ Validação bem-sucedida!", data);
+      } else {
+        console.error("[VALIDATE HMAC] ❌ Validação falhou:", data);
+      }
+      
+      return data;
+    } catch (error) {
+      console.error("[VALIDATE HMAC] ❌ Erro ao chamar API de validação:", error);
+      throw error;
+    }
+  }, []);
+
+
+  // Monitora mudanças no estado do modal
+  useEffect(() => {
+    console.log("[RECIBO PAGE] 🔄 Estado do paymentResult atualizado:", {
+      show: paymentResult.show,
+      statusCode: paymentResult.statusCode,
+      transactionId: paymentResult.transactionId,
+      fingerPrint: paymentResult.fingerPrint ? paymentResult.fingerPrint.substring(0, 20) + '...' : null,
+    });
+  }, [paymentResult]);
+
+  // CRÍTICO: Lê parâmetros do SISP diretamente da URL e abre o modal
+  useEffect(() => {
+    // Verifica se há parâmetros do SISP na URL
+    const statusCode = searchParams.get("status_code");
+    const transactionId = searchParams.get("transaction_id");
+    const fingerPrint = searchParams.get("finger_print");
+    const message = searchParams.get("message");
+    const channelTransactionId = searchParams.get("channel_transaction_id");
+
+    if (statusCode && transactionId) {
+      console.log("[RECIBO PAGE] 🚨 PARÂMETROS SISP DETECTADOS NA URL!");
+      console.log("[RECIBO PAGE] status_code:", statusCode);
+      console.log("[RECIBO PAGE] transaction_id:", transactionId);
+      console.log("[RECIBO PAGE] finger_print:", fingerPrint ? fingerPrint.substring(0, 30) + '...' : 'N/A');
+      console.log("[RECIBO PAGE] message:", message);
+      console.log("[RECIBO PAGE] channel_transaction_id:", channelTransactionId);
+
+      // Prepara os dados do pagamento
+      const paymentData = {
+        statusCode,
+        transactionId,
+        fingerPrint: fingerPrint || null,
+        message: message || null,
+        channelTransactionId: channelTransactionId || null,
+      };
+
+      // Salva no localStorage para persistência
+      try {
+        localStorage.setItem('sisp_payment_data', JSON.stringify(paymentData));
+        console.log("[RECIBO PAGE] ✅ Dados salvos no localStorage");
+      } catch (error) {
+        console.error("[RECIBO PAGE] ❌ Erro ao salvar no localStorage:", error);
+      }
+
+      // Abre o modal automaticamente com os dados da URL
+      setPaymentResult({
+        show: true, // Abre o modal automaticamente
+        ...paymentData,
+      });
+
+      // Se status_code = 1 (sucesso), valida o HMAC
+      if (statusCode === "1" && transactionId && fingerPrint) {
+        console.log("[RECIBO PAGE] ✅ Status code = 1, validando HMAC...");
+        console.log("[RECIBO PAGE] Chamando API: /api/payment/validate-hmac");
+        console.log("[RECIBO PAGE] transactionId:", transactionId);
+        console.log("[RECIBO PAGE] fingerPrint:", fingerPrint.substring(0, 30) + '...');
+        
+        validateHMAC(transactionId, fingerPrint)
+          .then((result) => {
+            console.log("[RECIBO PAGE] ✅ Validação HMAC concluída:", result);
+            if (result.success) {
+              showToast({
+                title: "✅ Pagamento validado com sucesso!",
+                description: "A transação foi verificada e confirmada.",
+                duration: 5000,
+              });
+            } else {
+              showToast({
+                title: "⚠️ Validação do pagamento falhou",
+                description: result.message || "Não foi possível validar a transação.",
+                variant: "destructive",
+                duration: 5000,
+              });
+            }
+          })
+          .catch((error) => {
+            console.error("[RECIBO PAGE] ❌ Erro ao validar HMAC:", error);
+            showToast({
+              title: "❌ Erro ao validar pagamento",
+              description: "Ocorreu um erro ao validar a transação. Tente novamente.",
+              variant: "destructive",
+              duration: 5000,
+            });
+          });
+      }
+    } else {
+      // Se não há parâmetros na URL, tenta carregar do localStorage
+      try {
+        const storedPaymentData = localStorage.getItem('sisp_payment_data');
+        if (storedPaymentData) {
+          const parsedData = JSON.parse(storedPaymentData);
+          console.log("[RECIBO PAGE] ✅ Dados do pagamento carregados do localStorage:", parsedData);
+          
+          // Abre o modal automaticamente se houver dados salvos
+          setPaymentResult({
+            show: true, // Abre o modal automaticamente
+            ...parsedData,
+          });
+
+          // Se status_code = 1 (sucesso) e ainda não validou, valida o HMAC
+          if (parsedData.statusCode === "1" && parsedData.transactionId && parsedData.fingerPrint) {
+            console.log("[RECIBO PAGE] ✅ Status code = 1 (do localStorage), validando HMAC...");
+            console.log("[RECIBO PAGE] Chamando API: /api/payment/validate-hmac");
+            
+            validateHMAC(parsedData.transactionId, parsedData.fingerPrint)
+              .then((result) => {
+                console.log("[RECIBO PAGE] ✅ Validação HMAC concluída (do localStorage):", result);
+                if (result.success) {
+                  showToast({
+                    title: "✅ Pagamento validado com sucesso!",
+                    description: "A transação foi verificada e confirmada.",
+                    duration: 5000,
+                  });
+                }
+              })
+              .catch((error) => {
+                console.error("[RECIBO PAGE] ❌ Erro ao validar HMAC (do localStorage):", error);
+              });
+          }
+        } else {
+          console.log("[RECIBO PAGE] Nenhum dado de pagamento encontrado");
+        }
+      } catch (error) {
+        console.error("[RECIBO PAGE] ❌ Erro ao carregar dados do localStorage:", error);
+      }
+    }
+  }, [searchParams, validateHMAC, showToast]); // Executa quando searchParams mudar
+
+  // Não precisa mais verificar parâmetros da URL aqui
+  // O callback dedicado (/payment-callback) já processa tudo e salva no localStorage
+  // Este componente apenas carrega do localStorage e exibe o modal
+
+  // Callback antigo (server_status, collect_status) - mantido para compatibilidade
   useEffect(() => {
     if (paymentModalShownRef.current) return;
     
-    const urlParams = new URLSearchParams(window.location.search);
-    const serverStatus = urlParams.get("server_status");
-    const serverMessage = urlParams.get("server_message");
-    const collectStatus = urlParams.get("collect_status");
-    const collectMessage = urlParams.get("collect_message");
+    const serverStatus = searchParams.get("server_status");
+    const serverMessage = searchParams.get("server_message");
+    const collectStatus = searchParams.get("collect_status");
+    const collectMessage = searchParams.get("collect_message");
     
     if (!serverStatus && !collectStatus) return;
     
@@ -139,16 +364,9 @@ export default function ReciboPage({ filterParams }: ReciboPageProps) {
       }
     }, 500);
     
-    // Limpar URL após 3 segundos
-    setTimeout(() => {
-      const cleanParams = new URLSearchParams(window.location.search);
-      const paramsToClean = ['server_status', 'server_message', 'collect_status', 'collect_message', 'merchantRef', 'amount', 'debug_ref', 'debug_fp'];
-      paramsToClean.forEach(param => cleanParams.delete(param));
-      
-      const newUrl = cleanParams.toString() ? `?${cleanParams.toString()}` : window.location.pathname;
-      window.history.replaceState(null, '', newUrl);
-    }, 3000);
-  }, [showToast]);
+    // NÃO LIMPA A URL - MANTÉM TODOS OS PARÂMETROS
+    // A URL nunca será limpa automaticamente
+  }, [showToast, searchParams]);
 
   const openConfirmDialog = (type: 'view' | 'download' | 'payment', reciboNumber: string, reciboData?: any) => {
     // Para "Ver", executa diretamente sem confirmação
@@ -185,16 +403,31 @@ export default function ReciboPage({ filterParams }: ReciboPageProps) {
           }
         } catch {}
         const reciboRef = reciboData.mbref || reciboData.reference || reciboNumber;
-        await processPayment(
+        
+        // Usa novo fluxo SISP
+        const result = await processPaymentSISP(
           reciboData.value,
           profile.user.nome,
           profile.user.email || "",
+          profile.user.telemovel || profile.user.telefone || "",
           profile.user.nif || "",
           reciboNumber,
           reciboRef
         );
 
-        toast.success("Checkout aberto! Conclua o pagamento na nova aba.");
+        // Abre HTML do SISP na mesma página
+        console.log("[RECIBO PAGE] ========== REDIRECIONANDO PARA SISP ==========");
+        console.log("[RECIBO PAGE] Result recebido:", result);
+        console.log("[RECIBO PAGE] HTML length:", result.html?.length);
+        console.log("[RECIBO PAGE] HTML primeiros 300 chars:", result.html?.substring(0, 300));
+        console.log("[RECIBO PAGE] channelTransactionId:", result.channelTransactionId);
+        
+        if (result.html) {
+          toast.success("Redirecionando para página de pagamento...");
+          openSISPInSamePage(result.html);
+        } else {
+          throw new Error("HTML do pagamento não foi recebido");
+        }
       } catch (error: any) {
         console.error("❌ [COMPONENTE] Erro capturado:", error);
         console.error("❌ [COMPONENTE] error.message:", error?.message);
@@ -363,16 +596,31 @@ export default function ReciboPage({ filterParams }: ReciboPageProps) {
             }
           } catch {}
           const reciboRef = recibo.mbref || invoiceNumber;
-          await processPayment(
+          
+          // Usa novo fluxo SISP
+          const result = await processPaymentSISP(
             recibo.value, // amount
             profile.user.nome, // userName
             profile.user.email || "", // userEmail
-            profile.user.nif || "", // userPhone
-            invoiceNumber, // merchantRef
+            profile.user.telemovel || profile.user.telefone || "", // userPhone
+            profile.user.nif || "", // userNif
+            invoiceNumber, // reciboNumber
             reciboRef // orderReference
           );
 
-          toast.success("Checkout aberto! Conclua o pagamento na nova aba.");
+          // Abre HTML do SISP na mesma página
+          console.log("[RECIBO PAGE] ========== REDIRECIONANDO PARA SISP (handlePay) ==========");
+          console.log("[RECIBO PAGE] Result recebido:", result);
+          console.log("[RECIBO PAGE] HTML length:", result.html?.length);
+          console.log("[RECIBO PAGE] HTML primeiros 300 chars:", result.html?.substring(0, 300));
+          console.log("[RECIBO PAGE] channelTransactionId:", result.channelTransactionId);
+          
+          if (result.html) {
+            toast.success("Redirecionando para página de pagamento...");
+            openSISPInSamePage(result.html);
+          } else {
+            throw new Error("HTML do pagamento não foi recebido");
+          }
           closeModal();
         } catch (error: any) {
           console.error("❌ [MODAL] Erro capturado:", error);
@@ -535,6 +783,19 @@ export default function ReciboPage({ filterParams }: ReciboPageProps) {
         <h1 className="text-lg md:text-2xl lg:text-3xl font-bold tracking-tight text-[#002256]">
           Meus Recibos
         </h1>
+        
+        {/* Botão para visualizar dados do pagamento salvos */}
+        {(paymentResult.statusCode || paymentResult.transactionId || paymentResult.fingerPrint) && (
+          <Button
+            type="button"
+            onClick={() => setPaymentResult({ ...paymentResult, show: true })}
+            variant="outline"
+            className="flex items-center gap-2"
+          >
+            <MdPayment className="h-4 w-4" />
+            Ver Último Pagamento
+          </Button>
+        )}
         <div className="flex items-center gap-1 md:gap-2">
           <Button
             size="sm"
@@ -868,6 +1129,136 @@ export default function ReciboPage({ filterParams }: ReciboPageProps) {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Modal de Resultado do Pagamento SISP */}
+      <Dialog 
+        open={paymentResult.show} 
+        onOpenChange={(open) => {
+          console.log("[RECIBO PAGE] Modal onOpenChange chamado:", open);
+          console.log("[RECIBO PAGE] paymentResult.show atual:", paymentResult.show);
+          // Não permite fechar o modal clicando fora se for sucesso
+          if (paymentResult.statusCode === "1" && !open) {
+            console.log("[RECIBO PAGE] Tentativa de fechar modal de sucesso bloqueada");
+            return; // Não fecha automaticamente
+          }
+          setPaymentResult({ ...paymentResult, show: open });
+        }}
+      >
+        <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-bold text-gray-900">
+              {paymentResult.statusCode === "1" && "✅ Pagamento Confirmado com Sucesso!"}
+              {paymentResult.statusCode === "2" && "⚠️ Pagamento Cancelado"}
+              {paymentResult.statusCode === "3" && "❌ Pagamento Falhou"}
+              {!paymentResult.statusCode && "Resultado do Pagamento"}
+            </DialogTitle>
+            <DialogDescription className="text-gray-600 text-base">
+              {paymentResult.message || "Detalhes da transação de pagamento"}
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-3 py-4">
+            {/* URL Completa */}
+            <div className="p-3 bg-blue-50 border border-blue-200 rounded">
+              <span className="font-medium text-gray-700 block mb-2">URL de Redirecionamento:</span>
+              <span className="text-gray-900 font-mono text-xs break-all">
+                {typeof window !== 'undefined' ? window.location.href : 'N/A'}
+              </span>
+            </div>
+
+            {paymentResult.statusCode && (
+              <div className="flex justify-between items-center p-3 bg-gray-50 rounded">
+                <span className="font-medium text-gray-700">Status Code:</span>
+                <span className={`font-semibold text-lg ${
+                  paymentResult.statusCode === "1" ? "text-green-600" :
+                  paymentResult.statusCode === "2" ? "text-yellow-600" :
+                  "text-red-600"
+                }`}>
+                  {paymentResult.statusCode === "1" ? "1 - Sucesso ✅" :
+                   paymentResult.statusCode === "2" ? "2 - Cancelado ⚠️" :
+                   paymentResult.statusCode === "3" ? "3 - Erro ❌" :
+                   paymentResult.statusCode}
+                </span>
+              </div>
+            )}
+
+            {paymentResult.message && (
+              <div className="flex justify-between items-center p-3 bg-gray-50 rounded">
+                <span className="font-medium text-gray-700">Mensagem:</span>
+                <span className="text-gray-900 text-sm">{paymentResult.message}</span>
+              </div>
+            )}
+
+            {paymentResult.transactionId && (
+              <div className="flex justify-between items-center p-3 bg-gray-50 rounded">
+                <span className="font-medium text-gray-700">Transaction ID:</span>
+                <span className="text-gray-900 font-mono text-sm">{paymentResult.transactionId}</span>
+              </div>
+            )}
+
+            {paymentResult.channelTransactionId && (
+              <div className="flex justify-between items-center p-3 bg-gray-50 rounded">
+                <span className="font-medium text-gray-700">Channel Transaction ID:</span>
+                <span className="text-gray-900 font-mono text-sm">{paymentResult.channelTransactionId}</span>
+              </div>
+            )}
+
+            {paymentResult.fingerPrint && (
+              <div className="flex justify-between items-start p-3 bg-gray-50 rounded">
+                <span className="font-medium text-gray-700">Fingerprint:</span>
+                <span className="text-gray-900 font-mono text-xs break-all text-right max-w-[60%]">
+                  {paymentResult.fingerPrint}
+                </span>
+              </div>
+            )}
+          </div>
+
+          <DialogFooter className="flex gap-2">
+            <Button
+              type="button"
+              onClick={() => {
+                // Limpa os dados do localStorage
+                try {
+                  localStorage.removeItem('sisp_payment_data');
+                  console.log("[RECIBO PAGE] ✅ Dados do pagamento removidos do localStorage");
+                } catch (error) {
+                  console.error("[RECIBO PAGE] ❌ Erro ao remover do localStorage:", error);
+                }
+                // Limpa o estado
+                setPaymentResult({
+                  show: false,
+                  statusCode: null,
+                  transactionId: null,
+                  fingerPrint: null,
+                  message: null,
+                  channelTransactionId: null,
+                });
+              }}
+              variant="destructive"
+              className="flex-1"
+            >
+              Limpar Dados
+            </Button>
+            <Button
+              type="button"
+              onClick={() => setPaymentResult({ ...paymentResult, show: false })}
+              className="flex-1"
+              variant={paymentResult.statusCode === "1" ? "default" : "outline"}
+            >
+              Fechar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
     </div>
+  );
+}
+
+export default function ReciboPage({ filterParams }: ReciboPageProps) {
+  return (
+    <Suspense fallback={<LoadingContainer />}>
+      <ReciboPageContent filterParams={filterParams} />
+    </Suspense>
   );
 }

@@ -181,6 +181,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       pathname?.startsWith(route)
     );
 
+    // CRÍTICO: Verifica se há parâmetros do SISP - NÃO redireciona se houver
+    const hasSispParams = (() => {
+      try {
+        const sp = new URLSearchParams(window.location.search);
+        return (
+          sp.has("status_code") ||
+          sp.has("transaction_id") ||
+          sp.has("finger_print")
+        );
+      } catch {
+        return false;
+      }
+    })();
+
     // Evita redirecionar para login durante o retorno do pagamento
     const hasPaymentParams = (() => {
       try {
@@ -203,6 +217,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return false;
       }
     })();
+
+    // CRÍTICO: Se há parâmetros do SISP, NÃO faz NENHUM redirecionamento
+    if (hasSispParams) {
+      console.log("[AUTH CONTEXT] 🚨 Parâmetros SISP detectados - NÃO redirecionando");
+      return;
+    }
 
     if (!user && !isPublicRoute) {
       if (hasPaymentParams || hasPostPayCookie) {

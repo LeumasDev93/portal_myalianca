@@ -10,7 +10,8 @@ import { useUserProfile } from "@/hooks/useUserProfile";
 import { tableMappeData } from "@/lib/tableMappe";
 import { getFirstAndLastName } from "@/lib/utils";
 import { useReciboActivity } from "@/lib/activityExamples";
-import { processPayment } from "@/service/paymentService";
+import { processPaymentSISP } from "@/service/paymentService";
+import { SISPPaymentModal } from "@/components/(recibo)/SISPPaymentModal";
 import { toast } from "sonner";
 import React, { useEffect, useState } from "react";
 import {
@@ -84,6 +85,10 @@ const HistoryTable = ({
     reciboNumber: string;
     reciboData?: any;
   }>({ open: false, type: null, reciboNumber: '' });
+  const [sispModal, setSispModal] = useState<{
+    isOpen: boolean;
+    html: string;
+  }>({ isOpen: false, html: '' });
   const { token } = useSessionCheckToken();
   const { profile } = useUserProfile();
   const { toast: showToast } = useToast();
@@ -332,18 +337,25 @@ const HistoryTable = ({
     }));
 
     try {
-      await processPayment(
+      const result = await processPaymentSISP(
         recibo.value,
         profile.user.nome,
         profile.user.email || "",
+        profile.user.telemovel || profile.user.telefone || "",
         profile.user.nif || "",
         invoiceNumber,
         recibo.mbref // Referência do recibo (ex: P2025.458)
       );
       
+      // Abre modal com HTML do SISP
+      setSispModal({
+        isOpen: true,
+        html: result.html,
+      });
+      
       setConfirmDialog({ open: false, type: null, reciboNumber: '' });
       showToast({
-        title: "Checkout aberto! Conclua o pagamento na nova aba.",
+        title: "Abrindo página de pagamento...",
         variant: "default",
       });
     } catch (error: any) {
@@ -910,6 +922,13 @@ const HistoryTable = ({
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Modal de Pagamento SISP */}
+      <SISPPaymentModal
+        html={sispModal.html}
+        isOpen={sispModal.isOpen}
+        onClose={() => setSispModal({ isOpen: false, html: '' })}
+      />
     </div>
   );
 };

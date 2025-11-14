@@ -2,19 +2,19 @@ import { NextResponse } from "next/server";
 
 const PAYMENT_BASE_URL = "https://pay.dev.aliancaseguros.cv";
 
-// Credenciais estáticas
+// Credenciais estáticas - Nova API
 const PAYMENT_CREDENTIALS = {
-  clientId: "4224339E02544A5EA6D1B6C6D9443CCA",
-  clientSecret: "eM5fGfyOQzYkGiABMmtzhrrniAY6X7toIk7Fmiqt32c"
+  clientId: "ju3Rt5EEDc2yQNxOsgJVBZrOszZx-aRB",
+  clientSecret: "pExQKluf1dDPvQ4Q8168MbpcgHw8Sd0hZPbt5qCMzJc"
 };
 
 export async function POST() {
   try {
     console.log("[PAYMENT API] ========== AUTHORIZE ==========");
-    console.log("[PAYMENT API] URL:", `${PAYMENT_BASE_URL}/api/v1/authorize`);
+    console.log("[PAYMENT API] URL:", `${PAYMENT_BASE_URL}/api/auth/token`);
     console.log("[PAYMENT API] Credentials:", PAYMENT_CREDENTIALS);
     
-    const response = await fetch(`${PAYMENT_BASE_URL}/api/v1/authorize`, {
+    const response = await fetch(`${PAYMENT_BASE_URL}/api/auth/token`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -62,11 +62,22 @@ export async function POST() {
       }, { status: 400 });
     }
 
+    // Nova API retorna 'token' ao invés de 'accessToken'
+    const token = data.token || data.accessToken;
+    
+    if (!token) {
+      console.error("[PAYMENT API] ❌ Token não encontrado na resposta:", data);
+      return NextResponse.json({ 
+        message: "Token não foi retornado pela API",
+        error: "Token não foi retornado pela API" 
+      }, { status: 400 });
+    }
+
     console.log("[PAYMENT API] ✅ Token gerado com sucesso");
-    console.log("[PAYMENT API] accessToken:", data.accessToken);
-    const res = NextResponse.json({ accessToken: data.accessToken });
+    console.log("[PAYMENT API] token:", token);
+    const res = NextResponse.json({ accessToken: token, token: token });
     // Define cookie curto para reuso server-side (validação HMAC)
-    res.cookies.set('pay_token', data.accessToken, {
+    res.cookies.set('pay_token', token, {
       path: '/',
       maxAge: 600,
       sameSite: 'none',

@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { FaSearch, FaSpinner } from "react-icons/fa";
 import { MobileMenu } from "@/components/Layout/MobileMenu";
 import { Menu, MenuItem } from "@/components/Layout/Menu";
@@ -94,6 +94,37 @@ const Page = () => {
   const router = useRouter();
   const { toast } = useToast();
 
+  // Função helper para verificar se há parâmetros do SISP
+  const hasSispParams = useCallback((params?: URLSearchParams): boolean => {
+    const checkParams = params || (typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null);
+    if (!checkParams) return false;
+    return checkParams.has("status_code") || 
+           checkParams.has("transaction_id") || 
+           checkParams.has("finger_print");
+  }, []);
+
+  // Função helper para preservar parâmetros do SISP ao fazer router.replace
+  const replaceWithPreservedParams = useCallback((menu: string, currentParams?: URLSearchParams) => {
+    const params = currentParams || new URLSearchParams(searchParams?.toString() || '');
+    
+    // PRESERVA parâmetros do SISP
+    const sispParams = ['status_code', 'transaction_id', 'finger_print', 'message', 'channel_transaction_id'];
+    const preservedParams: Record<string, string> = {};
+    sispParams.forEach(param => {
+      const value = params.get(param);
+      if (value) preservedParams[param] = value;
+    });
+    
+    params.set("menu", menu);
+    
+    Object.entries(preservedParams).forEach(([key, value]) => {
+      params.set(key, value);
+    });
+    
+    const qs = params.toString();
+    router.replace(`?${qs}`, { scroll: false });
+  }, [searchParams, router]);
+
   useEffect(() => {
     setIsLoading(true);
 
@@ -118,7 +149,18 @@ const Page = () => {
       // Se não for Company e tentar acessar páginas restritas, redireciona
       if (currentPage === 'empresarial' || currentPage === 'gestaoSOAT' || currentPage === 'Empresarial') {
         setCurrentPage('Historico');
-        router.push('/backoffice?page=Historico');
+        // Preserva parâmetros do SISP se existirem
+        const params = new URLSearchParams();
+        params.set("page", "Historico");
+        if (typeof window !== 'undefined') {
+          const urlParams = new URLSearchParams(window.location.search);
+          const sispParams = ['status_code', 'transaction_id', 'finger_print', 'message', 'channel_transaction_id'];
+          sispParams.forEach(param => {
+            const value = urlParams.get(param);
+            if (value) params.set(param, value);
+          });
+        }
+        router.push(`/backoffice?${params.toString()}`);
         toast({
           title: "Acesso Negado",
           description: "Esta página é exclusiva para empresas.",
@@ -128,7 +170,6 @@ const Page = () => {
     }
   }, [currentPage, profile?.user?.tipo_cliente, router, toast]);
 
-  console.log('profile?.user?.tipo_cliente -->', profile?.user?.tipo_cliente);
   // Filtra os menus baseado no tipo de cliente
   const getFilteredMenus = () => {
     const baseMenus: MenuItem[] = [
@@ -231,10 +272,57 @@ const Page = () => {
     setIsClient(true);
   }, []);
 
+  // Ref para evitar múltiplas execuções quando há parâmetros SISP
+  const sispParamsDetectedRef = useRef(false);
+
   // Define a página padrão baseada no tipo de usuário ou restaura da URL
   useEffect(() => {
     // Só processa quando está no cliente
     if (!isClient) return;
+    
+    // CRÍTICO: Verifica PRIMEIRO se há parâmetros do SISP ANTES de fazer QUALQUER coisa
+    // Lê diretamente de window.location para garantir que pega os parâmetros
+    let hasSisp = false;
+    if (typeof window !== 'undefined') {
+      try {
+        const urlParams = new URLSearchParams(window.location.search);
+        hasSisp = urlParams.has("status_code") || 
+                  urlParams.has("transaction_id") || 
+                  urlParams.has("finger_print");
+        if (hasSisp) {
+          console.log("[BACKOFFICE] 🚨🚨🚨 PARÂMETROS SISP DETECTADOS - BLOQUEANDO TODAS AS ALTERAÇÕES DE URL 🚨🚨🚨");
+          console.log("[BACKOFFICE] URL completa:", window.location.href);
+          console.log("[BACKOFFICE] Todos os parâmetros:", Array.from(urlParams.entries()));
+          
+          const menuFromUrl = urlParams.get("menu") || searchParams?.get("menu");
+          if (menuFromUrl) {
+            setCurrentPage(menuFromUrl);
+          }
+          // CRÍTICO: Marca como detectado e RETORNA IMEDIATAMENTE - NUNCA mais executa este useEffect
+          sispParamsDetectedRef.current = true;
+          return;
+        }
+      } catch (error) {
+        console.error("[BACKOFFICE] Erro ao verificar parâmetros:", error);
+      }
+    }
+    
+    // Fallback: verifica via searchParams também
+    if (!hasSisp && hasSispParams()) {
+      console.log("[BACKOFFICE] 🚨🚨🚨 PARÂMETROS SISP DETECTADOS (via searchParams) - BLOQUEANDO 🚨🚨🚨");
+      const menuFromUrl = searchParams?.get("menu");
+      if (menuFromUrl) {
+        setCurrentPage(menuFromUrl);
+      }
+      sispParamsDetectedRef.current = true;
+      return;
+    }
+    
+    // CRÍTICO: Se já detectou parâmetros SISP antes, NUNCA mais executa este código
+    if (sispParamsDetectedRef.current) {
+      console.log("[BACKOFFICE] ⚠️ Parâmetros SISP já detectados anteriormente - BLOQUEANDO execução");
+      return;
+    }
     
     const menuFromUrl = searchParams?.get("menu");
     
@@ -245,10 +333,7 @@ const Page = () => {
         // Redireciona para Historico se não tiver permissão
         const defaultMenu = "Historico";
         setCurrentPage(defaultMenu);
-        const params = new URLSearchParams(searchParams?.toString());
-        params.set("menu", defaultMenu);
-        const qs = params.toString();
-        router.replace(`?${qs}`, { scroll: false });
+        replaceWithPreservedParams(defaultMenu);
         toast({
           title: "Acesso Negado",
           description: "Esta página é exclusiva para empresas.",
@@ -275,10 +360,7 @@ const Page = () => {
             sessionStorage.removeItem("lastMenu");
           } else {
             setCurrentPage(lastMenu);
-            const params = new URLSearchParams(searchParams?.toString());
-            params.set("menu", lastMenu);
-            const qs = params.toString();
-            router.replace(`?${qs}`, { scroll: false });
+            replaceWithPreservedParams(lastMenu);
             return;
           }
         }
@@ -291,14 +373,12 @@ const Page = () => {
         : "Historico";
       
       setCurrentPage(defaultMenu);
-      
-      // Adiciona o parâmetro menu na URL, preservando outros parâmetros
-      const params = new URLSearchParams(searchParams?.toString());
-      params.set("menu", defaultMenu);
-      const qs = params.toString();
-      router.replace(`?${qs}`, { scroll: false });
+      // Só faz replace se NÃO houver parâmetros do SISP
+      if (!hasSispParams() && !sispParamsDetectedRef.current) {
+        replaceWithPreservedParams(defaultMenu);
+      }
     }
-  }, [isClient, profile?.user?.tipo_cliente, searchParams, router, toast]);
+  }, [isClient, profile?.user?.tipo_cliente, searchParams, router, toast, hasSispParams, replaceWithPreservedParams]);
 
   // NÃO limpa parâmetros aqui - deixa o ReciboPage fazer isso
 
@@ -356,12 +436,36 @@ const Page = () => {
       // silencioso
     }
 
-    // Atualiza URL param centralmente em qualquer navegação
+    // CRÍTICO: Verifica PRIMEIRO se há parâmetros do SISP ANTES de fazer QUALQUER coisa
+    // Lê diretamente de window.location para garantir
+    let hasSisp = false;
+    if (typeof window !== 'undefined') {
+      try {
+        const urlParams = new URLSearchParams(window.location.search);
+        hasSisp = urlParams.has("status_code") || 
+                  urlParams.has("transaction_id") || 
+                  urlParams.has("finger_print");
+        if (hasSisp) {
+          console.log("[BACKOFFICE] 🚨🚨🚨 PARÂMETROS SISP DETECTADOS NO handleMenuClick - BLOQUEANDO 🚨🚨🚨");
+          console.log("[BACKOFFICE] URL completa:", window.location.href);
+          setCurrentPage(menuPage);
+          return; // NÃO faz NENHUM router.replace
+        }
+      } catch (error) {
+        console.error("[BACKOFFICE] Erro ao verificar parâmetros no handleMenuClick:", error);
+      }
+    }
+    
+    // Fallback: verifica via searchParams
+    if (!hasSisp && hasSispParams()) {
+      console.log("[BACKOFFICE] 🚨 Parâmetros do SISP detectados no handleMenuClick (via searchParams) - NÃO alterando URL");
+      setCurrentPage(menuPage);
+      return;
+    }
+    
+    // Só faz replace se NÃO houver parâmetros do SISP
     try {
-      const urlParams = new URLSearchParams(searchParams?.toString());
-      urlParams.set("menu", menuPage);
-      const qs = urlParams.toString();
-      router.replace(`?${qs}`, { scroll: false });
+      replaceWithPreservedParams(menuPage);
     } catch (_e) {
       // silencioso
     }

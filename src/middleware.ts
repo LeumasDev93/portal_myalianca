@@ -44,6 +44,11 @@ export function middleware(req: NextRequest) {
     if (postpay === '1') {
       return NextResponse.next();
     }
+    // CRÍTICO: Verifica se há parâmetros do SISP (não redireciona se vier do SISP)
+    const hasSispParams = req.nextUrl.searchParams.has('status_code') || 
+                         req.nextUrl.searchParams.has('transaction_id') ||
+                         req.nextUrl.searchParams.has('finger_print');
+    
     // Verifica se há parâmetros de callback de pagamento (não redireciona se vier do SISP)
     const isPaymentCallback = req.nextUrl.searchParams.has('payment_status') || 
                              req.nextUrl.searchParams.has('reference') ||
@@ -51,7 +56,7 @@ export function middleware(req: NextRequest) {
                              req.nextUrl.searchParams.has('merchantSession') ||
                              req.nextUrl.searchParams.has('merchantRef');
     
-    if (isPaymentCallback) {
+    if (hasSispParams || isPaymentCallback) {
       // Seta cookie postpay aqui também como fallback e permite a passagem
       const res = NextResponse.next();
       res.cookies.set('postpay', '1', {
