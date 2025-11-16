@@ -56,6 +56,7 @@ import PageGestaoSOAT from "@/components/gestaoSOAT/page";
 import { BackToTopButton } from "@/components/ui/BackToTopButton";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useToast } from "@/components/ui/use-toast";
+import PaymentCallback from "@/components/(recibo)/PaymentCallback";
 
 const Page = () => {
   const { profile } = useUserProfile();
@@ -214,6 +215,14 @@ const Page = () => {
         icon: IoMdPin,
         hoverIcon: <IoMdPin />,
         onClick: () => handleMenuClick("Agencias"),
+      },
+      // Menu oculto: Callback de Pagamento (não deve aparecer visualmente)
+      {
+        title: "Callback",
+        path: "callback",
+        icon: IoReceiptSharp,
+        hoverIcon: <IoReceiptSharp />,
+        onClick: () => handleMenuClick("callback"),
       },
       {
         title: "Sair",
@@ -532,7 +541,7 @@ const Page = () => {
           <>
             <MobileMenu
               onMenuClick={handleMenuClick}
-              menuItems={MainMenus.map((menu) => ({
+              menuItems={MainMenus.filter((m) => !m.hidden).map((menu) => ({
                 ...menu,
                 onClick: () => {
                   if (menu.onClick) {
@@ -688,6 +697,9 @@ const Page = () => {
                     onSelectDetail={handleSelectMensagemDetail}
                     filterParams={filterParams}
                   />
+                )}
+                {currentPage === "callback" && (
+                  <PaymentCallback />
                 )}
                 {currentPage === "Perfil" && <PerfilPage />}
                 {currentPage === "Agencias" && <AgenciasPage />}

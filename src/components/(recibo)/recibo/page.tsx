@@ -136,6 +136,7 @@ function ReciboPageContent({ filterParams }: ReciboPageProps) {
   });
   const [isDownloadingRecibo, setIsDownloadingRecibo] = useState(false);
   const [isRetryingPayment, setIsRetryingPayment] = useState(false);
+  const [callbackActionHandled, setCallbackActionHandled] = useState(false);
   
   // Função helper para limpar localStorage e URL (não utilizada - cleanup feito no PaymentResultModal)
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -230,6 +231,45 @@ function ReciboPageContent({ filterParams }: ReciboPageProps) {
       throw error;
     }
   }, []);
+
+  // Integração com callback: filtrar por referência e opcionalmente abrir/ver/baixar
+  useEffect(() => {
+    const reference = searchParams.get("reference");
+    const action = searchParams.get("action"); // 'view' | 'download'
+    if (reference) {
+      // Ajusta filtro de busca para destacar o recibo
+      try {
+        setSearchTerm(reference);
+      } catch {}
+    }
+    // Executa ação (view/download) apenas uma vez, quando recibos forem carregados
+    if (!callbackActionHandled && reference && !isLoadingRecibos && recibos && recibos.length > 0) {
+      const recibo = recibos.find((r: any) => {
+        const ref = r?.mbref || r?.reference || r?.number;
+        return String(ref).toLowerCase() === String(reference).toLowerCase();
+      });
+      if (recibo) {
+        if (action === "view") {
+          try {
+            visualizarPDF(recibo.number, recibo?.status);
+            setCallbackActionHandled(true);
+          } catch {
+            setCallbackActionHandled(true);
+          }
+        } else if (action === "download") {
+          try {
+            handleDownload(recibo.number);
+            setCallbackActionHandled(true);
+          } catch {
+            setCallbackActionHandled(true);
+          }
+        }
+      } else {
+        // Se não encontrou nos recibos atuais, marca como tratado para não loopar
+        setCallbackActionHandled(true);
+      }
+    }
+  }, [searchParams, recibos, isLoadingRecibos, setSearchTerm, callbackActionHandled]);
 
   // Função para chamar API collect após HMAC validado (via API route do servidor)
   const callCollectAPI = useCallback(async (reciboRef: string, amount: number) => {
