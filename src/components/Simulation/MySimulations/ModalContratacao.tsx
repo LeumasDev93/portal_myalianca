@@ -7,6 +7,11 @@ import { useToast } from '@/components/ui/use-toast';
 import { ToastAction } from '@/components/ui/toast';
 import { LoadingContainer } from '@/components/ui/loading-container';
 import { useSessionCheckToken } from '@/hooks/useSessionToken';
+import { processPaymentSISP } from '@/service/paymentService';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
+import { formatCurrency } from '@/lib/utils';
 
 interface Document {
   id: string;
@@ -76,6 +81,7 @@ interface ModalContratacaoProps {
   isOpen: boolean;
   onClose: () => void;
   onNavigateToRecibo?: (reference: string) => void;
+  onCloseSimulationResults?: () => void;
   simulationData: {
     productId?: string;
     productType?: string;
@@ -88,7 +94,7 @@ interface ModalContratacaoProps {
   selectedInstallment?: InstallmentData | null;
 }
 
-export function ModalContratacao({ isOpen, onClose, onNavigateToRecibo, simulationData, simulationDetails, selectedInstallment }: ModalContratacaoProps) {
+export function ModalContratacao({ isOpen, onClose, onNavigateToRecibo, onCloseSimulationResults, simulationData, simulationDetails, selectedInstallment }: ModalContratacaoProps) {
   const { toast } = useToast();
   const { token } = useSessionCheckToken();
   const [loading, setLoading] = useState(false);
@@ -98,6 +104,34 @@ export function ModalContratacao({ isOpen, onClose, onNavigateToRecibo, simulati
   const [uploadedFiles, setUploadedFiles] = useState<Record<string, File | null>>({});
   const [activeTab, setActiveTab] = useState<'dados' | 'documentos'>('dados');
   const [clientData, setClientData] = useState<Client | null>(null);
+  const [successInfo, setSuccessInfo] = useState<{ message: string; reference?: string } | null>(null);
+  const [paymentDialogOpen, setPaymentDialogOpen] = useState(false);
+  const [paymentLoading, setPaymentLoading] = useState(false);
+
+  function openSISPInSamePage(html: string) {
+    let processedHtml = html;
+    const hasEscapeChars = html.includes('\\r\\n') || (html.includes('\\n') && !html.includes('\n'));
+    if (hasEscapeChars) {
+      processedHtml = html
+        .replace(/\\r\\n/g, '\r\n')
+        .replace(/\\n/g, '\n')
+        .replace(/\\t/g, '\t')
+        .replace(/\\"/g, '"')
+        .replace(/\\'/g, "'");
+    }
+    try {
+      const blob = new Blob([processedHtml], { type: "text/html;charset=utf-8" });
+      const blobUrl = URL.createObjectURL(blob);
+      const isInIframe = window.self !== window.top;
+      if (isInIframe && window.top) {
+        window.top.location.href = blobUrl;
+      } else {
+        window.location.href = blobUrl;
+      }
+    } catch {
+      // silent
+    }
+  }
 
   // Debug: monitorar quando clientData é atualizado
   useEffect(() => {
@@ -354,38 +388,18 @@ export function ModalContratacao({ isOpen, onClose, onNavigateToRecibo, simulati
         });
         onClose();
       } else if (contractResult.invoiceDTO) {
-        // Se NÃO houver erro e houver invoice, mostrar toast com botão para ver recibo
+        // Sucesso com invoice: mostrar mensagem completa no modal e fechar o modal de resultados da simulação
         console.log('✅ Contrato emitido com sucesso!');
         console.log('💰 Invoice:', contractResult.invoiceDTO);
-        
         const invoice = contractResult.invoiceDTO;
         setLoading(false);
-        
-        // Fechar modal antes de mostrar toast
-        onClose();
-        
-        // Mostrar toast verde com botão "Ver Recibo"
-        toast({
-          title: '✅ Contrato emitido com sucesso!',
-          description: `Recibo gerado: ${invoice.referencia}`,
-          className: 'bg-green-50 border-green-500 text-green-800',
-          style: {
-            borderColor: '#22c55e',
-            backgroundColor: '#f0fdf4',
-            color: '#166534',
-          },
-          action: onNavigateToRecibo ? (
-            <ToastAction 
-              altText="Ver Recibo"
-              onClick={() => {
-                console.log('🔗 Navegando para recibo:', invoice.referencia);
-                onNavigateToRecibo(invoice.referencia);
-              }}
-              className="bg-[#002855] text-white hover:bg-[#002855]/90 border-[#002855]"
-            >
-              Ver Recibo
-            </ToastAction>
-          ) : undefined,
+        // Fecha o modal "Simulation Results" (se disponível) mas mantém este modal aberto com a mensagem de sucesso
+        try {
+          onCloseSimulationResults && onCloseSimulationResults();
+        } catch {}
+        setSuccessInfo({
+          message: 'Contrato emitido com sucesso!',
+          reference: invoice.referencia,
         });
       } else {
         // Se não houver invoice e não houver erro, apenas mostrar sucesso
@@ -451,6 +465,55 @@ export function ModalContratacao({ isOpen, onClose, onNavigateToRecibo, simulati
           {loadingData ? (
             /* Loading Principal */
             <LoadingContainer message="CARREGANDO DADOS DA SIMULAÇÃO..." />
+          ) : successInfo ? (
+            <>
+              <div className="bg-green-50 border border-green-200 rounded-lg p-6 mb-6">
+                <div className="flex items-start gap-3">
+                  <div className="flex-shrink-0">
+                    <FaFileInvoiceDollar className="text-green-600 text-2xl" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold text-green-800">
+                      {successInfo.message}
+                    </h3>
+                    <p className="text-green-700 mt-1">
+                      {successInfo.reference ? `Recibo gerado: ${successInfo.reference}` : 'Operação concluída com sucesso.'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex flex-col sm:flex-row gap-3">
+                <button
+                  type="button"
+                  onClick={() => setPaymentDialogOpen(true)}
+                  className="w-full sm:flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium"
+                >
+                  Pagar agora
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (successInfo.reference && onNavigateToRecibo) {
+                      try {
+                        onNavigateToRecibo(successInfo.reference);
+                      } catch {}
+                    }
+                    onClose();
+                  }}
+                  className="w-full sm:flex-1 px-4 py-2 bg-[#002855] text-white rounded-lg hover:bg-[#002256]/90 transition-colors font-medium"
+                >
+                  Ver Recibo
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onClose()}
+                  className="w-full sm:flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors font-medium"
+                >
+                  Fechar
+                </button>
+              </div>
+            </>
           ) : (
             <>
               {/* Resumo Principal - Antes das Tabs */}
@@ -754,6 +817,120 @@ export function ModalContratacao({ isOpen, onClose, onNavigateToRecibo, simulati
           )}
         </div>
       </div>
+      {/* Dialog de confirmação de pagamento (estrutura idêntica à de Recibos) */}
+      <Dialog open={paymentDialogOpen} onOpenChange={setPaymentDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-bold text-gray-900">Confirmar Pagamento</DialogTitle>
+            <div className="space-y-4 py-4">
+              <DialogDescription className="text-sm text-gray-700 font-medium text-center">
+                Pagamento de Recibo
+              </DialogDescription>
+              
+              <div className="space-y-2">
+                <div className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                  <div className="flex items-center gap-2">
+                    <span className="text-gray-500">Referência:</span>
+                  </div>
+                  <span className="font-semibold text-gray-900">
+                    {successInfo?.reference || simulationDetails?.reference || '-'}
+                  </span>
+                </div>
+                
+                <div className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                  <div className="flex items-center gap-2">
+                    <span className="text-gray-500">Valor:</span>
+                  </div>
+                  <span className="font-semibold text-gray-900">
+                    {formatCurrency(selectedInstallment?.value || simulationDetails?.totalPremium || simulationData.totalPremium || 0)}
+                  </span>
+                </div>
+              </div>
+
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mt-4">
+                <div className="flex items-start gap-2 mb-2">
+                  <span className="text-blue-600 font-semibold text-sm">Informação Importante:</span>
+                </div>
+                <ul className="text-xs text-gray-700 space-y-1.5 list-disc list-inside">
+                  <li>Será redirecionado para a página segura de pagamento</li>
+                  <li>Aceita cartões de crédito e débito</li>
+                  <li>Receberá confirmação por email após o pagamento</li>
+                  <li>O pagamento é processado de forma segura pelo SISP</li>
+                </ul>
+              </div>
+            </div>
+          </DialogHeader>
+          <DialogFooter className="flex gap-3 sm:gap-3">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setPaymentDialogOpen(false)}
+              disabled={paymentLoading}
+              className="flex-1"
+            >
+              Cancelar
+            </Button>
+            <Button
+              type="button"
+              onClick={async () => {
+                if (paymentLoading) return;
+                setPaymentLoading(true);
+                try {
+                  const amount = selectedInstallment?.value || simulationDetails?.totalPremium || simulationData.totalPremium || 0;
+                  const userName = clientData?.name || '';
+                  const userEmail = clientData?.primaryEmailContact || '';
+                  const userPhone = clientData?.primaryMobileContact || '';
+                  const userNif = clientData?.nif || '';
+                  const reciboNumber = successInfo?.reference || simulationDetails?.reference || simulationData.reference || '';
+                  const orderReference = reciboNumber;
+
+                  if (!amount || !reciboNumber) {
+                    throw new Error('Dados insuficientes para iniciar o pagamento.');
+                  }
+
+                  // Persistir dados para o callback
+                  try {
+                    localStorage.setItem('recibo_ref', encodeURIComponent(reciboNumber));
+                    localStorage.setItem('payment_amount', String(amount));
+                  } catch {}
+
+                  const result = await processPaymentSISP(
+                    amount,
+                    userName,
+                    userEmail,
+                    userPhone,
+                    userNif,
+                    reciboNumber,
+                    orderReference
+                  );
+                  openSISPInSamePage(result.html);
+                } catch (err: unknown) {
+                  const message = err instanceof Error ? err.message : 'Erro ao iniciar pagamento';
+                  toast({
+                    title: 'Erro no pagamento',
+                    description: message,
+                    variant: 'destructive',
+                  });
+                } finally {
+                  setPaymentLoading(false);
+                  setPaymentDialogOpen(false);
+                }
+              }}
+              className="flex-1 bg-green-600 hover:bg-green-700 text-white"
+              disabled={paymentLoading}
+            >
+              {paymentLoading ? (
+                <>
+                  <LoadingSpinner size="sm" />
+                  <span className="ml-2">Processando...</span>
+                </>
+              ) : (
+                <>Pagar</>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
