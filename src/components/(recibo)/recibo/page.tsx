@@ -918,7 +918,6 @@ function ReciboPageContent({ filterParams }: ReciboPageProps) {
     } finally {
       setIsRetryingPayment(false);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [paymentResultModal, profile, recibos, token]);
 
   const handleDownload = async (invoiceNumber: string) => {
