@@ -160,7 +160,7 @@ export default function FormField({
 
   // Carrega marcas apenas uma vez quando o componente monta
   useEffect(() => {
-    if (field.name === "brand" && marcaOptions.length === 0) {
+    if ((field.name === "brand" || field.name === "vehicleBrand") && marcaOptions.length === 0) {
       const loadBrands = async () => {
         setLoadingMarca(true);
         setErrorMarca(null);
@@ -184,7 +184,7 @@ export default function FormField({
 
   // Sincroniza o estado da marca selecionada com o valor atual
   useEffect(() => {
-    if (field.name === "brand") {
+    if (field.name === "brand" || field.name === "vehicleBrand") {
       if (value && marcaOptions.length > 0) {
         const marca = marcaOptions.find((m) => m.name === value);
         if (marca) {
@@ -207,7 +207,7 @@ export default function FormField({
 
   // Carrega modelos quando a marca muda e apenas para campos de modelo
   useEffect(() => {
-    if (field.sourceData === "modelo") {
+    if (field.sourceData === "modelo" || field.name === "model" || field.name === "vehicleModel") {
       // Se não há marca selecionada, limpa os modelos
       if (!localGlobalState.selectedBrand.id) {
         if (localGlobalState.modelOptions.length > 0) {
@@ -224,11 +224,7 @@ export default function FormField({
         onChange("");
       }
 
-      if (
-        !loadingModel &&
-        (globalState.lastLoadedBrandId !== localGlobalState.selectedBrand.id ||
-          localGlobalState.modelOptions.length === 0)
-      ) {
+      if (!loadingModel && (globalState.lastLoadedBrandId !== localGlobalState.selectedBrand.id || localGlobalState.modelOptions.length === 0)) {
         loadModels(localGlobalState.selectedBrand.id);
       }
     }
@@ -238,6 +234,7 @@ export default function FormField({
     loadingModel,
     value,
     onChange,
+    field.name,
   ]);
 
   const loadModels = useCallback(
@@ -579,7 +576,7 @@ export default function FormField({
             <p className="text-red-500 text-sm mt-1">{dateError}</p>
           )}
         </>
-      ) : field.name === "brand" ? (
+      ) : field.name === "brand" || field.name === "vehicleBrand" ? (
         loadingMarca ? (
           <div className="px-4 py-3 border-2 border-blue-300 rounded-lg bg-blue-50 text-blue-700">
             <div className="flex items-center">
@@ -602,7 +599,7 @@ export default function FormField({
               setFilter(newValue);
 
               // Lógica adicional para marca, se necessário
-              if (field.name === "brand") {
+              if (field.name === "brand" || field.name === "vehicleBrand") {
                 const selectedBrand = marcaOptions.find(
                   (m) => m.name === newValue
                 );
@@ -611,6 +608,12 @@ export default function FormField({
                   setGlobalBrandState({
                     id: brandId,
                     name: selectedBrand.name,
+                    options: marcaOptions,
+                  });
+                } else {
+                  setGlobalBrandState({
+                    id: null,
+                    name: "",
                     options: marcaOptions,
                   });
                 }
@@ -636,7 +639,7 @@ export default function FormField({
             required={field.required}
           />
         )
-      ) : field.sourceData === "modelo" ? (
+      ) : field.sourceData === "modelo" || field.name === "model" || field.name === "vehicleModel" ? (
         /* Campo de Modelo customizado */
         loadingModel ? (
           <div className="px-4 py-3 border-2 border-blue-300 rounded-lg bg-blue-50 text-blue-700">

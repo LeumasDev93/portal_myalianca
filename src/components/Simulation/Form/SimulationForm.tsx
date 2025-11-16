@@ -13,6 +13,7 @@ import { FaUser, FaUserTie, FaCar, FaCalculator } from "react-icons/fa";
 import { fetchSimulation } from "@/service/simulationService";
 import { getSafeGridClass } from "@/lib/utils";
 import { fetchVehicleBrands } from "@/service/marcaService";
+import { fetchVehicleModels } from "@/service/modeloService";
 import { getSession } from "next-auth/react";
 import { SimulationResults } from "../MySimulations/SimulationResults";
 import { useSimulationActivity } from "@/lib/activityExamples";
@@ -74,6 +75,7 @@ export default function SimulationForm({
   const [isLoading, setIsLoading] = useState(false);
   const [fetchError, setError] = useState<string | null>(null);
   const [selectedBrandId, setSelectedBrandId] = useState<number | null>(null);
+  const [models, setModels] = useState<{ id: number; name: string }[]>([]);
   const [token, setToken] = useState<string | null>(null);
   const [simulationResult, setSimulationResult] = useState<any>(null);
   const [isLoadingSimulation, setIsLoadingSimulation] = useState(false);
@@ -101,10 +103,10 @@ export default function SimulationForm({
         const data = await fetchVehicleBrands(); // Passa token se precisar autenticar
         setBrands(data);
 
-        // Se o campo brand já estiver preenchido no formValues, atualiza selectedBrandId
-        if (formValues.brand) {
+        // Se o campo vehicleBrand já estiver preenchido no formValues, atualiza selectedBrandId
+        if (formValues.vehicleBrand) {
           const selectedBrand = data.find(
-            (brand) => brand.name === formValues.brand
+            (brand) => brand.name === formValues.vehicleBrand
           );
           if (selectedBrand) {
             setSelectedBrandId(selectedBrand.id);
@@ -123,7 +125,25 @@ export default function SimulationForm({
     };
 
     loadBrands();
-  }, [token, formValues.brand]);
+  }, [token, formValues.vehicleBrand]);
+
+  // Load vehicle models when brand changes
+  useEffect(() => {
+    const loadModels = async () => {
+      if (!selectedBrandId) {
+        setModels([]);
+        return;
+      }
+      try {
+        const data = await fetchVehicleModels(selectedBrandId);
+        setModels(Array.isArray(data) ? data : []);
+      } catch (err) {
+        console.error("Erro ao buscar modelos:", err);
+        setModels([]);
+      }
+    };
+    loadModels();
+  }, [selectedBrandId]);
 
   // Inicializa valores do formulário quando o produto carregar
   useEffect(() => {
@@ -267,6 +287,12 @@ export default function SimulationForm({
         ...prev,
         [name]: value,
       };
+      // Ao mudar a marca, limpar modelo e atualizar selectedBrandId
+      if (name === 'vehicleBrand') {
+        const brand = brands.find((b) => b.name === value);
+        setSelectedBrandId(brand ? brand.id : null);
+        updated['vehicleModel'] = '';
+      }
       return updated;
     });
 
@@ -512,6 +538,8 @@ export default function SimulationForm({
                     .sort((a: any, b: any) => a.position - b.position)
                     .map((field: any) => {
                       const fieldValue = formValues[field.name] || "";
+                      // Opções dinâmicas para modelos de veículo
+                      const dynamicOptions = field.name === 'vehicleModel' ? models.map(m => ({ id: m.id, name: m.name })) : [];
                       return (
                         <FormField
                           key={field.name}
@@ -521,7 +549,7 @@ export default function SimulationForm({
                           onChange={(value: string) =>
                             handleFieldChange(field.name, value)
                           }
-                          options={[]}
+                          options={dynamicOptions}
                         />
                       );
                     })}
