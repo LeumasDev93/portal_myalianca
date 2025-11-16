@@ -20,6 +20,11 @@ export default function SimulationScreen({ onNavigateToRecibo }: SimulationScree
   const [currentSlide, setCurrentSlide] = useState(0);
   const [activeTab, setActiveTab] = useState("types");
 
+  // Verificar se algum produto tem bannerIdm
+  const hasBanner = products && products.length > 0 && products.some(
+    (product) => product.bannerIdm || product.bannerIdmMobile || product.bannerIdmWeb
+  );
+
   const bannerImages = [
     {
       src: "https://st2.depositphotos.com/1441511/5482/i/450/depositphotos_54821609-stock-photo-happy-man-inside-car-of.jpg",
@@ -46,13 +51,14 @@ export default function SimulationScreen({ onNavigateToRecibo }: SimulationScree
     setActiveTab("mySimulations");
   };
   useEffect(() => {
+    if (!hasBanner) return;
     const interval = setInterval(() => {
       setCurrentSlide((prev) =>
         prev === bannerImages.length - 1 ? 0 : prev + 1
       );
     }, 5000);
     return () => clearInterval(interval);
-  }, [bannerImages.length]);
+  }, [hasBanner, bannerImages.length]);
 
   const nextSlide = () => {
     setCurrentSlide((prev) =>
@@ -71,90 +77,105 @@ export default function SimulationScreen({ onNavigateToRecibo }: SimulationScree
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         {/* Banner */}
         {!selectedProduct && (
-          <div className="relative bg-[#C41E3A]  overflow-hidden h-[220px] sm:h-[270px] md:h-[300px] flex items-center">
-            {bannerImages.map((image, index) => (
-              <div
-                key={index}
-                className={`absolute inset-0 flex transition-opacity duration-500 ${
-                  index === currentSlide
-                    ? "opacity-100 z-10"
-                    : "opacity-0 z-0 pointer-events-none"
-                }`}
-              >
-                <div className="container w-[100%] xl:w-full h-full flex flex-col items-center justify-center mt-2 sm:mt-4 md:mt-0 font-thin text-white z-5 relative px-4 pb-20 sm:pb-24 md:pb-0">
-                  <h1 className="text-base sm:text-lg md:text-2xl lg:text-4xl xl:text-5xl font-bold mb-1 sm:mb-2 text-center md:text-left">
-                    {image.title}
-                  </h1>
-                  <h2 className="text-xs sm:text-sm md:text-lg lg:text-xl xl:text-3xl text-center md:text-left">
-                    {image.subtitle}
-                  </h2>
-                </div>
-                <Image
-                  src={image.src}
-                  alt={image.alt}
-                  width={800}
-                  height={300}
-                  className="hidden md:block object-cover rounded-l-full"
-                  priority={index === 0}
-                />
-              </div>
-            ))}
+          <div className={`relative overflow-hidden h-[220px] sm:h-[270px] md:h-[300px] flex items-center ${
+            hasBanner ? 'bg-[#C41E3A]' : 'bg-gradient-to-br from-blue-900 to-red-800'
+          }`}>
+            {hasBanner ? (
+              <>
+                {bannerImages.map((image, index) => (
+                  <div
+                    key={index}
+                    className={`absolute inset-0 flex transition-opacity duration-500 ${
+                      index === currentSlide
+                        ? "opacity-100 z-10"
+                        : "opacity-0 z-0 pointer-events-none"
+                    }`}
+                  >
+                    <div className="container w-[100%] xl:w-full h-full flex flex-col items-center justify-center mt-2 sm:mt-4 md:mt-0 font-thin text-white z-5 relative px-4 pb-20 sm:pb-24 md:pb-0">
+                      <h1 className="text-base sm:text-lg md:text-2xl lg:text-4xl xl:text-5xl font-bold mb-1 sm:mb-2 text-center md:text-left">
+                        {image.title}
+                      </h1>
+                      <h2 className="text-xs sm:text-sm md:text-lg lg:text-xl xl:text-3xl text-center md:text-left">
+                        {image.subtitle}
+                      </h2>
+                    </div>
+                    <Image
+                      src={image.src}
+                      alt={image.alt}
+                      width={800}
+                      height={300}
+                      className="hidden md:block object-cover rounded-l-full"
+                      priority={index === 0}
+                    />
+                  </div>
+                ))}
 
-            {/* Navegação do banner */}
-            <button
-              onClick={prevSlide}
-              aria-label="Previous slide"
-              className="absolute left-2 sm:left-3 top-1/2 -translate-y-1/2 bg-white/30 hover:bg-white/50 p-1 sm:p-2 rounded-full z-20"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-4 w-4 sm:h-6 sm:w-6 text-white"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M15 19l-7-7 7-7"
-                />
-              </svg>
-            </button>
-            <button
-              onClick={nextSlide}
-              aria-label="Next slide"
-              className="absolute right-2 sm:right-3 top-1/2 -translate-y-1/2 bg-white/30 hover:bg-white/50 p-1 sm:p-2 rounded-full z-20"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-4 w-4 sm:h-6 sm:w-6 text-white"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M9 5l7 7-7 7"
-                />
-              </svg>
-            </button>
-
-            {/* Indicators */}
-            <div className="absolute bottom-10 sm:bottom-6 left-1/2 -translate-x-1/2 flex space-x-1 sm:space-x-2 z-10">
-              {bannerImages.map((_, i) => (
+                {/* Navegação do banner */}
                 <button
-                  key={i}
-                  onClick={() => setCurrentSlide(i)}
-                  className={`w-2 h-2 sm:w-3 sm:h-3 rounded-full ${
-                    i === currentSlide ? "bg-white" : "bg-white/50"
-                  }`}
-                  aria-label={`Go to slide ${i + 1}`}
-                />
-              ))}
-            </div>
+                  onClick={prevSlide}
+                  aria-label="Previous slide"
+                  className="absolute left-2 sm:left-3 top-1/2 -translate-y-1/2 bg-white/30 hover:bg-white/50 p-1 sm:p-2 rounded-full z-20"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-4 w-4 sm:h-6 sm:w-6 text-white"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M15 19l-7-7 7-7"
+                    />
+                  </svg>
+                </button>
+                <button
+                  onClick={nextSlide}
+                  aria-label="Next slide"
+                  className="absolute right-2 sm:right-3 top-1/2 -translate-y-1/2 bg-white/30 hover:bg-white/50 p-1 sm:p-2 rounded-full z-20"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-4 w-4 sm:h-6 sm:w-6 text-white"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M9 5l7 7-7 7"
+                    />
+                  </svg>
+                </button>
+
+                {/* Indicators */}
+                <div className="absolute bottom-10 sm:bottom-6 left-1/2 -translate-x-1/2 flex space-x-1 sm:space-x-2 z-10">
+                  {bannerImages.map((_, i) => (
+                    <button
+                      key={i}
+                      onClick={() => setCurrentSlide(i)}
+                      className={`w-2 h-2 sm:w-3 sm:h-3 rounded-full ${
+                        i === currentSlide ? "bg-white" : "bg-white/50"
+                      }`}
+                      aria-label={`Go to slide ${i + 1}`}
+                    />
+                  ))}
+                </div>
+              </>
+            ) : (
+              <div className="w-full h-full flex flex-col items-center justify-center px-4 text-white z-10 relative">
+                <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold mb-2 sm:mb-3 md:mb-4 text-center">
+                  Bem-vindo ao Simulador da Alianca Seguros
+                </h1>
+                <h2 className="text-sm sm:text-base md:text-lg lg:text-xl xl:text-2xl text-center font-light max-w-3xl">
+                  Simule, compare e escolha o seguro que melhor se adapta a si
+                </h2>
+              </div>
+            )}
 
             {/* Tabs responsivos - visíveis em todas as telas */}
             <TabsList className="absolute bottom-0 sm:bottom-2 left-2 right-2 lg:left-2 lg:right-auto flex z-10 bg-transparent space-x-1 lg:space-x-2">
