@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Button } from '@/components/ui/button';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { formatCurrency } from '@/lib/utils';
+import { useRouter } from 'next/navigation';
 
 interface Document {
   id: string;
@@ -96,6 +97,7 @@ interface ModalContratacaoProps {
 export function ModalContratacao({ isOpen, onClose, onNavigateToRecibo, onCloseSimulationResults, simulationData, simulationDetails, selectedInstallment }: ModalContratacaoProps) {
   const { toast } = useToast();
   const { token } = useSessionCheckToken();
+  const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [loadingData, setLoadingData] = useState(true);
   const [loadingDocuments, setLoadingDocuments] = useState(true);
@@ -495,10 +497,14 @@ export function ModalContratacao({ isOpen, onClose, onNavigateToRecibo, onCloseS
                 <button
                   type="button"
                   onClick={() => {
-                    if (successInfo.reference && onNavigateToRecibo) {
-                      try {
-                        onNavigateToRecibo(successInfo.reference);
-                      } catch {}
+                    if (successInfo.reference) {
+                      if (onNavigateToRecibo) {
+                        try {
+                          onNavigateToRecibo(successInfo.reference);
+                        } catch {}
+                      } else {
+                        router.push(`/backoffice?menu=Recibos&reference=${encodeURIComponent(successInfo.reference)}`);
+                      }
                     }
                     onClose();
                   }}

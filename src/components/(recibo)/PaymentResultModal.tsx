@@ -13,10 +13,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { FaCheckCircle, FaExclamationTriangle, FaDownload, FaEnvelope, FaTimes, FaRedo } from "react-icons/fa";
+import { FaCheckCircle, FaExclamationTriangle, FaDownload, FaEnvelope, FaTimes, FaRedo, FaEye } from "react-icons/fa";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { useUserProfile } from "@/hooks/useUserProfile";
 import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 
 type PaymentResultModalProps = {
   isOpen: boolean;
@@ -44,6 +45,7 @@ export function PaymentResultModal({
   isRetrying = false,
 }: PaymentResultModalProps) {
   const { profile } = useUserProfile();
+  const router = useRouter();
   const [showEmailForm, setShowEmailForm] = useState(false);
   const [useSessionEmail, setUseSessionEmail] = useState(true);
   const [email, setEmail] = useState("");
@@ -168,6 +170,15 @@ export function PaymentResultModal({
     }
     
     onClose();
+  };
+
+  const handleViewRecibo = () => {
+    if (reciboRef) {
+      router.push(`/backoffice?menu=Recibos&reference=${encodeURIComponent(reciboRef)}`);
+      onClose();
+    } else {
+      toast.error("Referência do recibo não encontrada");
+    }
   };
 
   return (
@@ -335,17 +346,30 @@ export function PaymentResultModal({
                     type="button"
                     variant="outline"
                     onClick={handleClose}
-                    className="w-full sm:flex-1 order-3 sm:order-1 text-sm sm:text-base"
+                    className="w-full sm:flex-1 order-4 sm:order-1 text-sm sm:text-base"
                     disabled={isDownloading || isSendingEmail}
                   >
                     Fechar
                   </Button>
+                  {reciboRef && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={handleViewRecibo}
+                      disabled={isDownloading || isSendingEmail}
+                      className="w-full sm:flex-1 border-[#002256] text-[#002256] hover:bg-[#002256]/10 order-1 sm:order-2 text-sm sm:text-base"
+                    >
+                      <FaEye className="mr-1 sm:mr-2 text-xs sm:text-sm" />
+                      <span className="hidden sm:inline">Ver Recibo</span>
+                      <span className="sm:hidden">Ver</span>
+                    </Button>
+                  )}
                   <Button
                     type="button"
                     variant="outline"
                     onClick={() => setShowEmailForm(true)}
                     disabled={isDownloading || isSendingEmail}
-                    className="w-full sm:flex-1 border-blue-600 text-blue-600 hover:bg-blue-50 order-1 sm:order-2 text-sm sm:text-base"
+                    className="w-full sm:flex-1 border-blue-600 text-blue-600 hover:bg-blue-50 order-2 sm:order-3 text-sm sm:text-base"
                   >
                     <FaEnvelope className="mr-1 sm:mr-2 text-xs sm:text-sm" />
                     <span className="hidden sm:inline">Enviar por Email</span>
@@ -355,7 +379,7 @@ export function PaymentResultModal({
                     type="button"
                     onClick={onDownloadRecibo}
                     disabled={isDownloading || isSendingEmail}
-                    className="w-full sm:flex-1 bg-[#002256] hover:bg-[#002256]/90 text-white order-2 sm:order-3 text-sm sm:text-base"
+                    className="w-full sm:flex-1 bg-[#002256] hover:bg-[#002256]/90 text-white order-3 sm:order-4 text-sm sm:text-base"
                   >
                     {isDownloading ? (
                       <>
