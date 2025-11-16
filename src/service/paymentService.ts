@@ -143,33 +143,25 @@ export async function processPaymentForModal(
     const randomStr = Math.random().toString(36).substring(2, 8).toUpperCase();
     const merchantSession = `S${timestampStr}${randomStr}`.substring(0, 15);
     
-    console.log("[PAYMENT] MerchantRef gerado:", merchantRef, `(${merchantRef.length} chars)`);
-    console.log("[PAYMENT] MerchantSession gerado:", merchantSession, `(${merchantSession.length} chars)`);
-    console.log("[PAYMENT] Recibo original (para referência):", reciboNumber);
-    console.log("[PAYMENT] merchantRef (mapeado para recibo):", merchantRef);
-    
     // Validação de comprimento
     if (merchantRef.length > 15 || merchantSession.length > 15) {
-      console.error("[PAYMENT] ⚠️ ERRO: merchantRef ou merchantSession excede 15 caracteres!");
       throw new Error("Referência do recibo excede limite permitido");
     }
 
     // PASSO 1: Obter token de acesso (sempre novo para evitar expiração)
-    console.log("[PAYMENT] PASSO 1: Chamando API de autorização...");
     const accessToken = await getPaymentAccessToken();
     try {
       // Compartilha o token com o servidor para uso no callback (curta duração)
       const isSecure = typeof window !== 'undefined' && window.location.protocol === 'https:';
       document.cookie = `pay_token=${accessToken}; Path=/; Max-Age=600; ${isSecure ? 'SameSite=None; Secure' : 'SameSite=Lax'}`;
     } catch {}
-    console.log("[PAYMENT] ✅ Token obtido com sucesso");
-    console.log("[PAYMENT] Token completo:", accessToken);
 
     // PASSO 2: Criar intenção de pagamento com o token
-    console.log("[PAYMENT] PASSO 2: Criando intenção de pagamento...");
+    // Arredonda o valor para cima se tiver decimais
+    const roundedAmount = roundAmountUp(amount);
     const paymentData: PaymentIntentRequest = {
       name: userName,
-      amount: amount,
+      amount: roundedAmount,
       currency: "CVE",
       email: userEmail,
       billAddrCity: "Praia",
@@ -182,21 +174,11 @@ export async function processPaymentForModal(
       phoneNumber: userPhone.replace(/[^0-9]/g, ""), // Remove formatação
       ...(orderReference && { orderReference }), // Referência do recibo se fornecida
     };
-    console.log("[PAYMENT] Dados que serão enviados:", JSON.stringify(paymentData, null, 2));
-    console.log("[PAYMENT] Token que será usado:", accessToken.substring(0, 50) + "...");
 
     const paymentIntent = await createPaymentIntent(accessToken, paymentData);
-    console.log("[PAYMENT] ✅ Intenção criada:", paymentIntent);
 
     // PASSO 3: Gerar URL do checkout
-    console.log("[PAYMENT] PASSO 3: Gerando URL do checkout...");
-    console.log("[PAYMENT] Reference (Checkout UUID):", paymentIntent.reference);
-    console.log("[PAYMENT] SessionId:", paymentIntent.sessionId);
-    console.log("[PAYMENT] MerchantRef (Recibo):", paymentIntent.merchantRef);
-    console.log("[PAYMENT] Recibo original:", reciboNumber);
-    
     const checkoutUrl = getCheckoutUrl(paymentIntent.reference, paymentIntent.sessionId);
-    console.log("[PAYMENT] ✅ URL do checkout gerada com sucesso!");
     
     return {
       checkoutUrl,
@@ -204,9 +186,19 @@ export async function processPaymentForModal(
       sessionId: paymentIntent.sessionId
     };
   } catch (error) {
-    console.error("[PAYMENT] ❌ Erro no processamento de pagamento:", error);
     throw error;
   }
+}
+
+/**
+ * Arredonda o valor para cima se tiver decimais (não pode conter valor após a vírgula)
+ */
+function roundAmountUp(amount: number): number {
+  // Se o valor tem decimais (parte decimal > 0), arredonda para cima
+  if (amount % 1 !== 0) {
+    return Math.ceil(amount);
+  }
+  return amount;
 }
 
 /**
@@ -270,21 +262,12 @@ async function createPurchase(
 
     // Lê o body como texto primeiro (SEMPRE como texto, nunca como JSON)
     const responseText = await response.text();
-    console.log("[PAYMENT SISP] Resposta recebida - Status:", response.status);
-    console.log("[PAYMENT SISP] Resposta recebida - Primeiros 200 chars:", responseText.substring(0, 200));
     
     // Verifica se é HTML (sempre priorizar HTML se começar com <!DOCTYPE ou <html)
     const isHTML = responseText.trim().startsWith('<!DOCTYPE') || responseText.trim().startsWith('<html');
     
     if (isHTML) {
       // É HTML - retorna diretamente (mesmo se status não for 200, pode ser HTML de erro)
-      console.log("[PAYMENT SISP] ✅ HTML detectado na resposta");
-      console.log("[PAYMENT SISP] HTML length:", responseText.length);
-      
-      if (!response.ok) {
-        console.warn("[PAYMENT SISP] ⚠️ Status não é 200, mas é HTML - retornando mesmo assim");
-      }
-      
       return {
         html: responseText,
         channelTransactionId: data.channelTransactionId,
@@ -297,9 +280,12 @@ async function createPurchase(
       try {
         // Tenta parsear como JSON para pegar mensagem de erro
         const errorData = JSON.parse(responseText);
-        errorMessage = errorData.message || errorData.error || errorData.detail || "Erro ao processar pagamento";
+        errorMessage = errorData.message || errorData.error || errorData.detail || `Erro ${response.status}: Erro ao criar pagamento`;
       } catch {
-        errorMessage = responseText || `Erro ${response.status}: Erro ao processar pagamento`;
+        // Se não conseguir parsear como JSON, usa o texto da resposta ou status
+        errorMessage = responseText && responseText.trim() 
+          ? responseText.substring(0, 200) 
+          : `Erro ${response.status}: Erro ao criar pagamento`;
       }
       const error = new Error(errorMessage) as PaymentError;
       error.status = response.status;
@@ -307,15 +293,13 @@ async function createPurchase(
     }
     
     // Resposta OK e não é HTML - tenta JSON
-    console.log("[PAYMENT SISP] Tentando parsear como JSON...");
     try {
       const responseData = JSON.parse(responseText);
       return {
         html: responseData.html || "",
         channelTransactionId: responseData.channelTransactionId || data.channelTransactionId,
       };
-    } catch (parseError) {
-      console.error("[PAYMENT SISP] ❌ Erro ao parsear JSON:", parseError);
+    } catch {
       throw new Error("Resposta não é HTML nem JSON válido");
     }
   } catch (error) {
@@ -339,9 +323,7 @@ export async function processPaymentSISP(
     const CLIENT_ID = "ju3Rt5EEDc2yQNxOsgJVBZrOszZx-aRB";
     
     // PASSO 1: Gerar token
-    console.log("[PAYMENT SISP] PASSO 1: Gerando token...");
     const token = await getPaymentAccessToken();
-    console.log("[PAYMENT SISP] ✅ Token gerado com sucesso");
     
     // Compartilha o token com o servidor para uso no callback
     try {
@@ -350,14 +332,13 @@ export async function processPaymentSISP(
     } catch {}
     
     // PASSO 2: Gerar channelTransactionId (máximo 15 caracteres)
-    console.log("[PAYMENT SISP] PASSO 2: Gerando channelTransactionId...");
     const channelTransactionId = generateChannelTransactionId();
-    console.log("[PAYMENT SISP] channelTransactionId gerado:", channelTransactionId, `(${channelTransactionId.length} chars)`);
     
     // PASSO 3: Criar pagamento
-    console.log("[PAYMENT SISP] PASSO 3: Criando pagamento...");
+    // Arredonda o valor para cima se tiver decimais
+    const roundedAmount = roundAmountUp(amount);
     const purchaseData: PurchaseRequest = {
-      amount: amount,
+      amount: roundedAmount,
       languageMessages: "pt",
       channelTransactionId: channelTransactionId,
       provider: "SISP",
@@ -376,27 +357,17 @@ export async function processPaymentSISP(
       clientId: CLIENT_ID,
     };
     
-    console.log("[PAYMENT SISP] Dados que serão enviados:", {
-      ...purchaseData,
-      token: token ? `${token.substring(0, 20)}...` : 'missing'
-    });
-    
     const purchaseResponse = await createPurchase(token, purchaseData);
-    console.log("[PAYMENT SISP] ✅ Pagamento criado com sucesso");
-    console.log("[PAYMENT SISP] HTML recebido:", purchaseResponse.html ? `Sim (${purchaseResponse.html.length} caracteres)` : "Não");
     
     if (purchaseResponse.html) {
-      console.log("[PAYMENT SISP] HTML preview:", purchaseResponse.html.substring(0, 300));
       return {
         html: purchaseResponse.html,
         channelTransactionId: purchaseResponse.channelTransactionId,
       };
     } else {
-      console.error("[PAYMENT SISP] ❌ Resposta não contém HTML válido:", purchaseResponse);
       throw new Error("Resposta do pagamento não contém HTML");
     }
   } catch (error) {
-    console.error("[PAYMENT SISP] ❌ Erro no processamento de pagamento:", error);
     throw error;
   }
 }
@@ -431,9 +402,11 @@ export async function processPayment(
     // PASSO 1: Obter token de acesso (sempre novo para evitar expiração)
     const accessToken = await getPaymentAccessToken();
     // PASSO 2: Criar intenção de pagamento com o token
+    // Arredonda o valor para cima se tiver decimais
+    const roundedAmount = roundAmountUp(amount);
     const paymentData: PaymentIntentRequest = {
       name: userName,
-      amount: amount,
+      amount: roundedAmount,
       currency: "CVE",
       email: userEmail,
       billAddrCity: "Praia",

@@ -14,20 +14,8 @@ type ReciboPDFModalProps = {
 export function ReciboPDFModal({
   pdfUrl,
   onClose,
-  reciboStatus,
   reciboNumber,
-  onPayment,
-  onDownload,
 }: ReciboPDFModalProps) {
-  // Determinar se pode pagar baseado no status
-  const canPay =
-    !reciboStatus ||
-    (reciboStatus !== 1 && reciboStatus !== 2 && reciboStatus !== 5);
-
-  // Determinar se pode baixar baseado no status
-  const canDownload =
-    reciboStatus &&
-    (reciboStatus === 1 || reciboStatus === 2 || reciboStatus === 5);
 
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50">
@@ -41,22 +29,7 @@ export function ReciboPDFModal({
             </h2>
           </div>
           <div className="flex items-center space-x-4">
-            {canPay && onPayment && (
-              <button
-                onClick={onPayment}
-                className="bg-[#002256] text-white px-4 py-2 rounded-md text-sm sm:text-lg hover:bg-[#001a3d] transition-colors"
-              >
-                Pagar Agora
-              </button>
-            )}
-            {canDownload && onDownload && (
-              <button
-                onClick={onDownload}
-                className="bg-[#002256] text-white px-4 py-2 text-sm sm:text-lg rounded-md hover:bg-[#002256]/70 transition-colors"
-              >
-                Baixar Recibo
-              </button>
-            )}
+          
             <button
               onClick={onClose}
               className="text-gray-500 hover:text-gray-800"

@@ -16,7 +16,6 @@ export function middleware(req: NextRequest) {
   
   // Pula middleware para rotas que não precisam de autenticação
   if (
-    pathname.startsWith('/api/payment/callback') ||
     pathname.startsWith('/api/') ||
     pathname.startsWith('/_next/') ||
     pathname.startsWith('/favicon.ico') ||

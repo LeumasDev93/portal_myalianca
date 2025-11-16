@@ -8,6 +8,7 @@ import { UnreadMessagesProvider } from "@/contexts/unread-messages-context";
 import { ConnectionProvider } from "@/contexts/connection-context";
 import { Suspense } from "react";
 import { Toaster } from "@/components/ui/toaster";
+import { Toaster as SonnerToaster } from "sonner";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -35,6 +36,7 @@ export default function RootLayout({
           </ConnectionProvider>
         </Suspense>
         <Toaster />
+        <SonnerToaster position="top-right" expand={true} richColors />
       </body>
     </html>
   );

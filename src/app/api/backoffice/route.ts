@@ -24,29 +24,35 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    console.log('[PAYMENT CALLBACK] Recebido callback POST do SISP (via /backoffice):', body);
-
     const { reference, amount, merchantRef, status: sispStatus, message: sispMessage } = body;
     const awtFromQuery = urlObj.searchParams.get('awt') || '';
     const reciboRefFromQuery = urlObj.searchParams.get('reciboRef') || '';
 
-    let serverStatus: 'ok' | 'error' = 'error';
+    let serverStatus: 'ok' | 'error' | 'cancelled' = 'error';
     let serverMessage = 'Pagamento não processado';
     let collectStatus: 'ok' | 'error' | 'skipped' = 'skipped';
     let collectMessage = '';
 
-    console.log('[BACKOFFICE] Status do SISP:', sispStatus);
-    console.log('[BACKOFFICE] Mensagem do SISP:', sispMessage);
+    // Verificar se foi cancelamento (normalmente vem com mensagem específica ou status específico)
+    const sispMessageLower = (sispMessage || '').toLowerCase();
+    const isCancelled = sispMessageLower.includes('cancel') || 
+                        sispMessageLower.includes('cancelado') ||
+                        sispMessageLower.includes('cancelled') ||
+                        body.status_code === '3' ||
+                        body.status_code === '2' && (sispMessageLower.includes('cancel') || sispMessageLower.includes('cancelado') || sispMessageLower.includes('cancelled')) ||
+                        sispStatus === 'CANCELLED' ||
+                        sispStatus === 'CANCEL' ||
+                        sispStatus === 'ERRO' && (sispMessageLower.includes('cancel') || sispMessageLower.includes('cancelado') || sispMessageLower.includes('cancelled'));
 
-    // SE SISP RETORNOU ERRO - NÃO VALIDA HMAC
-    if (sispStatus === 'ERRO' || sispStatus === 'ERROR' || sispStatus === 'FAILED') {
+    // SE SISP RETORNOU ERRO OU CANCELAMENTO - NÃO VALIDA HMAC
+    if (isCancelled) {
+      serverStatus = 'cancelled';
+      serverMessage = sispMessage || 'Pagamento cancelado pelo cliente';
+    } else if (sispStatus === 'ERRO' || sispStatus === 'ERROR' || sispStatus === 'FAILED') {
       serverStatus = 'error';
       serverMessage = sispMessage || 'Pagamento rejeitado pelo gateway';
-      console.log('❌ [BACKOFFICE] SISP retornou ERRO - NÃO validando HMAC');
-      console.log('❌ [BACKOFFICE] Mensagem:', serverMessage);
     } else {
       // SISP retornou sucesso - VALIDA HMAC
-      console.log('✅ [BACKOFFICE] SISP OK - Validando HMAC...');
       
       const hmacPayload = {
         reference: (reference || merchantRef || '').toString().trim(),
@@ -66,8 +72,7 @@ export async function POST(request: NextRequest) {
         cache: 'no-store',
       });
       if (!validateRes.ok) {
-        const txt = await validateRes.text().catch(() => '');
-        console.error('[BACKOFFICE] validar-hmac falhou:', validateRes.status, txt);
+        await validateRes.text().catch(() => '');
       }
       if (validateRes.ok) {
         serverStatus = 'ok';
@@ -79,74 +84,75 @@ export async function POST(request: NextRequest) {
             .split(';')
             .map((c) => c.trim())
             .find((c) => c.startsWith('recibo_ref='))
-            ?.split('=')[1] || reference || '';
+            ?.split('=')[1] || body.orderReference || '';
 
-            console.log('receiptRef -->', receiptRef, cookiesHeader,  "<-- cookiesHeader");
-          const collectUrl = `https://aliancacvtest.rtcom.pt/anywhere/api/v1/private/mobile/invoice/P2025.422/collect`;
-          const collectBody = {
-            value: Number(amount),
-            reference: "P2025.422",
-            sendEmail: false,
-            apiName: 'WebsiteCollection',
-          };
+          if (!receiptRef) {
+            collectStatus = 'error';
+            collectMessage = 'Referência do recibo não encontrada';
+          } else {
+            // Arredonda o valor para cima se tiver decimais (não pode conter valor após a vírgula)
+            const amountNumber = Number(amount);
+            const roundedValue = amountNumber % 1 !== 0 ? Math.ceil(amountNumber) : amountNumber;
+            
+            const collectUrl = `https://aliancacvtest.rtcom.pt/anywhere/api/v1/private/mobile/invoice/${encodeURIComponent(receiptRef)}/collect`;
+            const collectBody = {
+              value: roundedValue,
+              reference: receiptRef,
+              sendEmail: false,
+              apiName: 'WebsiteCollection',
+            };
 
-          // Prioridade: sessão NextAuth -> awt (query/body). NÃO usar pay_token/anywhere_token cookies
-          let anywhereBearer: string = '';
-          let tokenSource = 'none';
-          try {
-            const sess = await fetch(new URL('/api/auth/session', request.url), {
-              headers: { cookie: request.headers.get('cookie') || '' },
-              cache: 'no-store',
-            });
-            if (sess.ok) {
-              const data = await sess.json();
-              if (data?.user?.accessToken) {
-                anywhereBearer = data.user.accessToken as string;
-                tokenSource = 'session';
+            // Prioridade: sessão NextAuth -> awt (query/body). NÃO usar pay_token/anywhere_token cookies
+            let anywhereBearer: string = '';
+            try {
+              const sess = await fetch(new URL('/api/auth/session', request.url), {
+                headers: { cookie: request.headers.get('cookie') || '' },
+                cache: 'no-store',
+              });
+              if (sess.ok) {
+                const data = await sess.json();
+                if (data?.user?.accessToken) {
+                  anywhereBearer = data.user.accessToken as string;
+                }
+              }
+            } catch {}
+            if (!anywhereBearer && (awtFromQuery || body['awt'])) {
+              anywhereBearer = (awtFromQuery || body['awt']) as string;
+            }
+            if (!anywhereBearer) {
+              collectStatus = 'error';
+              collectMessage = 'Token de sessão ausente para cobrança';
+            } else {
+              const collectRes = await fetch(collectUrl, {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  Authorization: `Bearer ${anywhereBearer}`,
+                },
+                body: JSON.stringify(collectBody),
+                cache: 'no-store',
+              });
+              
+              collectStatus = collectRes.ok ? 'ok' : 'error';
+              
+              try {
+                const ct = collectRes.headers.get('content-type') || '';
+                if (ct.includes('application/json')) {
+                  const payload = await collectRes.json();
+                  // Usa apenas a mensagem da resposta, sem adicionar referência e valor
+                  collectMessage = payload?.error
+                    ? String(payload.error)
+                    : payload?.message || payload?.desc || (collectRes.ok ? 'Cobrança confirmada com sucesso' : 'Falha ao cobrar');
+                } else {
+                  const text = await collectRes.text();
+                  collectMessage = (text && text.trim().length > 0)
+                    ? text.slice(0, 300)
+                    : (collectRes.ok ? 'Cobrança confirmada com sucesso' : `Falha ao cobrar (${collectRes.status})`);
+                }
+              } catch {
+                collectMessage = collectRes.ok ? 'Cobrança confirmada com sucesso' : `Falha ao cobrar (${collectRes.status})`;
               }
             }
-          } catch {}
-          if (!anywhereBearer && (awtFromQuery || body['awt'])) {
-            anywhereBearer = (awtFromQuery || body['awt']) as string;
-            tokenSource = 'awt';
-          }
-          console.log('[COLLECT TOKEN]', tokenSource, anywhereBearer ? String(anywhereBearer).slice(0, 8) : 'MISSING');
-          if (!anywhereBearer) {
-            collectStatus = 'error';
-            collectMessage = 'Token de sessão ausente para cobrança';
-            throw new Error('MISSING_ANYWHERE_TOKEN');
-          }
-
-          const collectRes = await fetch(collectUrl, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              ...(anywhereBearer ? { Authorization: `Bearer ${anywhereBearer}` } : {}),
-            },
-            body: JSON.stringify(collectBody),
-            cache: 'no-store',
-          });
-          console.log('[COLLECT]', collectUrl, 'status=', collectRes.status);
-          collectStatus = collectRes.ok ? 'ok' : 'error';
-          try {
-            const ct = collectRes.headers.get('content-type') || '';
-            if (ct.includes('application/json')) {
-              const payload = await collectRes.json();
-              // monta mensagem amigável com campos relevantes se existirem
-              const msg = payload?.error
-                ? String(payload.error)
-                : payload?.message || payload?.desc || (collectRes.ok ? 'Cobrança confirmada' : 'Falha ao cobrar');
-              const value = payload?.value ?? collectBody.value;
-              const ref = payload?.reference ?? collectBody.reference;
-              collectMessage = `${msg}${ref ? ` | Ref: ${ref}` : ''}${value ? ` | Valor: ${value}` : ''}`;
-            } else {
-              const text = await collectRes.text();
-              collectMessage = (text && text.trim().length > 0)
-                ? text.slice(0, 300)
-                : (collectRes.ok ? 'Cobrança confirmada' : `Falha ao cobrar (${collectRes.status})`);
-            }
-          } catch {
-            collectMessage = collectRes.ok ? 'Cobrança confirmada' : `Falha ao cobrar (${collectRes.status})`;
           }
         }
       } else {
@@ -167,6 +173,24 @@ export async function POST(request: NextRequest) {
     if (collectMessage) redirectUrl.searchParams.set('collect_message', collectMessage);
     redirectUrl.searchParams.set('merchantRef', body.merchantRef || '');
     redirectUrl.searchParams.set('amount', body.amount?.toString() || '');
+    // Se houver status_code no body (do SISP), passar também
+    if (body.status_code) {
+      redirectUrl.searchParams.set('status_code', body.status_code);
+    }
+    if (sispMessage) {
+      redirectUrl.searchParams.set('message', sispMessage);
+    }
+    
+    // Adicionar referência do recibo se disponível
+    const cookiesHeader = request.headers.get('cookie') || '';
+    const receiptRef = (reciboRefFromQuery || body.reciboRef || '') || cookiesHeader
+      .split(';')
+      .map((c) => c.trim())
+      .find((c) => c.startsWith('recibo_ref='))
+      ?.split('=')[1] || body.orderReference || '';
+    if (receiptRef) {
+      redirectUrl.searchParams.set('reciboRef', receiptRef);
+    }
 
     const res = NextResponse.redirect(redirectUrl, 303);
     res.cookies.set('postpay', '1', {
@@ -177,8 +201,7 @@ export async function POST(request: NextRequest) {
     });
     res.cookies.set('pay_token', '', { path: '/', maxAge: 0, sameSite: 'none', secure: true });
     return res;
-  } catch (error) {
-    console.error('[PAYMENT CALLBACK] Erro no callback POST (/backoffice):', error);
+  } catch {
     const redirectUrl = new URL('/backoffice', request.url);
     redirectUrl.searchParams.set('menu', 'recibo');
     redirectUrl.searchParams.set('payment_status', 'error');
