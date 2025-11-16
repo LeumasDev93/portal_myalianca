@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useSessionCheckToken } from './useSessionToken';
 import { ReciboData } from '@/types/typesData';
 import { useUserProfile } from './useUserProfile';
@@ -44,68 +44,62 @@ export const useRecibos = (initialFilters?: Record<string, string>) => {
     const { profile } = useUserProfile();
     const nifUser = profile?.user?.nif;
     
-    // Busca os recibos da API
-    useEffect(() => {
+    // Função para buscar recibos (com ou sem loading)
+    const fetchRecibos = useCallback(async (showLoading = true) => {
         if (!token || !nifUser) {
             setState({ recibos: [], isLoading: false, error: null });
             return;
         }
 
-        const controller = new AbortController();
-        const { signal } = controller;
-
-        const fetchRecibos = async () => {
-            // Iniciar loading
-            setState({ recibos: [], isLoading: true, error: null });
-
-            try {
-                const response = await fetch(
-                    `/api/anywhere/api/v1/private/mobile/entity/nif/${nifUser}/invoices`,
-                    {
-                        method: "GET",
-                        headers: {
-                            Authorization: `Bearer ${token}`,
-                            "Content-Type": "application/json",
-                            Accept: "application/json",
-                        },
-                        signal,
-                    }
-                );
-
-                if (!response.ok) {
-                    throw new Error(`Erro ${response.status}: ${response.statusText}`);
-                }
-
-                const data = await response.json();
-                const recibosData = Array.isArray(data) ? data : [data];
-
-                // ✅ Atualização ATÔMICA - tudo de uma vez
-                setState({
-                    recibos: recibosData,
-                    isLoading: false,
-                    error: null
-                });
-                setDataLoaded(true);
-            } catch (error) {
-                if (signal.aborted) return;
-
-                const errorMessage = error instanceof Error
-                    ? error.message
-                    : "Erro ao carregar recibos";
-                    
-                // ✅ Erro ATÔMICO
-                setState({
-                    recibos: [],
-                    isLoading: false,
-                    error: errorMessage
-                });
+        try {
+            if (showLoading) {
+                setState(prev => ({ ...prev, isLoading: true, error: null }));
             }
-        };
 
-        fetchRecibos();
+            const response = await fetch(
+                `/api/anywhere/api/v1/private/mobile/entity/nif/${nifUser}/invoices`,
+                {
+                    method: "GET",
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                        "Content-Type": "application/json",
+                        Accept: "application/json",
+                    },
+                }
+            );
 
-        return () => controller.abort();
+            if (!response.ok) {
+                throw new Error(`Erro ${response.status}: ${response.statusText}`);
+            }
+
+            const data = await response.json();
+            const recibosData = Array.isArray(data) ? data : [data];
+
+            // ✅ Atualização ATÔMICA - tudo de uma vez
+            setState({
+                recibos: recibosData,
+                isLoading: false,
+                error: null
+            });
+            setDataLoaded(true);
+        } catch (error) {
+            const errorMessage = error instanceof Error
+                ? error.message
+                : "Erro ao carregar recibos";
+                
+            // ✅ Erro ATÔMICO
+            setState({
+                recibos: [],
+                isLoading: false,
+                error: errorMessage
+            });
+        }
     }, [token, nifUser]);
+    
+    // Busca os recibos da API
+    useEffect(() => {
+        fetchRecibos(true);
+    }, [fetchRecibos]);
 
     // Aplica os filtros sempre que houver mudanças
     const filteredRecibos = state.recibos.filter((recibo) => {
@@ -135,6 +129,11 @@ export const useRecibos = (initialFilters?: Record<string, string>) => {
         return true;
     });
 
+    // Função para atualizar recibos silenciosamente (sem mostrar loading)
+    const refetchSilent = useCallback(async () => {
+        await fetchRecibos(false);
+    }, [fetchRecibos]);
+
     return {
         recibos: state.recibos,
         filteredRecibos,
@@ -147,6 +146,7 @@ export const useRecibos = (initialFilters?: Record<string, string>) => {
         resetFilters: () => {
             setSearchTerm('');
             setStatusFilter('all');
-        }
+        },
+        refetchSilent
     };
 };

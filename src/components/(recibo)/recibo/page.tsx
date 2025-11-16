@@ -207,6 +207,7 @@ function ReciboPageContent({ filterParams }: ReciboPageProps) {
     statusFilter,
     setStatusFilter,
     resetFilters,
+    refetchSilent,
   } = useRecibos(filterParams);
 
   // Função para validar HMAC quando status_code = 1
@@ -1631,9 +1632,18 @@ function ReciboPageContent({ filterParams }: ReciboPageProps) {
       {/* Modal de Resultado do Pagamento (API Collect e SISP) */}
       <PaymentResultModal
         isOpen={paymentResultModal.isOpen}
-        onClose={() => {
+        onClose={async () => {
+          const wasSuccess = paymentResultModal.status === "success";
           setPaymentResultModal({ ...paymentResultModal, isOpen: false });
           paymentModalShownRef.current = false;
+          
+          // Atualiza os recibos silenciosamente quando o modal fechar (apenas se foi sucesso)
+          if (wasSuccess) {
+            // Aguarda um pequeno delay para garantir que a API processou o pagamento
+            setTimeout(async () => {
+              await refetchSilent();
+            }, 1000);
+          }
         }}
         status={paymentResultModal.status}
         reciboRef={paymentResultModal.reciboRef || paymentResultModal.merchantRef}
