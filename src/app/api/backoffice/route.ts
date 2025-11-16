@@ -165,7 +165,7 @@ export async function POST(request: NextRequest) {
     }
 
     const redirectUrl = new URL('/backoffice', request.url);
-    redirectUrl.searchParams.set('menu', 'recibo');
+    redirectUrl.searchParams.set('menu', 'callback');
     redirectUrl.searchParams.set('server_status', serverStatus);
     redirectUrl.searchParams.set('server_message', serverMessage);
     redirectUrl.searchParams.set('collect_status', collectStatus);
@@ -202,7 +202,7 @@ export async function POST(request: NextRequest) {
     return res;
   } catch {
     const redirectUrl = new URL('/backoffice', request.url);
-    redirectUrl.searchParams.set('menu', 'recibo');
+    redirectUrl.searchParams.set('menu', 'callback');
     redirectUrl.searchParams.set('payment_status', 'error');
     return NextResponse.redirect(redirectUrl, 303);
   }

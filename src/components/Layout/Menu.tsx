@@ -12,6 +12,7 @@ export interface MenuItem {
   hoverIcon?: string | React.ReactNode;
   onClick?: () => void;
   isActive?: boolean;
+  hidden?: boolean;
 }
 
 type MenuProps = {
@@ -23,7 +24,7 @@ type MenuProps = {
 export function Menu({ onMenuClick, menuItems, activePath }: MenuProps) {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [hoveredItem, setHoveredItem] = useState<number | null>(null);
-  const mainItems = menuItems.filter((item) => item.title !== "Sair");
+  const mainItems = menuItems.filter((item) => item.title !== "Sair" && !item.hidden);
   const logoutItem = menuItems.find((item) => item.title === "Sair");
 
   const handleLogoClick = () => {
