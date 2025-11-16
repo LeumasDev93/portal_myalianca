@@ -453,8 +453,8 @@ const HistoryTable = ({
   };
 
   return (
-    <div className="w-full">
-      <div className="flex gap-1 md:gap-2 overflow-x-auto">
+    <div className="w-full h-full flex flex-col">
+      <div className="flex gap-1 md:gap-2 overflow-x-auto flex-shrink-0">
         {Object.keys(tableConfigs).map((tab) => {
           const tabIcon = tableConfigs[tab as keyof typeof tableConfigs].icon;
 
@@ -488,12 +488,10 @@ const HistoryTable = ({
         })}
       </div>
 
-      <div className="bg-white rounded-b-lg rounded-tl-lg shadow-md p-2 md:p-3 xl:p-6 w-full overflow-x-auto">
+      <div className="bg-white rounded-b-lg rounded-tl-lg shadow-md p-2 md:p-3 xl:p-6 w-full overflow-x-auto h-full flex flex-col">
         <div
-          className="overflow-y-auto"
+          className="overflow-y-auto flex-1"
           style={{
-            minHeight: "300px",
-            maxHeight: "500px",
             overflowY: "auto",
           }}
         >
@@ -516,7 +514,7 @@ const HistoryTable = ({
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {loading ? (
-                <TableSkeleton rows={5} columns={config.headers.length} />
+                <TableSkeleton rows={8} columns={config.headers.length} />
               ) : currentItems.length === 0 ? (
                 <tr>
                   <td
@@ -653,7 +651,7 @@ const HistoryTable = ({
         </div>
 
         {totalItems > itemsPerPage && (
-          <div className="flex flex-col md:flex-row justify-between items-center gap-3 mt-4 px-2 md:px-4 py-2">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-3 mt-4 px-2 md:px-4 py-2 flex-shrink-0">
             <div className="text-[10px] md:text-xs text-gray-600 text-center md:text-left">
               Mostrando {indexOfFirstItem + 1} a{" "}
               {Math.min(indexOfLastItem, totalItems)} de {totalItems} itens

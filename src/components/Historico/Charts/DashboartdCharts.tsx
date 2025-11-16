@@ -132,9 +132,9 @@ export function DashboardCharts() {
     isLoadingApolices || isLoadingSinistros || isLoadingRecibos || isValidating;
 
   return (
-    <div className="flex flex-col">
-      <Card className="w-full h-full bg-white rounded-lg shadow-md sm:mt-10">
-        <CardHeader>
+    <div className="flex flex-col h-full">
+      <Card className="w-full h-full bg-white rounded-lg shadow-md sm:mt-10 flex flex-col">
+        <CardHeader className="flex-shrink-0">
           <div className="flex justify-between items-center">
             <CardTitle className="text-xl xl:text-2xl font-bold">
             
@@ -157,9 +157,9 @@ export function DashboardCharts() {
             </div>
           </div>
         </CardHeader>
-        <CardContent className="px-1 sm:px-2 md:px-4 xl:px-6">
-          <Tabs defaultValue="apolices" className="space-y-2 xl:space-y-4">
-            <TabsList className="grid w-full grid-cols-3 bg-white gap-1 sm:gap-2">
+        <CardContent className="px-1 sm:px-2 md:px-4 xl:px-6 flex-1 flex flex-col">
+          <Tabs defaultValue="apolices" className="space-y-2 xl:space-y-4 flex-1 flex flex-col">
+            <TabsList className="grid w-full grid-cols-3 bg-white gap-1 sm:gap-2 flex-shrink-0">
               <TabsTrigger
                 value="apolices"
                 className="text-[#002855] text-[10px] sm:text-xs xl:text-sm font-bold data-[state=active]:bg-[#002855] data-[state=active]:text-white px-2 py-2 data-[state=active]:px-3 data-[state=active]:py-2.5 sm:data-[state=active]:px-4 sm:data-[state=active]:py-3 xl:data-[state=active]:px-5 xl:data-[state=active]:py-3 rounded-lg transition-all whitespace-nowrap overflow-hidden text-ellipsis"
@@ -224,10 +224,10 @@ export function DashboardCharts() {
                 <TabsContent
                   key={key}
                   value={key}
-                  className="space-y-2 xl:space-y-4"
+                  className="space-y-2 xl:space-y-4 flex-1 flex flex-col"
                 >
                   {data.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center h-[200px] sm:h-[250px] xl:h-[270px] text-gray-500 space-y-2">
+                    <div className="flex flex-col items-center justify-center flex-1 text-gray-500 space-y-2">
                       <div className="relative">
                         <FaSearch className="text-4xl text-gray-400 animate-pulse" />
                         <FaFilter
@@ -238,9 +238,9 @@ export function DashboardCharts() {
                       <span>Nenhum dado encontrado.</span>
                     </div>
                   ) : (
-                    <div className="flex flex-col items-center justify-center gap-2 sm:gap-3 md:gap-4 py-2 sm:py-3 md:py-4">
+                    <div className="flex flex-col items-center justify-center gap-2 sm:gap-3 md:gap-4 py-2 sm:py-3 md:py-4 flex-1">
                       {/* Gráfico */}
-                      <div className="w-full h-[180px] sm:h-[220px] md:h-[250px] xl:h-[300px]">
+                      <div className="w-full flex-1 flex items-center justify-center">
                         <ResponsiveContainer width="100%" height="100%">
                           <PieChart>
                             <Pie
@@ -261,7 +261,7 @@ export function DashboardCharts() {
                       </div>
                       
                       {/* Legendas abaixo com quebra de linha automática */}
-                      <div className="flex flex-wrap gap-1.5 sm:gap-2 md:gap-3 xl:gap-4 justify-center items-center text-[10px] sm:text-xs xl:text-sm w-full px-2">
+                      <div className="flex flex-wrap gap-1.5 sm:gap-2 md:gap-3 xl:gap-4 justify-center items-center text-[10px] sm:text-xs xl:text-sm w-full px-2 flex-shrink-0">
                         {data.map((entry, i) => (
                           <div key={i} className="flex items-center gap-1 sm:gap-1.5 md:gap-2">
                             <span

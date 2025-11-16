@@ -58,6 +58,7 @@ import { useReciboActivity } from "@/lib/activityExamples";
 import { useUserProfile } from "@/hooks/useUserProfile";
 import { processPaymentSISP } from "@/service/paymentService";
 // Removido: tratamento de SISP/callback (validação HMAC/collect/limpeza de URL). Agora o retorno do SISP é tratado no PaymentCallback.
+import { FaChevronLeft, FaChevronRight } from "react-icons/fa";
 
 type ViewMode = "grid" | "list";
 
@@ -107,6 +108,8 @@ function ReciboPageContent({ filterParams }: ReciboPageProps) {
     resetFilters,
     // refetchSilent,
   } = useRecibos(filterParams);
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 10;
 
   // Removido: todo tratamento de retorno SISP/callback e modal de resultado de pagamento. Tratado no PaymentCallback.
 
@@ -523,6 +526,18 @@ function ReciboPageContent({ filterParams }: ReciboPageProps) {
   }
 
   // 4️⃣ TEM DADOS
+  // Paginação (estilo History)
+  const totalItems = filteredRecibos.length;
+  const totalPages = Math.ceil(totalItems / ITEMS_PER_PAGE) || 1;
+  const indexOfLastItem = currentPage * ITEMS_PER_PAGE;
+  const indexOfFirstItem = indexOfLastItem - ITEMS_PER_PAGE;
+  const currentRecibos = filteredRecibos.slice(indexOfFirstItem, indexOfLastItem);
+  const goToPage = (page: number) => {
+    if (page >= 1 && page <= totalPages && page !== currentPage) {
+      setCurrentPage(page);
+    }
+  };
+
   return (
     <div className="flex-1 space-y-4 md:space-y-6 p-3 md:p-6 lg:p-8 mt-4">
       <div className="flex items-center justify-between">
@@ -607,7 +622,7 @@ function ReciboPageContent({ filterParams }: ReciboPageProps) {
         </div>
       ) : viewMode === "grid" ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 md:gap-4">
-          {filteredRecibos.map((recibo) => (
+          {currentRecibos.map((recibo) => (
             <Card
               key={recibo.number}
               className="hover:shadow-lg transition-shadow"
@@ -703,7 +718,7 @@ function ReciboPageContent({ filterParams }: ReciboPageProps) {
         </div>
       ) : (
         <div className="space-y-3 md:space-y-4">
-          {filteredRecibos.map((recibo) => (
+          {currentRecibos.map((recibo) => (
             <div
               key={recibo.number}
               className="p-3 md:p-4 border rounded-lg bg-white hover:shadow-md transition-shadow"
@@ -797,6 +812,75 @@ function ReciboPageContent({ filterParams }: ReciboPageProps) {
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* Paginação (estilo History) */}
+      {totalItems > ITEMS_PER_PAGE && (
+        <div className="flex flex-col md:flex-row justify-between items-center gap-3 mt-4 px-2 md:px-4 py-2">
+          <div className="text-[10px] md:text-xs text-gray-600 text-center md:text-left">
+            Mostrando {indexOfFirstItem + 1} a {Math.min(indexOfLastItem, totalItems)} de {totalItems} itens
+          </div>
+          <div className="flex items-center space-x-1 md:space-x-2 text-[10px] md:text-sm">
+            <button
+              onClick={() => goToPage(currentPage - 1)}
+              disabled={currentPage === 1}
+              className={`p-1 md:p-2 rounded-md text-xs md:text-sm ${
+                currentPage === 1
+                  ? "bg-gray-200 text-gray-500 cursor-not-allowed"
+                  : "bg-[#002256] text-white hover:bg-[#002256]/90"
+              }`}
+              aria-label="Página anterior"
+            >
+              <FaChevronLeft className="h-2 w-2 2xl:h-3 2xl:w-3" />
+            </button>
+            {(() => {
+              const pages: (number | string)[] = [];
+              if (totalPages <= 4) {
+                for (let i = 1; i <= totalPages; i++) pages.push(i);
+              } else {
+                let startPage = 1;
+                if (currentPage <= 2) startPage = 1;
+                else if (currentPage >= totalPages - 1) startPage = totalPages - 3;
+                else startPage = currentPage - 1;
+                for (let i = 0; i < 4; i++) {
+                  const pageNum = startPage + i;
+                  if (pageNum <= totalPages) pages.push(pageNum);
+                }
+                if (startPage > 1) pages.unshift("...");
+                if (startPage + 3 < totalPages) pages.push("...");
+              }
+              return pages.map((page, idx) =>
+                page === "..." ? (
+                  <span key={`ellipsis-${idx}`} className="w-2 h-2 md:w-4 md:h-4 flex items-center justify-center text-gray-500 text-xs md:text-sm">
+                    ...
+                  </span>
+                ) : (
+                  <button
+                    key={page as number}
+                    onClick={() => goToPage(page as number)}
+                    className={`w-2 h-2 md:w-6 md:h-6 2xl:w-8 2xl:h-8 rounded-md text-xs md:text-sm font-medium transition-colors ${
+                      page === currentPage ? "bg-[#002256] text-white shadow-md" : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                    }`}
+                  >
+                    {page}
+                  </button>
+                )
+              );
+            })()}
+            <button
+              onClick={() => goToPage(currentPage + 1)}
+              disabled={currentPage === totalPages}
+              className={`p-1 md:p-2 rounded-md text-xs md:text-sm ${
+                currentPage === totalPages
+                  ? "bg-gray-200 text-gray-500 cursor-not-allowed"
+                  : "bg-[#002256] text-white hover:bg-[#002256]/90"
+              }`}
+              aria-label="Próxima página"
+            >
+              <FaChevronRight className="h-2 w-2 2xl:h-3 2xl:w-3" />
+            </button>
+          </div>
         </div>
       )}
 

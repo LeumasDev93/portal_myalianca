@@ -39,6 +39,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { IoMdClose } from "react-icons/io";
+import { FaChevronLeft, FaChevronRight } from "react-icons/fa";
 
 type ApolicePageProps = {
   onSelectDetail: (id: string, contractNumber: string) => void;
@@ -48,6 +49,8 @@ export default function ApolicePage({ onSelectDetail }: ApolicePageProps) {
   const { apolices, errorApolices, isLoadingApolices } = useApolices();
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 10;
 
   // 1️⃣ LOADING
   if (isLoadingApolices) {
@@ -115,6 +118,19 @@ export default function ApolicePage({ onSelectDetail }: ApolicePageProps) {
     return matchesSearch && matchesStatus;
   });
 
+  // Paginação (estilo History)
+  const totalItems = filteredApolices.length;
+  const totalPages = Math.ceil(totalItems / ITEMS_PER_PAGE) || 1;
+  const indexOfLastItem = currentPage * ITEMS_PER_PAGE;
+  const indexOfFirstItem = indexOfLastItem - ITEMS_PER_PAGE;
+  const currentItems = filteredApolices.slice(indexOfFirstItem, indexOfLastItem);
+
+  const goToPage = (page: number) => {
+    if (page >= 1 && page <= totalPages && page !== currentPage) {
+      setCurrentPage(page);
+    }
+  };
+
   return (
     <div className="flex-1 space-y-6 p-6 md:p-8 mt-4">
       <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-[#002256]">
@@ -169,7 +185,7 @@ export default function ApolicePage({ onSelectDetail }: ApolicePageProps) {
             </p>
           </div>
         ) : (
-          filteredApolices.map((apolice) => (
+          currentItems.map((apolice) => (
             <Card key={apolice.contractNumber} className="overflow-hidden">
               <CardHeader className="border-b border-b-red-500">
                 <div className="flex items-center justify-between">
@@ -236,17 +252,17 @@ export default function ApolicePage({ onSelectDetail }: ApolicePageProps) {
                     </div>
                   </div>
                   <div className="flex justify-between">
-                    {/* <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-4">
                       <div className="bg-gray-200  p-2 rounded-full ">
                         <FaRegCalendar className="size-3 sm:size-4 xl:size-5 text-[#002256]" />
                       </div>
                       <h3 className="text-sm font-medium text-[#002256]">
-                        Data Vencimento
+                      Data Vencimento
                       </h3>
-                    </div> */}
+                    </div>
                     <div className="flex items-center gap-2">
                       <h3 className="text-sm font-medium text-[#002256]">
-                        {formatDate(apolice.endDate)}
+                      {apolice.endDate ? formatDate(apolice.endDate) : "Anos e Seguintes"}
                       </h3>
                     </div>
                   </div>
@@ -256,7 +272,7 @@ export default function ApolicePage({ onSelectDetail }: ApolicePageProps) {
                         <FaDollarSign className="size-3 sm:size-4 xl:size-5 text-[#002256]" />
                       </div>
                       <h3 className="text-sm font-medium text-[#002256]">
-                        Prêmio Anual
+                        {apolice.endDate ? "Prêmio Total" : "Prêmio Anual"}
                       </h3>
                     </div>
                     <div className="flex flex-col items-center">
@@ -271,6 +287,75 @@ export default function ApolicePage({ onSelectDetail }: ApolicePageProps) {
           ))
         )}
       </div>
+
+      {/* Paginação (estilo History) */}
+      {totalItems > ITEMS_PER_PAGE && (
+        <div className="flex flex-col md:flex-row justify-between items-center gap-3 mt-4 px-2 md:px-4 py-2">
+          <div className="text-[10px] md:text-xs text-gray-600 text-center md:text-left">
+            Mostrando {indexOfFirstItem + 1} a {Math.min(indexOfLastItem, totalItems)} de {totalItems} itens
+          </div>
+          <div className="flex items-center space-x-1 md:space-x-2 text-[10px] md:text-sm">
+            <button
+              onClick={() => goToPage(currentPage - 1)}
+              disabled={currentPage === 1}
+              className={`p-1 md:p-2 rounded-md text-xs md:text-sm ${
+                currentPage === 1
+                  ? "bg-gray-200 text-gray-500 cursor-not-allowed"
+                  : "bg-[#002256] text-white hover:bg-[#002256]/90"
+              }`}
+              aria-label="Página anterior"
+            >
+              <FaChevronLeft className="h-2 w-2 2xl:h-3 2xl:w-3" />
+            </button>
+            {(() => {
+              const pages: (number | string)[] = [];
+              if (totalPages <= 4) {
+                for (let i = 1; i <= totalPages; i++) pages.push(i);
+              } else {
+                let startPage = 1;
+                if (currentPage <= 2) startPage = 1;
+                else if (currentPage >= totalPages - 1) startPage = totalPages - 3;
+                else startPage = currentPage - 1;
+                for (let i = 0; i < 4; i++) {
+                  const pageNum = startPage + i;
+                  if (pageNum <= totalPages) pages.push(pageNum);
+                }
+                if (startPage > 1) pages.unshift("...");
+                if (startPage + 3 < totalPages) pages.push("...");
+              }
+              return pages.map((page, idx) =>
+                page === "..." ? (
+                  <span key={`ellipsis-${idx}`} className="w-2 h-2 md:w-4 md:h-4 flex items-center justify-center text-gray-500 text-xs md:text-sm">
+                    ...
+                  </span>
+                ) : (
+                  <button
+                    key={page as number}
+                    onClick={() => goToPage(page as number)}
+                    className={`w-2 h-2 md:w-6 md:h-6 2xl:w-8 2xl:h-8 rounded-md text-xs md:text-sm font-medium transition-colors ${
+                      page === currentPage ? "bg-[#002256] text-white shadow-md" : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                    }`}
+                  >
+                    {page}
+                  </button>
+                )
+              );
+            })()}
+            <button
+              onClick={() => goToPage(currentPage + 1)}
+              disabled={currentPage === totalPages}
+              className={`p-1 md:p-2 rounded-md text-xs md:text-sm ${
+                currentPage === totalPages
+                  ? "bg-gray-200 text-gray-500 cursor-not-allowed"
+                  : "bg-[#002256] text-white hover:bg-[#002256]/90"
+              }`}
+              aria-label="Próxima página"
+            >
+              <FaChevronRight className="h-2 w-2 2xl:h-3 2xl:w-3" />
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

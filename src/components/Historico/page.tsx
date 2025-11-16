@@ -267,8 +267,8 @@ export default function Historico({
         <h1 className="text-xl font-bold text-[#002856]">Histórico</h1>
         <div className="flex flex-col lg:flex-row gap-4">
           <div
-            className="w-full lg:w-[65%] xl:w-[70%] overflow-auto"
-            style={{ minHeight: "400px", maxHeight: "650px" }}
+            className="w-full lg:w-[65%] xl:w-[70%] flex flex-col"
+            style={{ minHeight: "500px", height: "500px" }}
           >
             <HistoryTable
               onSelectDetailApolice={onSelectDetailApolice}
@@ -276,8 +276,8 @@ export default function Historico({
             />
           </div>
           <div
-            className="w-full lg:w-[35%] xl:w-[40%] 2xl:w-[30%]"
-            style={{ minHeight: "400px", maxHeight: "650px" }}
+            className="w-full lg:w-[35%] xl:w-[40%] 2xl:w-[30%] flex flex-col"
+            style={{ minHeight: "500px", height: "500px" }}
           >
             <DashboardCharts />
           </div>
