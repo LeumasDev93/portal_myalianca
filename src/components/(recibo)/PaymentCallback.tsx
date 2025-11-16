@@ -37,6 +37,7 @@ export default function PaymentCallback({ onViewRecibo }: PaymentCallbackProps) 
   const [capturedRef, setCapturedRef] = useState<string | undefined>(undefined);
   const [capturedAmount, setCapturedAmount] = useState<number | undefined>(undefined);
   const [captureDone, setCaptureDone] = useState(false);
+  
 
   const data = useMemo(() => {
     const getNum = (key: string) => {
