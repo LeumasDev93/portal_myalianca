@@ -16,7 +16,7 @@ import {
 } from "react-icons/fa";
 import { IoMdPin } from "react-icons/io";
 import { IoGrid, IoShieldCheckmarkSharp, IoReceiptSharp } from "react-icons/io5";
-import { MdEmail } from "react-icons/md";
+import { MdEmail, MdOutlinePayment } from "react-icons/md";
 import { TbTopologyStar3 } from "react-icons/tb";
 import { LuSquareKanban } from "react-icons/lu";
 import { AiFillFileExclamation } from "react-icons/ai";
@@ -34,14 +34,24 @@ export const getActivityDisplay = (action: string): ActivityDisplay => {
   const activityMap: Record<string, ActivityDisplay> = {
     // Pagamentos
     PAGAMENTO: {
-      icon: <FaCreditCard className={iconSize} />,
+      icon: <MdOutlinePayment className={iconSize} />,
       color: "text-green-600",
       bgColor: "bg-green-500",
     },
     PAGAMENTO_REALIZADO: {
-      icon: <FaCreditCard className={iconSize} />,
+      icon: <MdOutlinePayment className={iconSize} />,
       color: "text-green-600",
       bgColor: "bg-green-500",
+    },
+    pagamento_confirmado: {
+      icon: <MdOutlinePayment className={iconSize} />,
+      color: "text-green-600",
+      bgColor: "bg-green-500",
+    },
+    pagamento_cobranca_erro: {
+      icon: <MdOutlinePayment className={iconSize} />,
+      color: "text-red-600",
+      bgColor: "bg-red-500",
     },
 
     // Sinistros
