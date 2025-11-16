@@ -621,15 +621,15 @@ export default function LoginPage() {
           
           {/* Banner Semi-Transparente com Logo e Serviços (no rodapé) */}
           <div className="absolute bottom-8 left-0 right-0 z-10">
-            <div className="bg-white/10 backdrop-blur-md py-8 lg:py-10 xl:py-12 px-8 lg:px-12 xl:px-16 w-full">
-              <div className="text-white flex flex-col lg:flex-row items-center lg:items-start gap-6 lg:gap-8 xl:gap-12 max-w-7xl mx-auto">
+            <div className="bg-white/10 backdrop-blur-md py-6 lg:py-8 2xl:py-12 px-6 2xl:px-16 w-full">
+              <div className="text-white flex flex-col lg:flex-row items-center lg:items-start gap-4 lg:gap-6 2xl:gap-12">
                 {/* Logo */}
                 <div className="flex-shrink-0">
-                  <Image src={Logo} alt="Logo" width={200} height={80} className="w-32 md:w-40 lg:w-44 xl:w-48 h-auto" />
+                  <Image src={Logo} alt="Logo" width={200} height={80} className="w-24 lg:w-32 2xl:w-48 h-auto" />
                 </div>
                 
                 {/* Serviços */}
-                <div className="grid grid-cols-1 xl:grid-cols-2 gap-3 lg:gap-4 flex-1">
+                <div className="grid grid-cols-1 2xl:grid-cols-2 gap-2 lg:gap-3 2xl:gap-4 flex-1">
                   {[
                     "Gerenciamento de apólices",
                     "Acompanhamento de sinistros",
@@ -637,8 +637,8 @@ export default function LoginPage() {
                     "Atendimento personalizado",
                   ].map((benefit) => (
                     <div key={benefit} className="flex items-center gap-2">
-                      <CheckCircle2 className="h-4 lg:h-5 w-4 lg:w-5 text-white flex-shrink-0" />
-                      <span className="text-sm lg:text-base 2xl:text-lg">{benefit}</span>
+                      <CheckCircle2 className="h-3 w-3 lg:h-4 2xl:h-5 2xl:w-5 text-white flex-shrink-0" />
+                      <span className="text-xs lg:text-sm 2xl:text-lg">{benefit}</span>
                     </div>
                   ))}
                 </div>
