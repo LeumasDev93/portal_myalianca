@@ -482,6 +482,15 @@ export default function NewOcorrênciasPage({ onBack }: NewSinistroPageProps) {
       return;
     }
 
+    // Verificar se pelo menos uma imagem foi carregada
+    if (!uploadedFileIds || uploadedFileIds.length === 0) {
+      setError("É obrigatório carregar pelo menos uma imagem da ocorrência");
+      setTimeout(() => {
+        setError("");
+      }, 3000);
+      return;
+    }
+
     // Validar token CSRF disponível
     if (!csrfToken) {
       setError("Aguarde, carregando...");
@@ -535,9 +544,6 @@ export default function NewOcorrênciasPage({ onBack }: NewSinistroPageProps) {
       }
 
       setMessage("Ocorrência registrada com sucesso!");
-      setTimeout(() => {
-        setMessage("");
-      }, 3000);
       
       // Gerar novo token para próxima requisição
       refreshToken();
@@ -556,6 +562,11 @@ export default function NewOcorrênciasPage({ onBack }: NewSinistroPageProps) {
       setPreviews([]);
       setUploadedFileIds([]);
       setUploadingFiles(new Set());
+      
+      // Voltar para a lista de ocorrências após 1 segundo
+      setTimeout(() => {
+        onBack();
+      }, 1000);
     } catch (error: any) {
       setError(error.message || "Ocorreu um erro ao registrar a ocorrência");
       setTimeout(() => {
@@ -758,7 +769,7 @@ export default function NewOcorrênciasPage({ onBack }: NewSinistroPageProps) {
                   </div>
                 </div>
 
-                <div className="space-y-2 md:col-span-2">
+                <div className="space-y-2 md:col-span-3 xl:col-span-4">
                   <Label htmlFor="local">
                     Local do Ocorrido{" "}
                     <span className="text-company-red-500">*</span>
@@ -783,7 +794,7 @@ export default function NewOcorrênciasPage({ onBack }: NewSinistroPageProps) {
                 Detalhes da Ocorrência
               </h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-2">
+                <div className="space-y-2 sm:col-span-2">
                   <Label htmlFor="descricao">
                     Descrição Detalhada{" "}
                     <span className="text-company-red-500">*</span>
@@ -812,7 +823,8 @@ export default function NewOcorrênciasPage({ onBack }: NewSinistroPageProps) {
 
               <div className="space-y-2">
                 <Label>
-                  Fotos da Ocorrência (selecione uma por vez, máximo 5 fotos)
+                  Fotos da Ocorrência (selecione uma por vez, máximo 5 fotos){" "}
+                  <span className="text-company-red-500">*</span>
                 </Label>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
                   <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 flex flex-col items-center justify-center text-center">
@@ -941,7 +953,7 @@ export default function NewOcorrênciasPage({ onBack }: NewSinistroPageProps) {
                 className="bg-[#002256] hover:bg-[#002256]/80"
                 disabled={isLoading || isSubmitting || isLoadingCsrf}
               >
-                {isSubmitting ? "Processando..." : "Enviar Ocorrência de Segurança"}
+                {isSubmitting ? "Processando..." : "Enviar Ocorrência"}
               </Button>
             </CardFooter>
           </form>

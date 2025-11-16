@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { MapPin, Phone, Clock, Mail, X, Grid3x3, List, ChevronUp } from "lucide-react";
+import { MapPin, Phone, Clock, Mail, X, Grid3x3, List, ChevronUp, MapPinHouseIcon } from "lucide-react";
 import { FaMapMarker } from "react-icons/fa";
 import { useAgencias } from "@/hooks/useAgencias";
 import { LoadingContainer } from "@/components/ui/loading-container";
@@ -37,9 +37,13 @@ export default function AgenciasPage() {
       <div className="px-2 sm:px-3 md:px-4 lg:px-5 xl:px-6 py-2 sm:py-3 md:py-4 lg:py-5 xl:py-6">
         <div className="mt-2 sm:mt-3 md:mt-4 lg:mt-4 xl:mt-5">
           <div className="flex items-center justify-between mb-1 sm:mb-1.5 md:mb-2">
-            <h1 className="text-base sm:text-lg md:text-xl lg:text-2xl xl:text-3xl font-bold text-[#002256]">
-              Nossas Agências
-            </h1>
+             
+             <div className="flex items-center gap-2">
+             <MapPinHouseIcon className="w-4 h-4 sm:w-10 sm:h-10 text-[#002256] flex-shrink-0" />
+              <h1 className="text-base sm:text-lg md:text-xl lg:text-2xl xl:text-3xl font-bold text-[#002256]">
+                Agências
+              </h1>
+             </div>
             {/* Botões de alternância de visualização */}
             <div className="flex gap-1 sm:gap-2 bg-gray-100 p-1 rounded-lg">
               <button
@@ -66,8 +70,8 @@ export default function AgenciasPage() {
               </button>
             </div>
           </div>
-          <p className="text-xs sm:text-sm md:text-base text-gray-600">
-            Encontre a agência mais próxima de você para atendimento presencial.
+          <p className="text-xs sm:text-sm md:text-base text-gray-600 ml-2">
+            Encontre a agência mais próxima de si para atendimento personalizado.	
           </p>
         </div>
       </div>
@@ -143,7 +147,7 @@ export default function AgenciasPage() {
                         {/* Mapa inline */}
                         <div className="w-full h-[300px] sm:h-[400px] md:h-[500px] rounded-lg overflow-hidden border border-gray-200">
                           <iframe
-                            src={`https://www.google.com/maps?q=${agencia.latitude},${agencia.longitude}&hl=pt-PT&z=15&output=embed`}
+                            src={`https://www.google.com/maps?q=${agencia.latitude},${agencia.longitude}&hl=pt-PT&z=15&t=k&output=embed`}
                             className="w-full h-full border-0"
                             allowFullScreen
                             loading="lazy"
@@ -153,7 +157,7 @@ export default function AgenciasPage() {
                         
                         {/* Botão Google Maps */}
                         <a
-                          href={`https://www.google.com/maps/search/?api=1&query=${agencia.latitude},${agencia.longitude}`}
+                          href={`https://www.google.com/maps/search/?api=1&query=${agencia.latitude},${agencia.longitude}&t=k`}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="w-full inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-white bg-[#002256] rounded-md hover:bg-[#002256]/90 transition-colors"
@@ -247,7 +251,7 @@ export default function AgenciasPage() {
                   {/* Iframe do Mapa */}
                   <div className="flex-1 relative">
                     <iframe
-                      src={`https://www.google.com/maps?q=${selectedAgencia.latitude},${selectedAgencia.longitude}&hl=pt-PT&z=15&output=embed`}
+                      src={`https://www.google.com/maps?q=${selectedAgencia.latitude},${selectedAgencia.longitude}&hl=pt-PT&z=15&t=k&output=embed`}
                       className="w-full h-full border-0"
                       allowFullScreen
                       loading="lazy"

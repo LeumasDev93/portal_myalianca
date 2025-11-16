@@ -71,13 +71,13 @@ export function TopMenu({
   const formatarDataCompleta = () => {
     const data = new Date();
     const diasSemana = [
-      "domingo",
-      "segunda-feira",
-      "terça-feira",
-      "quarta-feira",
-      "quinta-feira",
-      "sexta-feira",
-      "sábado",
+      "Domingo",
+      "Segunda-feira",
+      "Terça-feira",
+      "Quarta-feira",
+      "Quinta-feira",
+      "Sexta-feira",
+      "Sábado",
     ];
     const diaSemana = diasSemana[data.getDay()];
     const dia = data.getDate();
@@ -165,63 +165,41 @@ export function TopMenu({
 
   return (
     <div
-      className={`${isMobile ? "hidden" : ""} fixed top-0 ${
-        showSidebar ? "left-14 xl:left-58 2xl:left-64" : "left-0"
-      } right-0 bg-white shadow-sm z-50 px-6 py-2 2xl:py-3 flex justify-between items-center border-b border-gray-100`}
+      className={`${isMobile ? "hidden" : ""} fixed top-0 left-0 right-0 bg-white shadow-sm z-50 py-2 2xl:py-3 flex justify-between items-center border-b border-gray-100 pr-6`}
     >
       <div className="flex items-center gap-4">
-        {!showSidebar && (
-          <div
-            className="flex items-center border-r border-gray-300 pr-4 cursor-pointer hover:opacity-80 transition-opacity"
-            onClick={handleLogoClick}
-            title="Voltar ao início"
-          >
-            <Image
-              src={Logo}
-              alt="Logo"
-              width={40}
-              height={40}
-              className="w-10 h-10"
-            />
-            <div className="flex ml-2">
-              <h1 className="text-lg font-extrabold text-[#B7021C]">My</h1>
-              <h1 className="text-lg font-extrabold text-[#002256]">Aliança</h1>
-            </div>
+        <div
+          className="flex items-center border-r border-gray-300 pr-4 cursor-pointer hover:opacity-80 transition-opacity pl-6"
+          onClick={handleLogoClick}
+          title="Voltar ao início"
+        >
+          <Image
+            src={Logo}
+            alt="Logo"
+            width={40}
+            height={40}
+            className="w-10 h-10"
+          />
+          <div className="flex ml-2">
+            <h1 className="text-lg font-extrabold text-[#B7021C]">My</h1>
+            <h1 className="text-lg font-extrabold text-[#002256]">Aliança</h1>
           </div>
-        )}
+        </div>
 
         <div className="flex flex-col items-start min-w-0">
-          {/* Layout especial para Empresarial */}
-          {currentPage === "empresarial" ? (
-            <div className="hidden md:block">
-              <h1 className="text-xl font-semibold text-[#002256] mb-1">
-                {getSaudacao()},{" "}
-                {profile?.user?.nome &&
-                  profile.user.nome
-                    .split(" ")
-                    .filter(Boolean)
-                    .filter((_, i, arr) => i === 0 || i === arr.length - 1)
-                    .join(" ")}
-                !
-              </h1>
-              <p className="text-sm text-gray-800">{formatarDataCompleta()}</p>
-            </div>
-          ) : (
-            /* Layout padrão para outras páginas */
-            <div className="hidden md:block">
-              <h1 className="text-xl font-semibold text-[#002256] mb-1">
-                {getSaudacao()},{" "}
-                {profile?.user?.nome &&
-                  profile.user.nome
-                    .split(" ")
-                    .filter(Boolean)
-                    .filter((_, i, arr) => i === 0 || i === arr.length - 1)
-                    .join(" ")}
-                !
-              </h1>
-              <p className="text-sm text-gray-800">{formatarDataCompleta()}</p>
-            </div>
-          )}
+          <div className="hidden md:block">
+            <h1 className="text-xl font-semibold text-[#002256] mb-1">
+              {getSaudacao()},{" "}
+              {profile?.user?.nome &&
+                profile.user.nome
+                  .split(" ")
+                  .filter(Boolean)
+                  .filter((_, i, arr) => i === 0 || i === arr.length - 1)
+                  .join(" ")}
+              !
+            </h1>
+            <p className="text-sm text-gray-800">{formatarDataCompleta()}</p>
+          </div>
         </div>
       </div>
 

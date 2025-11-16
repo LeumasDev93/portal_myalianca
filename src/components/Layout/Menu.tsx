@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
-import Logo from "@/assets/alianca.png";
 import { IconType } from "react-icons";
 
 export interface MenuItem {
@@ -26,10 +25,6 @@ export function Menu({ onMenuClick, menuItems, activePath }: MenuProps) {
   const [hoveredItem, setHoveredItem] = useState<number | null>(null);
   const mainItems = menuItems.filter((item) => item.title !== "Sair" && !item.hidden);
   const logoutItem = menuItems.find((item) => item.title === "Sair");
-
-  const handleLogoClick = () => {
-    onMenuClick("Historico");
-  };
 
   useEffect(() => {
     const handleResize = () => {
@@ -61,38 +56,15 @@ export function Menu({ onMenuClick, menuItems, activePath }: MenuProps) {
     <div className="relative">
       <aside
         className={`hidden md:flex flex-col h-screen bg-white shadow-xl fixed top-0 left-0 z-40 transition-all duration-300
-          ${isCollapsed ? "w-12 lg:w-14 xl:w-16" : "w-14 lg:w-58 2xl:w-64"}`}
+          ${isCollapsed ? "w-12 lg:w-14 xl:w-16" : "w-14 lg:w-52 xl:w-56 2xl:w-60"}`}
       >
         {/* Cabeçalho */}
         <div className="flex items-center px-1 lg:px-2 xl:px-4 py-2 lg:py-4 xl:py-3 2xl:py-[15px] bg-white shadow-sm border-b border-gray-100">
-          <div
-            className="flex items-center cursor-pointer"
-            onClick={handleLogoClick}
-            title="Voltar ao início"
-          >
-            <Image
-              src={Logo}
-              alt="Logo"
-              width={60}
-              height={60}
-              className={`transition-all duration-300 ${
-                isCollapsed ? "w-7 lg:w-8 xl:w-10" : "w-8 lg:w-9 xl:w-12"
-              }`}
-            />
-            {!isCollapsed && (
-              <div className="flex ml-1 lg:ml-1.5 xl:ml-2">
-                <h1 className="text-xs lg:text-sm xl:text-lg font-extrabold text-[#B7021C]">My</h1>
-                <h1 className="text-xs lg:text-sm xl:text-lg font-extrabold text-[#002256]">
-                  Aliança
-                </h1>
-              </div>
-            )}
-          </div>
         </div>
 
         {/* Itens do menu principal (scrolláveis) */}
         <div
-          className="flex-1 overflow-y-auto py-1 lg:py-1.5 xl:py-2 px-0.5 lg:px-1 mt-2 lg:mt-3 xl:mt-10"
+          className="flex-1 overflow-y-auto py-1 lg:py-1.5 xl:py-2 px-0.5 lg:px-1 mt-5 lg:mt-10 xl:mt-20"
           style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
         >
           <ul className="ml-0.5 lg:ml-1 xl:ml-2 space-y-1.5 lg:space-y-2 xl:space-y-4">
@@ -112,9 +84,9 @@ export function Menu({ onMenuClick, menuItems, activePath }: MenuProps) {
                           : "text-[#002256] hover:bg-[#002256] hover:text-white"
                       }`}
                   >
-                    <span>{renderIcon(menu.icon)}</span>
+                    <span className="flex-shrink-0">{renderIcon(menu.icon)}</span>
                     {!isCollapsed && (
-                      <span className="ml-1.5 lg:ml-2 xl:ml-3 font-medium text-[9px] lg:text-[10px] xl:text-sm">{menu.title}</span>
+                      <span className="ml-1.5 lg:ml-2 xl:ml-3 font-medium text-[9px] lg:text-[10px] xl:text-sm whitespace-nowrap">{menu.title}</span>
                     )}
                   </button>
                 </li>
@@ -132,9 +104,9 @@ export function Menu({ onMenuClick, menuItems, activePath }: MenuProps) {
                 ${isCollapsed ? "justify-center" : "justify-start"}
                 text-[#002256] hover:bg-[#B7021C] hover:text-white`}
             >
-              <span>{renderIcon(logoutItem.icon)}</span>
+              <span className="flex-shrink-0">{renderIcon(logoutItem.icon)}</span>
               {!isCollapsed && (
-                <span className="ml-1.5 lg:ml-2 xl:ml-3 font-medium text-[9px] lg:text-[10px] xl:text-sm">{logoutItem.title}</span>
+                <span className="ml-1.5 lg:ml-2 xl:ml-3 font-medium text-[9px] lg:text-[10px] xl:text-sm whitespace-nowrap">{logoutItem.title}</span>
               )}
             </button>
           </div>
