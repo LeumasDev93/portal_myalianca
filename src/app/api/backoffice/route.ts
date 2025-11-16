@@ -90,13 +90,12 @@ export async function POST(request: NextRequest) {
             collectStatus = 'error';
             collectMessage = 'Referência do recibo não encontrada';
           } else {
-            // Arredonda o valor para cima se tiver decimais (não pode conter valor após a vírgula)
+            // Usa o valor exato sem arredondamento
             const amountNumber = Number(amount);
-            const roundedValue = amountNumber % 1 !== 0 ? Math.ceil(amountNumber) : amountNumber;
             
             const collectUrl = `https://aliancacvtest.rtcom.pt/anywhere/api/v1/private/mobile/invoice/${encodeURIComponent(receiptRef)}/collect`;
             const collectBody = {
-              value: roundedValue,
+              value: amountNumber,
               reference: receiptRef,
               sendEmail: false,
               apiName: 'WebsiteCollection',

@@ -22,7 +22,7 @@ type PaymentResultModalProps = {
   isOpen: boolean;
   onClose: () => void;
   status: "success" | "error" | "cancelled" | "pending";
-  collectMessage?: string;
+  // collectMessage?: string;
   onDownloadRecibo?: () => void;
   isDownloading?: boolean;
   reciboRef?: string;
@@ -35,7 +35,7 @@ export function PaymentResultModal({
   isOpen,
   onClose,
   status,
-  collectMessage,
+  // collectMessage,
   onDownloadRecibo,
   isDownloading = false,
   reciboRef,
@@ -205,13 +205,13 @@ export function PaymentResultModal({
                     Seu pagamento foi processado e confirmado com sucesso!
                   </p>
                   
-                  {collectMessage && (
+                  {/* {collectMessage && (
                     <div className="bg-green-50 border border-green-200 rounded-md p-3 mt-3">
                       <p className="text-sm text-green-800">
                         {collectMessage}
                       </p>
                     </div>
-                  )}
+                  )} */}
                   
                   <p className="text-sm text-gray-700 font-medium mt-4">
                     Você pode baixar o recibo agora ou acessá-lo mais tarde na lista de recibos.
@@ -299,13 +299,13 @@ export function PaymentResultModal({
                     O pagamento foi cancelado pelo cliente.
                   </p>
 
-                  {collectMessage && (
+                  {/* {collectMessage && (
                     <div className="bg-orange-50 border border-orange-200 rounded-md p-3 mt-3">
                       <p className="text-sm text-orange-800">
                         {collectMessage}
                       </p>
                     </div>
-                  )}
+                  )} */}
                 </>
               ) : (
                 <>
@@ -313,13 +313,13 @@ export function PaymentResultModal({
                     Não foi possível processar seu pagamento. Por favor, tente novamente.
                   </p>
 
-                  {collectMessage && (
+                  {/* {collectMessage && (
                     <div className="bg-red-50 border border-red-200 rounded-md p-3 mt-3">
                       <p className="text-sm text-red-800">
                         {collectMessage}
                       </p>
                     </div>
-                  )}
+                  )} */}
                 </>
               )}
             </div>

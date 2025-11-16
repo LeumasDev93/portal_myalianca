@@ -1636,7 +1636,6 @@ function ReciboPageContent({ filterParams }: ReciboPageProps) {
           paymentModalShownRef.current = false;
         }}
         status={paymentResultModal.status}
-        collectMessage={paymentResultModal.collectMessage}
         reciboRef={paymentResultModal.reciboRef || paymentResultModal.merchantRef}
         amount={paymentResultModal.amount}
         onRetryPayment={paymentResultModal.status === "cancelled" ? handleRetryPayment : undefined}

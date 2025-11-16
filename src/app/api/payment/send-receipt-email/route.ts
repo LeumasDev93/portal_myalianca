@@ -45,12 +45,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Arredonda o valor para cima se tiver decimais
-    const roundedValue = amount % 1 !== 0 ? Math.ceil(amount) : amount;
+    // Usa o valor exato sem arredondamento
+    const amountNumber = Number(amount);
 
     const collectUrl = `https://aliancacvtest.rtcom.pt/anywhere/api/v1/private/mobile/invoice/${encodeURIComponent(reciboRef)}/collect`;
     const collectBody = {
-      value: roundedValue,
+      value: amountNumber,
       reference: reciboRef,
       sendEmail: true,
       email: email,
