@@ -264,11 +264,11 @@ export default function Historico({
       )}
 
       <div className="py-6">
-        <h1 className="text-xl font-bold text-[#002856]">Histórico</h1>
+        <h1 className="text-xl font-bold text-[#002856] mb-4">Histórico</h1>
         <div className="flex flex-col lg:flex-row gap-4">
           <div
             className="w-full lg:w-[65%] xl:w-[70%] flex flex-col"
-            style={{ minHeight: "500px", height: "500px" }}
+            style={{ height: "550px" }}
           >
             <HistoryTable
               onSelectDetailApolice={onSelectDetailApolice}
@@ -277,14 +277,14 @@ export default function Historico({
           </div>
           <div
             className="w-full lg:w-[35%] xl:w-[40%] 2xl:w-[30%] flex flex-col"
-            style={{ minHeight: "500px", height: "500px" }}
+            style={{ height: "550px" }}
           >
-            <DashboardCharts />
+            <DashboardCharts fixedHeight={true} />
           </div>
         </div>
       </div>
 
-      <section className="flex flex-col md:flex-row gap-4">
+      <section className="flex flex-col md:flex-row gap-4 mt-4">
         <AtivitysLastCard />
       </section>
     </div>

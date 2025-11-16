@@ -29,10 +29,7 @@ export default function DashboardPage({ onNavigate }: DashboardPageProps = {}) {
 
       <div className="py-6">
         <div className="flex flex-col lg:flex-row gap-4">
-          <div
-            className="w-full lg:w-[35%] xl:w-[30%]"
-            style={{ minHeight: "400px", maxHeight: "650px" }}
-          >
+          <div className="w-full lg:w-[35%] xl:w-[30%]">
             <DashboardCharts />
           </div>
         </div>
