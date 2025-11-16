@@ -4,7 +4,6 @@ import React, { useState, useEffect } from 'react';
 import { X, Upload } from 'lucide-react';
 import { FaFileInvoiceDollar, FaSpinner, FaFilePdf } from 'react-icons/fa';
 import { useToast } from '@/components/ui/use-toast';
-import { ToastAction } from '@/components/ui/toast';
 import { LoadingContainer } from '@/components/ui/loading-container';
 import { useSessionCheckToken } from '@/hooks/useSessionToken';
 import { processPaymentSISP } from '@/service/paymentService';
@@ -395,7 +394,9 @@ export function ModalContratacao({ isOpen, onClose, onNavigateToRecibo, onCloseS
         setLoading(false);
         // Fecha o modal "Simulation Results" (se disponível) mas mantém este modal aberto com a mensagem de sucesso
         try {
-          onCloseSimulationResults && onCloseSimulationResults();
+          if (onCloseSimulationResults) {
+            onCloseSimulationResults();
+          }
         } catch {}
         setSuccessInfo({
           message: 'Contrato emitido com sucesso!',

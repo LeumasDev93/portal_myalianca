@@ -144,7 +144,7 @@ function ReciboPageContent({ filterParams }: ReciboPageProps) {
     } catch {
       // noop
     }
-  }
+  }, [paymentResultModal, profile, recibos, token]);
 
   const handleDownload = async (invoiceNumber: string) => {
     setConfirmDialog({ open: false, type: null, reciboNumber: '' });
