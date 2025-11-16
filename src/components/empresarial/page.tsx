@@ -49,12 +49,6 @@ export default function Empresarial({
       path: "dashboard",
     },
     {
-      title: "Callback",
-      description: "Visualize e pague recibos",
-      icon: IoReceiptSharp,
-      path: "callback",
-    },
-    {
       title: "Gestão de SOAT",
       description: "Gerencie SOAT dos trabalhadores",
       icon: LuSquareKanban,

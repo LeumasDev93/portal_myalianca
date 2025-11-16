@@ -18,7 +18,7 @@ interface BottomNavItem {
 
 interface BottomNavigationProps {
   activePage: string;
-  onNavigate: (page: string) => void;
+  onNavigate: (page: string, params?: Record<string, string>, options?: { clearSisp?: boolean }) => void;
 }
 
 export const BottomNavigation = ({
@@ -33,26 +33,53 @@ export const BottomNavigation = ({
       title: isCompany ? "Empresarial" : "Início",
       key: isCompany ? "empresarial" : "Historico",
       icon: isCompany ? IoBusinessSharp : IoGrid,
-      onClick: () =>
-        onNavigate(isCompany ? "empresarial" : "Historico"),
+      onClick: () => {
+        try {
+          const url = new URL(window.location.href);
+          const next = new URL(window.location.origin + url.pathname);
+          window.history.replaceState({}, '', next.toString());
+        } catch {}
+        onNavigate(isCompany ? "empresarial" : "Historico", undefined, { clearSisp: true });
+      },
     },
     {
       title: "Apólice",
       key: "apolice",
       icon: IoShieldCheckmarkSharp,
-      onClick: () => onNavigate("apolice"),
+      onClick: () => {
+        try {
+          const url = new URL(window.location.href);
+          const next = new URL(window.location.origin + url.pathname);
+          window.history.replaceState({}, '', next.toString());
+        } catch {}
+        onNavigate("apolice", undefined, { clearSisp: true });
+      },
     },
     {
       title: "Sinistros",
       key: "sinistro",
       icon: FaTriangleExclamation,
-      onClick: () => onNavigate("sinistro"),
+      onClick: () => {
+        try {
+          const url = new URL(window.location.href);
+          const next = new URL(window.location.origin + url.pathname);
+          window.history.replaceState({}, '', next.toString());
+        } catch {}
+        onNavigate("sinistro", undefined, { clearSisp: true });
+      },
     },
     {
       title: "Simular",
       key: "Simulation",
       icon: TbTopologyStar3,
-      onClick: () => onNavigate("Simulation"),
+      onClick: () => {
+        try {
+          const url = new URL(window.location.href);
+          const next = new URL(window.location.origin + url.pathname);
+          window.history.replaceState({}, '', next.toString());
+        } catch {}
+        onNavigate("Simulation", undefined, { clearSisp: true });
+      },
     },
   ];
 
@@ -64,7 +91,14 @@ export const BottomNavigation = ({
           title: "Dashboard",
           key: "dashboard",
           icon: MdDashboard,
-          onClick: () => onNavigate("dashboard"),
+          onClick: () => {
+            try {
+              const url = new URL(window.location.href);
+              const next = new URL(window.location.origin + url.pathname);
+              window.history.replaceState({}, '', next.toString());
+            } catch {}
+            onNavigate("dashboard", undefined, { clearSisp: true });
+          },
         },
         ...baseItems.slice(1),
       ]

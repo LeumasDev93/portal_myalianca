@@ -179,42 +179,42 @@ const Page = () => {
         path: "apolice",
         icon: IoShieldCheckmarkSharp,
         hoverIcon: <IoShieldCheckmarkSharp />,
-        onClick: () => handleMenuClick("apolice"),
+        onClick: () => handleMenuClick("apolice", undefined, { clearSisp: true }),
       },
       {
         title: "Sinistros",
         path: "sinistro",
         icon: FaTriangleExclamation,
         hoverIcon: <FaTriangleExclamation />,
-        onClick: () => handleMenuClick("sinistro"),
+        onClick: () => handleMenuClick("sinistro", undefined, { clearSisp: true }),
       },
       {
         title: "Recibos & Pagamentos",
         path: "recibo",
         icon: IoReceiptSharp,
         hoverIcon: <IoReceiptSharp />,
-        onClick: () => handleMenuClick("recibo"),
+        onClick: () => handleMenuClick("recibo", undefined, { clearSisp: true }),
       },
       {
         title: "Ocorrências",
         path: "ocorrencias",
         icon: AiFillFileExclamation,
         hoverIcon: <AiFillFileExclamation />,
-        onClick: () => handleMenuClick("ocorrencias"),
+        onClick: () => handleMenuClick("ocorrencias", undefined, { clearSisp: true }),
       },
       {
         title: "Simular & Contratar",
         path: "Simulation",
         icon: TbTopologyStar3,
         hoverIcon: <TbTopologyStar3 />,
-        onClick: () => handleMenuClick("Simulation"),
+        onClick: () => handleMenuClick("Simulation", undefined, { clearSisp: true }),
       },
       {
         title: "Agências",
         path: "Agencias",
         icon: IoMdPin,
         hoverIcon: <IoMdPin />,
-        onClick: () => handleMenuClick("Agencias"),
+        onClick: () => handleMenuClick("Agencias", undefined, { clearSisp: true }),
       },
       // Menu oculto: Callback de Pagamento (não deve aparecer visualmente)
       {
@@ -222,7 +222,8 @@ const Page = () => {
         path: "callback",
         icon: IoReceiptSharp,
         hoverIcon: <IoReceiptSharp />,
-        onClick: () => handleMenuClick("callback"),
+        onClick: () => handleMenuClick("callback", undefined, { clearSisp: true }),
+        hidden: true,
       },
       {
         title: "Sair",
@@ -241,7 +242,7 @@ const Page = () => {
         path: "empresarial",
         icon: IoBusinessSharp,
         hoverIcon: <IoBusinessSharp />,
-        onClick: () => handleMenuClick("empresarial"),
+        onClick: () => handleMenuClick("empresarial", undefined, { clearSisp: true }),
       });
 
       // Dashboard para Company
@@ -250,7 +251,7 @@ const Page = () => {
         path: "dashboard",
         icon: IoStatsChart,
         hoverIcon: <IoStatsChart />,
-        onClick: () => handleMenuClick("dashboard"),
+        onClick: () => handleMenuClick("dashboard", undefined, { clearSisp: true }),
       });
 
       // Gestão de SOAT
@@ -259,7 +260,7 @@ const Page = () => {
         path: "gestaoSOAT",
         icon: LuSquareKanban,
         hoverIcon: <LuSquareKanban />,
-        onClick: () => handleMenuClick("gestaoSOAT"),
+        onClick: () => handleMenuClick("gestaoSOAT", undefined, { clearSisp: true }),
       });
     } else {
       // Início apenas para usuários não-Company
@@ -268,7 +269,7 @@ const Page = () => {
         path: "Historico",
         icon: IoGrid,
         hoverIcon: <IoGrid />,
-        onClick: () => handleMenuClick("Historico"),
+        onClick: () => handleMenuClick("Historico", undefined, { clearSisp: true }),
       });
     }
 
@@ -417,7 +418,8 @@ const Page = () => {
 
   const handleMenuClick = (
     menuPage: string,
-    params?: Record<string, string>
+    params?: Record<string, string>,
+    options?: { clearSisp?: boolean }
   ) => {
     console.log("🔷 handleMenuClick chamado:");
     console.log("  menuPage:", menuPage);
@@ -435,7 +437,9 @@ const Page = () => {
       }
     }
     
-    setIsLoading(true);
+    if (!options?.clearSisp) {
+      setIsLoading(true);
+    }
     setCurrentPage(menuPage);
 
     // Persistir escolha do menu para fallback em reloads
@@ -454,7 +458,7 @@ const Page = () => {
         hasSisp = urlParams.has("status_code") || 
                   urlParams.has("transaction_id") || 
                   urlParams.has("finger_print");
-        if (hasSisp) {
+        if (hasSisp && !options?.clearSisp) {
           console.log("[BACKOFFICE] 🚨🚨🚨 PARÂMETROS SISP DETECTADOS NO handleMenuClick - BLOQUEANDO 🚨🚨🚨");
           console.log("[BACKOFFICE] URL completa:", window.location.href);
           setCurrentPage(menuPage);
@@ -466,15 +470,32 @@ const Page = () => {
     }
     
     // Fallback: verifica via searchParams
-    if (!hasSisp && hasSispParams()) {
+    if (!hasSisp && hasSispParams() && !options?.clearSisp) {
       console.log("[BACKOFFICE] 🚨 Parâmetros do SISP detectados no handleMenuClick (via searchParams) - NÃO alterando URL");
       setCurrentPage(menuPage);
       return;
     }
     
-    // Só faz replace se NÃO houver parâmetros do SISP
     try {
-      replaceWithPreservedParams(menuPage);
+      const sispKeys = ['status_code', 'transaction_id', 'finger_print', 'message', 'channel_transaction_id', 'amount', 'reciboRef', 'merchantRef', 'reference'];
+      if (options?.clearSisp) {
+        // Limpa TODOS os parâmetros sensíveis/temporários da URL atual e navega somente com ?menu=
+        try {
+          const url = new URL(window.location.href);
+          sispKeys.forEach(k => url.searchParams.delete(k));
+          // constrói uma nova query apenas com menu
+          const next = new URL(window.location.origin + window.location.pathname);
+          next.searchParams.set('menu', menuPage);
+          // aplica a limpeza no histórico
+          window.history.replaceState({}, '', next.toString());
+        } catch (_ignore) {}
+        const qp = new URLSearchParams();
+        qp.set('menu', menuPage);
+        router.replace(`?${qp.toString()}`, { scroll: false });
+      } else {
+        // Só faz replace se NÃO houver parâmetros do SISP, preservando os que existirem
+        replaceWithPreservedParams(menuPage);
+      }
     } catch (_e) {
       // silencioso
     }
@@ -489,9 +510,11 @@ const Page = () => {
     }
     console.log("📊 Estado filterParams após atualização:", params || {});
 
-    setTimeout(() => {
-      setIsLoading(false);
-    }, 1000);
+    if (!options?.clearSisp) {
+      setTimeout(() => {
+        setIsLoading(false);
+      }, 1000);
+    }
   };
 
   function handleSelectApoliceDetail(id: string, contractNumber: string) {
@@ -585,7 +608,7 @@ const Page = () => {
           {profile?.user?.tipo_cliente === "Company" &&
             currentPage !== "empresarial" && (
               <BackToDashboardButton
-                onClick={() => handleMenuClick("empresarial")}
+                onClick={() => handleMenuClick("empresarial", undefined, { clearSisp: true })}
                 isMobile={isMobile}
                 currentPage={currentPage}
               />
@@ -699,7 +722,11 @@ const Page = () => {
                   />
                 )}
                 {currentPage === "callback" && (
-                  <PaymentCallback />
+                  <PaymentCallback
+                    onViewRecibo={(reference) => {
+                      handleMenuClick("recibo", { reference }, { clearSisp: true });
+                    }}
+                  />
                 )}
                 {currentPage === "Perfil" && <PerfilPage />}
                 {currentPage === "Agencias" && <AgenciasPage />}

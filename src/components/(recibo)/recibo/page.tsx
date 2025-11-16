@@ -35,7 +35,7 @@ import {
   getStatusReciverTexts,
   STATUS_OPTIONS_RECIBOS,
 } from "@/lib/utils";
-import { useState, useRef, useEffect, Suspense, useCallback } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import {
   FaDownload,
@@ -53,48 +53,15 @@ import { ReciboPDFModal } from "../ModalRecibo";
 import ReactDOM from "react-dom/client";
 import { MdPayment } from "react-icons/md";
 import { toast } from "sonner";
-import { useToast } from "@/components/ui/use-toast";
+// import { useToast } from "@/components/ui/use-toast";
 import { useReciboActivity } from "@/lib/activityExamples";
 import { useUserProfile } from "@/hooks/useUserProfile";
 import { processPaymentSISP } from "@/service/paymentService";
-import { PaymentResultModal } from "../PaymentResultModal";
+// Removido: tratamento de SISP/callback (validação HMAC/collect/limpeza de URL). Agora o retorno do SISP é tratado no PaymentCallback.
 
 type ViewMode = "grid" | "list";
 
-// Função para abrir HTML do SISP na mesma página
-function openSISPInSamePage(html: string) {
-  // Processa HTML (remove caracteres de escape se necessário)
-  let processedHtml = html;
-  const hasEscapeChars = html.includes('\\r\\n') || (html.includes('\\n') && !html.includes('\n'));
-  
-  if (hasEscapeChars) {
-    processedHtml = html
-      .replace(/\\r\\n/g, '\r\n')
-      .replace(/\\n/g, '\n')
-      .replace(/\\t/g, '\t')
-      .replace(/\\"/g, '"')
-      .replace(/\\'/g, "'");
-  }
-  
-  // Cria Blob URL
-  try {
-    const blob = new Blob([processedHtml], { type: "text/html;charset=utf-8" });
-    const blobUrl = URL.createObjectURL(blob);
-    
-    // Verifica se estamos em um iframe
-    const isInIframe = window.self !== window.top;
-    
-    // Redireciona a página atual para o blob URL
-    if (isInIframe && window.top) {
-      window.top.location.href = blobUrl;
-    } else {
-      window.location.href = blobUrl;
-    }
-  } catch {
-    // Erro ao criar blob - silencioso
-  }
-}
-
+// Removido: todo tratamento de retorno SISP/callback e modal de resultado de pagamento. Tratado no PaymentCallback.
 
 type ReciboPageProps = {
   onSelectDetail?: (id: string) => void;
@@ -121,82 +88,12 @@ function ReciboPageContent({ filterParams }: ReciboPageProps) {
     reciboNumber: string;
     reciboData?: any;
   }>({ open: false, type: null, reciboNumber: '' });
-  const paymentModalShownRef = useRef(false);
   const searchParams = useSearchParams();
-  const [paymentResultModal, setPaymentResultModal] = useState<{
-    isOpen: boolean;
-    status: "success" | "error" | "cancelled" | "pending";
-    collectMessage?: string;
-    merchantRef?: string;
-    reciboRef?: string;
-    amount?: number;
-  }>({
-    isOpen: false,
-    status: "pending",
-  });
-  const [isDownloadingRecibo, setIsDownloadingRecibo] = useState(false);
-  const [isRetryingPayment, setIsRetryingPayment] = useState(false);
-  const [callbackActionHandled, setCallbackActionHandled] = useState(false);
-  
-  // Função helper para limpar localStorage e URL (não utilizada - cleanup feito no PaymentResultModal)
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const clearPaymentData = useCallback(() => {
-    // Limpar localStorage
-    try {
-      const keys = Object.keys(localStorage);
-      keys.forEach(key => {
-        if (
-          key.includes('payment') || 
-          key.includes('sisp') || 
-          key.includes('transaction') ||
-          key.includes('recibo_ref') ||
-          key.includes('anywhere_token') ||
-          key.includes('pay_token')
-        ) {
-          localStorage.removeItem(key);
-        }
-      });
-    } catch {
-      // Erro ao limpar localStorage - silencioso
-    }
-    
-    // Limpar parâmetros da URL (mantém apenas 'menu')
-    try {
-      const url = new URL(window.location.href);
-      const paramsToRemove = [
-        'server_status',
-        'server_message',
-        'collect_status',
-        'collect_message',
-        'merchantRef',
-        'amount',
-        'debug_ref',
-        'debug_fp',
-        'status_code',
-        'message',
-        'transaction_id',
-        'channel_transaction_id',
-        'finger_print',
-        'reciboRef'
-      ];
-      paramsToRemove.forEach(param => url.searchParams.delete(param));
-      
-      // Se não houver mais parâmetros além de 'menu', manter apenas o path
-      const remainingParams = Array.from(url.searchParams.keys()).filter(key => key !== 'menu');
-      if (remainingParams.length === 0 && !url.searchParams.has('menu')) {
-        window.history.replaceState({}, '', url.pathname);
-      } else {
-        window.history.replaceState({}, '', url.toString());
-      }
-    } catch {
-      // Erro ao limpar URL - silencioso
-    }
-  }, []);
-  
+
   const { token } = useSessionCheckToken();
   const { registerReciboDownloadActivity } = useReciboActivity();
   const { profile } = useUserProfile(); // Dados do usuário
-  const { toast: showToast } = useToast();
+  // const { toast } = useToast();
 
   const {
     filteredRecibos,
@@ -208,758 +105,46 @@ function ReciboPageContent({ filterParams }: ReciboPageProps) {
     statusFilter,
     setStatusFilter,
     resetFilters,
-    refetchSilent,
+    // refetchSilent,
   } = useRecibos(filterParams);
 
-  // Função para validar HMAC quando status_code = 1
-  const validateHMAC = useCallback(async (transactionId: string, hmacFingerprint: string) => {
-    try {
-      const response = await fetch("/api/payment/validate-hmac", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          transactionId,
-          hmacFingerprint,
-        }),
-      });
+  // Removido: todo tratamento de retorno SISP/callback e modal de resultado de pagamento. Tratado no PaymentCallback.
 
-      const data = await response.json();
-      return data;
-    } catch (error) {
-      throw error;
-    }
-  }, []);
-
-  // Integração com callback: filtrar por referência e opcionalmente abrir/ver/baixar
+  // Integração com callback: apenas ajustar o filtro por referência (sem auto-abrir/baixar)
   useEffect(() => {
     const reference = searchParams.get("reference");
-    const action = searchParams.get("action"); // 'view' | 'download'
     if (reference) {
-      // Ajusta filtro de busca para destacar o recibo
       try {
         setSearchTerm(reference);
       } catch {}
     }
-    // Executa ação (view/download) apenas uma vez, quando recibos forem carregados
-    if (!callbackActionHandled && reference && !isLoadingRecibos && recibos && recibos.length > 0) {
-      const recibo = recibos.find((r: any) => {
-        const ref = r?.mbref || r?.reference || r?.number;
-        return String(ref).toLowerCase() === String(reference).toLowerCase();
-      });
-      if (recibo) {
-        if (action === "view") {
-          try {
-            visualizarPDF(recibo.number, recibo?.status);
-            setCallbackActionHandled(true);
-          } catch {
-            setCallbackActionHandled(true);
-          }
-        } else if (action === "download") {
-          try {
-            handleDownload(recibo.number);
-            setCallbackActionHandled(true);
-          } catch {
-            setCallbackActionHandled(true);
-          }
-        }
-      } else {
-        // Se não encontrou nos recibos atuais, marca como tratado para não loopar
-        setCallbackActionHandled(true);
-      }
-    }
-  }, [searchParams, recibos, isLoadingRecibos, setSearchTerm, callbackActionHandled]);
+  }, [searchParams, setSearchTerm]);
 
-  // Função para chamar API collect após HMAC validado (via API route do servidor)
-  const callCollectAPI = useCallback(async (reciboRef: string, amount: number) => {
+  // Helper para abrir HTML do SISP no mesmo separador (para iniciar pagamento)
+  function openSISPInSamePage(html: string) {
+    let processed = html;
+    const hasEsc = html.includes('\\r\\n') || (html.includes('\\n') && !html.includes('\n'));
+    if (hasEsc) {
+      processed = html
+        .replace(/\\r\\n/g, '\r\n')
+        .replace(/\\n/g, '\n')
+        .replace(/\\t/g, '\t')
+        .replace(/\\"/g, '"')
+        .replace(/\\'/g, "'");
+    }
     try {
-      console.log('[COLLECT API] Chamando API route /api/payment/collect:', {
-        reciboRef,
-        amount,
-      });
-
-      const response = await fetch('/api/payment/collect', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          reciboRef,
-          amount,
-        }),
-        cache: 'no-store',
-      });
-
-      console.log('[COLLECT API] Resposta recebida:', {
-        status: response.status,
-        statusText: response.statusText,
-        ok: response.ok,
-      });
-
-      const data = await response.json();
-      console.log('[COLLECT API] Dados da resposta:', data);
-
-      return {
-        success: data.success || false,
-        message: data.message || 'Erro ao processar cobrança',
-      };
-    } catch (error) {
-      console.error('[COLLECT API] Erro:', error);
-      return {
-        success: false,
-        message: 'Erro ao processar cobrança',
-      };
-    }
-  }, []);
-
-
-
-  // CRÍTICO: Lê parâmetros do SISP diretamente da URL e abre o modal
-  useEffect(() => {
-    // Verifica se há parâmetros do SISP na URL
-    const statusCode = searchParams.get("status_code");
-    const transactionId = searchParams.get("transaction_id");
-    const fingerPrint = searchParams.get("finger_print");
-    const message = searchParams.get("message");
-    const channelTransactionId = searchParams.get("channel_transaction_id");
-
-    if (statusCode && transactionId) {
-      // Prepara os dados do pagamento
-      const paymentData = {
-        statusCode,
-        transactionId,
-        fingerPrint: fingerPrint || null,
-        message: message || null,
-        channelTransactionId: channelTransactionId || null,
-      };
-
-      // Salva no localStorage para persistência
-      try {
-        localStorage.setItem('sisp_payment_data', JSON.stringify(paymentData));
-      } catch {
-        // Erro ao salvar no localStorage - silencioso
-      }
-
-      // Abre o modal automaticamente com os dados da URL
-      // Usa PaymentResultModal em vez do Dialog customizado
-      // Verificar se a mensagem indica cancelamento (mesmo que status_code seja 2)
-      const messageText = message?.toLowerCase() || "";
-      const isCancelledMessage = messageText.includes('cancel') || 
-                                  messageText.includes('cancelado') || 
-                                  messageText.includes('cancelled');
-      
-      const modalStatus: "success" | "error" | "cancelled" | "pending" = 
-        statusCode === "1" ? "success" : 
-        statusCode === "3" || isCancelledMessage ? "cancelled" :
-        statusCode === "2" ? "error" : 
-        "pending";
-      
-      // Busca reciboRef e amount para passar ao modal
-      let reciboRefForModal: string | undefined = searchParams.get("reciboRef") || undefined;
-      let amountForModal: number | undefined = undefined;
-
-      if (!reciboRefForModal) {
-        try {
-          const stored = localStorage.getItem('recibo_ref');
-          if (stored) {
-            reciboRefForModal = decodeURIComponent(stored);
-          }
-        } catch {
-          // Erro ao ler reciboRef - silencioso
-        }
-      }
-
-      const amountStr = searchParams.get("amount");
-      if (amountStr) {
-        amountForModal = Number(amountStr);
+      const blob = new Blob([processed], { type: 'text/html;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const inFrame = ((): boolean => { try { return window.self !== window.top; } catch { return false; } })();
+      if (inFrame && (window.top as Window)) {
+        (window as any).top.location.href = url;
       } else {
-        try {
-          const storedAmount = localStorage.getItem('payment_amount');
-          if (storedAmount) {
-            amountForModal = Number(storedAmount);
-          }
-        } catch {
-          // Erro ao ler amount - silencioso
-        }
+        window.location.href = url;
       }
-
-      // Tenta usar merchantRef se reciboRef não for encontrado
-      const merchantRef = searchParams.get("merchantRef") || searchParams.get("reciboRef");
-      
-      setPaymentResultModal({
-        isOpen: true,
-        status: modalStatus,
-        collectMessage: message || undefined,
-        merchantRef: merchantRef || undefined,
-        reciboRef: reciboRefForModal || merchantRef || undefined,
-        amount: amountForModal,
-      });
-
-      // Se status_code = "1" (sucesso), valida o HMAC e depois chama API collect
-      if (statusCode === "1" && transactionId && fingerPrint) {
-        console.log('[PAYMENT FLOW] Status code = 1, iniciando validação HMAC e collect...');
-        
-        // Primeiro mostra modal como pending
-        setPaymentResultModal({
-          isOpen: true,
-          status: "pending",
-          collectMessage: "Validando pagamento...",
-        });
-
-        validateHMAC(transactionId, fingerPrint)
-          .then(async (hmacResult) => {
-            console.log('[PAYMENT FLOW] Resultado HMAC:', hmacResult);
-            
-            if (hmacResult.success || hmacResult.validated) {
-              console.log('[PAYMENT FLOW] HMAC válido, buscando dados para collect...');
-              
-              // HMAC válido - agora chama API collect
-              // Busca reciboRef e amount de múltiplas fontes
-              let reciboRef: string | null = searchParams.get("reciboRef");
-              let amount: number | null = null;
-
-              // Tenta reciboRef do localStorage se não estiver na URL
-              if (!reciboRef) {
-                try {
-                  const stored = localStorage.getItem('recibo_ref');
-                  if (stored) {
-                    reciboRef = decodeURIComponent(stored);
-                    console.log('[PAYMENT FLOW] reciboRef do localStorage:', reciboRef);
-                  }
-                } catch (e) {
-                  console.error('[PAYMENT FLOW] Erro ao ler recibo_ref do localStorage:', e);
-                }
-              }
-
-              // Tenta amount da URL
-              const amountStr = searchParams.get("amount");
-              if (amountStr) {
-                amount = Number(amountStr);
-                console.log('[PAYMENT FLOW] amount da URL:', amount);
-              }
-
-              // Se não tiver na URL, tenta localStorage
-              if (!amount) {
-                try {
-                  const storedAmount = localStorage.getItem('payment_amount');
-                  if (storedAmount) {
-                    amount = Number(storedAmount);
-                    console.log('[PAYMENT FLOW] amount do localStorage:', amount);
-                  }
-                } catch (e) {
-                  console.error('[PAYMENT FLOW] Erro ao ler payment_amount do localStorage:', e);
-                }
-              }
-
-              // Tenta cookies como último recurso
-              if (!amount) {
-                try {
-                  const cookies = document.cookie.split(';');
-                  const amountCookie = cookies.find(c => c.trim().startsWith('payment_amount='));
-                  if (amountCookie) {
-                    amount = Number(amountCookie.split('=')[1]);
-                    console.log('[PAYMENT FLOW] amount dos cookies:', amount);
-                  }
-                } catch (e) {
-                  console.error('[PAYMENT FLOW] Erro ao ler payment_amount dos cookies:', e);
-                }
-              }
-
-              console.log('[PAYMENT FLOW] Dados finais para collect:', { reciboRef, amount });
-
-              if (reciboRef && amount && amount > 0) {
-                console.log('[PAYMENT FLOW] ✅ Dados encontrados, chamando API collect...');
-                // Chama API collect
-                const collectResult = await callCollectAPI(reciboRef, amount);
-                
-                console.log('[PAYMENT FLOW] Resultado collect:', collectResult);
-                
-                // Atualiza modal com resultado da collect
-                setPaymentResultModal({
-                  isOpen: true,
-                  status: collectResult.success ? "success" : "error",
-                  collectMessage: collectResult.message,
-                  merchantRef: reciboRef || undefined,
-                  reciboRef: reciboRef || undefined,
-                  amount: amount || undefined,
-                });
-              } else {
-                console.error('[PAYMENT FLOW] ❌ Dados não encontrados:', { reciboRef, amount });
-                // Se não tiver reciboRef ou amount, mostra erro
-                const merchantRef = searchParams.get("merchantRef");
-                setPaymentResultModal({
-                  isOpen: true,
-                  status: "error",
-                  collectMessage: `Dados do recibo não encontrados. ReciboRef: ${reciboRef || 'não encontrado'}, Amount: ${amount || 'não encontrado'}`,
-                  merchantRef: merchantRef || reciboRef || undefined,
-                  reciboRef: reciboRef || undefined,
-                  amount: amount || undefined,
-                });
-              }
-            } else {
-              console.error('[PAYMENT FLOW] ❌ HMAC inválido:', hmacResult);
-              // HMAC inválido
-              const merchantRef = searchParams.get("merchantRef") || searchParams.get("reciboRef");
-              setPaymentResultModal({
-                isOpen: true,
-                status: "error",
-                collectMessage: "Falha na validação de segurança do pagamento",
-                merchantRef: merchantRef || undefined,
-                reciboRef: reciboRefForModal || merchantRef || undefined,
-                amount: amountForModal,
-              });
-            }
-          })
-          .catch((error) => {
-            console.error('[PAYMENT FLOW] ❌ Erro na validação HMAC:', error);
-            // Erro na validação HMAC
-            const merchantRef = searchParams.get("merchantRef") || searchParams.get("reciboRef");
-            setPaymentResultModal({
-              isOpen: true,
-              status: "error",
-              collectMessage: "Erro ao validar pagamento",
-              merchantRef: merchantRef || undefined,
-              reciboRef: reciboRefForModal || merchantRef || undefined,
-              amount: amountForModal,
-            });
-          });
-      }
-    } else {
-      // Se não há parâmetros na URL, tenta carregar do localStorage
-      try {
-        const storedPaymentData = localStorage.getItem('sisp_payment_data');
-        if (storedPaymentData) {
-          const parsedData = JSON.parse(storedPaymentData);
-          
-          // Abre o modal automaticamente se houver dados salvos
-          // Usa PaymentResultModal em vez do Dialog customizado
-          // Verificar se a mensagem indica cancelamento (mesmo que statusCode seja 2)
-          const messageText = (parsedData.message || "").toLowerCase();
-          const isCancelledMessage = messageText.includes('cancel') || 
-                                      messageText.includes('cancelado') || 
-                                      messageText.includes('cancelled');
-          
-          const modalStatus: "success" | "error" | "cancelled" | "pending" = 
-            parsedData.statusCode === "1" ? "success" : 
-            parsedData.statusCode === "3" || isCancelledMessage ? "cancelled" :
-            parsedData.statusCode === "2" ? "error" : 
-            "pending";
-          
-          // Busca reciboRef e amount do localStorage
-          let reciboRefForModal: string | undefined = undefined;
-          let amountForModal: number | undefined = undefined;
-
-          try {
-            const stored = localStorage.getItem('recibo_ref');
-            if (stored) {
-              reciboRefForModal = decodeURIComponent(stored);
-            }
-          } catch {
-            // Erro ao ler reciboRef - silencioso
-          }
-
-          try {
-            const storedAmount = localStorage.getItem('payment_amount');
-            if (storedAmount) {
-              amountForModal = Number(storedAmount);
-            }
-          } catch {
-            // Erro ao ler amount - silencioso
-          }
-          
-          setPaymentResultModal({
-            isOpen: true,
-            status: modalStatus,
-            collectMessage: parsedData.message || undefined,
-            reciboRef: reciboRefForModal,
-            amount: amountForModal,
-          });
-
-          // Se status_code = "1" (sucesso) e ainda não validou, valida o HMAC e chama collect
-          if (parsedData.statusCode === "1" && parsedData.transactionId && parsedData.fingerPrint) {
-            console.log('[PAYMENT FLOW] Status code = 1 (localStorage), iniciando validação HMAC e collect...');
-            
-            // Primeiro mostra modal como pending
-            setPaymentResultModal({
-              isOpen: true,
-              status: "pending",
-              collectMessage: "Validando pagamento...",
-            });
-
-            validateHMAC(parsedData.transactionId, parsedData.fingerPrint)
-              .then(async (hmacResult) => {
-                console.log('[PAYMENT FLOW] Resultado HMAC (localStorage):', hmacResult);
-                
-                if (hmacResult.success || hmacResult.validated) {
-                  console.log('[PAYMENT FLOW] HMAC válido (localStorage), buscando dados para collect...');
-                  
-                  // HMAC válido - agora chama API collect
-                  // Busca reciboRef e amount do localStorage ou cookies
-                  let reciboRef: string | null = null;
-                  let amount: number | null = null;
-
-                  try {
-                    const storedRef = localStorage.getItem('recibo_ref');
-                    if (storedRef) {
-                      reciboRef = decodeURIComponent(storedRef);
-                      console.log('[PAYMENT FLOW] reciboRef do localStorage:', reciboRef);
-                    }
-                    
-                    // Tenta pegar amount dos cookies ou localStorage
-                    try {
-                      const storedAmount = localStorage.getItem('payment_amount');
-                      if (storedAmount) {
-                        amount = Number(storedAmount);
-                        console.log('[PAYMENT FLOW] amount do localStorage:', amount);
-                      } else {
-                        const cookies = document.cookie.split(';');
-                        const amountCookie = cookies.find(c => c.trim().startsWith('payment_amount='));
-                        if (amountCookie) {
-                          amount = Number(amountCookie.split('=')[1]);
-                          console.log('[PAYMENT FLOW] amount dos cookies:', amount);
-                        }
-                      }
-                    } catch (e) {
-                      console.error('[PAYMENT FLOW] Erro ao ler amount:', e);
-                    }
-                  } catch (e) {
-                    console.error('[PAYMENT FLOW] Erro ao ler reciboRef:', e);
-                  }
-
-                  console.log('[PAYMENT FLOW] Dados finais para collect (localStorage):', { reciboRef, amount });
-
-                  if (reciboRef && amount && amount > 0) {
-                    console.log('[PAYMENT FLOW] ✅ Dados encontrados (localStorage), chamando API collect...');
-                    // Chama API collect
-                    const collectResult = await callCollectAPI(reciboRef, amount);
-                    
-                    console.log('[PAYMENT FLOW] Resultado collect (localStorage):', collectResult);
-                    
-                    // Atualiza modal com resultado da collect
-                    setPaymentResultModal({
-                      isOpen: true,
-                      status: collectResult.success ? "success" : "error",
-                      collectMessage: collectResult.message,
-                      merchantRef: reciboRef || undefined,
-                      reciboRef: reciboRef || undefined,
-                      amount: amount || undefined,
-                    });
-                  } else {
-                    console.error('[PAYMENT FLOW] ❌ Dados não encontrados (localStorage):', { reciboRef, amount });
-                    // Se não tiver reciboRef ou amount, mostra erro
-                    setPaymentResultModal({
-                      isOpen: true,
-                      status: "error",
-                      collectMessage: `Dados do recibo não encontrados. ReciboRef: ${reciboRef || 'não encontrado'}, Amount: ${amount || 'não encontrado'}`,
-                      reciboRef: reciboRef || undefined,
-                      amount: amount || undefined,
-                    });
-                  }
-                } else {
-                  console.error('[PAYMENT FLOW] ❌ HMAC inválido (localStorage):', hmacResult);
-                  // HMAC inválido
-                  setPaymentResultModal({
-                    isOpen: true,
-                    status: "error",
-                    collectMessage: "Falha na validação de segurança do pagamento",
-                    reciboRef: reciboRefForModal,
-                    amount: amountForModal,
-                  });
-                }
-              })
-              .catch((error) => {
-                console.error('[PAYMENT FLOW] ❌ Erro na validação HMAC (localStorage):', error);
-                // Erro na validação HMAC
-                setPaymentResultModal({
-                  isOpen: true,
-                  status: "error",
-                  collectMessage: "Erro ao validar pagamento",
-                  reciboRef: reciboRefForModal,
-                  amount: amountForModal,
-                });
-              });
-          }
-        }
-      } catch {
-        // Erro ao carregar dados do localStorage - silencioso
-      }
+    } catch {
+      // noop
     }
-  }, [searchParams, validateHMAC, callCollectAPI, showToast]); // Executa quando searchParams mudar
-
-  // Carrega parâmetros da URL e exibe o modal de resultado do pagamento
-
-  // Callback antigo (server_status, collect_status) - mantido para compatibilidade
-  useEffect(() => {
-    if (paymentModalShownRef.current) return;
-    
-    const serverStatus = searchParams.get("server_status");
-    const serverMessage = searchParams.get("server_message");
-    const collectStatus = searchParams.get("collect_status");
-    const collectMessage = searchParams.get("collect_message");
-    const merchantRef = searchParams.get("merchantRef");
-    const statusCode = searchParams.get("status_code"); // Verificar status_code também
-    
-    if (!serverStatus && !collectStatus && !statusCode) return;
-    
-    paymentModalShownRef.current = true;
-    
-    // Determinar status do modal baseado no status_code (prioridade máxima), depois server_status, depois collect_status
-    let modalStatus: "success" | "error" | "cancelled" | "pending" = "pending";
-    let message = "";
-    
-    // Prioridade 1: Verificar status_code da URL (SISP) - mais confiável
-    const messageFromParams = searchParams.get("message") || "";
-    const messageText = (collectMessage || serverMessage || messageFromParams).toLowerCase();
-    const isCancelledMessage = messageText.includes('cancel') || 
-                                messageText.includes('cancelado') || 
-                                messageText.includes('cancelled');
-    
-    if (statusCode === "1") {
-      modalStatus = "success";
-      message = collectMessage || serverMessage || messageFromParams || "Pagamento confirmado com sucesso";
-    } else if (statusCode === "3" || (statusCode === "2" && isCancelledMessage)) {
-      // status_code=3 sempre é cancelado, ou status_code=2 com mensagem de cancelamento
-      modalStatus = "cancelled";
-      message = collectMessage || serverMessage || messageFromParams || "Pagamento cancelado pelo cliente";
-    } else if (statusCode === "2") {
-      modalStatus = "error";
-      message = collectMessage || serverMessage || messageFromParams || "Erro ao processar pagamento";
-    } 
-    // Prioridade 2: Verificar server_status (vem do /api/backoffice)
-    else if (serverStatus === "cancelled") {
-      modalStatus = "cancelled";
-      message = serverMessage || collectMessage || searchParams.get("message") || "Pagamento cancelado pelo cliente";
-    } else if (serverStatus === "ok") {
-      modalStatus = "success";
-      message = collectMessage || serverMessage || "Pagamento confirmado";
-    } else if (serverStatus === "error") {
-      modalStatus = "error";
-      message = serverMessage || collectMessage || "Erro ao processar pagamento";
-    }
-    // Prioridade 3: Verificar collect_status
-    else if (collectStatus === "ok") {
-      modalStatus = "success";
-      message = collectMessage || "Pagamento confirmado com sucesso";
-    } else if (collectStatus === "error") {
-      modalStatus = "error";
-      message = collectMessage || serverMessage || "Erro ao processar pagamento";
-    }
-    
-    // Busca reciboRef e amount para passar ao modal
-    let reciboRefForModal: string | undefined = merchantRef || searchParams.get("reciboRef") || undefined;
-    let amountForModal: number | undefined = undefined;
-
-    if (!reciboRefForModal) {
-      try {
-        const stored = localStorage.getItem('recibo_ref');
-        if (stored) {
-          reciboRefForModal = decodeURIComponent(stored);
-        }
-        } catch {
-          // Erro ao ler reciboRef - silencioso
-        }
-      }
-
-      const amountStr = searchParams.get("amount");
-    if (amountStr) {
-      amountForModal = Number(amountStr);
-    } else {
-      try {
-        const storedAmount = localStorage.getItem('payment_amount');
-        if (storedAmount) {
-          amountForModal = Number(storedAmount);
-        }
-      } catch {
-        // Erro ao ler amount - silencioso
-      }
-    }
-
-    // Abrir modal com a mensagem da API de collect
-    setPaymentResultModal({
-      isOpen: true,
-      status: modalStatus,
-      collectMessage: message,
-      merchantRef: merchantRef || reciboRefForModal || undefined,
-      reciboRef: reciboRefForModal || merchantRef || undefined,
-      amount: amountForModal,
-    });
-  }, [searchParams]);
-
-  const openConfirmDialog = (type: 'view' | 'download' | 'payment', reciboNumber: string, reciboData?: any) => {
-    // Para "Ver", executa diretamente sem confirmação
-    if (type === 'view') {
-      visualizarPDF(reciboNumber, reciboData?.status);
-      return;
-    }
-    // Para outros tipos, abre o dialog de confirmação
-    setConfirmDialog({ open: true, type, reciboNumber, reciboData });
-  };
-
-  const handleConfirmedAction = async () => {
-    const { type, reciboNumber, reciboData } = confirmDialog;
-    
-    if (type === 'view') {
-      visualizarPDF(reciboNumber, reciboData?.status);
-    } else if (type === 'download') {
-      handleDownload(reciboNumber);
-    } else if (type === 'payment' && reciboData && profile?.user) {
-      setConfirmDialog({ open: false, type: null, reciboNumber: '' });
-      setLoadingPayment((prev) => ({
-        ...prev,
-        [reciboNumber]: true,
-      }));
-
-      try {
-        try {
-          const reciboRef = reciboData.mbref || reciboData.reference || reciboNumber;
-          if (reciboRef) {
-            document.cookie = `recibo_ref=${encodeURIComponent(String(reciboRef))}; Path=/; Max-Age=1200;`;
-            localStorage.setItem('recibo_ref', encodeURIComponent(String(reciboRef)));
-          }
-          if (token) {
-            document.cookie = `anywhere_token=${encodeURIComponent(String(token))}; Path=/; Max-Age=1200;`;
-          }
-          // Salva o amount para usar na API collect
-          if (reciboData.value) {
-            document.cookie = `payment_amount=${reciboData.value}; Path=/; Max-Age=1200;`;
-            localStorage.setItem('payment_amount', String(reciboData.value));
-          }
-        } catch {}
-        const reciboRef = reciboData.mbref || reciboData.reference || reciboNumber;
-        
-        // Usa novo fluxo SISP
-        const result = await processPaymentSISP(
-          reciboData.value,
-          profile.user.nome,
-          profile.user.email || "",
-          profile.user.telemovel || profile.user.telefone || "",
-          profile.user.nif || "",
-          reciboNumber,
-          reciboRef
-        );
-
-        // Abre HTML do SISP na mesma página
-        if (result.html) {
-          openSISPInSamePage(result.html);
-        } else {
-          throw new Error("HTML do pagamento não foi recebido");
-        }
-      } catch (error: any) {
-        // Extrai mensagem de erro de diferentes formatos
-        let errorMessage = "Erro ao processar pagamento. Tente novamente.";
-        
-        if (error?.message) {
-          errorMessage = error.message;
-        } else if (error?.response?.data?.message) {
-          errorMessage = error.response.data.message;
-        } else if (error?.response?.data?.error) {
-          errorMessage = error.response.data.error;
-        } else if (typeof error === 'string') {
-          errorMessage = error;
-        } else if (error?.toString && error.toString() !== '[object Object]') {
-          errorMessage = error.toString();
-        }
-        
-        // Mostra erro em toast quando falha ao criar pagamento
-        toast.error(errorMessage, {
-          description: `Recibo: ${reciboNumber}`,
-          duration: 8000,
-        });
-      } finally {
-        setLoadingPayment((prev) => ({
-          ...prev,
-          [reciboNumber]: false,
-        }));
-      }
-    }
-  };
-
-  // Função para tentar pagamento novamente quando cancelado
-  const handleRetryPayment = useCallback(async () => {
-    if (!paymentResultModal.reciboRef && !paymentResultModal.merchantRef) {
-      toast.error("Não foi possível encontrar os dados do recibo para tentar novamente");
-      return;
-    }
-
-    if (!profile?.user) {
-      toast.error("Dados do usuário não encontrados");
-      return;
-    }
-
-    setIsRetryingPayment(true);
-    
-    try {
-      // Buscar o recibo pelo reciboRef ou merchantRef
-      const reciboRefToFind = paymentResultModal.reciboRef || paymentResultModal.merchantRef;
-      const recibo = recibos.find((r) => 
-        r.mbref === reciboRefToFind || 
-        r.number === reciboRefToFind
-      );
-
-      if (!recibo) {
-        toast.error("Recibo não encontrado na lista. Por favor, tente novamente mais tarde.");
-        return;
-      }
-
-      // Fechar o modal de resultado
-      setPaymentResultModal({ ...paymentResultModal, isOpen: false });
-      paymentModalShownRef.current = false;
-
-      // Salvar dados necessários
-      const reciboRef = recibo.mbref || recibo.number;
-      if (reciboRef) {
-        document.cookie = `recibo_ref=${encodeURIComponent(String(reciboRef))}; Path=/; Max-Age=1200;`;
-        localStorage.setItem('recibo_ref', encodeURIComponent(String(reciboRef)));
-      }
-      if (token) {
-        document.cookie = `anywhere_token=${encodeURIComponent(String(token))}; Path=/; Max-Age=1200;`;
-      }
-      if (recibo.value) {
-        document.cookie = `payment_amount=${recibo.value}; Path=/; Max-Age=1200;`;
-        localStorage.setItem('payment_amount', String(recibo.value));
-      }
-
-      // Iniciar novo pagamento
-      const result = await processPaymentSISP(
-        recibo.value,
-        profile.user.nome,
-        profile.user.email || "",
-        profile.user.telemovel || profile.user.telefone || "",
-        profile.user.nif || "",
-        recibo.number,
-        reciboRef
-      );
-
-      // Abre HTML do SISP na mesma página
-      if (result.html) {
-        openSISPInSamePage(result.html);
-      } else {
-        throw new Error("HTML do pagamento não foi recebido");
-      }
-    } catch (error: any) {
-      // Extrai mensagem de erro de diferentes formatos
-      let errorMessage = "Erro ao tentar pagamento novamente. Tente novamente.";
-      
-      if (error?.message) {
-        errorMessage = error.message;
-      } else if (error?.response?.data?.message) {
-        errorMessage = error.response.data.message;
-      } else if (error?.response?.data?.error) {
-        errorMessage = error.response.data.error;
-      } else if (typeof error === 'string') {
-        errorMessage = error;
-      }
-      
-      toast.error(errorMessage, {
-        description: `Recibo: ${paymentResultModal.reciboRef || paymentResultModal.merchantRef || 'N/A'}`,
-        duration: 8000,
-      });
-    } finally {
-      setIsRetryingPayment(false);
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [paymentResultModal, profile, recibos, token]);
+  }
 
   const handleDownload = async (invoiceNumber: string) => {
     setConfirmDialog({ open: false, type: null, reciboNumber: '' });
@@ -1243,6 +428,53 @@ function ReciboPageContent({ filterParams }: ReciboPageProps) {
   // Função para determinar se deve mostrar botão de download
   const shouldShowDownloadButton = (status: number) => {
     return status === 5; // Cobrado
+  };
+
+  // Diálogo de confirmação para ações de Ver/Baixar/Pagar
+  const openConfirmDialog = (
+    type: 'view' | 'download' | 'payment',
+    reciboNumber: string,
+    reciboData?: any
+  ) => {
+    setConfirmDialog({ open: true, type, reciboNumber, reciboData });
+  };
+
+  const handleConfirmedAction = async () => {
+    const { type, reciboNumber, reciboData } = confirmDialog;
+    if (!type || !reciboNumber) return;
+    try {
+      if (type === 'view') {
+        await visualizarPDF(reciboNumber, reciboData?.status);
+      } else if (type === 'download') {
+        await handleDownload(reciboNumber);
+      } else if (type === 'payment') {
+        if (!profile?.user || !reciboData) {
+          toast.error('Dados insuficientes para processar pagamento.');
+          return;
+        }
+        // Persistir referência e valor para o retorno do SISP
+        const rref = reciboData.mbref || reciboNumber;
+        try {
+          if (rref) localStorage.setItem('recibo_ref', encodeURIComponent(String(rref)));
+          if (reciboData.value) localStorage.setItem('payment_amount', String(reciboData.value));
+        } catch {}
+        const res = await processPaymentSISP(
+          reciboData.value,
+          profile.user.username || profile.user.nome || '',
+          profile.user.email || '',
+          profile.user.telemovel || profile.user.telefone || '',
+          profile.user.nif || '',
+          reciboNumber,
+          rref
+        );
+        openSISPInSamePage(res?.html);
+      }
+    } catch (e: any) {
+      const msg = e?.message || 'Operação falhou. Tente novamente.';
+      toast.error(msg);
+    } finally {
+      setConfirmDialog({ open: false, type: null, reciboNumber: '' });
+    }
   };
 
   // 1️⃣ LOADING
@@ -1669,51 +901,7 @@ function ReciboPageContent({ filterParams }: ReciboPageProps) {
         </DialogContent>
       </Dialog>
 
-      {/* Modal de Resultado do Pagamento (API Collect e SISP) */}
-      <PaymentResultModal
-        isOpen={paymentResultModal.isOpen}
-        onClose={async () => {
-          const wasSuccess = paymentResultModal.status === "success";
-          setPaymentResultModal({ ...paymentResultModal, isOpen: false });
-          paymentModalShownRef.current = false;
-          
-          // Atualiza os recibos silenciosamente quando o modal fechar (apenas se foi sucesso)
-          if (wasSuccess) {
-            // Aguarda um pequeno delay para garantir que a API processou o pagamento
-            setTimeout(async () => {
-              await refetchSilent();
-            }, 1000);
-          }
-        }}
-        status={paymentResultModal.status}
-        reciboRef={paymentResultModal.reciboRef || paymentResultModal.merchantRef}
-        amount={paymentResultModal.amount}
-        onRetryPayment={paymentResultModal.status === "cancelled" ? handleRetryPayment : undefined}
-        isRetrying={isRetryingPayment}
-        onDownloadRecibo={paymentResultModal.merchantRef ? async () => {
-          if (!paymentResultModal.merchantRef) return;
-          setIsDownloadingRecibo(true);
-          try {
-            // Tentar encontrar o recibo pela referência (mbref) ou pelo número
-            const recibo = recibos.find((r) => 
-              r.mbref === paymentResultModal.merchantRef || 
-              r.number === paymentResultModal.merchantRef
-            );
-            
-            if (recibo) {
-              await handleDownload(recibo.number);
-            } else {
-              // Se não encontrar, tentar usar o merchantRef diretamente
-              await handleDownload(paymentResultModal.merchantRef);
-            }
-          } catch {
-            // Erro ao baixar recibo - silencioso
-          } finally {
-            setIsDownloadingRecibo(false);
-          }
-        } : undefined}
-        isDownloading={isDownloadingRecibo}
-      />
+      {/* Removido: PaymentResultModal e lógica de SISP. Tratado no PaymentCallback. */}
 
     </div>
   );

@@ -17,8 +17,9 @@ export async function GET(request: NextRequest) {
     const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL_DEFAULT;
 
     if (!apiKey || !apiBaseUrl) {
+      console.error('[/api/activities][GET] Variáveis de ambiente ausentes', { hasApiKey: !!apiKey, hasBaseUrl: !!apiBaseUrl });
       return NextResponse.json(
-        { error: 'Configuração da API incompleta' },
+        { error: 'Configuração da API incompleta (API Key/Base URL ausentes)' },
         { status: 500 }
       );
     }
@@ -36,9 +37,10 @@ export async function GET(request: NextRequest) {
     );
 
     if (!response.ok) {
-      const errorData = await response.json();
+      const errorText = await response.text().catch(() => '');
+      console.error('[/api/activities][GET] Erro na API externa', response.status, errorText);
       return NextResponse.json(
-        { error: errorData.message || 'Erro ao buscar atividades' },
+        { error: errorText || 'Erro ao buscar atividades' },
         { status: response.status }
       );
     }
@@ -71,8 +73,9 @@ export async function POST(request: NextRequest) {
     const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL_DEFAULT;
 
     if (!apiKey || !apiBaseUrl) {
+      console.error('[/api/activities][POST] Variáveis de ambiente ausentes', { hasApiKey: !!apiKey, hasBaseUrl: !!apiBaseUrl });
       return NextResponse.json(
-        { error: 'Configuração da API incompleta' },
+        { error: 'Configuração da API incompleta (API Key/Base URL ausentes)' },
         { status: 500 }
       );
     }
@@ -89,13 +92,15 @@ export async function POST(request: NextRequest) {
         'Content-Type': 'application/json',
         'ApiKey': apiKey,
       },
+      cache: 'no-store',
       body: JSON.stringify(requestData),
     });
 
     if (!response.ok) {
-      const errorData = await response.json();
+      const errorText = await response.text().catch(() => '');
+      console.error('[/api/activities][POST] Erro na API externa', response.status, errorText, { requestData });
       return NextResponse.json(
-        { error: errorData.message || 'Erro ao registrar atividade' },
+        { error: errorText || 'Erro ao registrar atividade' },
         { status: response.status }
       );
     }
@@ -127,8 +132,9 @@ export async function DELETE(request: NextRequest) {
     const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL_DEFAULT;
 
     if (!apiKey || !apiBaseUrl) {
+      console.error('[/api/activities][DELETE] Variáveis de ambiente ausentes', { hasApiKey: !!apiKey, hasBaseUrl: !!apiBaseUrl });
       return NextResponse.json(
-        { error: 'Configuração da API incompleta' },
+        { error: 'Configuração da API incompleta (API Key/Base URL ausentes)' },
         { status: 500 }
       );
     }
@@ -141,13 +147,15 @@ export async function DELETE(request: NextRequest) {
           'Content-Type': 'application/json',
           'ApiKey': apiKey,
         },
+        cache: 'no-store',
       }
     );
 
     if (!response.ok) {
-      const errorData = await response.json();
+      const errorText = await response.text().catch(() => '');
+      console.error('[/api/activities][DELETE] Erro na API externa', response.status, errorText);
       return NextResponse.json(
-        { error: errorData.message || 'Erro ao limpar atividades' },
+        { error: errorText || 'Erro ao limpar atividades' },
         { status: response.status }
       );
     }
