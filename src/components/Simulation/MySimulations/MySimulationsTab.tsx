@@ -5,7 +5,7 @@ import EmptyState from "../Form/EmptyState";
 import { LoadingContainer } from "../../ui/loading-container";
 import { Card, CardHeader, CardTitle } from "../../ui/card";
 import { formatDate } from "@/lib/utils";
-import { FaRegEdit, FaRegEye, FaSearch } from "react-icons/fa";
+import { FaRegEdit, FaRegEye, FaSearch, FaChevronLeft, FaChevronRight } from "react-icons/fa";
 import { fetchSimulations } from "@/service/listSimulationsService";
 import { Simulation, SimulationResponse } from "@/types/typesData";
 import {
@@ -217,17 +217,20 @@ export default function MySimulationsTab({ onNavigateToRecibo }: MySimulationsTa
     ? Array.from(new Set(simulations.map((sim) => sim.productName))).sort()
     : [];
 
-  // Paginação
-  const totalPages = filteredSimulations
-    ? Math.ceil(filteredSimulations.length / itemsPerPage)
-    : 0;
-
+  // Paginação (estilo Apólices)
+  const totalItems = filteredSimulations ? filteredSimulations.length : 0;
+  const totalPages = Math.ceil(totalItems / itemsPerPage) || 1;
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
   const paginatedSimulations = filteredSimulations
-    ? filteredSimulations.slice(
-        (currentPage - 1) * itemsPerPage,
-        currentPage * itemsPerPage
-      )
+    ? filteredSimulations.slice(indexOfFirstItem, indexOfLastItem)
     : [];
+
+  const goToPage = (page: number) => {
+    if (page >= 1 && page <= totalPages && page !== currentPage) {
+      setCurrentPage(page);
+    }
+  };
 
   if (loading) {
     return (
@@ -474,47 +477,71 @@ export default function MySimulationsTab({ onNavigateToRecibo }: MySimulationsTa
         )}
       </div>
 
-      {totalPages > 1 && (
-        <div className="flex justify-center items-center gap-1 md:gap-2 mt-4 pb-6 px-3 md:px-4">
-          <Button
-            className={`px-2 md:px-4 py-1 md:py-2 rounded-lg border text-xs md:text-sm ${
-              currentPage === 1
-                ? "bg-[#E5E7EB] text-[#002256] opacity-50 cursor-not-allowed"
-                : "bg-[#002256] text-white hover:bg-[#002256]/70"
-            }`}
-            onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-            disabled={currentPage === 1}
-          >
-            Anterior
-          </Button>
-
-          {Array.from({ length: totalPages }, (_, i) => (
-            <Button
-              key={i + 1}
-              onClick={() => setCurrentPage(i + 1)}
-              className={`px-2 md:px-4 py-1 md:py-2 rounded-lg border text-xs md:text-sm ${
-                currentPage === i + 1
-                  ? "bg-[#002256] text-white"
-                  : "bg-[#E5E7EB] text-[#002256] hover:bg-[#D1D5DB]"
+      {totalItems > itemsPerPage && (
+        <div className="flex flex-col md:flex-row justify-between items-center gap-3 mt-4 px-2 md:px-4 py-2">
+          <div className="text-[10px] md:text-xs text-gray-600 text-center md:text-left">
+            Mostrando {indexOfFirstItem + 1} a {Math.min(indexOfLastItem, totalItems)} de {totalItems} itens
+          </div>
+          <div className="flex items-center space-x-1 md:space-x-2 text-[10px] md:text-sm">
+            <button
+              onClick={() => goToPage(currentPage - 1)}
+              disabled={currentPage === 1}
+              className={`p-1 md:p-2 rounded-md text-xs md:text-sm ${
+                currentPage === 1
+                  ? "bg-gray-200 text-gray-500 cursor-not-allowed"
+                  : "bg-[#002256] text-white hover:bg-[#002256]/90"
               }`}
+              aria-label="Página anterior"
             >
-              {i + 1}
-            </Button>
-          ))}
-
-          <Button
-            className={`px-2 md:px-4 py-1 md:py-2 rounded-lg border text-xs md:text-sm ${
-              currentPage === totalPages
-                ? "bg-[#E5E7EB] text-[#002256] opacity-50 cursor-not-allowed"
-                : "bg-[#002256] text-white hover:bg-[#002256]/70"
-            }`}
-            onClick={() =>
-              setCurrentPage((prev) => Math.min(prev + 1, totalPages))
-            }
-            disabled={currentPage === totalPages}
-          >
-            Próximo
-          </Button>
+              <FaChevronLeft className="h-2 w-2 2xl:h-3 2xl:w-3" />
+            </button>
+            {(() => {
+              const pages: (number | string)[] = [];
+              if (totalPages <= 4) {
+                for (let i = 1; i <= totalPages; i++) pages.push(i);
+              } else {
+                let startPage = 1;
+                if (currentPage <= 2) startPage = 1;
+                else if (currentPage >= totalPages - 1) startPage = totalPages - 3;
+                else startPage = currentPage - 1;
+                for (let i = 0; i < 4; i++) {
+                  const pageNum = startPage + i;
+                  if (pageNum <= totalPages) pages.push(pageNum);
+                }
+                if (startPage > 1) pages.unshift("...");
+                if (startPage + 3 < totalPages) pages.push("...");
+              }
+              return pages.map((page, idx) =>
+                page === "..." ? (
+                  <span key={`ellipsis-${idx}`} className="w-2 h-2 md:w-4 md:h-4 flex items-center justify-center text-gray-500 text-xs md:text-sm">
+                    ...
+                  </span>
+                ) : (
+                  <button
+                    key={page as number}
+                    onClick={() => goToPage(page as number)}
+                    className={`w-2 h-2 md:w-6 md:h-6 2xl:w-8 2xl:h-8 rounded-md text-xs md:text-sm font-medium transition-colors ${
+                      page === currentPage ? "bg-[#002256] text-white shadow-md" : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                    }`}
+                  >
+                    {page}
+                  </button>
+                )
+              );
+            })()}
+            <button
+              onClick={() => goToPage(currentPage + 1)}
+              disabled={currentPage === totalPages}
+              className={`p-1 md:p-2 rounded-md text-xs md:text-sm ${
+                currentPage === totalPages
+                  ? "bg-gray-200 text-gray-500 cursor-not-allowed"
+                  : "bg-[#002256] text-white hover:bg-[#002256]/90"
+              }`}
+              aria-label="Próxima página"
+            >
+              <FaChevronRight className="h-2 w-2 2xl:h-3 2xl:w-3" />
+            </button>
+          </div>
         </div>
       )}
 

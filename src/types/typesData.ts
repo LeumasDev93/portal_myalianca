@@ -165,6 +165,14 @@ export interface FormTab {
 }
 
 export interface Product {
+  bannerIdm: string;
+  bannerIdmMobile: string;
+  bannerIdmWeb: string;
+  bannerIdmTablet: string;
+  bannerIdmDesktop: string;
+  bannerIdmLargeDesktop: string;
+  bannerIdmSmallDesktop: string;
+  bannerIdmMediumDesktop: string;
   name: string;
   description: string;
   category: string;
