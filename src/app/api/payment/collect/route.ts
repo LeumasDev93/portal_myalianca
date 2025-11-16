@@ -86,18 +86,34 @@ export async function POST(request: NextRequest) {
         ? `Pagamento confirmado | ref=${reciboRef} | valor=${amountNumber}`
         : `Falha na cobrança | ref=${reciboRef} | valor=${amountNumber} | msg=${collectMessage}`;
       const activityUserId = (userIdFromBody && String(userIdFromBody)) || sessionUserId || '0';
-      await fetch(new URL('/api/activities', request.url), {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          // Encaminha cookies da requisição original caso a rota dependa de contexto
-          cookie: request.headers.get('cookie') || '',
-        },
-        cache: 'no-store',
-        body: JSON.stringify({ userId: activityUserId, action, description }),
-      });
-    } catch {
-      // Ignora erro de atividade para não quebrar o fluxo da cobrança
+      
+      if (activityUserId === '0') {
+      } else {
+        const activityResponse = await fetch(new URL('/api/activities', request.url), {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            // Encaminha cookies da requisição original caso a rota dependa de contexto
+            cookie: request.headers.get('cookie') || '',
+          },
+          cache: 'no-store',
+          body: JSON.stringify({ userId: activityUserId, action, description }),
+        });
+
+        if (!activityResponse.ok) {
+          const errorText = await activityResponse.text().catch(() => '');
+          console.error('[PAYMENT/COLLECT] Erro ao registrar atividade:', activityResponse.status, errorText, {
+            userId: activityUserId,
+            action,
+            description,
+          });
+        } else {
+          console.log('[PAYMENT/COLLECT] Atividade registrada com sucesso:', { userId: activityUserId, action });
+        }
+      }
+    } catch (error) {
+      // Log do erro mas não quebra o fluxo da cobrança
+      console.error('[PAYMENT/COLLECT] Exceção ao registrar atividade:', error);
     }
 
     return NextResponse.json({
