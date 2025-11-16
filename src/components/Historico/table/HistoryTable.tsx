@@ -11,7 +11,6 @@ import { tableMappeData } from "@/lib/tableMappe";
 import { getFirstAndLastName } from "@/lib/utils";
 import { useReciboActivity } from "@/lib/activityExamples";
 import { processPaymentSISP } from "@/service/paymentService";
-import { SISPPaymentModal } from "@/components/(recibo)/SISPPaymentModal";
 import { toast } from "sonner";
 import React, { useEffect, useState } from "react";
 import {
@@ -85,10 +84,6 @@ const HistoryTable = ({
     reciboNumber: string;
     reciboData?: any;
   }>({ open: false, type: null, reciboNumber: '' });
-  const [sispModal, setSispModal] = useState<{
-    isOpen: boolean;
-    html: string;
-  }>({ isOpen: false, html: '' });
   const { token } = useSessionCheckToken();
   const { profile } = useUserProfile();
   const { toast: showToast } = useToast();
@@ -204,6 +199,32 @@ const HistoryTable = ({
       setLoadingView((prev) => ({ ...prev, [invoiceNumber]: false }));
     }
   };
+
+  // Abre o HTML do SISP no mesmo separador (mesma lógica usada em recibo/callback)
+  function openSISPInSamePage(html: string) {
+    let processed = html;
+    const hasEsc = html.includes('\\r\\n') || (html.includes('\\n') && !html.includes('\n'));
+    if (hasEsc) {
+      processed = html
+        .replace(/\\r\\n/g, '\r\n')
+        .replace(/\\n/g, '\n')
+        .replace(/\\t/g, '\t')
+        .replace(/\\"/g, '"')
+        .replace(/\\'/g, "'");
+    }
+    try {
+      const blob = new Blob([processed], { type: 'text/html;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const inFrame = ((): boolean => { try { return window.self !== window.top; } catch { return false; } })();
+      if (inFrame && (window.top as Window)) {
+        (window as any).top.location.href = url;
+      } else {
+        window.location.href = url;
+      }
+    } catch {
+      // noop
+    }
+  }
 
   const tableConfigs = {
     Apólices: {
@@ -346,13 +367,8 @@ const HistoryTable = ({
         invoiceNumber,
         recibo.mbref // Referência do recibo (ex: P2025.458)
       );
-      
-      // Abre modal com HTML do SISP
-      setSispModal({
-        isOpen: true,
-        html: result.html,
-      });
-      
+      // Abre o fluxo do SISP no mesmo separador
+      openSISPInSamePage(result.html);
       setConfirmDialog({ open: false, type: null, reciboNumber: '' });
       showToast({
         title: "Abrindo página de pagamento...",
@@ -868,6 +884,45 @@ const HistoryTable = ({
               {confirmDialog.type === 'download' && 'Baixar Recibo'}
               {confirmDialog.type === 'payment' && 'Confirmar Pagamento'}
             </DialogTitle>
+            {confirmDialog.type === 'payment' && confirmDialog.reciboData ? (
+              <div className="space-y-4 py-4">
+                <DialogDescription className="text-sm text-gray-700 font-medium text-center">
+                  Pagamento de Recibo
+                </DialogDescription>
+
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                    <div className="flex items-center gap-2">
+                      <span className="text-gray-500">Referência:</span>
+                    </div>
+                    <span className="font-semibold text-gray-900">
+                      {confirmDialog.reciboData.mbref || confirmDialog.reciboData.reference || confirmDialog.reciboNumber}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                    <div className="flex items-center gap-2">
+                      <span className="text-gray-500">Valor:</span>
+                    </div>
+                    <span className="font-semibold text-gray-900">
+                      {formatCurrency(confirmDialog.reciboData.value)}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mt-4">
+                  <div className="flex items-start gap-2 mb-2">
+                    <span className="text-blue-600 font-semibold text-sm">Informação Importante:</span>
+                  </div>
+                  <ul className="text-xs text-gray-700 space-y-1.5 list-disc list-inside">
+                    <li>Será redirecionado para a página segura de pagamento</li>
+                    <li>Aceita cartões de crédito e débito</li>
+                    <li>Receberá confirmação por email após o pagamento</li>
+                    <li>O pagamento é processado de forma segura pelo SISP</li>
+                  </ul>
+                </div>
+              </div>
+            ) : (
             <DialogDescription className="text-gray-600">
               {confirmDialog.type === 'view' && (
                 <>Tem certeza que deseja visualizar o recibo <span className="font-semibold text-gray-900">{confirmDialog.reciboNumber}</span>?</>
@@ -875,10 +930,8 @@ const HistoryTable = ({
               {confirmDialog.type === 'download' && (
                 <>Tem certeza que deseja baixar o recibo <span className="font-semibold text-gray-900">{confirmDialog.reciboNumber}</span>?</>
               )}
-              {confirmDialog.type === 'payment' && (
-                <>Tem certeza que deseja pagar o recibo <span className="font-semibold text-gray-900">{confirmDialog.reciboNumber}</span> no valor de <span className="font-semibold text-green-600">{confirmDialog.reciboData ? formatCurrency(confirmDialog.reciboData.value) : ''}</span>?</>
-              )}
             </DialogDescription>
+            )}
           </DialogHeader>
           <DialogFooter className="flex gap-3 sm:gap-3">
             <Button
@@ -923,12 +976,7 @@ const HistoryTable = ({
         </DialogContent>
       </Dialog>
 
-      {/* Modal de Pagamento SISP */}
-      <SISPPaymentModal
-        html={sispModal.html}
-        isOpen={sispModal.isOpen}
-        onClose={() => setSispModal({ isOpen: false, html: '' })}
-      />
+      {/* SISPPaymentModal removido: fluxo padronizado abre no mesmo separador */}
     </div>
   );
 };

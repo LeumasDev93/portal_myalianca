@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { reciboRef, amount } = body;
+    const { reciboRef, amount, userId: userIdFromBody } = body;
 
     if (!reciboRef || !amount) {
       return NextResponse.json(
@@ -14,6 +14,7 @@ export async function POST(request: NextRequest) {
 
     // Busca o token da sessão (anywhere token) via API session
     let anywhereToken: string = '';
+    let sessionUserId: string | undefined = undefined;
     try {
       const sess = await fetch(new URL('/api/auth/session', request.url), {
         headers: { cookie: request.headers.get('cookie') || '' },
@@ -23,6 +24,9 @@ export async function POST(request: NextRequest) {
         const data = await sess.json();
         if (data?.user?.accessToken) {
           anywhereToken = data.user.accessToken as string;
+        }
+        if (data?.user?.id) {
+          sessionUserId = String(data.user.id);
         }
       }
     } catch {
@@ -73,6 +77,27 @@ export async function POST(request: NextRequest) {
       }
     } catch {
       collectMessage = collectRes.ok ? 'Cobrança confirmada com sucesso' : `Falha ao cobrar (${collectRes.status})`;
+    }
+
+    // Registra atividade de pagamento (não bloqueante)
+    try {
+      const action = collectRes.ok ? 'pagamento_confirmado' : 'pagamento_cobranca_erro';
+      const description = collectRes.ok
+        ? `Pagamento confirmado | ref=${reciboRef} | valor=${amountNumber}`
+        : `Falha na cobrança | ref=${reciboRef} | valor=${amountNumber} | msg=${collectMessage}`;
+      const activityUserId = (userIdFromBody && String(userIdFromBody)) || sessionUserId || '0';
+      await fetch(new URL('/api/activities', request.url), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          // Encaminha cookies da requisição original caso a rota dependa de contexto
+          cookie: request.headers.get('cookie') || '',
+        },
+        cache: 'no-store',
+        body: JSON.stringify({ userId: activityUserId, action, description }),
+      });
+    } catch {
+      // Ignora erro de atividade para não quebrar o fluxo da cobrança
     }
 
     return NextResponse.json({
