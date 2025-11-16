@@ -3,7 +3,6 @@ import {
   FaCar,
   FaExclamationTriangle,
   FaHome,
-  FaCreditCard,
   FaFileAlt,
   FaShieldAlt,
   FaHistory,
