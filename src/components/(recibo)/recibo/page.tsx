@@ -85,7 +85,7 @@ function ReciboPageContent({ filterParams }: ReciboPageProps) {
   const [viewMode, setViewMode] = useState<ViewMode>("list");
   const [confirmDialog, setConfirmDialog] = useState<{
     open: boolean;
-    type: 'view' | 'download' | 'payment' | null;
+    type: 'download' | 'payment' | null;
     reciboNumber: string;
     reciboData?: any;
   }>({ open: false, type: null, reciboNumber: '' });
@@ -435,7 +435,7 @@ function ReciboPageContent({ filterParams }: ReciboPageProps) {
 
   // Diálogo de confirmação para ações de Ver/Baixar/Pagar
   const openConfirmDialog = (
-    type: 'view' | 'download' | 'payment',
+    type: 'download' | 'payment',
     reciboNumber: string,
     reciboData?: any
   ) => {
@@ -445,14 +445,22 @@ function ReciboPageContent({ filterParams }: ReciboPageProps) {
   const handleConfirmedAction = async () => {
     const { type, reciboNumber, reciboData } = confirmDialog;
     if (!type || !reciboNumber) return;
+    
+    // Ativar loading baseado no tipo
+    if (type === 'payment') {
+      setLoadingPayment((prev) => ({ ...prev, [reciboNumber]: true }));
+    } else if (type === 'download') {
+      setLoadingStates((prev) => ({ ...prev, [reciboNumber]: true }));
+    }
+    
     try {
-      if (type === 'view') {
-        await visualizarPDF(reciboNumber, reciboData?.status);
-      } else if (type === 'download') {
+      if (type === 'download') {
         await handleDownload(reciboNumber);
       } else if (type === 'payment') {
         if (!profile?.user || !reciboData) {
           toast.error('Dados insuficientes para processar pagamento.');
+          // Desativar loading antes de retornar
+          setLoadingPayment((prev) => ({ ...prev, [reciboNumber]: false }));
           return;
         }
         // Persistir referência e valor para o retorno do SISP
@@ -471,12 +479,28 @@ function ReciboPageContent({ filterParams }: ReciboPageProps) {
           rref
         );
         openSISPInSamePage(res?.html);
+        // Não fechar o dialog imediatamente após abrir o SISP, apenas desativar loading
+        setLoadingPayment((prev) => ({ ...prev, [reciboNumber]: false }));
+        setConfirmDialog({ open: false, type: null, reciboNumber: '' });
+        return; // Retornar para não executar o finally que fecha o dialog
       }
     } catch (e: any) {
       const msg = e?.message || 'Operação falhou. Tente novamente.';
       toast.error(msg);
+      // Desativar loading em caso de erro
+      if (type === 'payment') {
+        setLoadingPayment((prev) => ({ ...prev, [reciboNumber]: false }));
+      } else if (type === 'download') {
+        setLoadingStates((prev) => ({ ...prev, [reciboNumber]: false }));
+      }
     } finally {
-      setConfirmDialog({ open: false, type: null, reciboNumber: '' });
+      // Desativar loading baseado no tipo (apenas se não for payment que já foi tratado)
+      if (type !== 'payment') {
+        if (type === 'download') {
+          setLoadingStates((prev) => ({ ...prev, [reciboNumber]: false }));
+        }
+        setConfirmDialog({ open: false, type: null, reciboNumber: '' });
+      }
     }
   };
 
@@ -671,20 +695,20 @@ function ReciboPageContent({ filterParams }: ReciboPageProps) {
                   {formatDate(recibo.from)} - {formatDate(recibo.to)}
                 </div>
                 <div className="flex gap-2 w-full">
-                  <Button
-                    onClick={() => openConfirmDialog('view', recibo.number, recibo)}
-                    disabled={loadingView[recibo.number]}
-                    variant="outline"
-                    size="sm"
-                    className="flex-1 text-xs md:text-sm py-2"
-                  >
-                    {loadingView[recibo.number] ? (
-                      <LoadingSpinner size="sm" />
-                    ) : (
-                      <FaEye className="size-3 md:size-4" />
-                    )}
-                    <span className="ml-1">Ver</span>
-                  </Button>
+                    <Button
+                      onClick={() => visualizarPDF(recibo.number, recibo.status)}
+                      disabled={loadingView[recibo.number]}
+                      variant="outline"
+                      size="sm"
+                      className="flex-1 text-xs md:text-sm py-2"
+                    >
+                      {loadingView[recibo.number] ? (
+                        <LoadingSpinner size="sm" />
+                      ) : (
+                        <FaEye className="size-3 md:size-4" />
+                      )}
+                      <span className="ml-1">Ver</span>
+                    </Button>
                   {shouldShowPaymentButton(recibo.status) && (
                     <Button
                       onClick={() => openConfirmDialog('payment', recibo.number, recibo)}
@@ -768,7 +792,7 @@ function ReciboPageContent({ filterParams }: ReciboPageProps) {
                   </span>
                   <div className="flex gap-2 w-full md:w-auto">
                     <Button
-                      onClick={() => openConfirmDialog('view', recibo.number, recibo)}
+                      onClick={() => visualizarPDF(recibo.number, recibo.status)}
                       disabled={loadingView[recibo.number]}
                       variant="outline"
                       size="sm"
@@ -889,7 +913,6 @@ function ReciboPageContent({ filterParams }: ReciboPageProps) {
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="text-lg font-bold text-gray-900">
-              {confirmDialog.type === 'view' && 'Visualizar Recibo'}
               {confirmDialog.type === 'download' && 'Baixar Recibo'}
               {confirmDialog.type === 'payment' && 'Confirmar Pagamento'}
             </DialogTitle>
@@ -933,9 +956,6 @@ function ReciboPageContent({ filterParams }: ReciboPageProps) {
               </div>
             ) : (
             <DialogDescription className="text-gray-600">
-              {confirmDialog.type === 'view' && (
-                <>Tem certeza que deseja visualizar o recibo <span className="font-semibold text-gray-900">{confirmDialog.reciboNumber}</span>?</>
-              )}
               {confirmDialog.type === 'download' && (
                 <>Tem certeza que deseja baixar o recibo <span className="font-semibold text-gray-900">{confirmDialog.reciboNumber}</span>?</>
               )}
@@ -947,7 +967,7 @@ function ReciboPageContent({ filterParams }: ReciboPageProps) {
               type="button"
               variant="outline"
               onClick={() => setConfirmDialog({ open: false, type: null, reciboNumber: '' })}
-              disabled={loadingView[confirmDialog.reciboNumber] || loadingStates[confirmDialog.reciboNumber] || loadingPayment[confirmDialog.reciboNumber]}
+              disabled={loadingStates[confirmDialog.reciboNumber] || loadingPayment[confirmDialog.reciboNumber]}
               className="flex-1"
             >
               Cancelar
@@ -955,27 +975,23 @@ function ReciboPageContent({ filterParams }: ReciboPageProps) {
             <Button
               type="button"
               onClick={handleConfirmedAction}
-              disabled={loadingView[confirmDialog.reciboNumber] || loadingStates[confirmDialog.reciboNumber] || loadingPayment[confirmDialog.reciboNumber]}
+              disabled={loadingStates[confirmDialog.reciboNumber] || loadingPayment[confirmDialog.reciboNumber]}
               className={`flex-1 ${
                 confirmDialog.type === 'payment' 
                   ? 'bg-green-600 hover:bg-green-700' 
-                  : confirmDialog.type === 'download'
-                  ? 'bg-[#002256] hover:bg-[#002256]/90'
-                  : 'bg-blue-600 hover:bg-blue-700'
+                  : 'bg-[#002256] hover:bg-[#002256]/90'
               } text-white`}
             >
-              {(loadingView[confirmDialog.reciboNumber] || loadingStates[confirmDialog.reciboNumber] || loadingPayment[confirmDialog.reciboNumber]) ? (
+              {(loadingStates[confirmDialog.reciboNumber] || loadingPayment[confirmDialog.reciboNumber]) ? (
                 <>
                   <LoadingSpinner size="sm" />
                   <span className="ml-2">
-                    {confirmDialog.type === 'view' && 'Visualizando...'}
                     {confirmDialog.type === 'download' && 'Baixando...'}
                     {confirmDialog.type === 'payment' && 'Processando...'}
                   </span>
                 </>
               ) : (
                 <>
-                  {confirmDialog.type === 'view' && 'Visualizar'}
                   {confirmDialog.type === 'download' && 'Baixar'}
                   {confirmDialog.type === 'payment' && 'Pagar'}
                 </>
