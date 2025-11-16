@@ -278,6 +278,12 @@ const HistoryTable = ({
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
   const currentItems = config.data.slice(indexOfFirstItem, indexOfLastItem);
   const totalPages = Math.ceil(totalItems / itemsPerPage);
+  
+  // Garantir que sempre temos exatamente 5 linhas (preencher com vazias se necessário)
+  const displayItems: (typeof currentItems[0] | null)[] = [...currentItems];
+  while (displayItems.length < itemsPerPage) {
+    displayItems.push(null);
+  }
 
   const handleOptionsClick = (event: React.MouseEvent, item: any) => {
     const rect = event.currentTarget.getBoundingClientRect();
@@ -488,15 +494,10 @@ const HistoryTable = ({
         })}
       </div>
 
-      <div className="bg-white rounded-b-lg rounded-tl-lg shadow-md p-2 md:p-3 xl:p-6 w-full overflow-x-auto h-full flex flex-col">
-        <div
-          className="overflow-y-auto flex-1"
-          style={{
-            overflowY: "auto",
-          }}
-        >
-          <table className="divide-y divide-gray-200 w-full min-w-[600px]">
-            <thead className="sticky top-0 bg-white z-10">
+      <div className="bg-white rounded-b-lg rounded-tl-lg shadow-md p-2 md:p-3 xl:p-6 w-full h-full flex flex-col">
+        <div className="flex-1 overflow-x-auto overflow-y-hidden min-h-0">
+          <table className="divide-y divide-gray-200 w-full min-w-[600px] table-fixed">
+            <thead className="bg-white">
               <tr className="border-b-2 border-[#B7021C]">
                 {config.headers.map((header) => (
                   <th
@@ -514,7 +515,7 @@ const HistoryTable = ({
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {loading ? (
-                <TableSkeleton rows={8} columns={config.headers.length} />
+                <TableSkeleton rows={itemsPerPage} columns={config.headers.length} />
               ) : currentItems.length === 0 ? (
                 <tr>
                   <td
@@ -536,50 +537,62 @@ const HistoryTable = ({
                   </td>
                 </tr>
               ) : (
-                /* Data rows */
-                currentItems.map((item, rowIndex) => (
-                  <tr key={rowIndex} className="hover:bg-gray-50">
-                    {config.headers.map((header, colIndex) => {
-                      if (header.key === "options") {
-                        return (
-                          <td
-                            key={colIndex}
-                            className="px-2 md:px-3 py-3 md:py-4 text-center relative z-10"
-                          >
-                            <button
-                              onClick={(e) => handleOptionsClick(e, item)}
-                              className="text-[#002855] hover:text-[#001a3d] focus:outline-none p-1 relative z-10"
+                /* Data rows - sempre exatamente 5 linhas */
+                displayItems.map((item, rowIndex) => {
+                  if (!item) {
+                    // Linha vazia para manter sempre 5 linhas
+                    return (
+                      <tr key={`empty-${rowIndex}`} className="h-[50px]">
+                        {config.headers.map((header, colIndex) => (
+                          <td key={colIndex} className="px-2 md:px-3 py-1 md:py-2"></td>
+                        ))}
+                      </tr>
+                    );
+                  }
+                  
+                  return (
+                    <tr key={rowIndex} className="hover:bg-gray-50 h-[50px]">
+                      {config.headers.map((header, colIndex) => {
+                        if (header.key === "options") {
+                          return (
+                            <td
+                              key={colIndex}
+                              className="px-2 md:px-3 py-1 md:py-2 text-center relative z-10"
                             >
-                              <HiDotsVertical className="text-base md:text-lg xl:text-xl" />
-                            </button>
-                          </td>
-                        );
-                      }
+                              <button
+                                onClick={(e) => handleOptionsClick(e, item)}
+                                className="text-[#002855] hover:text-[#001a3d] focus:outline-none p-1 relative z-10"
+                              >
+                                <HiDotsVertical className="text-base md:text-lg xl:text-xl" />
+                              </button>
+                            </td>
+                          );
+                        }
 
-                      const value =
-                        header.key in item &&
-                        typeof (item as any)[header.key] !== "object"
-                          ? String((item as any)[header.key])
-                          : "";
+                        const value =
+                          header.key in item &&
+                          typeof (item as any)[header.key] !== "object"
+                            ? String((item as any)[header.key])
+                            : "";
 
-                      if (header.key === "ramo") {
-                        return (
+                        if (header.key === "ramo") {
+                          return (
                           <td
                             key={colIndex}
-                            className="px-2 md:px-3 py-3 md:py-4 text-center"
+                            className="px-2 md:px-3 py-1 md:py-2 2xl:py-3 text-center"
                           >
                             <span className="bg-[#002256] rounded-full w-5 h-5 md:w-6 md:h-6 xl:w-8 xl:h-8 flex items-center justify-center mx-auto">
-                              {ramoIcons[value as keyof typeof ramoIcons] ||
-                                ramoIcons.Outros}
-                            </span>
-                          </td>
-                        );
-                      }
-                      if (header.key === "clientName") {
-                        return (
+                                {ramoIcons[value as keyof typeof ramoIcons] ||
+                                  ramoIcons.Outros}
+                              </span>
+                            </td>
+                          );
+                        }
+                        if (header.key === "clientName") {
+                          return (
                           <td
                             key={colIndex}
-                            className="px-2 md:px-3 py-3 md:py-4 text-center"
+                            className="px-2 md:px-3 py-1 md:py-2 2xl:py-3 text-center"
                           >
                             <span className="text-xs md:text-sm">
                               {getFirstAndLastName(item.rawData.clientName)}
@@ -592,25 +605,25 @@ const HistoryTable = ({
                         return (
                           <td
                             key={colIndex}
-                            className="px-2 md:px-3 py-3 md:py-4 text-center"
+                            className="px-2 md:px-3 py-1 md:py-2 2xl:py-3 text-center"
                           >
-                            <span
-                              className={`inline-block text-xs md:text-sm font-semibold py-1 md:py-2 px-2 md:px-3 rounded-md text-center whitespace-nowrap  ${item.statusClass}`}
-                            >
-                              {item.status}
-                            </span>
-                          </td>
-                        );
-                      }
-                      if (
-                        header.key === "numberapolice" ||
-                        header.key === "reference" ||
-                        header.key === "number"
-                      ) {
-                        return (
+                              <span
+                                className={`inline-block text-xs md:text-sm font-semibold py-1 md:py-2 px-2 md:px-3 rounded-md text-center whitespace-nowrap  ${item.statusClass}`}
+                              >
+                                {item.status}
+                              </span>
+                            </td>
+                          );
+                        }
+                        if (
+                          header.key === "numberapolice" ||
+                          header.key === "reference" ||
+                          header.key === "number"
+                        ) {
+                          return (
                           <td
                             key={colIndex}
-                            className="px-2 md:px-3 py-3 md:py-4 text-xs md:text-sm text-center"
+                            className="px-2 md:px-3 py-1 md:py-2 2xl:py-3 text-xs md:text-sm text-center"
                           >
                             <span>#{value}</span>
                           </td>
@@ -621,7 +634,7 @@ const HistoryTable = ({
                         return (
                           <td
                             key={colIndex}
-                            className="px-2 md:px-3 py-3 md:py-4 text-center"
+                            className="px-2 md:px-3 py-1 md:py-2 2xl:py-3 text-center"
                           >
                             {value && (
                               <button
@@ -634,24 +647,25 @@ const HistoryTable = ({
                         );
                       }
 
-                      return (
-                        <td
-                          key={colIndex}
-                          className="px-2 md:px-3 py-3 md:py-4 text-xs md:text-sm text-center"
-                        >
-                          {value}
-                        </td>
-                      );
-                    })}
-                  </tr>
-                ))
+                        return (
+                          <td
+                            key={colIndex}
+                            className="px-2 md:px-3 py-1 md:py-2 2xl:py-3 text-xs md:text-sm text-center"
+                          >
+                            {value}
+                          </td>
+                        );
+                      })}
+                    </tr>
+                  );
+                })
               )}
             </tbody>
           </table>
         </div>
 
         {totalItems > itemsPerPage && (
-          <div className="flex flex-col md:flex-row justify-between items-center gap-3 mt-4 px-2 md:px-4 py-2 flex-shrink-0">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-3 mt-2 px-2 md:px-4 py-2 border-t border-gray-200 flex-shrink-0">
             <div className="text-[10px] md:text-xs text-gray-600 text-center md:text-left">
               Mostrando {indexOfFirstItem + 1} a{" "}
               {Math.min(indexOfLastItem, totalItems)} de {totalItems} itens

@@ -36,7 +36,11 @@ const customTooltip = ({ active, payload }: any) => {
   return null;
 };
 
-export function DashboardCharts() {
+interface DashboardChartsProps {
+  fixedHeight?: boolean;
+}
+
+export function DashboardCharts({ fixedHeight = false }: DashboardChartsProps) {
   const [isXlScreen, setIsXlScreen] = useState(false);
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
   const [forceRefresh, setForceRefresh] = useState(false);
@@ -132,8 +136,8 @@ export function DashboardCharts() {
     isLoadingApolices || isLoadingSinistros || isLoadingRecibos || isValidating;
 
   return (
-    <div className="flex flex-col h-full">
-      <Card className="w-full h-full bg-white rounded-lg shadow-md sm:mt-10 flex flex-col">
+    <div className={`flex flex-col ${fixedHeight ? 'h-full' : ''}`}>
+      <Card className={`w-full bg-white rounded-lg shadow-md sm:mt-10 flex flex-col ${fixedHeight ? 'h-full' : ''}`}>
         <CardHeader className="flex-shrink-0">
           <div className="flex justify-between items-center">
             <CardTitle className="text-xl xl:text-2xl font-bold">
@@ -157,8 +161,8 @@ export function DashboardCharts() {
             </div>
           </div>
         </CardHeader>
-        <CardContent className="px-1 sm:px-2 md:px-4 xl:px-6 flex-1 flex flex-col">
-          <Tabs defaultValue="apolices" className="space-y-2 xl:space-y-4 flex-1 flex flex-col">
+        <CardContent className={`px-1 sm:px-2 md:px-4 xl:px-6 ${fixedHeight ? 'flex-1 flex flex-col' : ''}`}>
+          <Tabs defaultValue="apolices" className={`space-y-2 xl:space-y-4 ${fixedHeight ? 'flex-1 flex flex-col' : ''}`}>
             <TabsList className="grid w-full grid-cols-3 bg-white gap-1 sm:gap-2 flex-shrink-0">
               <TabsTrigger
                 value="apolices"
@@ -224,10 +228,10 @@ export function DashboardCharts() {
                 <TabsContent
                   key={key}
                   value={key}
-                  className="space-y-2 xl:space-y-4 flex-1 flex flex-col"
+                  className={`space-y-2 xl:space-y-4 ${fixedHeight ? 'flex-1 flex flex-col' : ''}`}
                 >
                   {data.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center flex-1 text-gray-500 space-y-2">
+                    <div className={`flex flex-col items-center justify-center text-gray-500 space-y-2 ${fixedHeight ? 'flex-1' : 'h-[200px] sm:h-[250px] xl:h-[270px]'}`}>
                       <div className="relative">
                         <FaSearch className="text-4xl text-gray-400 animate-pulse" />
                         <FaFilter
@@ -238,9 +242,9 @@ export function DashboardCharts() {
                       <span>Nenhum dado encontrado.</span>
                     </div>
                   ) : (
-                    <div className="flex flex-col items-center justify-center gap-2 sm:gap-3 md:gap-4 py-2 sm:py-3 md:py-4 flex-1">
+                    <div className={`flex flex-col items-center justify-center gap-2 sm:gap-3 md:gap-4 py-2 sm:py-3 md:py-4 ${fixedHeight ? 'flex-1' : ''}`}>
                       {/* Gráfico */}
-                      <div className="w-full flex-1 flex items-center justify-center">
+                      <div className={`w-full ${fixedHeight ? 'flex-1 flex items-center justify-center' : 'h-[180px] sm:h-[220px] md:h-[250px] xl:h-[300px]'}`}>
                         <ResponsiveContainer width="100%" height="100%">
                           <PieChart>
                             <Pie
@@ -261,7 +265,7 @@ export function DashboardCharts() {
                       </div>
                       
                       {/* Legendas abaixo com quebra de linha automática */}
-                      <div className="flex flex-wrap gap-1.5 sm:gap-2 md:gap-3 xl:gap-4 justify-center items-center text-[10px] sm:text-xs xl:text-sm w-full px-2 flex-shrink-0">
+                      <div className={`flex flex-wrap gap-1.5 sm:gap-2 md:gap-3 xl:gap-4 justify-center items-center text-[10px] sm:text-xs xl:text-sm w-full px-2 ${fixedHeight ? 'flex-shrink-0' : ''}`}>
                         {data.map((entry, i) => (
                           <div key={i} className="flex items-center gap-1 sm:gap-1.5 md:gap-2">
                             <span
