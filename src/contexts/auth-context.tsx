@@ -61,15 +61,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     document.cookie = "token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
   };
 
+  const wipeClientStorage = useCallback(() => {
+    try {
+      sessionStorage.clear();
+    } catch (error) {
+      console.warn("[AUTH] Falha ao limpar sessionStorage:", error);
+    }
+
+    try {
+      localStorage.clear();
+    } catch (error) {
+      console.warn("[AUTH] Falha ao limpar localStorage:", error);
+    }
+  }, []);
+
   const clearAuthData = useCallback(() => {
-    sessionStorage.removeItem("user");
-    sessionStorage.removeItem("token");
-    // Limpar TODO o localStorage, não importa o que tenha
-    localStorage.clear();
+    wipeClientStorage();
     setUser(null);
     setToken(null);
     clearAuthCookies();
-  }, []);
+  }, [wipeClientStorage]);
 
   useEffect(() => {
     const initializeAuth = async () => {
@@ -129,6 +140,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setError(null);
 
       try {
+        wipeClientStorage();
+
         const response = await axios.post("/api/auth/login", {
           username,
           password,
@@ -163,7 +176,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         throw error;
       }
     },
-    [router, searchParams, clearAuthData]
+    [router, searchParams, clearAuthData, wipeClientStorage]
   );
 
   const logout = useCallback(async () => {
@@ -171,6 +184,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setIsLoading(false); // Garante que loading está desativado ao fazer logout
     router.push("/login");
   }, [router, clearAuthData]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const handleBeforeUnload = () => {
+      wipeClientStorage();
+      clearAuthCookies();
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, [wipeClientStorage]);
 
 
   useEffect(() => {
