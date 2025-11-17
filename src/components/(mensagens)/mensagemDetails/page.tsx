@@ -72,6 +72,7 @@ export default function MensagemDetailPage({
   const { profile } = useUserProfile();
   const { markMessageAsRead } = useUnreadMessages();
   const replyFormRef = useRef<MessageReplyFormRef>(null);
+  const hasMarkedAsReadRef = useRef(false);
 
   const userId = profile?.user.id || "";
 
@@ -149,6 +150,100 @@ export default function MensagemDetailPage({
       const thread = data.results;
       const messages = await mapThreadToMessages(thread);
       setConversation(messages);
+      
+      // Marcar como lida automaticamente ao abrir os detalhes (apenas uma vez)
+      // Pegar o ID diretamente do array thread.mensagens (última mensagem)
+      if (thread?.mensagens && thread.mensagens.length > 0 && !hasMarkedAsReadRef.current) {
+        // Ordenar mensagens por data_envio para garantir que pegamos a última
+        const sortedMessages = [...thread.mensagens].sort((a, b) => {
+          const dateA = new Date(a.data_envio).getTime();
+          const dateB = new Date(b.data_envio).getTime();
+          return dateA - dateB; // Ordenar do mais antigo para o mais recente
+        });
+        
+        // Pegar a última mensagem do array ordenado (a mais recente)
+        const lastMessageFromThread = sortedMessages[sortedMessages.length - 1];
+        const lastMessageId = lastMessageFromThread.id; // ID da última mensagem do array
+        
+        console.log('📧 Array de mensagens:', {
+          total: thread.mensagens.length,
+          mensagens: thread.mensagens.map((m: any) => ({
+            id: m.id,
+            data_envio: m.data_envio,
+            tipo_utilizador: m.tipo_utilizador
+          }))
+        });
+        
+        console.log('📧 Última mensagem encontrada (após ordenação):', {
+          messageId: lastMessageId,
+          data_envio: lastMessageFromThread.data_envio,
+          user_id: lastMessageFromThread.user_id,
+          tipo_utilizador: lastMessageFromThread.tipo_utilizador,
+          lida_cliente: lastMessageFromThread.lida_cliente,
+          lida_colaborador: lastMessageFromThread.lida_colaborador,
+          userId: userId,
+          threadId: id
+        });
+        
+        console.log('📧 ID da última mensagem que será usado:', lastMessageId);
+        
+        // Verificar se a mensagem não foi lida pelo cliente
+        // Se tipo_utilizador é "COLABORADOR" ou user_id é diferente/null, não é do cliente
+        const isFromClient = lastMessageFromThread.user_id === userId && 
+                            lastMessageFromThread.tipo_utilizador === 'CLIENTE';
+        const isReadByClient = lastMessageFromThread.lida_cliente === true;
+        
+        console.log('📧 Verificação antes de marcar como lida:', {
+          lastMessageId,
+          threadId: id,
+          isFromClient,
+          isReadByClient,
+          tipo_utilizador: lastMessageFromThread.tipo_utilizador,
+          user_id: lastMessageFromThread.user_id,
+          userId: userId
+        });
+        
+        // Sempre tentar marcar como lida se não foi enviada pelo cliente
+        // Mesmo que já esteja marcada como lida, a API pode atualizar o status
+        if (!isFromClient) {
+          try {
+            const payload = {
+              messageId: lastMessageId, // ID da última mensagem do array mensagens
+              userId: userId,
+            };
+            
+            console.log('📧 Chamando API mark-read - Payload:', payload);
+            
+            // Usar o ID da última mensagem para marcar como lida
+            const response = await fetch('/api/menssage/mark-read', {
+              method: 'PATCH',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(payload),
+            });
+            
+            if (!response.ok) {
+              const errorText = await response.text().catch(() => '');
+              console.error('❌ Erro ao marcar mensagem como lida:', response.status, errorText);
+              throw new Error(`Erro ${response.status}: ${errorText}`);
+            }
+            
+            const responseData = await response.json();
+            console.log('✅ Resposta da API mark-read:', response.status, responseData);
+            
+            // Atualizar o contexto local usando o ID da thread
+            markMessageAsRead(id);
+            // Marcar como já processado para evitar múltiplas chamadas
+            hasMarkedAsReadRef.current = true;
+          } catch (error) {
+            console.error('❌ Erro ao marcar mensagem como lida:', error);
+            // Não marcar como processado em caso de erro para tentar novamente
+          }
+        } else {
+          // Se é do próprio cliente, não precisa marcar como lida
+          console.log('📧 Mensagem é do próprio cliente, não precisa marcar como lida');
+          hasMarkedAsReadRef.current = true;
+        }
+      }
     } catch (error) {
       console.error(error);
       if (showLoading) {
@@ -164,6 +259,8 @@ export default function MensagemDetailPage({
   };
 
   useEffect(() => {
+    // Resetar a flag quando o ID da conversa mudar
+    hasMarkedAsReadRef.current = false;
     if (userId) fetchConversation();
   }, [id, userId]);
 

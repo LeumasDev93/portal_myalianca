@@ -19,7 +19,7 @@ import {
 import Link from "next/link";
 import {
   Eye,
-  Trash2,
+  // Trash2,
   Star,
   Plus,
   AlertTriangle,
@@ -480,13 +480,9 @@ export default function MensagensPage({
                         {/* Conteúdo da mensagem */}
                         <Link
                           href={``}
-                          onClick={async () => {
-                            // Marcar como lida se não estiver lida
-                            if (!isMessageRead(message.id)) {
-                              markMessageAsRead(message.id);
-                              await markAsRead(message.id);
-                              refreshUnreadCount(); // Atualiza contador global
-                            }
+                          onClick={() => {
+                            // Não marcar como lida aqui - será marcado automaticamente ao abrir os detalhes
+                            // onde temos acesso ao ID da última mensagem
                             onSelectDetail(message.id);
                           }}
                           className={`${
@@ -635,60 +631,9 @@ export default function MensagensPage({
                           </Button>
 
                           <Button
-                            variant="ghost"
-                            size="icon"
-                            className={`${
-                              viewMode === "grid"
-                                ? "h-6 w-6 sm:h-8 sm:w-8"
-                                : "h-8 w-8"
-                            } cursor-pointer`}
-                            onClick={async (e) => {
-                              e.preventDefault();
-                              e.stopPropagation();
-
-                              if (isMessageRead(message.id)) {
-                                markMessageAsUnread(message.id);
-                                await markAsUnread(message.id);
-                                refreshUnreadCount(); // Atualiza contador global
-                              } else {
-                                markMessageAsRead(message.id);
-                                await markAsRead(message.id);
-                                refreshUnreadCount(); // Atualiza contador global
-                              }
-                            }}
-                            title={
-                              isMessageRead(message.id)
-                                ? "Marcar como não lida"
-                                : "Marcar como lida"
-                            }
-                          >
-                            {isMessageRead(message.id) ? (
-                              <Mail
-                                className={`${
-                                  viewMode === "grid"
-                                    ? "h-3 w-3 sm:h-4 sm:w-4"
-                                    : "h-4 w-4"
-                                } text-gray-400`}
-                              />
-                            ) : (
-                              <MailOpen
-                                className={`${
-                                  viewMode === "grid"
-                                    ? "h-3 w-3 sm:h-4 sm:w-4"
-                                    : "h-4 w-4"
-                                } text-company-blue-600`}
-                              />
-                            )}
-                          </Button>
-
-                          <Button
-                            onClick={async () => {
-                              // Marcar como lida se não estiver lida
-                              if (!isMessageRead(message.id)) {
-                                markMessageAsRead(message.id);
-                                await markAsRead(message.id);
-                                refreshUnreadCount();
-                              }
+                            onClick={() => {
+                              // Não marcar como lida aqui - será marcado automaticamente ao abrir os detalhes
+                              // onde temos acesso ao ID da última mensagem
                               onSelectDetail(message.id);
                             }}
                             variant="ghost"
@@ -709,7 +654,7 @@ export default function MensagensPage({
                             />
                           </Button>
 
-                          <Button
+                          {/* <Button
                             variant="ghost"
                             size="icon"
                             className={`${
@@ -727,7 +672,7 @@ export default function MensagensPage({
                                   : "h-4 w-4"
                               } text-gray-400`}
                             />
-                          </Button>
+                          </Button> */}
                         </div>
 
                         {/* Menu dropdown para mobile */}
@@ -764,12 +709,9 @@ export default function MensagensPage({
                               sideOffset={8}
                             >
                               <DropdownMenuItem
-                                onClick={async () => {
-                                  if (!isMessageRead(message.id)) {
-                                    markMessageAsRead(message.id);
-                                    await markAsRead(message.id);
-                                    refreshUnreadCount();
-                                  }
+                                onClick={() => {
+                                  // Não marcar como lida aqui - será marcado automaticamente ao abrir os detalhes
+                                  // onde temos acesso ao ID da última mensagem
                                   onSelectDetail(message.id);
                                 }}
                                 className="flex items-center gap-2 sm:gap-3 p-2 sm:p-2 text-xs sm:text-sm cursor-pointer hover:bg-gray-100 rounded-md"
@@ -814,42 +756,13 @@ export default function MensagensPage({
                                 </span>
                               </DropdownMenuItem>
 
-                              <DropdownMenuItem
-                                onClick={async (e) => {
-                                  e.preventDefault();
-                                  e.stopPropagation();
-
-                                  if (isMessageRead(message.id)) {
-                                    markMessageAsUnread(message.id);
-                                    await markAsUnread(message.id);
-                                    refreshUnreadCount(); // Atualiza contador global
-                                  } else {
-                                    markMessageAsRead(message.id);
-                                    await markAsRead(message.id);
-                                    refreshUnreadCount(); // Atualiza contador global
-                                  }
-                                }}
-                                className="flex items-center gap-2 sm:gap-3 p-2 sm:p-2 text-xs sm:text-sm cursor-pointer hover:bg-gray-100 rounded-md"
-                              >
-                                {isMessageRead(message.id) ? (
-                                  <Mail className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0 text-gray-400" />
-                                ) : (
-                                  <MailOpen className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0 text-company-blue-600" />
-                                )}
-                                <span className="flex-1">
-                                  {isMessageRead(message.id)
-                                    ? "Marcar como não lida"
-                                    : "Marcar como lida"}
-                                </span>
-                              </DropdownMenuItem>
-
-                              <DropdownMenuItem
+                              {/* <DropdownMenuItem
                                 onClick={(e) => openDeleteDialog(message.id, e)}
                                 className="flex items-center gap-2 sm:gap-3 p-2 sm:p-2 text-xs sm:text-sm cursor-pointer hover:bg-red-50 rounded-md text-red-600"
                               >
                                 <Trash2 className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
                                 <span className="flex-1">Excluir</span>
-                              </DropdownMenuItem>
+                              </DropdownMenuItem> */}
                             </DropdownMenuContent>
                           </DropdownMenu>
                         </div>

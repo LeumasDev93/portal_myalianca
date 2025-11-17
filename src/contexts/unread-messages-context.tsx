@@ -72,28 +72,71 @@ export function UnreadMessagesProvider({ children }: { children: ReactNode }) {
     if (!profile?.user?.id) return;
 
     try {
-      const res = await fetch(`/api/menssage?user_id=${profile.user.id}`, {
-        cache: "no-store",
-      });
+      // Usar a nova API de contagem de mensagens não lidas
+      const res = await fetch(
+        `/api/messages/count-not-read?user_id=${encodeURIComponent(profile.user.id)}`,
+        {
+          cache: "no-store",
+        }
+      );
 
-      if (!res.ok) throw new Error("Erro ao carregar mensagens");
+      if (!res.ok) {
+        // Se a API falhar, tentar o método antigo como fallback
+        console.warn("Erro ao buscar contador via API, tentando método alternativo...");
+        const fallbackRes = await fetch(`/api/menssage?user_id=${profile.user.id}`, {
+          cache: "no-store",
+        });
+
+        if (!fallbackRes.ok) throw new Error("Erro ao carregar mensagens");
+
+        const fallbackData = await fallbackRes.json();
+        const storedReadMessages = loadReadMessagesFromStorage();
+        setReadMessages(storedReadMessages);
+
+        const unreadMessages =
+          fallbackData.results?.filter(
+            (msg: { id: string; read: boolean }) =>
+              !storedReadMessages.has(msg.id) && !msg.read
+          ) || [];
+
+        setUnreadCount(unreadMessages.length);
+        return;
+      }
 
       const data = await res.json();
+      
+      console.log('📡 Resposta da API count-not-read:', data);
+      
+      // A API pode retornar o contador diretamente ou em uma propriedade
+      // Verificar diferentes formatos de resposta
+      let count = 0;
+      
+      // Primeiro verificar se results é um número (caso mais comum: { "info": {...}, "results": 5 })
+      if (data && typeof data.results === 'number') {
+        count = Number(data.results);
+      } else if (typeof data === 'number') {
+        count = Number(data);
+      } else if (data && data.count !== undefined) {
+        count = Number(data.count);
+      } else if (data && data.count_not_read !== undefined) {
+        count = Number(data.count_not_read);
+      } else if (data && data.results && typeof data.results === 'object' && data.results.count !== undefined) {
+        count = Number(data.results.count);
+      } else {
+        // Se não encontrar o formato esperado, usar 0
+        console.warn("Formato de resposta inesperado da API de contagem:", data);
+        count = 0;
+      }
 
-      // Carregar mensagens lidas do localStorage
-      const storedReadMessages = loadReadMessagesFromStorage();
-      setReadMessages(storedReadMessages);
+      // Garantir que count é um número válido
+      count = isNaN(count) ? 0 : Math.max(0, Math.floor(count));
 
-      // Calcular número de mensagens não lidas baseado no localStorage
-      const unreadMessages =
-        data.results?.filter(
-          (msg: { id: string; read: boolean }) =>
-            !storedReadMessages.has(msg.id) && !msg.read
-        ) || [];
-
-      setUnreadCount(unreadMessages.length);
+      console.log('📊 Contador de mensagens não lidas processado:', count, typeof count);
+      setUnreadCount(count);
     } catch (error) {
       console.error("Erro ao buscar contador de mensagens não lidas:", error);
+      // Em caso de erro, manter o contador atual ou definir como 0
+      setUnreadCount(0);
     }
   }, [profile?.user?.id, loadReadMessagesFromStorage]);
 

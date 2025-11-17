@@ -41,6 +41,12 @@ export function TopMenu({
   } = useNotificationsContext();
   const { unreadCount: messagesCount, markAllMessagesAsRead } =
     useUnreadMessages();
+  
+  // Debug: verificar se o contador está sendo atualizado
+  useEffect(() => {
+    console.log('🔔 TopMenu - Contador de mensagens:', messagesCount);
+  }, [messagesCount]);
+  
   const [showSearch, setShowSearch] = useState(false);
   const [showProfilePopup, setShowProfilePopup] = useState(false);
   const [showMessagesPopup, setShowMessagesPopup] = useState(false);
