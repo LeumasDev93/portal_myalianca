@@ -186,18 +186,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [router, clearAuthData]);
 
   useEffect(() => {
-    if (typeof window === "undefined") return;
-    const handleBeforeUnload = () => {
-      wipeClientStorage();
-      clearAuthCookies();
-    };
-
-    window.addEventListener("beforeunload", handleBeforeUnload);
-    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
-  }, [wipeClientStorage]);
-
-
-  useEffect(() => {
     if (isLoading) return;
 
     const publicRoutes = ["/login", "/signup", "/recuperar-senha", "/"];
