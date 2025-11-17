@@ -168,7 +168,6 @@ export default function FloatingSupportButtons() {
 
 	return (
 		<div className="fixed top-1/2 -translate-y-1/2 md:top-[50%] right-0 z-[1000]">
-			{/* Simulate button */}
 			<div className="relative">
 				<button
 					ref={buttonRef}
@@ -184,7 +183,6 @@ export default function FloatingSupportButtons() {
 					}}
 					className="relative p-4 md:p-4 bg-blue-950 hover:bg-white hover:border border-blue-950 rounded-tl-xl rounded-bl-none shadow-lg transition-all duration-300 ease-in-out w-10 h-10 md:w-20 md:h-20 flex flex-col items-center justify-center group"
 				>
-					{/* Seta apontando para o popup */}
 					{isSimulateOpen && (
 						<div 
 							className={`absolute top-1/2 -translate-y-1/2 w-0 h-0 z-[51] transition-colors duration-300 ${
@@ -197,15 +195,14 @@ export default function FloatingSupportButtons() {
 							}}
 						/>
 					)}
-					<div className="flex items-center justify-center w-4 h-3 md:w-8 md:h-8">
-						<MessageSquare className="w-6 h-6 md:w-8 md:h-8 text-white group-hover:text-blue-950 transition-colors duration-300" />
+					<div className="flex items-center justify-center w-4 h-3 md:w-6 md:h-6 2xl:w-8 2xl:h-8">
+						<MessageSquare className="w-4 h-4 md:w-6 md:h-6 2xl:w-8 2xl:h-8 text-white group-hover:text-blue-950 transition-colors duration-300" />
 					</div>
-					<span className="text-xs text-white mt-1 hidden md:flex transition-colors duration-300 group-hover:text-[#002256]">
+					<span className="2xl:text-xs text-[10px] text-white mt-1 hidden md:flex transition-colors duration-300 group-hover:text-[#002256]">
 						Mensagens
 					</span>
 				</button>
 
-				{/* Popup de Mensagens */}
 				{isSimulateOpen && (
 					<div 
 						ref={popupRef}
@@ -216,7 +213,6 @@ export default function FloatingSupportButtons() {
 						}`}
 					>
 						<div className="bg-white rounded-lg shadow-2xl border border-gray-200 overflow-hidden">
-						{/* Header */}
 						<div className="bg-blue-950 text-white p-4 flex items-center justify-between">
 							<h3 className="text-lg font-semibold">Envie sua dúvida</h3>
 							<button
@@ -338,19 +334,19 @@ export default function FloatingSupportButtons() {
 					</div>
 				)}
 				
-				<div className="flex items-center justify-center md:relative w-4 h-4 md:w-8 md:h-8">
+				<div className="flex items-center justify-center md:relative w-4 h-4 md:w-6 md:h-6 2xl:w-8 2xl:h-8">
 					<Image
 						src={IconContactWhite}
 						alt="Contactar"
-						className="absolute w-6 h-6 md:w-8 md:h-8 transition-opacity duration-300 opacity-100 group-hover:opacity-0"
+						className="absolute w-4 h-4 md:w-6 md:h-6 2xl:w-8 2xl:h-8 transition-opacity duration-300 opacity-100 group-hover:opacity-0"
 					/>
 					<Image
 						src={IconContactBlue}
 						alt="Contactar Hover"
-						className="absolute w-6 h-6 md:w-8 md:h-8 transition-opacity duration-300 opacity-0 group-hover:opacity-100"
+						className="absolute w-4 h-4 md:w-6 md:h-6 2xl:w-8 2xl:h-8 transition-opacity duration-300 opacity-0 group-hover:opacity-100"
 					/>
 				</div>
-				<span className="text-xs text-white mt-1 hidden md:flex transition-colors duration-300 group-hover:text-[#002256]">
+				<span className="2xl:text-xs text-[10px] text-white mt-1 hidden md:flex transition-colors duration-300 group-hover:text-[#002256]">
 					Contactar
 				</span>
 			</button>
