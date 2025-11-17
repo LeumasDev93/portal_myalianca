@@ -61,6 +61,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     document.cookie = "token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
   };
 
+  const STORAGE_USER_KEY = "user";
+  const STORAGE_TOKEN_KEY = "token";
+
   const wipeClientStorage = useCallback(() => {
     try {
       sessionStorage.clear();
@@ -75,6 +78,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  const persistAuthData = useCallback((userData: User, tokenValue: string) => {
+    try {
+      sessionStorage.setItem(STORAGE_USER_KEY, JSON.stringify(userData));
+      sessionStorage.setItem(STORAGE_TOKEN_KEY, tokenValue);
+    } catch (error) {
+      console.warn("[AUTH] Falha ao gravar sessionStorage:", error);
+    }
+
+    try {
+      localStorage.setItem(STORAGE_USER_KEY, JSON.stringify(userData));
+      localStorage.setItem(STORAGE_TOKEN_KEY, tokenValue);
+    } catch (error) {
+      console.warn("[AUTH] Falha ao gravar localStorage:", error);
+    }
+  }, []);
+
   const clearAuthData = useCallback(() => {
     wipeClientStorage();
     setUser(null);
@@ -85,8 +104,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const initializeAuth = async () => {
       try {
-        const userData = sessionStorage.getItem("user");
-        const authToken = sessionStorage.getItem("token");
+        const userData = sessionStorage.getItem(STORAGE_USER_KEY);
+        const authToken = sessionStorage.getItem(STORAGE_TOKEN_KEY);
 
         console.log("Initializing auth with userData:", userData);
 
@@ -94,6 +113,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setUser(JSON.parse(userData));
           setToken(authToken);
           setAuthCookies(authToken);
+          return;
+        }
+
+        // Fallback para localStorage (outra aba pode ter sessão ativa)
+        const localUserData = localStorage.getItem(STORAGE_USER_KEY);
+        const localToken = localStorage.getItem(STORAGE_TOKEN_KEY);
+
+        if (localUserData && localToken) {
+          persistAuthData(JSON.parse(localUserData), localToken);
+          setUser(JSON.parse(localUserData));
+          setToken(localToken);
+          setAuthCookies(localToken);
         } else {
           // Fallback: usuário pode estar logado em outra aba (cookie presente) mas sem sessionStorage nesta aba
           const cookies = typeof document !== "undefined" ? document.cookie : "";
@@ -108,8 +139,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               const res = await fetch("/api/profile", { credentials: "include" });
               if (res.ok) {
                 const profile = await res.json();
-                sessionStorage.setItem("user", JSON.stringify(profile));
-                sessionStorage.setItem("token", tokenFromCookie);
+                persistAuthData(profile, tokenFromCookie);
                 setUser(profile);
                 setToken(tokenFromCookie);
                 setAuthCookies(tokenFromCookie);
@@ -149,9 +179,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         const { token, ...userData } = response.data;
 
-        sessionStorage.setItem("user", JSON.stringify(userData));
-
-        sessionStorage.setItem("token", token);
+        persistAuthData(userData, token);
         setUser(userData);
         setToken(token);
         setAuthCookies(token);
