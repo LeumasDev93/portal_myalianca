@@ -168,7 +168,7 @@ export default function SimulationScreen({ onNavigateToRecibo }: SimulationScree
               </>
             ) : (
               <div className="w-full h-full flex flex-col items-center justify-center px-4 text-white z-10 relative">
-                <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold mb-2 sm:mb-3 md:mb-4 text-center">
+                <h1 className="text-2xl sm:text-3xl lg:text-4xl xl:text-5xl font-bold mb-2 sm:mb-3 md:mb-4 text-center">
                   Bem-vindo ao Simulador da Alianca Seguros
                 </h1>
                 <h2 className="text-sm sm:text-base md:text-lg lg:text-xl xl:text-2xl text-center font-light max-w-3xl">
