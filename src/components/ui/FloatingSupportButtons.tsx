@@ -8,7 +8,7 @@ import IconContactBlue from "@/assets/Icones/Contactar_Icone.svg";
 import { useUserProfile } from "@/hooks/useUserProfile";
 
 const CONTACT_LINK =
-  process.env.NEXT_PUBLIC_CONTACT_URL ?? "https://wa.me/2389300000";
+  process.env.NEXT_PUBLIC_CONTACT_URL ?? "https://wa.me/2389965580";
 
 export default function FloatingSupportButtons() {
 	const { profile } = useUserProfile();
