@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { fetchVehicleBrands } from "@/service/marcaService";
 import { fetchVehicleModels } from "@/service/modeloService";
+import { fetchDynamicApiData } from "@/service/dynamicApiService";
 import ReactSelect from "react-select";
 import { useUserProfile } from "@/hooks/useUserProfile";
 import { useDomain } from "@/hooks/useDomain";
@@ -31,6 +32,7 @@ interface FormFieldData {
     | "date"
     | "select"
     | "autocomplete"
+    | "auto-complete"
     | "number"
     | "brand"
     | "model"
@@ -38,6 +40,8 @@ interface FormFieldData {
   required?: boolean;
   fieldPlaceholder?: string;
   fieldSize?: number;
+  provider?: string | null;
+  targetField?: string | null;
 }
 
 interface FormFieldProps {
@@ -46,7 +50,13 @@ interface FormFieldProps {
   error?: string;
   onChange: (value: string) => void;
   options?: Option[];
+  formValues?: Record<string, unknown>; // Valores do formulário para campos dependentes
 }
+
+// Helper function para verificar se o tipo é autocomplete (aceita "autocomplete" e "auto-complete")
+const isAutocompleteType = (type: string | undefined): boolean => {
+  return type === "autocomplete" || type === "auto-complete";
+};
 
 // Estado global compartilhado
 const globalState = {
@@ -81,6 +91,7 @@ export default function FormField({
   onChange,
   error,
   options = [],
+  formValues = {},
 }: FormFieldProps) {
   const { profile } = useUserProfile();
   
@@ -88,6 +99,12 @@ export default function FormField({
   const isDomainField = field.sourceDataType?.toUpperCase() === "DOMAIN";
   const domainName = isDomainField ? field.sourceData : null;
   const { options: domainOptions, loading: loadingDomain, error: errorDomain } = useDomain(domainName);
+
+  // Estado para campos de API dinâmica
+  const isApiField = field.sourceDataType?.toUpperCase() === "API";
+  const [apiOptions, setApiOptions] = useState<Option[]>([]);
+  const [loadingApi, setLoadingApi] = useState(false);
+  const [errorApi, setErrorApi] = useState<string | null>(null);
 
   const [filter, setFilter] = useState(value || "");
   const [showOptions, setShowOptions] = useState(false);
@@ -141,6 +158,37 @@ export default function FormField({
     setFilter(value || "");
   }, [value]);
 
+  // Mostrar opções automaticamente quando dados são carregados (para autocomplete de API)
+  useEffect(() => {
+    if (isAutocompleteType(field.type) && isApiField && apiOptions.length > 0 && !loadingApi) {
+      // Se há opções disponíveis e o campo está focado, mostrar opções
+      const inputElement = document.getElementById(field.name) as HTMLInputElement;
+      if (inputElement && document.activeElement === inputElement) {
+        if (field.name === 'brand' || field.name === 'vehicleBrand') {
+          console.log(`🔄 [${field.name}] Dados carregados e campo focado - Mostrando opções`);
+        }
+        setShowOptions(true);
+      }
+    }
+  }, [field.type, field.name, isApiField, apiOptions.length, loadingApi]);
+  
+  // Log quando showOptions muda
+  useEffect(() => {
+    if ((field.name === 'brand' || field.name === 'vehicleBrand') && isApiField) {
+      const availableOpts = isApiField ? apiOptions : options;
+      const filteredOpts = filter.trim() === "" 
+        ? availableOpts 
+        : availableOpts.filter((opt) =>
+            opt.name.toLowerCase().includes(filter.toLowerCase())
+          );
+      console.log(`🔄 [${field.name}] showOptions mudou:`, {
+        showOptions,
+        apiOptionsCount: apiOptions.length,
+        filteredOptionsCount: filteredOpts.length
+      });
+    }
+  }, [showOptions, field.name, isApiField, apiOptions.length]);
+
   useEffect(() => {
     if (!value && profile) {
       if (field.name === "name" && profile.user.nome) {
@@ -158,8 +206,125 @@ export default function FormField({
     }
   }, [profile, field.name, value, onChange]);
 
-  // Carrega marcas apenas uma vez quando o componente monta
+  // Obter valor do campo dependente para usar como dependência
+  const targetField = field.targetField;
+  const targetFieldValue = targetField ? formValues?.[targetField] : undefined;
+
+  // Busca dados de API dinamicamente quando sourceDataType for "API"
   useEffect(() => {
+    if (!isApiField || !field.sourceData) return;
+
+    // Se o campo tem targetField, verificar se o campo dependente tem valor
+    if (targetField) {
+      // Verificar se o valor está vazio ou é null/undefined
+      if (!targetFieldValue || targetFieldValue === '' || targetFieldValue === null || targetFieldValue === undefined) {
+        // Se não há valor no campo dependente, limpar opções e valor
+        setApiOptions([]);
+        if (value) {
+          onChange(""); // Limpar valor quando o campo dependente não tem valor
+        }
+        return;
+      }
+    }
+
+    const loadApiData = async () => {
+      setLoadingApi(true);
+      setErrorApi(null);
+      try {
+        let targetValue: string | number | undefined = undefined;
+        
+        // Converter targetFieldValue para string | number | undefined
+        if (targetFieldValue !== undefined && targetFieldValue !== null) {
+          if (typeof targetFieldValue === 'string' || typeof targetFieldValue === 'number') {
+            targetValue = targetFieldValue;
+          } else {
+            targetValue = String(targetFieldValue);
+          }
+        }
+        
+        // Se o targetField é "brand" e temos o valor, precisamos obter o ID
+        // Primeiro, tentar buscar as opções de marca para encontrar o ID
+        if (targetField === "brand" && targetValue) {
+          // Se targetValue é um nome, precisamos encontrar o ID correspondente
+          // Vamos buscar as marcas primeiro para obter o ID
+          try {
+            const brandData = await fetchDynamicApiData(
+              "private/mobile/vehicle/brands",
+              field.provider || null,
+              undefined,
+              {}
+            );
+            const brandOption = brandData.find((opt: Option) => opt.name === targetValue);
+            if (brandOption) {
+              targetValue = brandOption.id; // Usar o ID em vez do nome
+            }
+          } catch (err) {
+            console.warn("Erro ao buscar ID da marca:", err);
+            // Continuar com o valor original se não conseguir encontrar o ID
+          }
+        }
+        
+        const provider = field.provider || null;
+        
+        const data = await fetchDynamicApiData(
+          field.sourceData,
+          provider,
+          targetValue,
+          formValues
+        );
+        
+        setApiOptions(data);
+        
+        // Log temporário para debug
+        if (field.name === 'brand' || field.name === 'vehicleBrand') {
+          console.log(`✅ [${field.name}] Dados carregados:`, {
+            count: data.length,
+            showOptions: showOptions,
+            isApiField,
+            fieldType: field.type
+          });
+        }
+        
+        // Se o valor atual não está mais nas opções (por exemplo, mudou a marca), limpar
+        if (value && data.length > 0) {
+          const currentValueExists = data.some(opt => opt.name === value || opt.id === value);
+          if (!currentValueExists) {
+            onChange(""); // Limpar valor se não existe mais nas opções
+          }
+        }
+      } catch (err) {
+        // Mensagem amigável para o cliente, especialmente para o campo "Marca"
+        if (field.name === 'brand' || field.name === 'vehicleBrand') {
+          setErrorApi('Não foi possível carregar as marcas.');
+        } else {
+          setErrorApi('Nenhum modelo disponível para esta marca.');
+        }
+      } finally {
+        setLoadingApi(false);
+      }
+    };
+
+    loadApiData();
+  }, [
+    isApiField, 
+    field.sourceData, 
+    field.name, 
+    targetField, 
+    targetFieldValue, // Valor específico do campo dependente
+    field.provider,
+    formValues,
+    value,
+    onChange
+  ]);
+
+  // Carrega marcas apenas uma vez quando o componente monta (mantido para compatibilidade)
+  // NOTA: Esta lógica só é usada se o campo NÃO for dinâmico (isApiField === false)
+  useEffect(() => {
+    // Se é um campo de API dinâmico, não usar a lógica antiga
+    if (isApiField) {
+      return;
+    }
+    
     if ((field.name === "brand" || field.name === "vehicleBrand") && marcaOptions.length === 0) {
       const loadBrands = async () => {
         setLoadingMarca(true);
@@ -172,18 +337,23 @@ export default function FormField({
             options: brands,
           });
         } catch (err) {
-          console.error("Erro ao buscar marcas:", err);
-          setErrorMarca("Erro ao carregar marcas. Tente novamente mais tarde.");
+          setErrorMarca("Nenhuma marca disponível no momento.");
         } finally {
           setLoadingMarca(false);
         }
       };
       loadBrands();
     }
-  }, [field.name, marcaOptions.length]);
+  }, [field.name, marcaOptions.length, isApiField]);
 
   // Sincroniza o estado da marca selecionada com o valor atual
+  // NOTA: Esta lógica só é usada se o campo NÃO for dinâmico (isApiField === false)
   useEffect(() => {
+    // Se é um campo de API dinâmico, não usar a lógica antiga
+    if (isApiField) {
+      return;
+    }
+    
     if (field.name === "brand" || field.name === "vehicleBrand") {
       if (value && marcaOptions.length > 0) {
         const marca = marcaOptions.find((m) => m.name === value);
@@ -203,10 +373,16 @@ export default function FormField({
         });
       }
     }
-  }, [value, marcaOptions, field.name]);
+  }, [value, marcaOptions, field.name, isApiField]);
 
   // Carrega modelos quando a marca muda e apenas para campos de modelo
+  // NOTA: Esta lógica só é usada se o campo NÃO for dinâmico (isApiField === false)
   useEffect(() => {
+    // Se é um campo de API dinâmico, não usar a lógica antiga
+    if (isApiField) {
+      return;
+    }
+    
     if (field.sourceData === "modelo" || field.name === "model" || field.name === "vehicleModel") {
       // Se não há marca selecionada, limpa os modelos
       if (!localGlobalState.selectedBrand.id) {
@@ -235,6 +411,7 @@ export default function FormField({
     value,
     onChange,
     field.name,
+    isApiField,
   ]);
 
   const loadModels = useCallback(
@@ -256,8 +433,7 @@ export default function FormField({
         const models = await fetchVehicleModels(brandId);
         setGlobalModelOptions(models);
       } catch (err) {
-        console.error("Erro ao buscar modelos:", err);
-        setErrorModel("Erro ao carregar modelos. Tente novamente mais tarde.");
+        setErrorModel("Nenhum modelo disponível no momento.");
         globalState.lastLoadedBrandId = null;
       } finally {
         setLoadingModel(false);
@@ -296,9 +472,13 @@ export default function FormField({
     setShowOptions(false);
   };
 
-  const filteredOptions = options.filter((opt) =>
-    opt.name.toLowerCase().includes(filter.toLowerCase())
-  );
+  // Usar apiOptions se for campo de API, senão usar options
+  const availableOptions = isApiField ? apiOptions : options;
+  const filteredOptions = filter.trim() === "" 
+    ? availableOptions 
+    : availableOptions.filter((opt) =>
+        opt.name.toLowerCase().includes(filter.toLowerCase())
+      );
 
   const getModelFieldState = () => {
     if (loadingModel) {
@@ -576,71 +756,8 @@ export default function FormField({
             <p className="text-red-500 text-sm mt-1">{dateError}</p>
           )}
         </>
-      ) : field.name === "brand" || field.name === "vehicleBrand" ? (
-        loadingMarca ? (
-          <div className="px-4 py-3 border-2 border-blue-300 rounded-lg bg-blue-50 text-blue-700">
-            <div className="flex items-center">
-              <div className="animate-spin rounded-full h-5 w-5 border-2 border-blue-700 border-t-transparent mr-3"></div>
-              <span className="text-sm font-medium">Buscando marcas...</span>
-            </div>
-          </div>
-        ) : errorMarca ? (
-          <div className="px-4 py-3 border-2 border-red-300 rounded-lg bg-red-50 text-red-700">
-            <span className="text-sm">{errorMarca}</span>
-          </div>
-        ) : (
-          <ReactSelect
-            id={field.name}
-            name={field.name}
-            value={value ? { value, label: value } : null}
-            onChange={(selectedOption) => {
-              const newValue = selectedOption ? selectedOption.value : "";
-              onChange(newValue);
-              setFilter(newValue);
-
-              // Lógica adicional para marca, se necessário
-              if (field.name === "brand" || field.name === "vehicleBrand") {
-                const selectedBrand = marcaOptions.find(
-                  (m) => m.name === newValue
-                );
-                if (selectedBrand) {
-                  const brandId = Number(selectedBrand.id);
-                  setGlobalBrandState({
-                    id: brandId,
-                    name: selectedBrand.name,
-                    options: marcaOptions,
-                  });
-                } else {
-                  setGlobalBrandState({
-                    id: null,
-                    name: "",
-                    options: marcaOptions,
-                  });
-                }
-              }
-            }}
-            options={marcaOptions.map((brand) => ({
-              value: brand.name,
-              label: brand.name,
-            }))}
-            className={`react-select-container ${
-              error ? "react-select--error" : ""
-            }`}
-            classNamePrefix="react-select"
-            placeholder={field.fieldPlaceholder || "Selecione uma marca"}
-            isClearable
-            noOptionsMessage={({ inputValue }) =>
-              inputValue.length < 3
-                ? "Digite pelo menos 3 letras"
-                : "Nenhuma marca encontrada"
-            }
-            loadingMessage={() => "Carregando..."}
-            isLoading={loadingMarca}
-            required={field.required}
-          />
-        )
-      ) : field.sourceData === "modelo" || field.name === "model" || field.name === "vehicleModel" ? (
-        /* Campo de Modelo customizado */
+      ) : (field.sourceData === "modelo" || field.name === "model" || field.name === "vehicleModel") && !isApiField ? (
+        /* Campo de Modelo customizado (lógica antiga - apenas se NÃO for dinâmico) */
         loadingModel ? (
           <div className="px-4 py-3 border-2 border-blue-300 rounded-lg bg-blue-50 text-blue-700">
             <div className="flex items-center">
@@ -681,6 +798,47 @@ export default function FormField({
                 ))}
             </SelectContent>
           </Select>
+        )
+      ) : isApiField && !isAutocompleteType(field.type) ? (
+        /* Campo com dados de API dinâmica (Select) */
+        loadingApi ? (
+          <div className="px-4 py-3 border-2 border-blue-300 rounded-lg bg-blue-50 text-blue-700">
+            <div className="flex items-center">
+              <div className="animate-spin rounded-full h-5 w-5 border-2 border-blue-700 border-t-transparent mr-3"></div>
+              <span className="text-sm font-medium">Carregando opções...</span>
+            </div>
+          </div>
+        ) : errorApi ? (
+          <div className="px-4 py-3 border-2 border-gray-300 rounded-lg bg-gray-50 text-gray-700">
+            <span className="text-sm">{errorApi}</span>
+          </div>
+        ) : apiOptions.length > 0 ? (
+          <Select
+            value={value || ""}
+            onValueChange={(newValue) => {
+              onChange(newValue);
+            }}
+            required={field.required}
+          >
+            <SelectTrigger className={error ? "border-red-500" : ""}>
+              <SelectValue placeholder={field.fieldPlaceholder || "Selecione uma opção"} />
+            </SelectTrigger>
+            <SelectContent>
+              {apiOptions.map((opt) => (
+                <SelectItem key={String(opt.id)} value={String(opt.name)}>
+                  {opt.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        ) : (
+          <div className="px-4 py-3 border-2 border-gray-300 rounded-lg bg-gray-50 text-gray-700">
+            <span className="text-sm">
+              {field.name === 'model' || field.name === 'vehicleModel'
+                ? 'Nenhum modelo disponível no momento.'
+                : 'Nenhuma opção disponível no momento.'}
+            </span>
+          </div>
         )
       ) : isDomainField ? (
         /* Campo com dados de domínio dinâmico customizado */
@@ -731,7 +889,7 @@ export default function FormField({
             ))}
           </SelectContent>
         </Select>
-      ) : field.type === "autocomplete" ? (
+      ) : isAutocompleteType(field.type) ? (
         /* Autocomplete */
         <div className="relative">
           <input
@@ -745,25 +903,112 @@ export default function FormField({
               onChange(e.target.value);
               setShowOptions(true);
             }}
-            onFocus={() => setShowOptions(true)}
-            onBlur={() => setTimeout(() => setShowOptions(false), 200)}
+            onClick={() => {
+              // Mostrar opções quando clicar no campo
+              if (isApiField) {
+                // Para campos de API, verificar apiOptions
+                if (apiOptions.length > 0 && !loadingApi) {
+                  setShowOptions(true);
+                }
+              } else {
+                // Para campos normais, verificar availableOptions
+                if (availableOptions.length > 0 && !loadingApi) {
+                  setShowOptions(true);
+                }
+              }
+            }}
+            onFocus={() => {
+              // Mostrar todas as opções quando receber foco (se houver opções)
+              if (isApiField) {
+                // Para campos de API, verificar apiOptions
+                if (apiOptions.length > 0 && !loadingApi) {
+                  console.log(`🎯 [${field.name}] onFocus - Mostrando opções:`, {
+                    apiOptionsCount: apiOptions.length,
+                    showOptions: true
+                  });
+                  setShowOptions(true);
+                } else {
+                  console.log(`⚠️ [${field.name}] onFocus - Não pode mostrar opções:`, {
+                    apiOptionsCount: apiOptions.length,
+                    loadingApi
+                  });
+                }
+              } else {
+                // Para campos normais, verificar availableOptions
+                if (availableOptions.length > 0 && !loadingApi) {
+                  setShowOptions(true);
+                }
+              }
+            }}
+            onKeyDown={(e) => {
+              // Mostrar opções quando começar a digitar
+              if (isApiField) {
+                if (apiOptions.length > 0 && !loadingApi && !showOptions) {
+                  setShowOptions(true);
+                }
+              } else {
+                if (availableOptions.length > 0 && !loadingApi && !showOptions) {
+                  setShowOptions(true);
+                }
+              }
+            }}
+            onBlur={() => setTimeout(() => setShowOptions(false), 300)}
             autoComplete="off"
             className={`w-full p-2 border rounded-md focus:ring-2 focus:ring-[#002256] ${
               error ? "border-red-500" : "border-gray-300"
-            }`}
+            } ${isApiField && (loadingApi || availableOptions.length > 0) ? "pr-20" : ""}`}
             required={field.required}
+            disabled={isApiField && loadingApi}
           />
+          <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2">
+            {isApiField && loadingApi && (
+              <div className="animate-spin rounded-full h-4 w-4 border-2 border-blue-700 border-t-transparent"></div>
+            )}
+            {isApiField && !loadingApi && availableOptions.length > 0 && (
+              <span className="text-xs text-gray-500">{availableOptions.length}</span>
+            )}
+          </div>
+          {isApiField && errorApi && (
+            <div className="mt-1 text-xs text-gray-500">
+              {field.name === 'brand' || field.name === 'vehicleBrand' 
+                ? 'Não foi possível carregar as marcas.'
+                : `Sem opções disponíveis no momento.`}
+            </div>
+          )}
+          {isApiField && !loadingApi && !errorApi && apiOptions.length === 0 && (
+            <div className="mt-1 text-xs text-gray-500">
+              {field.name === 'brand' || field.name === 'vehicleBrand'
+                ? 'Nenhuma marca disponível no momento.'
+                : 'Sem opções disponíveis no momento.'}
+            </div>
+          )}
           {showOptions && filteredOptions.length > 0 && (
-            <ul className="absolute z-10 bg-white border border-gray-300 rounded-md w-full max-h-40 overflow-auto mt-1 shadow-lg">
+            <ul className="absolute z-50 bg-white border border-gray-300 rounded-md w-full max-h-40 overflow-auto mt-1 shadow-lg">
+              {(() => {
+                if (field.name === 'brand' || field.name === 'vehicleBrand') {
+                  console.log(`📋 [${field.name}] Renderizando opções:`, {
+                    showOptions,
+                    filteredOptionsCount: filteredOptions.length,
+                    availableOptionsCount: availableOptions.length,
+                    apiOptionsCount: apiOptions.length
+                  });
+                }
+                return null;
+              })()}
               {filteredOptions.map((opt) => (
                 <li
-                  key={opt.id}
+                  key={String(opt.id)}
                   className="px-4 py-2 hover:bg-[#002256] hover:text-white cursor-pointer"
                   onMouseDown={() => handleSelectOption(opt.name)}
                 >
                   {opt.name}
                 </li>
               ))}
+            </ul>
+          )}
+          {showOptions && !loadingApi && filteredOptions.length === 0 && availableOptions.length > 0 && (
+            <ul className="absolute z-50 bg-white border border-gray-300 rounded-md w-full mt-1 shadow-lg">
+              <li className="px-4 py-2 text-gray-500 text-sm">Nenhum resultado encontrado</li>
             </ul>
           )}
         </div>

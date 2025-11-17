@@ -150,120 +150,59 @@ export default function SimulationForm({
     if (product) {
       const initialValues: Record<string, any> = {};
 
-      // Se temos dados iniciais, mapear os valores
+      // Se temos dados iniciais, mapear os valores dinamicamente
       if (initialData) {
-        console.log("Preenchendo formulário com dados iniciais:", initialData);
-        console.log("Produto carregado:", product);
-
-        // Mapear dados da simulação para campos do formulário
+        // Mapear dados da simulação para campos do formulário de forma dinâmica
         product.tabs.forEach((tab: any) => {
-          console.log("Processando tab:", tab.title);
           tab.form.fields.forEach((field: any) => {
-            console.log("Processando campo:", field.name);
-            // Mapear campos específicos baseado no nome
             let value = "";
 
-            // Mapeamento de campos da simulação para campos do formulário
-            switch (field.name) {
-              case "clientName":
-                value = initialData.clientReference || "";
-                console.log("Mapeando clientName:", value);
-                break;
-              case "vehicleBrand":
-                // Extrair marca do objeto segurado se disponível
-                if (initialData.simulationObjects?.[0]?.propertyGroup?.values) {
-                  const brandValue =
-                    initialData.simulationObjects[0].propertyGroup.values.find(
-                      (prop: any) => prop.name === "brand"
-                    );
-                  value = brandValue?.value || "";
-                  console.log("Mapeando vehicleBrand:", value);
+            // Caso especial: clientName pode vir de clientReference
+            if (field.name === "clientName" && initialData.clientReference) {
+              value = initialData.clientReference;
+            }
+            // Caso especial: vehicleBrand pode vir de "brand" em propertyGroup
+            else if (field.name === "vehicleBrand" || field.name === "brand") {
+              if (initialData.simulationObjects?.[0]?.propertyGroup?.values) {
+                const brandProp = initialData.simulationObjects[0].propertyGroup.values.find(
+                  (prop: any) => prop.name === "brand" || prop.name === "vehicleBrand"
+                );
+                value = brandProp?.value || "";
+              }
+            }
+            // Caso especial: vehicleModel pode vir de "model" em propertyGroup
+            else if (field.name === "vehicleModel" || field.name === "model") {
+              if (initialData.simulationObjects?.[0]?.propertyGroup?.values) {
+                const modelProp = initialData.simulationObjects[0].propertyGroup.values.find(
+                  (prop: any) => prop.name === "model" || prop.name === "vehicleModel"
+                );
+                value = modelProp?.value || "";
+              }
+            }
+            // Para todos os outros campos, buscar dinamicamente
+            else {
+              // Primeiro, tentar em properties (formato direto)
+              if (initialData.simulationObjects?.[0]?.properties) {
+                const propValue = initialData.simulationObjects[0].properties[field.name];
+                if (propValue !== undefined && propValue !== null) {
+                  value = String(propValue);
                 }
-                break;
-              case "vehicleModel":
-                // Extrair modelo do objeto segurado se disponível
-                if (initialData.simulationObjects?.[0]?.propertyGroup?.values) {
-                  const modelValue =
-                    initialData.simulationObjects[0].propertyGroup.values.find(
-                      (prop: any) => prop.name === "model"
-                    );
-                  value = modelValue?.value || "";
-                  console.log("Mapeando vehicleModel:", value);
+              }
+              
+              // Se não encontrou, tentar em propertyGroup.values
+              if (!value && initialData.simulationObjects?.[0]?.propertyGroup?.values) {
+                const matchingProp = initialData.simulationObjects[0].propertyGroup.values.find(
+                  (prop: any) => prop.name === field.name
+                );
+                if (matchingProp?.value !== undefined && matchingProp?.value !== null) {
+                  value = String(matchingProp.value);
                 }
-                break;
-              case "licensePlate":
-                // Extrair placa do objeto segurado se disponível
-                if (initialData.simulationObjects?.[0]?.propertyGroup?.values) {
-                  const plateValue =
-                    initialData.simulationObjects[0].propertyGroup.values.find(
-                      (prop: any) => prop.name === "licensePlate"
-                    );
-                  value = plateValue?.value || "";
-                  console.log("Mapeando licensePlate:", value);
-                }
-                break;
-              case "vehicleValue":
-                // Extrair valor do veículo se disponível
-                if (initialData.simulationObjects?.[0]?.propertyGroup?.values) {
-                  const valueProp =
-                    initialData.simulationObjects[0].propertyGroup.values.find(
-                      (prop: any) => prop.name === "currentValue"
-                    );
-                  value = valueProp?.value || "";
-                  console.log("Mapeando vehicleValue:", value);
-                }
-                break;
-              case "weight":
-                // Extrair peso do veículo se disponível
-                if (initialData.simulationObjects?.[0]?.propertyGroup?.values) {
-                  const weightProp =
-                    initialData.simulationObjects[0].propertyGroup.values.find(
-                      (prop: any) => prop.name === "weight"
-                    );
-                  value = weightProp?.value || "";
-                  console.log("Mapeando weight:", value);
-                }
-                break;
-              case "seats":
-                // Extrair número de lugares se disponível
-                if (initialData.simulationObjects?.[0]?.propertyGroup?.values) {
-                  const seatsProp =
-                    initialData.simulationObjects[0].propertyGroup.values.find(
-                      (prop: any) => prop.name === "seats"
-                    );
-                  value = seatsProp?.value || "";
-                  console.log("Mapeando seats:", value);
-                }
-                break;
-              case "licenseDate":
-                // Extrair data da carta se disponível
-                if (initialData.simulationObjects?.[0]?.propertyGroup?.values) {
-                  const licenseDateProp =
-                    initialData.simulationObjects[0].propertyGroup.values.find(
-                      (prop: any) => prop.name === "licenseDate"
-                    );
-                  value = licenseDateProp?.value || "";
-                  console.log("Mapeando licenseDate:", value);
-                }
-                break;
-              default:
-                // Para outros campos, tentar encontrar por nome
-                if (initialData.simulationObjects?.[0]?.propertyGroup?.values) {
-                  const matchingProp =
-                    initialData.simulationObjects[0].propertyGroup.values.find(
-                      (prop: any) => prop.name === field.name
-                    );
-                  value = matchingProp?.value || "";
-                  console.log(`Mapeando ${field.name}:`, value);
-                }
-                break;
+              }
             }
 
             initialValues[field.name] = value;
           });
         });
-
-        console.log("Valores iniciais mapeados:", initialValues);
       } else {
         // Se não há dados iniciais, inicializar com valores vazios
         product.tabs.forEach((tab: any) => {
@@ -288,10 +227,12 @@ export default function SimulationForm({
         [name]: value,
       };
       // Ao mudar a marca, limpar modelo e atualizar selectedBrandId
-      if (name === 'vehicleBrand') {
+      if (name === 'vehicleBrand' || name === 'brand') {
         const brand = brands.find((b) => b.name === value);
         setSelectedBrandId(brand ? brand.id : null);
+        // Limpar modelo quando marca muda
         updated['vehicleModel'] = '';
+        updated['model'] = '';
       }
       return updated;
     });
@@ -338,8 +279,18 @@ export default function SimulationForm({
         setIsLoadingSimulation(true);
         setSimulationError(null);
 
+        // Log para debug
+        console.log("📋 Valores do formulário antes de simular:", formValues);
+
+        if (!product.bodyTemplate) {
+          setSimulationError("Template da simulação não encontrado no produto.");
+          setIsLoadingSimulation(false);
+          return;
+        }
+
         const data = await fetchSimulation(
-          formValues as any,
+          formValues,
+          product.bodyTemplate,
           setIsLoading,
           setSimulationResult,
           productId
@@ -540,6 +491,7 @@ export default function SimulationForm({
                       const fieldValue = formValues[field.name] || "";
                       // Opções dinâmicas para modelos de veículo
                       const dynamicOptions = field.name === 'vehicleModel' ? models.map(m => ({ id: m.id, name: m.name })) : [];
+                      
                       return (
                         <FormField
                           key={field.name}
@@ -550,6 +502,7 @@ export default function SimulationForm({
                             handleFieldChange(field.name, value)
                           }
                           options={dynamicOptions}
+                          formValues={formValues}
                         />
                       );
                     })}

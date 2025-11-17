@@ -90,7 +90,7 @@ function ReciboPageContent({ filterParams }: ReciboPageProps) {
     reciboData?: any;
   }>({ open: false, type: null, reciboNumber: '' });
   const searchParams = useSearchParams();
-
+  
   const { token } = useSessionCheckToken();
   const { registerReciboDownloadActivity } = useReciboActivity();
   const { profile } = useUserProfile(); // Dados do usuário
@@ -141,10 +141,10 @@ function ReciboPageContent({ filterParams }: ReciboPageProps) {
       const inFrame = ((): boolean => { try { return window.self !== window.top; } catch { return false; } })();
       if (inFrame && (window.top as Window)) {
         (window as any).top.location.href = url;
-      } else {
+              } else {
         window.location.href = url;
-      }
-    } catch {
+            }
+          } catch {
       // noop
     }
   }
@@ -299,13 +299,24 @@ function ReciboPageContent({ filterParams }: ReciboPageProps) {
           } catch {}
           const reciboRef = recibo.mbref || invoiceNumber;
           
+          // Sempre usar dados da sessão
+          const userName = profile.user.nome || profile.user.username || '';
+          const userEmail = profile.user.email || '';
+          const userPhone = profile.user.telemovel || profile.user.telefone || '';
+          const userNif = profile.user.nif || '';
+          
+          // Validar dados obrigatórios
+          if (!userEmail || !userPhone || !userNif) {
+            throw new Error('Dados do usuário incompletos. Verifique se email, telefone e NIF estão cadastrados na sua conta.');
+          }
+          
           // Usa novo fluxo SISP
           const result = await processPaymentSISP(
             recibo.value, // amount
-            profile.user.nome, // userName
-            profile.user.email || "", // userEmail
-            profile.user.telemovel || profile.user.telefone || "", // userPhone
-            profile.user.nif || "", // userNif
+            userName,
+            userEmail,
+            userPhone,
+            userNif,
             invoiceNumber, // reciboNumber
             reciboRef // orderReference
           );
@@ -469,12 +480,26 @@ function ReciboPageContent({ filterParams }: ReciboPageProps) {
           if (rref) localStorage.setItem('recibo_ref', encodeURIComponent(String(rref)));
           if (reciboData.value) localStorage.setItem('payment_amount', String(reciboData.value));
         } catch {}
+        
+        // Sempre usar dados da sessão
+        const userName = profile.user.nome || profile.user.username || '';
+        const userEmail = profile.user.email || '';
+        const userPhone = profile.user.telemovel || profile.user.telefone || '';
+        const userNif = profile.user.nif || '';
+        
+        // Validar dados obrigatórios
+        if (!userEmail || !userPhone || !userNif) {
+          toast.error('Dados do usuário incompletos. Verifique se email, telefone e NIF estão cadastrados na sua conta.');
+          setLoadingPayment((prev) => ({ ...prev, [reciboNumber]: false }));
+          return;
+        }
+        
         const res = await processPaymentSISP(
           reciboData.value,
-          profile.user.username || profile.user.nome || '',
-          profile.user.email || '',
-          profile.user.telemovel || profile.user.telefone || '',
-          profile.user.nif || '',
+          userName,
+          userEmail,
+          userPhone,
+          userNif,
           reciboNumber,
           rref
         );
@@ -695,20 +720,20 @@ function ReciboPageContent({ filterParams }: ReciboPageProps) {
                   {formatDate(recibo.from)} - {formatDate(recibo.to)}
                 </div>
                 <div className="flex gap-2 w-full">
-                    <Button
+                  <Button
                       onClick={() => visualizarPDF(recibo.number, recibo.status)}
-                      disabled={loadingView[recibo.number]}
-                      variant="outline"
-                      size="sm"
-                      className="flex-1 text-xs md:text-sm py-2"
-                    >
-                      {loadingView[recibo.number] ? (
-                        <LoadingSpinner size="sm" />
-                      ) : (
-                        <FaEye className="size-3 md:size-4" />
-                      )}
-                      <span className="ml-1">Ver</span>
-                    </Button>
+                    disabled={loadingView[recibo.number]}
+                    variant="outline"
+                    size="sm"
+                    className="flex-1 text-xs md:text-sm py-2"
+                  >
+                    {loadingView[recibo.number] ? (
+                      <LoadingSpinner size="sm" />
+                    ) : (
+                      <FaEye className="size-3 md:size-4" />
+                    )}
+                    <span className="ml-1">Ver</span>
+                  </Button>
                   {shouldShowPaymentButton(recibo.status) && (
                     <Button
                       onClick={() => openConfirmDialog('payment', recibo.number, recibo)}

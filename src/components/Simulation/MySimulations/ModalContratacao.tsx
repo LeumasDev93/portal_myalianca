@@ -6,6 +6,7 @@ import { FaFileInvoiceDollar, FaSpinner, FaFilePdf } from 'react-icons/fa';
 import { useToast } from '@/components/ui/use-toast';
 import { LoadingContainer } from '@/components/ui/loading-container';
 import { useSessionCheckToken } from '@/hooks/useSessionToken';
+import { useUserProfile } from '@/hooks/useUserProfile';
 import { processPaymentSISP } from '@/service/paymentService';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -97,6 +98,7 @@ interface ModalContratacaoProps {
 export function ModalContratacao({ isOpen, onClose, onNavigateToRecibo, onCloseSimulationResults, simulationData, simulationDetails, selectedInstallment }: ModalContratacaoProps) {
   const { toast } = useToast();
   const { token } = useSessionCheckToken();
+  const { profile } = useUserProfile(); // Dados do usuário da sessão
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [loadingData, setLoadingData] = useState(true);
@@ -881,18 +883,36 @@ export function ModalContratacao({ isOpen, onClose, onNavigateToRecibo, onCloseS
               type="button"
               onClick={async () => {
                 if (paymentLoading) return;
+                
+                // Verificar se há dados da sessão
+                if (!profile?.user) {
+                  toast({
+                    title: 'Erro no pagamento',
+                    description: 'Dados do usuário não encontrados. Por favor, faça login novamente.',
+                    variant: 'destructive',
+                  });
+                  return;
+                }
+                
                 setPaymentLoading(true);
                 try {
                   const amount = selectedInstallment?.value || simulationDetails?.totalPremium || simulationData.totalPremium || 0;
-                  const userName = clientData?.name || '';
-                  const userEmail = clientData?.primaryEmailContact || '';
-                  const userPhone = clientData?.primaryMobileContact || '';
-                  const userNif = clientData?.nif || '';
+                  
+                  // Sempre usar dados da sessão
+                  const userName = profile.user.nome || profile.user.username || '';
+                  const userEmail = profile.user.email || '';
+                  const userPhone = profile.user.telemovel || profile.user.telefone || '';
+                  const userNif = profile.user.nif || '';
+                  
                   const reciboNumber = successInfo?.reference || simulationDetails?.reference || simulationData.reference || '';
                   const orderReference = reciboNumber;
 
                   if (!amount || !reciboNumber) {
                     throw new Error('Dados insuficientes para iniciar o pagamento.');
+                  }
+                  
+                  if (!userEmail || !userPhone || !userNif) {
+                    throw new Error('Dados do usuário incompletos. Verifique se email, telefone e NIF estão cadastrados.');
                   }
 
                   // Persistir dados para o callback

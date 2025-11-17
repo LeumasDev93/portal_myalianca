@@ -620,7 +620,7 @@ export default function LoginPage() {
           </div>
           
           {/* Banner Semi-Transparente com Logo e Serviços (no rodapé) */}
-          <div className="absolute bottom-4 left-0 right-0 z-10">
+          <div className="absolute bottom-0 left-0 right-0 z-10">
             <div className="bg-white/10 backdrop-blur-md py-6 lg:py-8 2xl:py-12 px-6 2xl:px-16 w-full">
               <div className="text-white flex flex-col lg:flex-row items-center lg:items-start gap-4 lg:gap-6 2xl:gap-12">
                 {/* Logo */}

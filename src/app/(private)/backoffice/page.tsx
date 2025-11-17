@@ -54,6 +54,7 @@ import DashboardPage from "@/components/dashboard/page";
 import { BackToDashboardButton } from "@/components/ui/BackToDashboardButton";
 import PageGestaoSOAT from "@/components/gestaoSOAT/page";
 import { BackToTopButton } from "@/components/ui/BackToTopButton";
+import FloatingSupportButtons from "@/components/ui/FloatingSupportButtons";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useToast } from "@/components/ui/use-toast";
 import PaymentCallback from "@/components/(recibo)/PaymentCallback";
@@ -543,6 +544,7 @@ const Page = () => {
 
   return (
     <main className="flex flex-col min-h-screen bg-[#f3f3f5]">
+      <FloatingSupportButtons />
       <ConnectionErrorScreen />
       <ConnectionRestoredNotification />
       <TopMenu

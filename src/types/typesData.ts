@@ -184,6 +184,7 @@ export interface Product {
   active: boolean;
   tabs: FormTab[];
   productId: string;
+  bodyTemplate?: string;
 }
 
 export interface ApiResponse<T> {
