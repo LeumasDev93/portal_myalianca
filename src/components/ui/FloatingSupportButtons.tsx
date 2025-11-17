@@ -206,7 +206,7 @@ export default function FloatingSupportButtons() {
 				{isSimulateOpen && (
 					<div 
 						ref={popupRef}
-						className={`absolute bottom-0 w-[320px] md:w-[400px] max-w-[calc(100vw-2rem)] z-50 ${
+						className={`absolute 2xl:bottom-0 bottom-[-100px] w-[320px] md:w-[400px] max-w-[calc(100vw-2rem)] z-50 ${
 							popupPosition === 'left' 
 								? 'right-full mr-2' 
 								: 'left-full ml-2'

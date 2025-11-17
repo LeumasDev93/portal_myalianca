@@ -153,9 +153,17 @@ export default function FormField({
     };
   }, [updateLocalState]);
 
-  // Atualiza filtro quando value muda
+  // Atualiza filtro quando value muda externamente (não quando o usuário está digitando)
+  // Usar uma ref para rastrear se a mudança veio do usuário ou externamente
+  const isUserTypingRef = useRef(false);
+  
   useEffect(() => {
-    setFilter(value || "");
+    // Só atualizar o filter se a mudança não veio do usuário digitando
+    if (!isUserTypingRef.current) {
+      setFilter(value || "");
+    }
+    // Resetar a flag após processar
+    isUserTypingRef.current = false;
   }, [value]);
 
   // Mostrar opções automaticamente quando dados são carregados (para autocomplete de API)
@@ -285,13 +293,8 @@ export default function FormField({
           });
         }
         
-        // Se o valor atual não está mais nas opções (por exemplo, mudou a marca), limpar
-        if (value && data.length > 0) {
-          const currentValueExists = data.some(opt => opt.name === value || opt.id === value);
-          if (!currentValueExists) {
-            onChange(""); // Limpar valor se não existe mais nas opções
-          }
-        }
+        // Não limpar o valor automaticamente - deixar o usuário digitar livremente
+        // A limpeza só acontece quando o campo dependente está vazio (linha 223-225)
       } catch (err) {
         // Mensagem amigável para o cliente, especialmente para o campo "Marca"
         if (field.name === 'brand' || field.name === 'vehicleBrand') {
@@ -305,16 +308,16 @@ export default function FormField({
     };
 
     loadApiData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     isApiField, 
     field.sourceData, 
     field.name, 
     targetField, 
     targetFieldValue, // Valor específico do campo dependente
-    field.provider,
-    formValues,
-    value,
-    onChange
+    field.provider
+    // Removido value e onChange das dependências para não recarregar quando o usuário digita
+    // Removido formValues para evitar recarregamentos desnecessários
   ]);
 
   // Carrega marcas apenas uma vez quando o componente monta (mantido para compatibilidade)
@@ -474,7 +477,13 @@ export default function FormField({
 
   // Usar apiOptions se for campo de API, senão usar options
   const availableOptions = isApiField ? apiOptions : options;
-  const filteredOptions = filter.trim() === "" 
+  
+  // Para o campo "Modelo", só filtrar após 3 letras. Para "Marca", filtrar imediatamente
+  const isModelField = field.name === 'model' || field.name === 'vehicleModel' || field.name === 'Modelo';
+  const minLengthForFilter = isModelField ? 3 : 0;
+  const shouldFilter = filter.trim().length >= minLengthForFilter;
+  
+  const filteredOptions = filter.trim() === "" || !shouldFilter
     ? availableOptions 
     : availableOptions.filter((opt) =>
         opt.name.toLowerCase().includes(filter.toLowerCase())
@@ -899,6 +908,7 @@ export default function FormField({
             value={filter}
             placeholder={field.fieldPlaceholder || "Digite para buscar..."}
             onChange={(e) => {
+              isUserTypingRef.current = true; // Marcar que o usuário está digitando
               setFilter(e.target.value);
               onChange(e.target.value);
               setShowOptions(true);
@@ -982,7 +992,7 @@ export default function FormField({
                 : 'Sem opções disponíveis no momento.'}
             </div>
           )}
-          {showOptions && filteredOptions.length > 0 && (
+          {showOptions && filteredOptions.length > 0 && shouldFilter && (
             <ul className="absolute z-50 bg-white border border-gray-300 rounded-md w-full max-h-40 overflow-auto mt-1 shadow-lg">
               {(() => {
                 if (field.name === 'brand' || field.name === 'vehicleBrand') {
@@ -1006,9 +1016,14 @@ export default function FormField({
               ))}
             </ul>
           )}
-          {showOptions && !loadingApi && filteredOptions.length === 0 && availableOptions.length > 0 && (
+          {showOptions && !loadingApi && shouldFilter && filteredOptions.length === 0 && availableOptions.length > 0 && (
             <ul className="absolute z-50 bg-white border border-gray-300 rounded-md w-full mt-1 shadow-lg">
               <li className="px-4 py-2 text-gray-500 text-sm">Nenhum resultado encontrado</li>
+            </ul>
+          )}
+          {showOptions && !shouldFilter && isModelField && (
+            <ul className="absolute z-50 bg-white border border-gray-300 rounded-md w-full mt-1 shadow-lg">
+              <li className="px-4 py-2 text-gray-500 text-sm">Digite pelo menos 3 letras para pesquisar</li>
             </ul>
           )}
         </div>
